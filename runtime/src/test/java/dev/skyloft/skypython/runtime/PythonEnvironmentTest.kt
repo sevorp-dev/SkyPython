@@ -1,0 +1,47 @@
+package dev.skyloft.skypython.runtime
+
+import org.junit.Assert.assertEquals
+import org.junit.Test
+import java.io.File
+
+class PythonEnvironmentTest {
+
+    // Expected values are taken from File.path so the test also passes on a Windows JVM.
+    private val files = File("/data/user/0/dev.skyloft.skypython/files")
+    private val nativeLibDir = File("/data/app/~~abc/dev.skyloft.skypython-1/lib/x86_64")
+    private val pythonHome = File(files, "python")
+    private val homeDir = File(files, "home")
+    private val cacheDir = File("/data/user/0/dev.skyloft.skypython/cache")
+    private val launcher = File(nativeLibDir, "libpylauncher.so")
+    private val paths = PythonPaths(
+        home = pythonHome,
+        nativeLibDir = nativeLibDir,
+        launcher = launcher,
+        homeDir = homeDir,
+        tmpDir = cacheDir,
+    )
+
+    @Test
+    fun buildReturnsExactlyTheProcessEnvironment() {
+        assertEquals(
+            mapOf(
+                "PYTHONHOME" to pythonHome.path,
+                "LD_LIBRARY_PATH" to nativeLibDir.path,
+                "PYTHONUNBUFFERED" to "1",
+                "PYTHONIOENCODING" to "utf-8",
+                "HOME" to homeDir.path,
+                "TMPDIR" to cacheDir.path,
+            ),
+            PythonEnvironment.build(paths),
+        )
+    }
+
+    @Test
+    fun commandRunsScriptUnbufferedWithLauncher() {
+        val script = File(files, "projects/my scripts/hello world.py")
+        assertEquals(
+            listOf(launcher.path, "-u", script.path),
+            PythonEnvironment.command(paths, script),
+        )
+    }
+}
