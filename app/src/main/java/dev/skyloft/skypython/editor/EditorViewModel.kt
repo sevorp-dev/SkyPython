@@ -15,11 +15,11 @@ import dev.skyloft.skypython.data.SessionStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
@@ -56,9 +56,11 @@ class EditorViewModel(
     private val _state = MutableStateFlow(EditorUiState())
     val state: StateFlow<EditorUiState> = _state.asStateFlow()
 
-    private val _messages = MutableSharedFlow<String>(extraBufferCapacity = 8, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    /** One-shot user-facing messages (e.g. save errors) for a snackbar. */
-    val messages: SharedFlow<String> = _messages.asSharedFlow()
+    // A buffered Channel, not a SharedFlow: messages emitted before the screen starts collecting
+    // (e.g. during session restore in init) must be kept, not dropped for lack of subscribers.
+    private val _messages = Channel<String>(capacity = 8, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    /** One-shot user-facing messages (e.g. save errors) for a snackbar; each is delivered once. */
+    val messages: Flow<String> = _messages.receiveAsFlow()
 
     private val saver = DocumentSaver(
         docs = docsState,
@@ -245,7 +247,7 @@ class EditorViewModel(
     }
 
     private fun message(text: String) {
-        _messages.tryEmit(text)
+        _messages.trySend(text)
     }
 
     // ---- IO helpers (call on Dispatchers.IO) ----

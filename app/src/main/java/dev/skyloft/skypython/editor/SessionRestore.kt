@@ -22,6 +22,12 @@ fun restoreTabs(
                 SavedTab.Kind.LOCAL -> File(tab.location).let { OpenDocument.local(it, readLocal(it)) }
                 SavedTab.Kind.EXTERNAL -> openExternal(tab)
             }
+        }.onFailure { e ->
+            // A missing local file was deleted on purpose; an external doc vanishing is news to the user.
+            if (tab.kind == SavedTab.Kind.EXTERNAL) {
+                val reason = if (e is SecurityException) "permission lost" else e.message ?: "unavailable"
+                messages += "Couldn't reopen ${tab.name}: $reason"
+            }
         }.getOrNull()
     }
     return RestoredTabs(docs, messages)
