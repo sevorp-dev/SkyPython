@@ -12,4 +12,3 @@ build/
 /runtime/src/main/jniLibs/
 /runtime/src/main/assets/python/
 /.superpowers/
-/.claude/

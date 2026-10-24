@@ -34,6 +34,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
+          # Re-pushing a tag replaces its release.
+          gh release delete "$GITHUB_REF_NAME" --yes 2>/dev/null || true
           gh release create "$GITHUB_REF_NAME" \
             "SkyPython-${VERSION}.apk" "SkyPython-${VERSION}.apk.sha256" \
             --title "SkyPython ${VERSION}" \
