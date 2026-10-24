@@ -35,9 +35,9 @@
 **CPython 3.14** interpreter, so your code runs exactly like on a computer — no server, no
 internet connection, no account.
 
-It aims to do the same job in the open: a familiar editor with a
-tool drawer, an interactive console, a terminal and a package manager — free of ads and
-premium walls, and built to work on as many phones as possible, including old and low-end ones.
+Everything a mobile Python developer needs, in the open: a comfortable editor with a tool
+drawer, an interactive console, a terminal and a package manager — free of ads and premium
+walls, and built to work on as many phones as possible, including old and low-end ones.
 
 ## 🚀 Features
 
@@ -108,7 +108,7 @@ If Android says *"App not installed"*, you picked the wrong one — take `univer
 
 - **CPython** comes from python.org's [official Android build](https://docs.python.org/3/using/android.html) (64-bit) and from our own [build workflow](.github/workflows/build-python.yml) that runs CPython's `Android/android.py` (32-bit).
 - The **standard library** is packed per CPU type and unpacked once into the app's private storage.
-- Each program runs as a **separate process**, like on a desktop — the same approach a desktop computer uses.
+- Each program runs as a **separate process**, exactly like on a desktop computer.
 - The **editor** is [Sora Editor](https://github.com/Rosemoe/sora-editor) with TextMate grammars (MagicPython).
 
 ## 🛠️ Build from source
@@ -174,7 +174,7 @@ on Android 7, 9, 11, 14 and 16. Pushing a `v*.*.*` tag publishes a release
 - [x] Run scripts offline with CPython 3.14
 - [x] Interactive console, interpreter and terminal
 - [x] Pip for pure-Python packages
-- [x] tool drawer, samples, settings
+- [x] Tool drawer, samples, settings
 - [x] Android 7.0+ and 32-bit devices
 - [ ] Full terminal emulator (colors, `Ctrl+C`, curses)
 - [ ] Code completion and error hints
