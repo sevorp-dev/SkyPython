@@ -91,7 +91,7 @@ fun SkyDrawer(fileName: String?, cursor: CursorPosition, onAction: (DrawerAction
                 .fillMaxWidth()
                 .background(HeaderBlue)
                 .statusBarsPadding()
-                .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 20.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
         ) {
             Text(
                 header.title,
@@ -102,7 +102,7 @@ fun SkyDrawer(fileName: String?, cursor: CursorPosition, onAction: (DrawerAction
                 overflow = TextOverflow.Ellipsis,
             )
             if (header.line != null) {
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(10.dp))
                 Text(header.line, color = Color(0xFFCFDCE6), fontSize = 14.sp)
                 Spacer(Modifier.height(2.dp))
                 Text(header.offset.orEmpty(), color = Color(0xFFCFDCE6), fontSize = 14.sp)
@@ -115,12 +115,12 @@ fun SkyDrawer(fileName: String?, cursor: CursorPosition, onAction: (DrawerAction
                     section.title,
                     color = SectionGrey,
                     fontSize = 14.sp,
-                    modifier = Modifier.padding(start = 16.dp, top = 18.dp, bottom = 6.dp),
+                    modifier = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 4.dp),
                 )
                 section.actions.forEach { action ->
                     DrawerItem(action) { onAction(action) }
                 }
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(4.dp))
             }
         }
     }
@@ -132,7 +132,7 @@ private fun DrawerItem(action: DrawerAction, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .height(52.dp)
+            .height(48.dp)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp),
     ) {

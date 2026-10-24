@@ -77,6 +77,9 @@ class EditorController {
      */
     fun flushPendingText() { flusher?.invoke() }
 
+    /** Closes the soft keyboard; the console and other screens must not open under it. */
+    fun hideKeyboard() { view?.hideSoftInput() }
+
     fun undo() { view?.undo() }
     fun redo() { view?.redo() }
 
@@ -98,7 +101,10 @@ private fun CodeEditor.applyConfig(config: EditorViewConfig) {
         android.util.TypedValue.COMPLEX_UNIT_SP, config.textSizeSp, resources.displayMetrics,
     )
     if (textSizePx != px) setTextSize(config.textSizeSp)
-    if (isWordwrap != config.wordWrap) isWordwrap = config.wordWrap
+    // Wrap at the exact width, not at word boundaries: Sora 0.24's anti-word-breaking splits a
+    // line again at every following '.' or space, so `print("a", statistics.mode(x))` took three
+    // rows with a lone `mode(x))` and the closing `")` of a string dropped to a row of its own.
+    if (isWordwrap != config.wordWrap || isAntiWordBreaking) setWordwrap(config.wordWrap, false)
     if (isLineNumberEnabled != config.lineNumbers) isLineNumberEnabled = config.lineNumbers
     keepScreenOn = config.keepScreenOn
 }

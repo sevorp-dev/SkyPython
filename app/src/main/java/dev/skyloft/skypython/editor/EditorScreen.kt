@@ -14,7 +14,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -71,6 +74,7 @@ import dev.skyloft.skypython.ui.drawer.SkyDrawer
 import dev.skyloft.skypython.ui.theme.BarBlue
 import dev.skyloft.skypython.ui.theme.EditorBackground
 import dev.skyloft.skypython.ui.theme.RunAmber
+import dev.skyloft.skypython.ui.theme.SkyBlue
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -78,7 +82,7 @@ private val TabSelected = Color.White
 private val TabIdle = Color(0xFF93A4B3)
 private val SubtitleColor = Color(0xFFB3C2CE)
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EditorScreen(
     viewModel: EditorViewModel,
@@ -110,9 +114,24 @@ fun EditorScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { controller.flushPendingText(); viewModel.saveAll() }
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { controller.flushPendingText(); viewModel.saveAll() }
     // Edits reach the ViewModel debounced; flush before anything that reads the text.
-    val openFiles = { controller.flushPendingText(); onOpenFiles() }
+    val openFiles = { controller.flushPendingText(); controller.hideKeyboard(); onOpenFiles() }
 
     val current = state.current
+    val imeVisible = WindowInsets.isImeVisible
+    val runCurrent: () -> Unit = {
+        if (!running) {
+            running = true
+            controller.flushPendingText()
+            controller.hideKeyboard()
+            scope.launch {
+                try {
+                    viewModel.runCurrent()?.let(onRun)
+                } finally {
+                    running = false
+                }
+            }
+        }
+    }
 
     BackHandler(enabled = drawerState.isOpen) { scope.launch { drawerState.close() } }
 
@@ -124,6 +143,7 @@ fun EditorScreen(
             SkyDrawer(fileName = current?.name, cursor = cursor.value) { action ->
                 scope.launch { drawerState.close() }
                 controller.flushPendingText()
+                controller.hideKeyboard()
                 onDrawerAction(action)
             }
         },
@@ -140,7 +160,7 @@ fun EditorScreen(
                             actionIconContentColor = Color.White,
                         ),
                         navigationIcon = {
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            IconButton(onClick = { controller.hideKeyboard(); scope.launch { drawerState.open() } }) {
                                 Icon(Icons.Filled.Menu, contentDescription = "Menu")
                             }
                         },
@@ -193,20 +213,11 @@ fun EditorScreen(
                 }
             },
             floatingActionButton = {
-                if (current != null) {
+                // With the keyboard up the FAB would sit on the lines being typed; Run moves
+                // into the symbol bar instead.
+                if (current != null && !imeVisible) {
                     FloatingActionButton(
-                        onClick = {
-                            if (running) return@FloatingActionButton
-                            running = true
-                            controller.flushPendingText()
-                            scope.launch {
-                                try {
-                                    viewModel.runCurrent()?.let(onRun)
-                                } finally {
-                                    running = false
-                                }
-                            }
-                        },
+                        onClick = runCurrent,
                         shape = CircleShape,
                         containerColor = RunAmber,
                         contentColor = Color(0xFF2B2200),
@@ -217,7 +228,11 @@ fun EditorScreen(
             },
             bottomBar = {
                 if (current != null) {
-                    SymbolBar(onInsert = controller::insert, modifier = Modifier.navigationBarsPadding().imePadding())
+                    SymbolBar(
+                        onInsert = controller::insert,
+                        onRun = if (imeVisible) runCurrent else null,
+                        modifier = Modifier.navigationBarsPadding().imePadding(),
+                    )
                 }
             },
             snackbarHost = { SnackbarHost(snackbar) },
@@ -244,7 +259,7 @@ fun EditorScreen(
     }
 }
 
-/** File name (bold) over its folder path, both ellipsized, like a classic IDE title. */
+/** File name (bold) over its folder path, both ellipsized. */
 @Composable
 private fun EditorTitle(doc: OpenDocument?, projectsRoot: File) {
     if (doc == null) {
@@ -297,6 +312,13 @@ private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel, onClose: (
                     fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
                     maxLines = 1,
                 )
+                // A thin marker, so the current tab is clear even with many similar names.
+                if (selected && state.docs.size > 1) {
+                    // matchParentSize, not fillMaxWidth: the strip scrolls, so max width is unbounded.
+                    Box(Modifier.matchParentSize(), contentAlignment = Alignment.BottomCenter) {
+                        Box(Modifier.fillMaxWidth().height(2.dp).background(SkyBlue))
+                    }
+                }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                     DropdownMenuItem(text = { Text("Close") }, onClick = {
                         menu = false
