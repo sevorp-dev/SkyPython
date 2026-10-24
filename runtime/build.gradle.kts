@@ -118,6 +118,16 @@ pythonAbis.forEach { (abi, triple) ->
         from(extractDir.map { it.dir("prefix/lib/python$pythonShortVersion") }) {
             exclude("test/**", "idlelib/**", "tkinter/**", "turtledemo/**")
             exclude("**/__pycache__/**")
+            // CPython's own test-suite extension modules and frozen-module demo: only
+            // Lib/test imports them.
+            exclude(
+                "lib-dynload/_test*.so",
+                "lib-dynload/_ctypes_test*.so",
+                "lib-dynload/_xxtestfuzz*.so",
+                "lib-dynload/xxlimited*.so",
+                "lib-dynload/xxsubtype*.so",
+                "__phello__/**",
+            )
             into("lib/python$pythonShortVersion")
         }
         includeEmptyDirs = false
