@@ -160,6 +160,7 @@ private fun RestartDialog(consoleVm: ConsoleViewModel, onConfirmed: () -> Unit) 
     val pending = state.pending ?: return
     AlertDialog(
         onDismissRequest = consoleVm::dismissPendingRun,
+        title = { Text("Still running") },
         text = { Text("Something is still running. Stop it and start ${pending.title}?") },
         confirmButton = {
             TextButton(onClick = {

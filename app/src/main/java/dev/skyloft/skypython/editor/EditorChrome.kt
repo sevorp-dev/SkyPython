@@ -7,7 +7,7 @@ import dev.skyloft.skypython.settings.EditorSettings
 /** Cursor of the live editor: 0-based [line] and [column], plus the document's [lineCount]. */
 data class CursorPosition(val line: Int = 0, val column: Int = 0, val lineCount: Int = 1)
 
-/** Tab text: the label, with a `*` suffix while the doc has unsaved changes (classic IDE style). */
+/** Tab text: the label, with a `*` suffix while the doc has unsaved changes. */
 fun tabTitle(label: String, dirty: Boolean): String = if (dirty) "$label*" else label
 
 /** Top-bar subtitle: the folder a local doc lives in, or a hint for documents opened from other apps. */

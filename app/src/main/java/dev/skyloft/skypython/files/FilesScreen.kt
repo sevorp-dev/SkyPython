@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.material.icons.filled.Add
@@ -47,7 +46,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import dev.skyloft.skypython.ui.theme.SkyTopBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -65,7 +64,24 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.skyloft.skypython.editor.PROJECTS_LABEL
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import dev.skyloft.skypython.ui.theme.BarBlue
+import dev.skyloft.skypython.ui.theme.DividerBlue
+import dev.skyloft.skypython.ui.theme.EditorBackground
+import dev.skyloft.skypython.ui.theme.MutedText
+import dev.skyloft.skypython.ui.theme.RunAmber
 import dev.skyloft.skypython.ui.theme.SkyPythonTheme
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import java.io.File
 
 private val OPEN_MIME_TYPES = arrayOf("text/*", "application/octet-stream")
@@ -219,14 +235,11 @@ private fun FilesContent(
     }
 
     Scaffold(
+        containerColor = EditorBackground,
         topBar = {
-            TopAppBar(
-                title = { Text("Files") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+            SkyTopBar(
+                title = "Files",
+                onBack = onBack,
                 actions = {
                     IconButton(onClick = onOpenExternal) {
                         Icon(Icons.Filled.FileOpen, contentDescription = "Open external…")
@@ -243,7 +256,6 @@ private fun FilesContent(
                 .padding(padding),
         ) {
             Breadcrumbs(state = state, onUp = onUp, onNavigate = onNavigate)
-            HorizontalDivider()
             if (state.entries.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
@@ -264,6 +276,7 @@ private fun FilesContent(
                             onRename = { onRename(entry) },
                             onDelete = { onDelete(entry) },
                         )
+                        HorizontalDivider(Modifier.padding(start = 72.dp), color = DividerBlue)
                     }
                 }
             }
@@ -276,11 +289,16 @@ private fun Breadcrumbs(state: FilesState, onUp: () -> Unit, onNavigate: (File) 
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .background(BarBlue)
             .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onUp, enabled = state.canGoUp) {
-            Icon(Icons.Filled.ArrowUpward, contentDescription = "Up one folder")
+            Icon(
+                Icons.Filled.ArrowUpward,
+                contentDescription = "Up one folder",
+                tint = if (state.canGoUp) Color.White else MutedText.copy(alpha = 0.4f),
+            )
         }
         Row(
             modifier = Modifier
@@ -294,15 +312,17 @@ private fun Breadcrumbs(state: FilesState, onUp: () -> Unit, onNavigate: (File) 
                         Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = MutedText,
                     )
                 }
                 val isLast = index == state.breadcrumbs.lastIndex
                 TextButton(onClick = { onNavigate(crumb.dir) }, enabled = !isLast) {
                     Text(
-                        crumb.label,
+                        // The root is called "Projects" everywhere else (editor subtitle).
+                        if (index == 0) PROJECTS_LABEL else crumb.label,
                         maxLines = 1,
-                        color = if (isLast) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary,
+                        color = if (isLast) Color.White else MutedText,
+                        fontWeight = if (isLast) FontWeight.Medium else FontWeight.Normal,
                     )
                 }
             }
@@ -315,11 +335,16 @@ private fun EntryRow(entry: FileEntry, onClick: () -> Unit, onRename: () -> Unit
     var menuOpen by remember { mutableStateOf(false) }
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         leadingContent = {
             Icon(
-                if (entry.isDirectory) Icons.Filled.Folder else Icons.Filled.Description,
+                when {
+                    entry.isDirectory -> Icons.Filled.Folder
+                    entry.name.endsWith(".py") -> Icons.Filled.Code
+                    else -> Icons.Filled.Description
+                },
                 contentDescription = if (entry.isDirectory) "Folder" else "File",
-                tint = if (entry.isDirectory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = if (entry.isDirectory) RunAmber else MaterialTheme.colorScheme.primary,
             )
         },
         headlineContent = { Text(entry.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -355,7 +380,12 @@ private fun EntryRow(entry: FileEntry, onClick: () -> Unit, onRename: () -> Unit
 private fun NewItemFab(onNewFile: () -> Unit, onNewFolder: () -> Unit) {
     var menuOpen by remember { mutableStateOf(false) }
     Box {
-        FloatingActionButton(onClick = { menuOpen = true }) {
+        FloatingActionButton(
+            onClick = { menuOpen = true },
+            shape = CircleShape,
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+        ) {
             Icon(Icons.Filled.Add, contentDescription = "New")
         }
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
@@ -424,6 +454,14 @@ private fun NameDialog(
                 singleLine = true,
                 isError = error != null,
                 supportingText = error?.let { { Text(it) } },
+                // File names, not prose: no auto-capitals or autocorrect; Done confirms.
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    autoCorrectEnabled = false,
+                    keyboardType = KeyboardType.Uri,
+                    imeAction = ImeAction.Done,
+                ),
+                keyboardActions = KeyboardActions(onDone = { if (canConfirm) onConfirm(trimmed) }),
             )
         },
         confirmButton = {

@@ -22,7 +22,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -40,7 +39,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import dev.skyloft.skypython.ui.theme.SkyTopBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,9 +54,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.skyloft.skypython.ui.theme.BarBlue
+import dev.skyloft.skypython.ui.theme.DividerBlue
 import dev.skyloft.skypython.ui.theme.ErrorRed
+import dev.skyloft.skypython.ui.theme.MutedText
 
-private val LogBackground = Color(0xFF000000)
+private val LogBackground = Color(0xFF0A1118)
 private val LogText = Color(0xFFD6E4F0)
 private val SuccessGreen = Color(0xFF81C784)
 
@@ -68,13 +70,9 @@ fun PipScreen(viewModel: PipViewModel, onBack: () -> Unit) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Pip") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+            SkyTopBar(
+                title = "Pip",
+                onBack = onBack,
                 actions = {
                     if (state.tab == PipTab.Installed) {
                         IconButton(onClick = viewModel::refresh, enabled = !state.loading) {
@@ -92,12 +90,19 @@ fun PipScreen(viewModel: PipViewModel, onBack: () -> Unit) {
                 .fillMaxSize()
                 .imePadding(),
         ) {
-            PrimaryTabRow(selectedTabIndex = state.tab.ordinal) {
+            PrimaryTabRow(
+                selectedTabIndex = state.tab.ordinal,
+                containerColor = BarBlue,
+                contentColor = Color.White,
+                divider = {},
+            ) {
                 PipTab.entries.forEach { tab ->
                     Tab(
                         selected = state.tab == tab,
                         onClick = { viewModel.selectTab(tab) },
-                        text = { Text(tab.name) },
+                        text = { Text(tab.name, fontWeight = FontWeight.Medium) },
+                        selectedContentColor = Color.White,
+                        unselectedContentColor = MutedText,
                     )
                 }
             }
@@ -126,7 +131,7 @@ fun PipScreen(viewModel: PipViewModel, onBack: () -> Unit) {
 @Composable
 private fun InstallTab(state: PipState, viewModel: PipViewModel) {
     Column(Modifier.fillMaxSize().padding(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.Top) {
             OutlinedTextField(
                 value = state.spec,
                 onValueChange = viewModel::onSpecChange,
@@ -138,6 +143,7 @@ private fun InstallTab(state: PipState, viewModel: PipViewModel) {
                 isError = state.specError != null,
                 supportingText = state.specError?.let { { Text(it) } },
                 textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace),
+                shape = RoundedCornerShape(6.dp),
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.None,
                     autoCorrectEnabled = false,
@@ -146,7 +152,13 @@ private fun InstallTab(state: PipState, viewModel: PipViewModel) {
                 keyboardActions = KeyboardActions(onGo = { viewModel.install() }),
             )
             Spacer(Modifier.size(8.dp))
-            Button(onClick = viewModel::install, enabled = !state.installing) { Text("Install") }
+            Button(
+                onClick = viewModel::install,
+                enabled = !state.installing,
+                shape = RoundedCornerShape(6.dp),
+                // The outlined field reserves 8dp above its box for the floating label.
+                modifier = Modifier.padding(top = 8.dp).height(56.dp),
+            ) { Text("Install") }
         }
         if (state.installing) {
             LinearProgressIndicator(Modifier.fillMaxWidth().padding(vertical = 8.dp))
@@ -166,8 +178,11 @@ private fun InstallTab(state: PipState, viewModel: PipViewModel) {
                 )
             }
         }
-        Spacer(Modifier.height(8.dp))
-        InstallLog(state.log, Modifier.weight(1f).fillMaxWidth())
+        // An empty black box before the first install only looks broken.
+        if (state.log.isNotEmpty() || state.installing) {
+            Spacer(Modifier.height(8.dp))
+            InstallLog(state.log, Modifier.weight(1f).fillMaxWidth())
+        }
     }
 }
 
@@ -228,7 +243,7 @@ private fun InstalledTab(state: PipState, viewModel: PipViewModel) {
                     enabled = state.uninstalling == null,
                     onUninstall = { viewModel.requestUninstall(pkg) },
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainer)
+                HorizontalDivider(color = DividerBlue)
             }
         }
     }

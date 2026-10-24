@@ -8,17 +8,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import dev.skyloft.skypython.ui.theme.SkyTopBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,14 +51,7 @@ fun SamplesScreen(projectsRoot: File, onOpen: (File) -> Unit, onBack: () -> Unit
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Samples") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-            )
+            SkyTopBar(title = "Samples", onBack = onBack)
         },
     ) { padding ->
         val list = samples
@@ -69,14 +63,22 @@ fun SamplesScreen(projectsRoot: File, onOpen: (File) -> Unit, onBack: () -> Unit
         }
         LazyColumn(Modifier.fillMaxSize().padding(padding)) {
             items(list, key = { it.name }) { sample ->
+                // "Loops and lists: for, while, …" → a short bold name over the description.
+                val head = sample.title.substringBefore(": ", sample.title)
+                val detail = sample.title.substringAfter(": ", "").replaceFirstChar { it.uppercaseChar() }
                 ListItem(
-                    headlineContent = { Text(sample.title) },
+                    headlineContent = { Text(head, fontWeight = FontWeight.Medium) },
                     supportingContent = {
-                        Text(sample.name, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            detail.ifEmpty { sample.name },
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
                     },
                     leadingContent = {
                         Icon(Icons.Filled.Code, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.clickable {
                         scope.launch {
                             val file = withContext(Dispatchers.IO) {

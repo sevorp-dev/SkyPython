@@ -80,6 +80,12 @@ class ConsoleViewModel(
     private var runJob: Job? = null
     private var lastTarget: RunTarget? = null
 
+    // A REPL/shell prompt read from stderr, not yet shown (confined to [work]). stdout and stderr
+    // are separate pipes, so the prompt that follows a result can be read before the result
+    // itself; holding it briefly lets that output land first.
+    private var heldPrompt: String? = null
+    private var promptRelease: Job? = null
+
     fun run(script: File) = start(RunTarget.Script(script))
 
     /** Starts [target], stopping whatever runs now without asking (see [request]). */
@@ -89,6 +95,8 @@ class ConsoleViewModel(
         _state.update { it.copy(running = true, title = target.title) }
         runJob = viewModelScope.launch(work) {
             previous?.let { process?.stop(); it.cancelAndJoin() }
+            promptRelease?.cancel()
+            heldPrompt = null
             buffer.clear()
             publish(running = true, title = target.title, acceptsInput = false)
 
@@ -105,15 +113,32 @@ class ConsoleViewModel(
                 proc.start(target.toCommand()).collect { event ->
                     when (event) {
                         is ConsoleEvent.Stdout -> buffer.append(event.text, isError = false)
-                        is ConsoleEvent.Stderr -> appendStderr(event.text, target)
-                        is ConsoleEvent.Failed -> buffer.append(event.message + "\n", isError = true)
-                        is ConsoleEvent.Exited -> buffer.append(
-                            exitLine(event.code, afterNewline = buffer.endsWithNewline),
-                            isError = false,
-                        )
+                        is ConsoleEvent.Stderr -> {
+                            releasePrompt()
+                            val prompt = appendStderr(event.text, target)
+                            if (prompt.isNotEmpty()) {
+                                heldPrompt = prompt
+                                promptRelease = launch {
+                                    delay(PROMPT_HOLD_MILLIS)
+                                    releasePrompt()
+                                }
+                            }
+                        }
+                        is ConsoleEvent.Failed -> {
+                            releasePrompt()
+                            buffer.append(event.message + "\n", isError = true)
+                        }
+                        is ConsoleEvent.Exited -> {
+                            releasePrompt()
+                            buffer.append(
+                                exitLine(event.code, afterNewline = buffer.endsWithNewline),
+                                isError = false,
+                            )
+                        }
                     }
                 }
             } finally {
+                releasePrompt()
                 ticker.cancel()
                 if (process === proc) process = null
             }
@@ -159,6 +184,7 @@ class ConsoleViewModel(
         val proc = process ?: return
         viewModelScope.launch(work) {
             if (!proc.isRunning) return@launch
+            releasePrompt() // the echo goes after the prompt it answers
             buffer.append(line + "\n", isError = false)
             proc.write(line + "\n")
             publish()
@@ -201,11 +227,23 @@ class ConsoleViewModel(
         RunTarget.Terminal -> RunCommand.Shell(projectsRoot)
     }
 
-    /** Call on [work] only. A trailing REPL/shell prompt is shown as normal text, not red. */
-    private fun appendStderr(text: String, target: RunTarget) {
+    /**
+     * Call on [work] only. Appends the error part of [text] and returns the trailing REPL/shell
+     * prompt ("" if none) for the caller to show, as normal text rather than red.
+     */
+    private fun appendStderr(text: String, target: RunTarget): String {
         val prompt = promptLength(text, target)
         buffer.append(text.substring(0, text.length - prompt), isError = true)
-        buffer.append(text.substring(text.length - prompt), isError = false)
+        return text.substring(text.length - prompt)
+    }
+
+    /** Call on [work] only. Shows the held prompt now, if any. */
+    private fun releasePrompt() {
+        promptRelease?.cancel()
+        promptRelease = null
+        val prompt = heldPrompt ?: return
+        heldPrompt = null
+        buffer.append(prompt, isError = false)
     }
 
     private suspend fun installPython(): PythonPaths? {
@@ -255,6 +293,9 @@ class ConsoleViewModel(
 
     companion object {
         private const val CANCELLED = "[Cancelled]\n"
+
+        /** How long a prompt may wait for output that raced behind it on the other pipe. */
+        private const val PROMPT_HOLD_MILLIS = 30L
 
         /** The footer; starts with '\n' only if output didn't already end with one. */
         fun exitLine(code: Int, afterNewline: Boolean): String {

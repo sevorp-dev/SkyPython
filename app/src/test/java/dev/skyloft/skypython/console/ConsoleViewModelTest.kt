@@ -90,9 +90,13 @@ class ConsoleViewModelTest {
 
     /** Ends every script before returning: a live ticker would keep runTest from going idle. */
     private fun test(body: suspend TestScope.() -> Unit) = runTest(dispatcher, timeout = 10.seconds) {
-        body()
-        processes.forEach { it.events.trySend(ConsoleEvent.Exited(0)) }
-        runCurrent()
+        try {
+            body()
+        } finally {
+            // Also after a failed assertion: otherwise the ticker spins virtual time forever.
+            processes.forEach { it.events.trySend(ConsoleEvent.Exited(0)) }
+            runCurrent()
+        }
     }
 
     private fun ConsoleLine.text() = pieces.joinToString("") { it.text }
@@ -297,6 +301,37 @@ class ConsoleViewModelTest {
         assertEquals(listOf(Segment(">>> ", false), Segment("Traceback", true)), lines[0].pieces)
         assertEquals(listOf(Segment("ZeroDivisionError", true)), lines[1].pieces)
         assertEquals(listOf(Segment(">>> ", false)), lines[2].pieces)
+    }
+
+    @Test
+    fun replOutputRacingAheadOfItsPromptStillComesBeforeIt() = test {
+        // stdout and stderr are separate pipes: the next prompt can be read before the result.
+        installGate.complete(Result.success(paths))
+        vm.startInterpreter()
+        runCurrent()
+        val p = processes.single()
+        p.events.send(ConsoleEvent.Stderr(">>> "))
+        advanceTimeBy(60)
+        runCurrent()
+        vm.send("1+1")
+        runCurrent()
+        p.events.send(ConsoleEvent.Stderr(">>> "))
+        p.events.send(ConsoleEvent.Stdout("2\n"))
+        advanceTimeBy(60)
+        runCurrent()
+        assertEquals(listOf(">>> 1+1", "2", ">>> "), texts)
+    }
+
+    @Test
+    fun heldPromptIsShownBeforeTheExitFooter() = test {
+        installGate.complete(Result.success(paths))
+        vm.startTerminal()
+        runCurrent()
+        val p = processes.single()
+        p.events.send(ConsoleEvent.Stderr("$ "))
+        p.events.send(ConsoleEvent.Exited(0))
+        runCurrent()
+        assertEquals(listOf("$ ", "[Program finished, exit code 0]"), texts)
     }
 
     @Test
