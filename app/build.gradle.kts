@@ -52,6 +52,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.sora.editor)
+    implementation(libs.sora.textmate)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)
