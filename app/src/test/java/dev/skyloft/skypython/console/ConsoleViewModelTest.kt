@@ -22,6 +22,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.File
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ConsoleViewModelTest {
@@ -82,7 +83,12 @@ class ConsoleViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun test(body: suspend TestScope.() -> Unit) = runTest(dispatcher) { body() }
+    /** Ends every script before returning: a live ticker would keep runTest from going idle. */
+    private fun test(body: suspend TestScope.() -> Unit) = runTest(dispatcher, timeout = 10.seconds) {
+        body()
+        processes.forEach { it.events.trySend(ConsoleEvent.Exited(0)) }
+        runCurrent()
+    }
 
     private fun ConsoleLine.text() = pieces.joinToString("") { it.text }
     private val texts get() = vm.state.value.lines.map { it.text() }
@@ -127,6 +133,51 @@ class ConsoleViewModelTest {
         runCurrent()
         assertFalse(vm.state.value.acceptsInput)
         assertFalse(vm.state.value.running)
+    }
+
+    @Test
+    fun requestRunWhileIdleStartsRightAway() = test {
+        installGate.complete(Result.success(paths))
+        assertTrue(vm.requestRun(script))
+        runCurrent()
+        assertTrue(vm.state.value.running)
+        assertEquals(null, vm.state.value.pendingRun)
+        assertTrue(processes.single().started)
+    }
+
+    @Test
+    fun requestRunWhileRunningAsksBeforeKillingTheScript() = test {
+        installGate.complete(Result.success(paths))
+        vm.run(script)
+        runCurrent()
+        val other = File("/p/other.py")
+
+        assertFalse(vm.requestRun(other))
+        runCurrent()
+        assertEquals(other, vm.state.value.pendingRun)
+        assertTrue("running script left alone", processes.single().running)
+
+        vm.confirmPendingRun()
+        runCurrent()
+        assertEquals(null, vm.state.value.pendingRun)
+        assertEquals(2, processes.size)
+        assertFalse(processes[0].running)
+        assertTrue(processes[1].started)
+        assertEquals("other.py", vm.state.value.scriptName)
+    }
+
+    @Test
+    fun dismissingTheRunRequestKeepsTheScriptRunning() = test {
+        installGate.complete(Result.success(paths))
+        vm.run(script)
+        runCurrent()
+        vm.requestRun(File("/p/other.py"))
+        vm.dismissPendingRun()
+        runCurrent()
+        assertEquals(null, vm.state.value.pendingRun)
+        assertEquals(1, processes.size)
+        assertTrue(processes.single().running)
+        assertEquals("hello.py", vm.state.value.scriptName)
     }
 
     @Test

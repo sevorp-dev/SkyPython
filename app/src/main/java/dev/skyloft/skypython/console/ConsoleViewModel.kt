@@ -33,6 +33,8 @@ data class ConsoleState(
     val installing: Boolean = false,
     val installError: String? = null,
     val scriptName: String? = null,
+    /** A Run requested while a script was running; the UI asks before restarting. */
+    val pendingRun: File? = null,
 )
 
 /** The part of [PythonProcess] the console needs; lets tests drive the view model. */
@@ -104,6 +106,31 @@ class ConsoleViewModel(
             }
             publish(running = false, acceptsInput = false)
         }
+    }
+
+    /**
+     * Only one script runs at a time: if one is running, [script] becomes
+     * [ConsoleState.pendingRun] and nothing starts until [confirmPendingRun].
+     * @return true if the run started now.
+     */
+    fun requestRun(script: File): Boolean {
+        if (_state.value.running) {
+            _state.update { it.copy(pendingRun = script) }
+            return false
+        }
+        run(script)
+        return true
+    }
+
+    /** Stops the running script and runs the pending one. */
+    fun confirmPendingRun() {
+        val script = _state.value.pendingRun ?: return
+        _state.update { it.copy(pendingRun = null) }
+        run(script)
+    }
+
+    fun dismissPendingRun() {
+        _state.update { it.copy(pendingRun = null) }
     }
 
     fun send(line: String) {
