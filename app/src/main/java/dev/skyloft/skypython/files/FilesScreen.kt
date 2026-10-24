@@ -85,6 +85,7 @@ private sealed interface FilesDialog {
  * @param onOpenExternal a document was picked via SAF; a persistable permission has already been requested.
  * @param onDeleted a file or folder was deleted (folders recursively) so the editor can close affected tabs.
  * @param onBack leave the Files screen.
+ * @param onRenamed a file or folder was renamed so the editor can re-point affected tabs.
  */
 @Composable
 fun FilesScreen(
@@ -93,6 +94,7 @@ fun FilesScreen(
     onOpenExternal: (Uri) -> Unit,
     onDeleted: (File) -> Unit,
     onBack: () -> Unit,
+    onRenamed: (old: File, new: File) -> Unit = { _, _ -> },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -159,7 +161,10 @@ fun FilesScreen(
             onClearServerError = { dialogError = null },
             onConfirm = { name ->
                 if (name.trim() == d.entry.name) closeDialog()
-                else viewModel.rename(d.entry.file, name, onOpResult)
+                else viewModel.rename(d.entry.file, name) { error ->
+                    onOpResult(error)
+                    if (error == null) onRenamed(d.entry.file, File(d.entry.file.parentFile, name.trim()))
+                }
             },
             onDismiss = ::closeDialog,
         )
