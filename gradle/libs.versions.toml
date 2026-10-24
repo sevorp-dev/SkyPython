@@ -7,6 +7,7 @@ lifecycle = "2.9.3"
 navigation = "2.9.4"
 datastore = "1.1.7"
 coroutines = "1.10.2"
+desugarJdkLibs = "2.1.5"
 sora = "0.24.4"
 junit = "4.13.2"
 androidxTestRunner = "1.7.0"
@@ -31,6 +32,7 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 sora-editor = { module = "io.github.rosemoe:editor", version.ref = "sora" }
 sora-textmate = { module = "io.github.rosemoe:language-textmate", version.ref = "sora" }
 junit = { module = "junit:junit", version.ref = "junit" }
+desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugarJdkLibs" }
 androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidxTestRunner" }
 androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidxTestExt" }
 

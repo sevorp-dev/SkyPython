@@ -16,7 +16,6 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.io.Writer
-import java.util.concurrent.TimeUnit
 
 /**
  * Runs one script at a time in a separate interpreter process.
@@ -30,7 +29,7 @@ class PythonProcess(private val paths: PythonPaths) {
     private val stdinLock = Any()
     private val killerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    val isRunning: Boolean get() = process?.isAlive == true
+    val isRunning: Boolean get() = process?.let(ProcessCompat::isAlive) == true
 
     /**
      * Starts [script] (cwd = its directory) when collected. Emits stdout/stderr chunks, then
@@ -77,7 +76,7 @@ class PythonProcess(private val paths: PythonPaths) {
                 runCatching { stdin?.close() }
                 stdin = null
             }
-            if (p.isAlive) p.destroyForcibly()
+            if (ProcessCompat.isAlive(p)) ProcessCompat.destroyForcibly(p)
             if (process === p) process = null
         }
     }
@@ -100,7 +99,7 @@ class PythonProcess(private val paths: PythonPaths) {
         val p = process ?: return
         p.destroy()
         killerScope.launch {
-            if (!p.waitFor(1, TimeUnit.SECONDS)) p.destroyForcibly()
+            if (!ProcessCompat.waitFor(p, 1_000)) ProcessCompat.destroyForcibly(p)
         }
     }
 

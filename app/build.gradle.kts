@@ -9,7 +9,8 @@ android {
 
     defaultConfig {
         applicationId = "dev.skyloft.skypython"
-        minSdk = 26
+        // Android 7.0: the python.org CPython build targets API 24.
+        minSdk = 24
         targetSdk = 36
         versionCode = 1
         versionName = "0.0.1"
@@ -44,6 +45,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // Sora's TextMate highlighter (tm4e) uses java.time, which Android only has from API 26.
+        isCoreLibraryDesugaringEnabled = true
     }
     buildFeatures {
         compose = true
@@ -51,6 +54,7 @@ android {
 }
 
 dependencies {
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(project(":runtime"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
