@@ -10,6 +10,7 @@ import java.io.File
  * @property launcher the `libpylauncher.so` executable inside [nativeLibDir].
  * @property homeDir HOME for scripts (`filesDir/home`).
  * @property tmpDir TMPDIR for scripts (`cacheDir`).
+ * @property binDir the terminal's `python` / `pip` shims (`filesDir/home/bin`), first on its PATH.
  */
 data class PythonPaths(
     val home: File,
@@ -17,4 +18,5 @@ data class PythonPaths(
     val launcher: File,
     val homeDir: File,
     val tmpDir: File,
+    val binDir: File = File(homeDir, "bin"),
 )

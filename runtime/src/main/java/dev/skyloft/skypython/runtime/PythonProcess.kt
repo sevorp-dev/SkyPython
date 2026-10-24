@@ -37,19 +37,29 @@ class PythonProcess(private val paths: PythonPaths) {
      * [ConsoleEvent.Exited] last, or only [ConsoleEvent.Failed] if the process cannot start.
      * Cancelling the collector kills the process.
      */
-    fun start(script: File): Flow<ConsoleEvent> = channelFlow {
+    fun start(script: File): Flow<ConsoleEvent> = start(RunCommand.Script(script))
+
+    /**
+     * Starts [command] when collected; same events and cancellation as `start(script)`.
+     * [RunCommand.Shell] first (re)writes the `python` / `pip` shims into [PythonPaths.binDir].
+     */
+    fun start(command: RunCommand): Flow<ConsoleEvent> = channelFlow {
         if (isRunning) {
             send(ConsoleEvent.Failed("A script is already running"))
             return@channelFlow
         }
-        val builder = ProcessBuilder(PythonEnvironment.command(paths, script))
-            .directory(script.absoluteFile.parentFile)
-        builder.environment().putAll(PythonEnvironment.build(paths))
+        val builder = try {
+            prepare(command)
+        } catch (e: IOException) {
+            send(ConsoleEvent.Failed("Cannot start: ${e.message}"))
+            return@channelFlow
+        }
 
         val p = try {
             builder.start()
         } catch (e: IOException) {
-            send(ConsoleEvent.Failed("Cannot start Python: ${e.message}"))
+            val what = if (command is RunCommand.Shell) "the shell" else "Python"
+            send(ConsoleEvent.Failed("Cannot start $what: ${e.message}"))
             return@channelFlow
         }
         // stdin first, so write() works as soon as isRunning is true.
@@ -80,6 +90,21 @@ class PythonProcess(private val paths: PythonPaths) {
             if (p.isAlive) p.destroyForcibly()
             if (process === p) process = null
         }
+    }
+
+    private fun prepare(command: RunCommand): ProcessBuilder {
+        when (command) {
+            is RunCommand.Script -> Unit
+            is RunCommand.Interpreter -> command.cwd.mkdirs()
+            is RunCommand.Shell -> {
+                command.cwd.mkdirs()
+                ShellShims.install(paths.binDir, paths.launcher)
+            }
+        }
+        val builder = ProcessBuilder(PythonEnvironment.command(paths, command))
+            .directory(command.workingDir)
+        builder.environment().putAll(PythonEnvironment.environment(paths, command))
+        return builder
     }
 
     /** Sends [text] to the script's stdin. Ignored when nothing is running. */

@@ -17,4 +17,23 @@ object PythonEnvironment {
 
     fun command(paths: PythonPaths, script: File): List<String> =
         listOf(paths.launcher.path, "-u", script.path)
+
+    // --- Interpreter and terminal (area B) -------------------------------------------------
+
+    /** Command line for [command]. */
+    fun command(paths: PythonPaths, command: RunCommand): List<String> = when (command) {
+        is RunCommand.Script -> command(paths, command.file)
+        is RunCommand.Interpreter -> listOf(paths.launcher.path, "-i", "-q")
+        is RunCommand.Shell -> listOf(SHELL, "-i")
+    }
+
+    /** Variables added on top of the app's own environment for [command]. */
+    fun environment(paths: PythonPaths, command: RunCommand): Map<String, String> =
+        if (command is RunCommand.Shell) shellEnvironment(paths) else build(paths)
+
+    /** [build] plus a PATH that finds the `python` / `pip` shims in [PythonPaths.binDir]. */
+    fun shellEnvironment(paths: PythonPaths): Map<String, String> =
+        build(paths) + ("PATH" to "${paths.binDir.path}:/system/bin")
+
+    private const val SHELL = "/system/bin/sh"
 }

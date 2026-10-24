@@ -2,6 +2,7 @@ package dev.skyloft.skypython.console
 
 import dev.skyloft.skypython.runtime.ConsoleEvent
 import dev.skyloft.skypython.runtime.PythonPaths
+import dev.skyloft.skypython.runtime.RunCommand
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,12 +32,14 @@ class ConsoleViewModelTest {
     private class FakeProcess : ScriptProcess {
         val events = Channel<ConsoleEvent>(Channel.UNLIMITED)
         var started = false
+        var command: RunCommand? = null
         @Volatile var running = false
         val written = mutableListOf<String>()
 
         override val isRunning get() = running
 
-        override fun start(script: File): Flow<ConsoleEvent> = flow {
+        override fun start(command: RunCommand): Flow<ConsoleEvent> = flow {
+            this@FakeProcess.command = command
             started = true
             running = true
             try {
@@ -64,12 +67,14 @@ class ConsoleViewModelTest {
     private val installGate = CompletableDeferred<Result<PythonPaths>>()
     private val processes = mutableListOf<FakeProcess>()
     private val script = File("/p/hello.py")
+    private val projects = File("/p")
     private lateinit var vm: ConsoleViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
         vm = ConsoleViewModel(
+            projectsRoot = projects,
             install = { installGate.await() },
             newProcess = { FakeProcess().also { processes += it } },
             work = dispatcher,
@@ -141,7 +146,7 @@ class ConsoleViewModelTest {
         assertTrue(vm.requestRun(script))
         runCurrent()
         assertTrue(vm.state.value.running)
-        assertEquals(null, vm.state.value.pendingRun)
+        assertEquals(null, vm.state.value.pending)
         assertTrue(processes.single().started)
     }
 
@@ -154,16 +159,16 @@ class ConsoleViewModelTest {
 
         assertFalse(vm.requestRun(other))
         runCurrent()
-        assertEquals(other, vm.state.value.pendingRun)
+        assertEquals(RunTarget.Script(other), vm.state.value.pending)
         assertTrue("running script left alone", processes.single().running)
 
         vm.confirmPendingRun()
         runCurrent()
-        assertEquals(null, vm.state.value.pendingRun)
+        assertEquals(null, vm.state.value.pending)
         assertEquals(2, processes.size)
         assertFalse(processes[0].running)
         assertTrue(processes[1].started)
-        assertEquals("other.py", vm.state.value.scriptName)
+        assertEquals("other.py", vm.state.value.title)
     }
 
     @Test
@@ -174,10 +179,10 @@ class ConsoleViewModelTest {
         vm.requestRun(File("/p/other.py"))
         vm.dismissPendingRun()
         runCurrent()
-        assertEquals(null, vm.state.value.pendingRun)
+        assertEquals(null, vm.state.value.pending)
         assertEquals(1, processes.size)
         assertTrue(processes.single().running)
-        assertEquals("hello.py", vm.state.value.scriptName)
+        assertEquals("hello.py", vm.state.value.title)
     }
 
     @Test
@@ -213,5 +218,95 @@ class ConsoleViewModelTest {
         runCurrent()
         assertFalse(vm.state.value.running)
         assertEquals("[Program finished, exit code -15]", texts.last())
+    }
+
+    @Test
+    fun scriptRunTitleIsTheScriptName() = test {
+        installGate.complete(Result.success(paths))
+        vm.run(script)
+        runCurrent()
+        assertEquals("hello.py", vm.state.value.title)
+        assertEquals(RunCommand.Script(script), processes.single().command)
+    }
+
+    @Test
+    fun startInterpreterRunsTheReplInTheProjectsRoot() = test {
+        installGate.complete(Result.success(paths))
+        assertTrue(vm.startInterpreter())
+        runCurrent()
+        assertEquals("Interpreter", vm.state.value.title)
+        assertTrue(vm.state.value.running)
+        assertEquals(RunCommand.Interpreter(projects), processes.single().command)
+    }
+
+    @Test
+    fun startTerminalRunsTheShellInTheProjectsRoot() = test {
+        installGate.complete(Result.success(paths))
+        assertTrue(vm.startTerminal())
+        runCurrent()
+        assertEquals("Terminal", vm.state.value.title)
+        assertEquals(RunCommand.Shell(projects), processes.single().command)
+    }
+
+    @Test
+    fun startInterpreterWhileAScriptRunsAsksFirst() = test {
+        installGate.complete(Result.success(paths))
+        vm.run(script)
+        runCurrent()
+
+        assertFalse(vm.startInterpreter())
+        runCurrent()
+        assertEquals(RunTarget.Interpreter, vm.state.value.pending)
+        assertEquals("Interpreter", vm.state.value.pending?.title)
+        assertTrue("running script left alone", processes.single().running)
+
+        vm.confirmPendingRun()
+        runCurrent()
+        assertEquals(null, vm.state.value.pending)
+        assertFalse(processes[0].running)
+        assertEquals(RunCommand.Interpreter(projects), processes[1].command)
+        assertEquals("Interpreter", vm.state.value.title)
+    }
+
+    @Test
+    fun restartRerunsTheSameMode() = test {
+        installGate.complete(Result.success(paths))
+        vm.startTerminal()
+        runCurrent()
+        processes.single().events.send(ConsoleEvent.Exited(0))
+        runCurrent()
+
+        vm.restart()
+        runCurrent()
+        assertEquals(2, processes.size)
+        assertEquals(RunCommand.Shell(projects), processes[1].command)
+        assertEquals("Terminal", vm.state.value.title)
+    }
+
+    @Test
+    fun interpreterPromptsOnStderrAreNotErrors() = test {
+        installGate.complete(Result.success(paths))
+        vm.startInterpreter()
+        runCurrent()
+        val p = processes.single()
+        p.events.send(ConsoleEvent.Stderr(">>> "))
+        p.events.send(ConsoleEvent.Stderr("Traceback\nZeroDivisionError\n>>> "))
+        advanceTimeBy(60)
+        runCurrent()
+        val lines = vm.state.value.lines
+        assertEquals(listOf(Segment(">>> ", false), Segment("Traceback", true)), lines[0].pieces)
+        assertEquals(listOf(Segment("ZeroDivisionError", true)), lines[1].pieces)
+        assertEquals(listOf(Segment(">>> ", false)), lines[2].pieces)
+    }
+
+    @Test
+    fun scriptStderrStaysAnErrorEvenIfItLooksLikeAPrompt() = test {
+        installGate.complete(Result.success(paths))
+        vm.run(script)
+        runCurrent()
+        processes.single().events.send(ConsoleEvent.Stderr(">>> "))
+        advanceTimeBy(60)
+        runCurrent()
+        assertEquals(listOf(Segment(">>> ", true)), vm.state.value.lines.single().pieces)
     }
 }
