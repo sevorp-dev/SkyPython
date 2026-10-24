@@ -144,7 +144,7 @@ fun EditorScreen(
                                 Icon(Icons.Filled.Menu, contentDescription = "Menu")
                             }
                         },
-                        title = { EditorTitle(current) },
+                        title = { EditorTitle(current, viewModel.projectsRoot) },
                         actions = {
                             IconButton(onClick = openFiles) {
                                 Icon(Icons.Outlined.Folder, contentDescription = "Files")
@@ -246,7 +246,7 @@ fun EditorScreen(
 
 /** File name (bold) over its folder path, both ellipsized, like a classic IDE title. */
 @Composable
-private fun EditorTitle(doc: OpenDocument?) {
+private fun EditorTitle(doc: OpenDocument?, projectsRoot: File) {
     if (doc == null) {
         Text("SkyPython", fontWeight = FontWeight.Bold)
         return
@@ -260,7 +260,7 @@ private fun EditorTitle(doc: OpenDocument?) {
             overflow = TextOverflow.Ellipsis,
         )
         Text(
-            docSubtitle(doc),
+            docSubtitle(doc, projectsRoot),
             fontSize = 14.sp,
             color = SubtitleColor,
             maxLines = 1,

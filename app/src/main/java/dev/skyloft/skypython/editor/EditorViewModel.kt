@@ -52,7 +52,7 @@ class EditorViewModel(
 
     private val docsState = DocumentsState()
     /** Resolved once; tab paths are resolved too (see [DocSource.Local]), so labels relativise cleanly. */
-    private val projectsRoot: File = resolvedFile(projectsRoot)
+    val projectsRoot: File = resolvedFile(projectsRoot)
     private val _state = MutableStateFlow(EditorUiState())
     val state: StateFlow<EditorUiState> = _state.asStateFlow()
 

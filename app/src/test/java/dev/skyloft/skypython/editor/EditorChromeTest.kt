@@ -17,10 +17,23 @@ class EditorChromeTest {
         assertEquals("main.py*", tabTitle("main.py", dirty = true))
     }
 
-    @Test fun `subtitle of a local doc is its folder path`() {
-        val file = File("/data/projects/demo/main.py")
+    @Test fun `subtitle of a doc in the projects root is Projects`() {
+        val root = File(System.getProperty("java.io.tmpdir"), "sky-sub/projects")
+        val doc = OpenDocument(id = "x", source = DocSource.Local(File(root, "main.py")), name = "main.py", text = "", dirty = false)
+        assertEquals("Projects", docSubtitle(doc, root))
+    }
+
+    @Test fun `subtitle of a doc in a project folder is relative to Projects`() {
+        val root = File(System.getProperty("java.io.tmpdir"), "sky-sub/projects")
+        val doc = OpenDocument(id = "x", source = DocSource.Local(File(root, "demo/sub/main.py")), name = "main.py", text = "", dirty = false)
+        assertEquals("Projects/demo/sub", docSubtitle(doc, root))
+    }
+
+    @Test fun `subtitle of a local doc outside projects is its folder path`() {
+        val root = File(System.getProperty("java.io.tmpdir"), "sky-sub/projects")
+        val file = File(System.getProperty("java.io.tmpdir"), "elsewhere/main.py")
         val doc = OpenDocument(id = "x", source = DocSource.Local(file), name = "main.py", text = "", dirty = false)
-        assertEquals(DocSource.Local(file).file.parentFile!!.path, docSubtitle(doc))
+        assertEquals(DocSource.Local(file).file.parentFile!!.path, docSubtitle(doc, root))
     }
 
     @Test fun `settings map to editor view config`() {
