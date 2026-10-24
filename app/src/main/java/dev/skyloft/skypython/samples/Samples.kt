@@ -17,7 +17,7 @@ data class Sample(val name: String, val title: String)
  * otherwise the file name without extension.
  */
 fun sampleTitle(source: String, fileName: String): String {
-    val first = source.removePrefix("﻿").lineSequence().firstOrNull()?.trim().orEmpty()
+    val first = source.removePrefix(Char(0xFEFF).toString()).lineSequence().firstOrNull()?.trim().orEmpty()
     val text = if (first.startsWith("#")) first.removePrefix("#").trim() else ""
     return text.ifEmpty { fileName.substringBeforeLast('.') }
 }
