@@ -20,7 +20,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Stop
@@ -32,8 +31,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,10 +55,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.skyloft.skypython.ui.theme.ErrorRed
+import dev.skyloft.skypython.ui.theme.SkyTopBar
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 
-/** Terminal-like colours, independent of the app theme . */
+/** Terminal-like colours for the output area, independent of the app theme. */
 private val ConsoleBackground = Color(0xFF0B0F14)
-private val ConsoleBar = Color(0xFF11161D)
 private val ConsoleText = Color(0xFFD8DEE9)
 private val ConsoleDim = Color(0xFF6B7682)
 private val ConsolePrompt = Color(0xFFFFD54F)
@@ -82,14 +85,9 @@ fun ConsoleScreen(viewModel: ConsoleViewModel, onBack: () -> Unit) {
         containerColor = ConsoleBackground,
         contentColor = ConsoleText,
         topBar = {
-            TopAppBar(
-                title = { Text(state.title ?: "Console") },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = ConsoleBar),
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+            SkyTopBar(
+                title = state.title ?: "Console",
+                onBack = onBack,
                 actions = {
                     if (state.running) {
                         IconButton(onClick = viewModel::stop) {
@@ -119,7 +117,13 @@ fun ConsoleScreen(viewModel: ConsoleViewModel, onBack: () -> Unit) {
                     else -> ConsoleOutput(state.lines, state.version)
                 }
             }
-            InputRow(enabled = state.acceptsInput, onSend = viewModel::send)
+            InputRow(
+                enabled = state.acceptsInput,
+                // The REPL and the shell always want typing; a script may never read input, so the
+                // keyboard would only hide its output.
+                autoFocus = state.title == RunTarget.Interpreter.title || state.title == RunTarget.Terminal.title,
+                onSend = viewModel::send,
+            )
         }
     }
 }
@@ -167,7 +171,15 @@ private fun ConsoleOutput(lines: List<ConsoleLine>, version: Long) {
     }
 }
 
+/** The console's own status lines (exit footer, "[Cancelled]"), dimmed so program output stands out. */
+private val STATUS_LINE = Regex("""\[(Program finished, exit code -?\d+|Cancelled)]""")
+
 private fun ConsoleLine.toAnnotated(): AnnotatedString = buildAnnotatedString {
+    val only = pieces.singleOrNull()
+    if (only != null && !only.isError && STATUS_LINE.matches(only.text)) {
+        withStyle(SpanStyle(color = ConsoleDim)) { append(only.text) }
+        return@buildAnnotatedString
+    }
     for (piece in pieces) {
         if (piece.isError) withStyle(SpanStyle(color = ErrorRed)) { append(piece.text) }
         else append(piece.text)
@@ -176,14 +188,21 @@ private fun ConsoleLine.toAnnotated(): AnnotatedString = buildAnnotatedString {
 
 /** Input line drawn as part of the console: a prompt caret, a borderless field, a small Send. */
 @Composable
-private fun InputRow(enabled: Boolean, onSend: (String) -> Unit) {
+private fun InputRow(enabled: Boolean, autoFocus: Boolean, onSend: (String) -> Unit) {
     var text by rememberSaveable { mutableStateOf("") }
     val send = {
         onSend(text)
         text = ""
     }
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(enabled, autoFocus) { if (enabled && autoFocus) focus.requestFocus() }
     Row(
-        Modifier.fillMaxWidth().background(ConsoleBackground).padding(start = 8.dp),
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .background(ConsoleBackground)
+            .clickable(enabled = enabled, indication = null, interactionSource = null) { focus.requestFocus() }
+            .padding(start = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -197,12 +216,18 @@ private fun InputRow(enabled: Boolean, onSend: (String) -> Unit) {
             BasicTextField(
                 value = text,
                 onValueChange = { text = it },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().focusRequester(focus),
                 enabled = enabled,
                 singleLine = true,
                 textStyle = ConsoleTextStyle,
                 cursorBrush = SolidColor(ConsolePrompt),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                // Code, not prose: no auto-capitals ("i" → "I") and no autocorrect.
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    autoCorrectEnabled = false,
+                    keyboardType = KeyboardType.Ascii,
+                    imeAction = ImeAction.Send,
+                ),
                 keyboardActions = KeyboardActions(onSend = { send() }),
             )
         }
