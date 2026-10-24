@@ -97,7 +97,10 @@ class ConsoleViewModel(
                         is ConsoleEvent.Stdout -> buffer.append(event.text, isError = false)
                         is ConsoleEvent.Stderr -> buffer.append(event.text, isError = true)
                         is ConsoleEvent.Failed -> buffer.append(event.message + "\n", isError = true)
-                        is ConsoleEvent.Exited -> buffer.append(exitLine(event.code), isError = false)
+                        is ConsoleEvent.Exited -> buffer.append(
+                            exitLine(event.code, afterNewline = buffer.endsWithNewline),
+                            isError = false,
+                        )
                     }
                 }
             } finally {
@@ -220,7 +223,11 @@ class ConsoleViewModel(
     companion object {
         private const val CANCELLED = "[Cancelled]\n"
 
-        fun exitLine(code: Int) = "\n[Program finished, exit code $code]\n"
+        /** The footer; starts with '\n' only if output didn't already end with one. */
+        fun exitLine(code: Int, afterNewline: Boolean): String {
+            val footer = "[Program finished, exit code $code]\n"
+            return if (afterNewline) footer else "\n" + footer
+        }
 
         fun factory(app: Application): ViewModelProvider.Factory = viewModelFactory {
             initializer {

@@ -181,6 +181,28 @@ class ConsoleViewModelTest {
     }
 
     @Test
+    fun exitFooterAddsNoBlankLineAfterANewline() = test {
+        installGate.complete(Result.success(paths))
+        vm.run(script)
+        runCurrent()
+        processes.single().events.send(ConsoleEvent.Stdout("hi\n"))
+        processes.single().events.send(ConsoleEvent.Exited(0))
+        runCurrent()
+        assertEquals(listOf("hi", "[Program finished, exit code 0]"), texts)
+    }
+
+    @Test
+    fun exitFooterStartsOnItsOwnLineAfterAPartialLine() = test {
+        installGate.complete(Result.success(paths))
+        vm.run(script)
+        runCurrent()
+        processes.single().events.send(ConsoleEvent.Stdout("hi"))
+        processes.single().events.send(ConsoleEvent.Exited(3))
+        runCurrent()
+        assertEquals(listOf("hi", "[Program finished, exit code 3]"), texts)
+    }
+
+    @Test
     fun stopWhileScriptRunsStopsTheProcess() = test {
         installGate.complete(Result.success(paths))
         vm.run(script)
