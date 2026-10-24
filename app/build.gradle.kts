@@ -15,7 +15,7 @@ android {
         versionName = "0.0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
-            abiFilters += listOf("arm64-v8a", "x86_64")
+            abiFilters += skypythonAbis() // gradle.properties `skypython.abis`
         }
     }
 

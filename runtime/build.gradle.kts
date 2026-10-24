@@ -9,18 +9,16 @@ plugins {
 }
 
 // ---------------------------------------------------------------------------
-// CPython (official python.org Android release), fetched at build time.
+// CPython for Android, fetched at build time: python.org's official release for the 64-bit
+// ABIs, our own build (.github/workflows/build-python.yml) for the 32-bit ones.
 // ---------------------------------------------------------------------------
 
 val pythonProps = Properties().apply { file("python.properties").inputStream().use { load(it) } }
 val pythonVersion: String = pythonProps.getProperty("version")
 val pythonShortVersion: String = pythonVersion.split(".").take(2).joinToString(".") // "3.14"
 
-/** Android ABI -> python.org host triple. */
-val pythonAbis = linkedMapOf(
-    "arm64-v8a" to "aarch64-linux-android",
-    "x86_64" to "x86_64-linux-android",
-)
+/** ABIs to build (gradle.properties `skypython.abis`); see buildSrc/PythonAbis.kt. */
+val pythonAbis: List<String> = skypythonAbis()
 
 val pythonBuildDir = layout.buildDirectory.dir("python")
 
@@ -71,18 +69,25 @@ val preparePython = tasks.register("preparePython") {
     description = "Copies CPython native libs to jniLibs and zips the stdlib into assets."
 }
 
-pythonAbis.forEach { (abi, triple) ->
+// Output of ABIs dropped from `skypython.abis` would otherwise stay in assets (and the APK).
+val deleteStalePython = tasks.register<Delete>("deleteStalePython") {
+    group = "python"
+    val stale = PythonAbis.TRIPLES.keys - pythonAbis.toSet()
+    delete(stale.map { "src/main/assets/python/stdlib-$it.zip" })
+    delete(stale.map { "src/main/jniLibs/$it" })
+}
+preparePython.configure { dependsOn(deleteStalePython) }
+
+pythonAbis.forEach { abi ->
     val taskSuffix = abi.split("-", "_").joinToString("") { it.replaceFirstChar(Char::uppercase) }
-    val tarball = pythonBuildDir.map { it.file("python-$pythonVersion-$triple.tar.gz") }
+    val tarball = pythonBuildDir.map { it.file(PythonAbis.tarballName(abi, pythonVersion)) }
     val extractDir = pythonBuildDir.map { it.dir(abi) }
 
     val download = tasks.register<DownloadVerifiedFile>("downloadPython$taskSuffix") {
         group = "python"
-        url.set("https://www.python.org/ftp/python/$pythonVersion/python-$pythonVersion-$triple.tar.gz")
-        sha256.set(
-            pythonProps.getProperty("sha256.$triple")
-                ?: throw GradleException("runtime/python.properties has no sha256.$triple")
-        )
+        url.set(PythonAbis.tarballUrl(abi, pythonVersion))
+        // Lazy: a placeholder hash fails only when this ABI's download actually runs.
+        sha256.set(provider { PythonAbis.sha256(pythonProps, abi) })
         dest.set(tarball)
     }
 
@@ -140,8 +145,9 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "PYTHON_VERSION", "\"$pythonVersion\"")
         buildConfigField("String", "PYTHON_SHORT_VERSION", "\"$pythonShortVersion\"")
+        buildConfigField("String", "PYTHON_ABIS", "\"${pythonAbis.joinToString(",")}\"")
         ndk {
-            abiFilters += pythonAbis.keys
+            abiFilters += pythonAbis
         }
         externalNativeBuild {
             cmake {
