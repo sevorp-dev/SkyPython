@@ -21,6 +21,7 @@ import dev.skyloft.skypython.editor.EditorViewModel
 import dev.skyloft.skypython.files.FilesScreen
 import dev.skyloft.skypython.files.FilesViewModel
 import dev.skyloft.skypython.files.Workspace
+import dev.skyloft.skypython.settings.EditorSettings
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -54,6 +55,7 @@ fun SkyPythonApp() {
         composable(Routes.EDITOR) {
             EditorScreen(
                 viewModel = editorVm,
+                settings = EditorSettings(),
                 onRun = { file ->
                     // Only one script at a time: a running one makes this ask first.
                     if (consoleVm.requestRun(file)) {
@@ -68,6 +70,7 @@ fun SkyPythonApp() {
                         nav.navigate(Routes.FILES) { launchSingleTop = true }
                     }
                 },
+                onDrawerAction = {},
             )
             RestartScriptDialog(
                 consoleVm = consoleVm,
