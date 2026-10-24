@@ -123,6 +123,28 @@ class InstallSupportTest {
     }
 
     @Test
+    fun requireFreeSpaceFailsWithReadableMessageWhenStorageIsLow() {
+        val mb = 1024L * 1024
+        try {
+            InstallSupport.requireFreeSpace(tmp.root, requiredBytes = 35 * mb, usableBytes = 12 * mb)
+            fail("expected IOException")
+        } catch (e: IOException) {
+            assertEquals(
+                "Not enough free storage to install Python: 35 MB needed, 12 MB free. " +
+                    "Free up some space and try again.",
+                e.message,
+            )
+        }
+    }
+
+    @Test
+    fun requireFreeSpacePassesWhenEnoughIsFree() {
+        val mb = 1024L * 1024
+        InstallSupport.requireFreeSpace(tmp.root, requiredBytes = 35 * mb, usableBytes = 35 * mb)
+        InstallSupport.requireFreeSpace(tmp.root, requiredBytes = 35 * mb) // real disk of the build host
+    }
+
+    @Test
     fun isInstalledComparesMarker() {
         val target = File(tmp.root, "python")
         assertFalse(InstallSupport.isInstalled(target, ".installed", "v1"))

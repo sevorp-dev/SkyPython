@@ -129,6 +129,45 @@ class WorkspaceTest {
         assertTrue(root.isDirectory)
     }
 
+    /** Creates [link] -> [target]; skips the test where the host can't (e.g. Windows without dev mode). */
+    private fun symlink(link: File, target: File) {
+        val made = runCatching { java.nio.file.Files.createSymbolicLink(link.toPath(), target.toPath()) }.isSuccess
+        org.junit.Assume.assumeTrue("symlinks not permitted on this host", made)
+    }
+
+    @Test
+    fun deleteRemovesSymlinkedDirWithoutTouchingItsTarget() {
+        val d = ws.createDir(root, "d").getOrThrow()
+        val outside = tmp.newFolder("outside")
+        val victim = File(outside, "victim.py").apply { writeText("keep") }
+        val link = File(d, "link")
+        symlink(link, outside)
+
+        ws.delete(d).getOrThrow()
+
+        assertFalse(d.exists())
+        assertEquals("keep", victim.readText())
+    }
+
+    @Test
+    fun danglingSymlinkCanBeRenamedAndDeleted() {
+        root.mkdirs()
+        val link = File(root, "dangling")
+        symlink(link, File(tmp.root, "missing"))
+
+        val renamed = ws.rename(link, "renamed").getOrThrow()
+        assertEquals(listOf("renamed"), root.list()!!.toList())
+        ws.delete(renamed).getOrThrow()
+        assertEquals(emptyList<String>(), root.list()!!.toList())
+    }
+
+    @Test
+    fun deleteOrRenameOfMissingEntryFails() {
+        root.mkdirs()
+        assertTrue(ws.delete(File(root, "nope")).isFailure)
+        assertTrue(ws.rename(File(root, "nope"), "x").isFailure)
+    }
+
     @Test
     fun deleteRootFails() {
         ws.createFile(root, "x.py").getOrThrow()

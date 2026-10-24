@@ -1,10 +1,9 @@
 package dev.skyloft.skypython.files
 
+import dev.skyloft.skypython.compat.EntryType
+import dev.skyloft.skypython.compat.entryTypeNoFollow
 import java.io.File
 import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.LinkOption
-import java.nio.file.Path
 
 /** Content of the starter file created by [Workspace.ensureHello]. */
 const val HELLO_PY = "# Welcome to SkyPython!\n" +
@@ -39,17 +38,19 @@ fun nameError(name: String): String? = when {
  */
 class Workspace(val root: File) {
 
-    private val rootPath: Path get() = root.canonicalFile.toPath()
+    private val rootFile: File get() = root.canonicalFile
 
     /** True if [file] resolves (canonically) to [root] or something inside it. */
     fun contains(file: File): Boolean = try {
-        file.canonicalFile.toPath().startsWith(rootPath)
+        val path = file.canonicalPath
+        val rootPath = rootFile.path
+        path == rootPath || path.startsWith(rootPath.trimEnd(File.separatorChar) + File.separator)
     } catch (e: IOException) {
         false
     }
 
     private fun isRoot(file: File): Boolean = try {
-        file.canonicalFile.toPath() == rootPath
+        file.canonicalFile == rootFile
     } catch (e: IOException) {
         false
     }
@@ -91,7 +92,7 @@ class Workspace(val root: File) {
     fun rename(file: File, newName: String): Result<File> = runCatching {
         nameError(newName)?.let { throw IllegalArgumentException(it) }
         val source = entryOf(file)
-        if (!Files.exists(source.toPath(), LinkOption.NOFOLLOW_LINKS)) {
+        if (entryTypeNoFollow(source) == EntryType.MISSING) {
             throw IOException("\"${source.name}\" does not exist")
         }
         val target = File(source.parentFile, newName)
@@ -105,18 +106,21 @@ class Workspace(val root: File) {
 
     /** Deletes [file]; directories are deleted recursively. Symlinks are removed, never followed. */
     fun delete(file: File): Result<Unit> = runCatching {
-        val path = entryOf(file).toPath()
-        if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
+        val entry = entryOf(file)
+        val type = entryTypeNoFollow(entry)
+        if (type == EntryType.MISSING) {
             throw IOException("\"${file.name}\" does not exist")
         }
-        deleteRecursively(path)
+        deleteRecursively(entry, type)
     }
 
-    private fun deleteRecursively(path: Path) {
-        if (Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
-            Files.newDirectoryStream(path).use { children -> children.forEach(::deleteRecursively) }
+    private fun deleteRecursively(entry: File, type: EntryType = entryTypeNoFollow(entry)) {
+        if (type == EntryType.DIRECTORY) {
+            entry.listFiles()?.forEach { deleteRecursively(it) }
         }
-        Files.delete(path)
+        if (!entry.delete() && entryTypeNoFollow(entry) != EntryType.MISSING) {
+            throw IOException("Could not delete \"${entry.name}\"")
+        }
     }
 
     /**

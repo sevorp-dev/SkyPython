@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher icon for Android 7.x (API 24/25), which has no adaptive icons (mipmap-anydpi-v26). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/sky_background" />
+        </shape>
+    </item>
+    <!-- The foreground is drawn for a 108dp canvas; enlarge it so the 66dp safe zone fills the circle. -->
+    <item
+        android:bottom="-12dp"
+        android:drawable="@drawable/ic_launcher_foreground"
+        android:left="-12dp"
+        android:right="-12dp"
+        android:top="-12dp" />
+</layer-list>

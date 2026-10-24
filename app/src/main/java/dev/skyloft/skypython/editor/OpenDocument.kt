@@ -1,6 +1,7 @@
 package dev.skyloft.skypython.editor
 
 import android.net.Uri
+import dev.skyloft.skypython.compat.hasNioFiles
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -18,6 +19,7 @@ fun resolvedFile(file: File): File {
         file.absoluteFile
     }
     // File.canonicalFile already resolves symlinks on Unix/Android; toRealPath also does on Windows.
+    if (!hasNioFiles) return canonical // Android 7.x: no java.nio.file, canonicalFile is enough
     return try {
         var existing: Path? = canonical.toPath()
         val tail = ArrayDeque<String>()

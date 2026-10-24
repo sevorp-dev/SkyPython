@@ -51,6 +51,26 @@ internal object InstallSupport {
     fun chooseAbi(runningAbi: String?, supportedAbis: Array<String>, shipped: Set<String>): String? =
         runningAbi?.takeIf { it in shipped } ?: supportedAbis.firstOrNull { it in shipped }
 
+    /**
+     * Free space needed to unpack the stdlib: about 21 MB of files (709 of them, so block
+     * rounding adds more) plus room for the first `.pyc` caches.
+     */
+    const val REQUIRED_FREE_BYTES: Long = 35L * 1024 * 1024
+
+    /**
+     * Throws an [IOException] with a message for the user if [dir]'s volume has less than
+     * [requiredBytes] free, so a full phone fails up front instead of halfway through unpacking.
+     */
+    fun requireFreeSpace(dir: File, requiredBytes: Long, usableBytes: Long = dir.usableSpace) {
+        // usableSpace is 0 if it can't be determined; then just try (unpacking reports ENOSPC).
+        if (usableBytes <= 0L || usableBytes >= requiredBytes) return
+        val mb = 1024L * 1024
+        throw IOException(
+            "Not enough free storage to install Python: ${(requiredBytes + mb - 1) / mb} MB needed, " +
+                "${usableBytes / mb} MB free. Free up some space and try again."
+        )
+    }
+
     fun isInstalled(target: File, marker: String, markerContent: String): Boolean {
         val file = File(target, marker)
         return file.isFile && file.readText() == markerContent

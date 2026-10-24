@@ -141,7 +141,7 @@ android {
     ndkVersion = "28.2.13676358"
 
     defaultConfig {
-        minSdk = 26
+        minSdk = 24 // Android 7.0, the API level the python.org CPython build targets
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "PYTHON_VERSION", "\"$pythonVersion\"")
         buildConfigField("String", "PYTHON_SHORT_VERSION", "\"$pythonShortVersion\"")
