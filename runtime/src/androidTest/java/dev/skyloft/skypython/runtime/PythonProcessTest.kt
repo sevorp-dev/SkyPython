@@ -163,6 +163,57 @@ class PythonProcessTest {
         assertEquals(ConsoleEvent.Exited(0), events.last())
     }
 
+    /** Starts [command], types [input] once it is running, waits for exit; returns all output. */
+    private fun interact(command: RunCommand, input: String): List<ConsoleEvent> = runBlocking {
+        withTimeout(TIMEOUT_MS) {
+            val process = PythonProcess(paths)
+            val c = Collector(process.start(command), this)
+            while (!process.isRunning) {
+                assertTrue("not started: ${c.events}", c.job.isActive)
+                delay(10)
+            }
+            process.write(input)
+            c.job.await()
+            c.events.toList()
+        }
+    }
+
+    @Test
+    fun interpreterEvaluatesAnExpression() {
+        val events = interact(RunCommand.Interpreter(scriptDir), "1+1\nexit()\n")
+        assertTrue(events.toString(), events.stdout().contains("2"))
+        assertTrue(events.stderr(), events.stderr().contains(">>> "))
+        assertEquals(ConsoleEvent.Exited(0), events.last())
+    }
+
+    @Test
+    fun interpreterRunsInTheGivenDirectory() {
+        val events = interact(RunCommand.Interpreter(scriptDir), "import os; print(os.getcwd())\nexit()\n")
+        assertTrue(events.toString(), events.stdout().contains(scriptDir.name))
+    }
+
+    @Test
+    fun terminalRunsShellCommands() {
+        val events = interact(RunCommand.Shell(scriptDir), "echo hi\nexit\n")
+        assertTrue(events.toString(), events.stdout().contains("hi"))
+        assertEquals(ConsoleEvent.Exited(0), events.last())
+    }
+
+    @Test
+    fun terminalFindsPythonOnPath() {
+        val events = interact(RunCommand.Shell(scriptDir), "python -c \"print(40+2)\"\nexit\n")
+        assertTrue(events.toString(), events.stdout().contains("42"))
+    }
+
+    @Test
+    fun terminalPipShimRunsPythonPip() {
+        // pip itself may not be installed yet (ensurepip is the Pip screen's job); either way the
+        // shim must reach Python: "pip X from ..." or "No module named pip", not "not found".
+        val events = interact(RunCommand.Shell(scriptDir), "pip --version\nexit\n")
+        val all = events.stdout() + events.stderr()
+        assertTrue(all, all.contains("pip ") || all.contains("No module named pip"))
+    }
+
     private companion object {
         const val TIMEOUT_MS = 60_000L
     }
