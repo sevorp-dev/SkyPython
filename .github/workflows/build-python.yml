@@ -1,0 +1,175 @@
+# Builds CPython for the 32-bit Android ABIs (python.org publishes only 64-bit builds)
+# with CPython's own Android/android.py, and publishes the tarballs as the prerelease
+# `python-android-<version>` of this repo. runtime/build.gradle.kts downloads them from
+# there, checked against the hashes pinned in runtime/python.properties: paste the
+# `sha256.*=` lines this workflow prints (job summary / annotations) into that file.
+name: Build Python for Android (32-bit)
+
+on:
+  workflow_dispatch:
+    inputs:
+      python_version:
+        description: CPython version (python/cpython must have the tag v<version>)
+        required: true
+        default: 3.14.9
+      replace:
+        description: Replace tarballs already in the release (breaks pinned hashes!)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-python-${{ inputs.python_version }}
+
+env:
+  PYVER: ${{ inputs.python_version }}
+
+jobs:
+  build:
+    name: Build ${{ matrix.host }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - host: arm-linux-androideabi
+            readelf_machine: ARM
+          - host: i686-linux-android
+            readelf_machine: Intel 80386
+    env:
+      HOST: ${{ matrix.host }}
+    steps:
+      - name: Check version input
+        run: |
+          if ! [[ "$PYVER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::python_version must look like 3.14.9, got '$PYVER'"
+            exit 1
+          fi
+
+      - name: Check out CPython v${{ inputs.python_version }}
+        uses: actions/checkout@v5
+        with:
+          repository: python/cpython
+          ref: v${{ inputs.python_version }}
+          path: cpython
+          persist-credentials: false
+
+      # sdkmanager (used by android-env.sh to install the NDK) needs Java.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      # `android.py build HOST` builds only the host; the build Python must exist first.
+      - name: Build the build Python
+        working-directory: cpython
+        run: ./Android/android.py build build
+
+      - name: Build CPython for ${{ matrix.host }}
+        working-directory: cpython
+        run: ./Android/android.py build "$HOST"
+
+      - name: Package
+        working-directory: cpython
+        run: ./Android/android.py package "$HOST"
+
+      - name: Verify the package layout
+        env:
+          MACHINE: ${{ matrix.readelf_machine }}
+        run: |
+          set -euo pipefail
+          SHORT="${PYVER%.*}"
+          TARBALL="cpython/cross-build/$HOST/dist/python-$PYVER-$HOST.tar.gz"
+          test -f "$TARBALL" || { echo "::error::$TARBALL not produced"; ls -l "cpython/cross-build/$HOST/dist" || true; exit 1; }
+          mkdir -p check dist
+          tar -xzf "$TARBALL" -C check
+          for f in \
+            "prefix/lib/libpython$SHORT.so" \
+            prefix/lib/libssl_python.so \
+            prefix/lib/libcrypto_python.so \
+            prefix/lib/libsqlite3_python.so \
+            "prefix/include/python$SHORT/Python.h" \
+            "prefix/lib/python$SHORT/os.py" \
+            "prefix/lib/python$SHORT/_sysconfigdata__android_$HOST.py"; do
+            test -f "check/$f" || { echo "::error::missing $f in $TARBALL"; exit 1; }
+          done
+          ls "check/prefix/lib/python$SHORT/lib-dynload/"*.so > /dev/null
+          header="$(readelf -h "check/prefix/lib/libpython$SHORT.so")"
+          echo "$header"
+          grep -Eq 'Class:[[:space:]]+ELF32' <<< "$header" || { echo "::error::libpython is not ELF32"; exit 1; }
+          grep -Eq "Machine:[[:space:]]+$MACHINE" <<< "$header" || { echo "::error::libpython is not $MACHINE"; exit 1; }
+          cp "$TARBALL" dist/
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: python-${{ inputs.python_version }}-${{ matrix.host }}
+          path: dist/python-${{ inputs.python_version }}-${{ matrix.host }}.tar.gz
+          if-no-files-found: error
+          compression-level: 0
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      REPLACE: ${{ inputs.replace }}
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: python-${{ inputs.python_version }}-*
+          path: dist
+          merge-multiple: true
+
+      - name: Compute SHA-256
+        working-directory: dist
+        run: |
+          set -euo pipefail
+          sha256sum python-*.tar.gz | tee SHA256SUMS
+          : > python.properties.txt
+          while read -r hash file; do
+            triple="${file#python-$PYVER-}"
+            triple="${triple%.tar.gz}"
+            echo "sha256.$triple=$hash" >> python.properties.txt
+          done < SHA256SUMS
+          {
+            echo "### Paste into runtime/python.properties"
+            echo '```properties'
+            cat python.properties.txt
+            echo '```'
+            echo "Then add armeabi-v7a and x86 to \`skypython.abis\` in gradle.properties."
+          } >> "$GITHUB_STEP_SUMMARY"
+          while read -r line; do
+            echo "::notice title=runtime/python.properties::$line"
+          done < python.properties.txt
+
+      - name: Publish release python-android-${{ inputs.python_version }}
+        working-directory: dist
+        run: |
+          set -euo pipefail
+          TAG="python-android-$PYVER"
+          ASSETS=(python-*.tar.gz SHA256SUMS python.properties.txt)
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            if [ "$REPLACE" != "true" ]; then
+              existing="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
+              for f in python-*.tar.gz; do
+                if grep -qxF "$f" <<< "$existing"; then
+                  echo "::error::$TAG already has $f. Builds are not bit-for-bit reproducible, so replacing it would break the hash pinned in runtime/python.properties. Re-run with 'replace' checked if you really mean it."
+                  exit 1
+                fi
+              done
+            fi
+            gh release upload "$TAG" "${ASSETS[@]}" --clobber
+          else
+            gh release create "$TAG" "${ASSETS[@]}" \
+              --target "$GITHUB_SHA" \
+              --title "CPython $PYVER for 32-bit Android" \
+              --notes "CPython $PYVER built with CPython's own Android/android.py for arm-linux-androideabi (armeabi-v7a) and i686-linux-android (x86), API level 24. Used by the SkyPython build; python.org publishes only the 64-bit builds. SHA-256: see SHA256SUMS." \
+              --prerelease \
+              --latest=false
+          fi

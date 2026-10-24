@@ -9,24 +9,33 @@ import java.util.zip.ZipInputStream
 /** Android-independent parts of [PythonInstaller], unit-tested on the JVM. */
 internal object InstallSupport {
 
-    /** ABIs we ship a CPython build for. */
-    val SHIPPED_ABIS: Set<String> = setOf("arm64-v8a", "x86_64")
+    /** Parses BuildConfig.PYTHON_ABIS ("arm64-v8a,x86_64"): the ABIs this APK ships Python for. */
+    fun parseAbis(list: String): Set<String> =
+        list.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
 
+    private const val ELFCLASS32 = 1
+    private const val ELFCLASS64 = 2
+    private const val EM_386 = 3
+    private const val EM_ARM = 40
     private const val EM_X86_64 = 62
     private const val EM_AARCH64 = 183
 
-    /** ABI of a 64-bit little-endian ELF file, or null if unknown / not shipped / unreadable. */
+    /** Android ABI of a little-endian ELF file, or null if unknown / unreadable. */
     fun elfAbi(file: File): String? = try {
         RandomAccessFile(file, "r").use { raf ->
             val header = ByteArray(20)
             raf.readFully(header)
-            val isElf64Le = header[0] == 0x7f.toByte() && header[1] == 'E'.code.toByte() &&
+            val isElfLe = header[0] == 0x7f.toByte() && header[1] == 'E'.code.toByte() &&
                 header[2] == 'L'.code.toByte() && header[3] == 'F'.code.toByte() &&
-                header[4] == 2.toByte() && header[5] == 1.toByte()
-            if (!isElf64Le) return null
-            when ((header[18].toInt() and 0xff) or ((header[19].toInt() and 0xff) shl 8)) {
-                EM_AARCH64 -> "arm64-v8a"
-                EM_X86_64 -> "x86_64"
+                header[5] == 1.toByte()
+            if (!isElfLe) return null
+            // e_machine is at offset 18 in both ELF32 and ELF64 headers.
+            val machine = (header[18].toInt() and 0xff) or ((header[19].toInt() and 0xff) shl 8)
+            when (header[4].toInt() to machine) {
+                ELFCLASS64 to EM_AARCH64 -> "arm64-v8a"
+                ELFCLASS64 to EM_X86_64 -> "x86_64"
+                ELFCLASS32 to EM_ARM -> "armeabi-v7a"
+                ELFCLASS32 to EM_386 -> "x86"
                 else -> null
             }
         }

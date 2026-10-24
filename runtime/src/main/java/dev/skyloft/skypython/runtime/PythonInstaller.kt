@@ -38,7 +38,7 @@ class PythonInstaller(context: Context) {
         val abi = InstallSupport.chooseAbi(
             InstallSupport.elfAbi(libPython),
             Build.SUPPORTED_ABIS,
-            InstallSupport.SHIPPED_ABIS,
+            InstallSupport.parseAbis(BuildConfig.PYTHON_ABIS),
         ) ?: error("No bundled Python for this device (ABIs: ${Build.SUPPORTED_ABIS.joinToString()})")
 
         val home = File(context.filesDir, "python")

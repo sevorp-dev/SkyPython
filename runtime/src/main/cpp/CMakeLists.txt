@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.22.1)
 project(pylauncher C)
 
 # PYTHON_BUILD_DIR and PYTHON_SHORT_VERSION are passed by runtime/build.gradle.kts.
-# The python.org release for each ABI is extracted to
+# The CPython release for each ABI (python.org for 64-bit, our build-python workflow
+# for 32-bit; same layout) is extracted to
 # ${PYTHON_BUILD_DIR}/<ANDROID_ABI>/prefix by the extractPython<Abi> task.
 if(NOT DEFINED PYTHON_BUILD_DIR OR NOT DEFINED PYTHON_SHORT_VERSION)
     message(FATAL_ERROR "PYTHON_BUILD_DIR / PYTHON_SHORT_VERSION not set")
@@ -12,8 +13,12 @@ if(ANDROID_ABI STREQUAL "arm64-v8a")
     set(PY_TRIPLE aarch64-linux-android)
 elseif(ANDROID_ABI STREQUAL "x86_64")
     set(PY_TRIPLE x86_64-linux-android)
+elseif(ANDROID_ABI STREQUAL "armeabi-v7a")
+    set(PY_TRIPLE arm-linux-androideabi)
+elseif(ANDROID_ABI STREQUAL "x86")
+    set(PY_TRIPLE i686-linux-android)
 else()
-    message(FATAL_ERROR "No official CPython build for ABI ${ANDROID_ABI}")
+    message(FATAL_ERROR "No CPython build for ABI ${ANDROID_ABI}")
 endif()
 
 set(PY_PREFIX "${PYTHON_BUILD_DIR}/${ANDROID_ABI}/prefix")
