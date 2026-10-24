@@ -31,9 +31,16 @@ class PythonEnvironmentTest {
                 "PYTHONIOENCODING" to "utf-8",
                 "HOME" to homeDir.path,
                 "TMPDIR" to cacheDir.path,
+                "PYTHONUSERBASE" to File(homeDir, ".local").path,
+                "PIP_DISABLE_PIP_VERSION_CHECK" to "1",
             ),
             PythonEnvironment.build(paths),
         )
+    }
+
+    @Test
+    fun userBaseIsDotLocalInHome() {
+        assertEquals(File(homeDir, ".local"), paths.userBase)
     }
 
     @Test
