@@ -68,6 +68,9 @@ fun EditorScreen(viewModel: EditorViewModel, onRun: (File) -> Unit, onOpenFiles:
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { snackbar.showSnackbar(it) }
     }
+    // ON_PAUSE always precedes finishing/backgrounding; ON_STOP is kept as a cheap second chance
+    // (it is a no-op when nothing is dirty). Saves are NonCancellable, see DocumentSaver.
+    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { viewModel.saveAll() }
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.saveAll() }
 
     val current = state.current

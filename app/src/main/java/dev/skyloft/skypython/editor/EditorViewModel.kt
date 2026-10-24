@@ -156,6 +156,7 @@ class EditorViewModel(
         docsState.current?.let { save(it) }
     }
 
+    /** Saves every dirty doc. Once started the save survives viewModelScope cancellation (onCleared). */
     fun saveAll(): Job = viewModelScope.launch { saveAllNow() }
 
     /**
