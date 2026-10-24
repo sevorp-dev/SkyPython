@@ -16,15 +16,18 @@ on:
         description: Replace tarballs already in the release (breaks pinned hashes!)
         type: boolean
         default: false
+  # Pushing the branch `build-python` runs it with the defaults (no GitHub UI or token needed).
+  push:
+    branches: [ build-python ]
 
 permissions:
   contents: read
 
 concurrency:
-  group: build-python-${{ inputs.python_version }}
+  group: build-python-${{ inputs.python_version || '3.14.9' }}
 
 env:
-  PYVER: ${{ inputs.python_version }}
+  PYVER: ${{ inputs.python_version || '3.14.9' }}
 
 jobs:
   build:
@@ -49,11 +52,11 @@ jobs:
             exit 1
           fi
 
-      - name: Check out CPython v${{ inputs.python_version }}
+      - name: Check out CPython v${{ inputs.python_version || '3.14.9' }}
         uses: actions/checkout@v5
         with:
           repository: python/cpython
-          ref: v${{ inputs.python_version }}
+          ref: v${{ inputs.python_version || '3.14.9' }}
           path: cpython
           persist-credentials: false
 
@@ -105,8 +108,8 @@ jobs:
 
       - uses: actions/upload-artifact@v5
         with:
-          name: python-${{ inputs.python_version }}-${{ matrix.host }}
-          path: dist/python-${{ inputs.python_version }}-${{ matrix.host }}.tar.gz
+          name: python-${{ inputs.python_version || '3.14.9' }}-${{ matrix.host }}
+          path: dist/python-${{ inputs.python_version || '3.14.9' }}-${{ matrix.host }}.tar.gz
           if-no-files-found: error
           compression-level: 0
 
@@ -118,11 +121,11 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-      REPLACE: ${{ inputs.replace }}
+      REPLACE: ${{ inputs.replace || false }}
     steps:
       - uses: actions/download-artifact@v5
         with:
-          pattern: python-${{ inputs.python_version }}-*
+          pattern: python-${{ inputs.python_version || '3.14.9' }}-*
           path: dist
           merge-multiple: true
 
@@ -148,7 +151,7 @@ jobs:
             echo "::notice title=runtime/python.properties::$line"
           done < python.properties.txt
 
-      - name: Publish release python-android-${{ inputs.python_version }}
+      - name: Publish release python-android-${{ inputs.python_version || '3.14.9' }}
         working-directory: dist
         run: |
           set -euo pipefail
