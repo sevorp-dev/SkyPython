@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Folders whose files can be shared through the FileProvider (share/Share.kt). -->
+<paths>
+    <files-path name="projects" path="projects/" />
+    <cache-path name="run" path="run/" />
+</paths>
