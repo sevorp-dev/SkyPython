@@ -11,7 +11,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dev.skyloft.skypython.console.ConsoleScreen
 import dev.skyloft.skypython.console.ConsoleViewModel
-import dev.skyloft.skypython.editor.DocSource
 import dev.skyloft.skypython.editor.EditorScreen
 import dev.skyloft.skypython.editor.EditorViewModel
 import dev.skyloft.skypython.files.FilesScreen
@@ -33,7 +32,9 @@ private object Routes {
 @Composable
 fun SkyPythonApp() {
     val app = LocalContext.current.applicationContext as Application
-    val workspace = remember { Workspace(File(app.filesDir, "projects")) }
+    // Canonical: filesDir is reached via a symlink (/data/user/0 -> /data/data) and Files lists
+    // canonical paths, so the editor must see the same spelling for the same file.
+    val workspace = remember { Workspace(File(app.filesDir, "projects").canonicalFile) }
 
     val editorVm: EditorViewModel = viewModel(
         factory = EditorViewModel.factory(app, workspace.root, workspace::ensureHello),
@@ -77,13 +78,7 @@ fun SkyPythonApp() {
                     nav.popBackStack()
                 },
                 onDeleted = editorVm::closeFile,
-                onRenamed = { old, new ->
-                    val wasOpen = editorVm.state.value.docs.any {
-                        (it.source as? DocSource.Local)?.file == old
-                    }
-                    editorVm.closeFile(old)
-                    if (wasOpen) editorVm.open(new)
-                },
+                onRenamed = editorVm::onRenamed,
                 onBack = { nav.popBackStack() },
             )
         }

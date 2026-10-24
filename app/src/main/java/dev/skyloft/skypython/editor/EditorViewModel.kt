@@ -45,12 +45,14 @@ data class EditorUiState(
  */
 class EditorViewModel(
     app: Application,
-    private val projectsRoot: File,
+    projectsRoot: File,
     private val firstRunFile: () -> File,
     private val sessionStore: SessionStore = SessionStore(app),
 ) : AndroidViewModel(app) {
 
     private val docsState = DocumentsState()
+    /** Resolved once; tab paths are resolved too (see [DocSource.Local]), so labels relativise cleanly. */
+    private val projectsRoot: File = resolvedFile(projectsRoot)
     private val _state = MutableStateFlow(EditorUiState())
     val state: StateFlow<EditorUiState> = _state.asStateFlow()
 
@@ -89,12 +91,13 @@ class EditorViewModel(
 
     fun open(file: File) {
         viewModelScope.launch {
-            val id = OpenDocument.idOf(DocSource.Local(file))
+            val source = withContext(Dispatchers.IO) { DocSource.Local(file) }
+            val id = OpenDocument.idOf(source)
             if (docsState.find(id) != null) {
                 docsState.select(id); publish(); return@launch
             }
-            val text = withContext(Dispatchers.IO) { runCatching { readLocal(file) } }
-            text.onSuccess { docsState.open(OpenDocument.local(file, it)); publish() }
+            val text = withContext(Dispatchers.IO) { runCatching { readLocal(source.file) } }
+            text.onSuccess { docsState.open(OpenDocument.of(source, it)); publish() }
                 .onFailure { message("Can't open ${file.name}: ${it.message}") }
         }
     }
@@ -134,7 +137,12 @@ class EditorViewModel(
         docsState.closeLocal(file); publish()
     }
 
-    /** Called by the editor on every text change. */
+    /** [old] (file or folder) was renamed to [new] in Files: re-point affected tabs, keeping unsaved text. */
+    fun onRenamed(old: File, new: File) {
+        docsState.rename(old, new); publish()
+    }
+
+    /** Called by the editor when the text changed. */
     fun onTextChanged(id: String, text: String) {
         val before = docsState.find(id) ?: return
         if (before.text == text) return
