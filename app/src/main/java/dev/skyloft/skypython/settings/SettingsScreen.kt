@@ -1,6 +1,7 @@
 package dev.skyloft.skypython.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.WrapText
 import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.LightMode
@@ -30,7 +30,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import dev.skyloft.skypython.ui.theme.SkyTopBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -47,9 +47,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.skyloft.skypython.ui.theme.DividerBlue
+import dev.skyloft.skypython.ui.theme.EditorBackground
 import kotlinx.coroutines.launch
 
-/** settings list. Changes are saved immediately. */
+/** Settings list. Changes are saved immediately. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
@@ -61,14 +63,7 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Settings") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-            )
+            SkyTopBar(title = "Settings", onBack = onBack)
         },
     ) { padding ->
         val s = settings ?: return@Scaffold // wait for the first read so switches don't flicker
@@ -84,7 +79,7 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 onChange = { sp -> update { it.copy(fontSizeSp = clampFontSize(sp)) } },
             )
             CodePreview(s.fontSizeSp)
-            HorizontalDivider(Modifier.padding(top = 8.dp))
+            HorizontalDivider(Modifier.padding(top = 12.dp), color = DividerBlue)
             SwitchRow(
                 icon = Icons.AutoMirrored.Filled.WrapText,
                 title = "Word wrap",
@@ -169,7 +164,8 @@ private fun CodePreview(sizeSp: Int) {
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .background(Color(0xFF1E1E1E), RoundedCornerShape(8.dp))
+            .background(EditorBackground, RoundedCornerShape(6.dp))
+            .border(1.dp, DividerBlue, RoundedCornerShape(6.dp))
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
