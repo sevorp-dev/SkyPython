@@ -27,7 +27,7 @@ jobs:
           path: app/build/outputs/apk/debug/app-debug.apk
 
   instrumented:
-    name: instrumented (API ${{ matrix.api-level }})
+    name: instrumented (API ${{ matrix.api-level }} ${{ matrix.arch }})
     runs-on: ubuntu-24.04
     strategy:
       # One failing Android version must not cancel the others.
@@ -35,6 +35,11 @@ jobs:
       matrix:
         # 24 = minSdk (Android 7.0), then Android 9, 11, 14 and 16.
         api-level: [24, 28, 30, 34, 36]
+        arch: [x86_64]
+        include:
+          # 32-bit Python (our own CPython build) on a 32-bit x86 emulator.
+          - api-level: 28
+            arch: x86
     steps:
       - uses: actions/checkout@v5
 
@@ -55,7 +60,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
-          arch: x86_64
+          arch: ${{ matrix.arch }}
           # google_apis x86_64 images exist for every level in the matrix.
           target: google_apis
           disable-animations: true
@@ -70,14 +75,14 @@ jobs:
               r = ET.parse(f).getroot()
               suites = [r] if r.tag == 'testsuite' else r.findall('testsuite')
               for s in suites:
-                  print(f"::notice title=API ${{ matrix.api-level }} {s.get('name')}::tests={s.get('tests')} failures={s.get('failures')} errors={s.get('errors')} skipped={s.get('skipped')}")
+                  print(f"::notice title=API ${{ matrix.api-level }} ${{ matrix.arch }} {s.get('name')}::tests={s.get('tests')} failures={s.get('failures')} errors={s.get('errors')} skipped={s.get('skipped')}")
                   for c in s.findall('testcase'):
                       if c.find('failure') is not None or c.find('error') is not None:
-                          print(f"::error title=API ${{ matrix.api-level }} FAILED {c.get('classname')}.{c.get('name')}::failed")
+                          print(f"::error title=API ${{ matrix.api-level }} ${{ matrix.arch }} FAILED {c.get('classname')}.{c.get('name')}::failed")
           PY
 
       - uses: actions/upload-artifact@v5
         if: always()
         with:
-          name: instrumented-test-reports-api${{ matrix.api-level }}
+          name: instrumented-test-reports-api${{ matrix.api-level }}-${{ matrix.arch }}
           path: '**/build/reports/androidTests/'
