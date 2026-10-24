@@ -95,7 +95,7 @@ fun ConsoleScreen(viewModel: ConsoleViewModel, onBack: () -> Unit) {
                     else -> ConsoleOutput(state.lines, state.version)
                 }
             }
-            InputRow(enabled = state.running, onSend = viewModel::send)
+            InputRow(enabled = state.acceptsInput, onSend = viewModel::send)
         }
     }
 }

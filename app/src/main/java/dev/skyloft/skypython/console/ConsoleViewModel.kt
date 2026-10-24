@@ -28,6 +28,8 @@ data class ConsoleState(
     /** Bumped on every output change, even when the line count stays the same. */
     val version: Long = 0,
     val running: Boolean = false,
+    /** True only while the script process is alive; input typed otherwise would be lost. */
+    val acceptsInput: Boolean = false,
     val installing: Boolean = false,
     val installError: String? = null,
     val scriptName: String? = null,
@@ -76,7 +78,7 @@ class ConsoleViewModel(
         runJob = viewModelScope.launch(work) {
             previous?.let { process?.stop(); it.cancelAndJoin() }
             buffer.clear()
-            publish(running = true, scriptName = script.name)
+            publish(running = true, scriptName = script.name, acceptsInput = false)
 
             val p = paths ?: installPython() ?: return@launch
             val proc = newProcess(p).also { process = it }
@@ -84,19 +86,23 @@ class ConsoleViewModel(
             val ticker = launch {
                 while (true) {
                     delay(tickMillis)
-                    publishIfChanged()
+                    publishIfChanged(acceptsInput = proc.isRunning)
                 }
             }
-            proc.start(script).collect { event ->
-                when (event) {
-                    is ConsoleEvent.Stdout -> buffer.append(event.text, isError = false)
-                    is ConsoleEvent.Stderr -> buffer.append(event.text, isError = true)
-                    is ConsoleEvent.Failed -> buffer.append(event.message + "\n", isError = true)
-                    is ConsoleEvent.Exited -> buffer.append(exitLine(event.code), isError = false)
+            try {
+                proc.start(script).collect { event ->
+                    when (event) {
+                        is ConsoleEvent.Stdout -> buffer.append(event.text, isError = false)
+                        is ConsoleEvent.Stderr -> buffer.append(event.text, isError = true)
+                        is ConsoleEvent.Failed -> buffer.append(event.message + "\n", isError = true)
+                        is ConsoleEvent.Exited -> buffer.append(exitLine(event.code), isError = false)
+                    }
                 }
+            } finally {
+                ticker.cancel()
+                if (process === proc) process = null
             }
-            ticker.cancel()
-            publish(running = false)
+            publish(running = false, acceptsInput = false)
         }
     }
 
@@ -110,8 +116,24 @@ class ConsoleViewModel(
         }
     }
 
+    /**
+     * Stops the script. Before the process is up (e.g. while Python is being unpacked on
+     * first run) there is nothing to kill, so the run itself is cancelled instead.
+     */
     fun stop() {
-        process?.stop()
+        val proc = process
+        if (proc != null && proc.isRunning) {
+            proc.stop()
+            return
+        }
+        val job = runJob ?: return
+        if (!job.isActive) return
+        job.cancel() // cancelling the collector also kills a process that is just starting
+        viewModelScope.launch(work) {
+            buffer.append(if (buffer.endsWithNewline) CANCELLED else "\n" + CANCELLED, false)
+            _state.update { it.copy(installing = false) }
+            publish(running = false, acceptsInput = false)
+        }
     }
 
     fun restart() {
@@ -138,12 +160,19 @@ class ConsoleViewModel(
         )
     }
 
-    private fun publishIfChanged() {
-        if (buffer.version != _state.value.version) publish()
+    private fun publishIfChanged(acceptsInput: Boolean) {
+        val s = _state.value
+        if (buffer.version != s.version || acceptsInput != s.acceptsInput) {
+            publish(acceptsInput = acceptsInput)
+        }
     }
 
     /** Call on [work] only. */
-    private fun publish(running: Boolean? = null, scriptName: String? = null) {
+    private fun publish(
+        running: Boolean? = null,
+        scriptName: String? = null,
+        acceptsInput: Boolean? = null,
+    ) {
         val lines = buffer.lines
         val version = buffer.version
         _state.update {
@@ -151,6 +180,7 @@ class ConsoleViewModel(
                 lines = lines,
                 version = version,
                 running = running ?: it.running,
+                acceptsInput = acceptsInput ?: it.acceptsInput,
                 scriptName = scriptName ?: it.scriptName,
             )
         }
@@ -161,6 +191,8 @@ class ConsoleViewModel(
     }
 
     companion object {
+        private const val CANCELLED = "[Cancelled]\n"
+
         fun exitLine(code: Int) = "\n[Program finished, exit code $code]\n"
 
         fun factory(app: Application): ViewModelProvider.Factory = viewModelFactory {
