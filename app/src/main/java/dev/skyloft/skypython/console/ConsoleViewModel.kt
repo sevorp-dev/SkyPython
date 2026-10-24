@@ -10,6 +10,7 @@ import dev.skyloft.skypython.runtime.ConsoleEvent
 import dev.skyloft.skypython.runtime.PythonInstaller
 import dev.skyloft.skypython.runtime.PythonPaths
 import dev.skyloft.skypython.runtime.PythonProcess
+import dev.skyloft.skypython.runtime.RunCommand
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -32,32 +33,38 @@ data class ConsoleState(
     val acceptsInput: Boolean = false,
     val installing: Boolean = false,
     val installError: String? = null,
-    val scriptName: String? = null,
-    /** A Run requested while a script was running; the UI asks before restarting. */
-    val pendingRun: File? = null,
-)
+    /** Script name, "Interpreter" or "Terminal"; null before anything ran. */
+    val title: String? = null,
+    /** A start requested while something was running; the UI asks before replacing it. */
+    val pending: RunTarget? = null,
+) {
+    /** The pending script, if [pending] is a script run. */
+    val pendingRun: File? get() = (pending as? RunTarget.Script)?.file
+}
 
 /** The part of [PythonProcess] the console needs; lets tests drive the view model. */
 interface ScriptProcess {
     val isRunning: Boolean
-    fun start(script: File): Flow<ConsoleEvent>
+    fun start(command: RunCommand): Flow<ConsoleEvent>
     fun write(text: String)
     fun stop()
 }
 
 private class PythonScriptProcess(private val p: PythonProcess) : ScriptProcess {
     override val isRunning get() = p.isRunning
-    override fun start(script: File) = p.start(script)
+    override fun start(command: RunCommand) = p.start(command)
     override fun write(text: String) = p.write(text)
     override fun stop() = p.stop()
 }
 
 /**
- * Owns the running script and the console buffer. All buffer mutation happens on the
+ * Owns the running script, interpreter or terminal (one at a time) and the console buffer. All buffer mutation happens on the
  * single-threaded [work] dispatcher; only immutable snapshots go to [state] (read on Main),
  * at most once per [tickMillis].
  */
 class ConsoleViewModel(
+    /** Working directory of the interpreter and the terminal. */
+    private val projectsRoot: File,
     private val install: suspend () -> Result<PythonPaths>,
     private val newProcess: (PythonPaths) -> ScriptProcess,
     private val work: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(1),
@@ -71,16 +78,19 @@ class ConsoleViewModel(
     private var paths: PythonPaths? = null
     @Volatile private var process: ScriptProcess? = null
     private var runJob: Job? = null
-    private var lastScript: File? = null
+    private var lastTarget: RunTarget? = null
 
-    fun run(script: File) {
-        lastScript = script
+    fun run(script: File) = start(RunTarget.Script(script))
+
+    /** Starts [target], stopping whatever runs now without asking (see [request]). */
+    fun start(target: RunTarget) {
+        lastTarget = target
         val previous = runJob
-        _state.update { it.copy(running = true, scriptName = script.name) }
+        _state.update { it.copy(running = true, title = target.title) }
         runJob = viewModelScope.launch(work) {
             previous?.let { process?.stop(); it.cancelAndJoin() }
             buffer.clear()
-            publish(running = true, scriptName = script.name, acceptsInput = false)
+            publish(running = true, title = target.title, acceptsInput = false)
 
             val p = paths ?: installPython() ?: return@launch
             val proc = newProcess(p).also { process = it }
@@ -92,10 +102,10 @@ class ConsoleViewModel(
                 }
             }
             try {
-                proc.start(script).collect { event ->
+                proc.start(target.toCommand()).collect { event ->
                     when (event) {
                         is ConsoleEvent.Stdout -> buffer.append(event.text, isError = false)
-                        is ConsoleEvent.Stderr -> buffer.append(event.text, isError = true)
+                        is ConsoleEvent.Stderr -> appendStderr(event.text, target)
                         is ConsoleEvent.Failed -> buffer.append(event.message + "\n", isError = true)
                         is ConsoleEvent.Exited -> buffer.append(
                             exitLine(event.code, afterNewline = buffer.endsWithNewline),
@@ -112,28 +122,37 @@ class ConsoleViewModel(
     }
 
     /**
-     * Only one script runs at a time: if one is running, [script] becomes
-     * [ConsoleState.pendingRun] and nothing starts until [confirmPendingRun].
-     * @return true if the run started now.
+     * Only one thing runs at a time: if something is running, [target] becomes
+     * [ConsoleState.pending] and nothing starts until [confirmPendingRun].
+     * @return true if it started now.
      */
-    fun requestRun(script: File): Boolean {
+    fun request(target: RunTarget): Boolean {
         if (_state.value.running) {
-            _state.update { it.copy(pendingRun = script) }
+            _state.update { it.copy(pending = target) }
             return false
         }
-        run(script)
+        start(target)
         return true
     }
 
-    /** Stops the running script and runs the pending one. */
+    /** [request] for a script. */
+    fun requestRun(script: File): Boolean = request(RunTarget.Script(script))
+
+    /** Python REPL in the projects root; [request] rules. */
+    fun startInterpreter(): Boolean = request(RunTarget.Interpreter)
+
+    /** Shell in the projects root; [request] rules. */
+    fun startTerminal(): Boolean = request(RunTarget.Terminal)
+
+    /** Stops what is running and starts the pending target. */
     fun confirmPendingRun() {
-        val script = _state.value.pendingRun ?: return
-        _state.update { it.copy(pendingRun = null) }
-        run(script)
+        val target = _state.value.pending ?: return
+        _state.update { it.copy(pending = null) }
+        start(target)
     }
 
     fun dismissPendingRun() {
-        _state.update { it.copy(pendingRun = null) }
+        _state.update { it.copy(pending = null) }
     }
 
     fun send(line: String) {
@@ -166,13 +185,27 @@ class ConsoleViewModel(
         }
     }
 
+    /** Re-runs the last script, interpreter or terminal. */
     fun restart() {
-        lastScript?.let(::run)
+        lastTarget?.let(::start)
     }
 
     fun retryInstall() {
         _state.update { it.copy(installError = null) }
         restart()
+    }
+
+    private fun RunTarget.toCommand(): RunCommand = when (this) {
+        is RunTarget.Script -> RunCommand.Script(file)
+        RunTarget.Interpreter -> RunCommand.Interpreter(projectsRoot)
+        RunTarget.Terminal -> RunCommand.Shell(projectsRoot)
+    }
+
+    /** Call on [work] only. A trailing REPL/shell prompt is shown as normal text, not red. */
+    private fun appendStderr(text: String, target: RunTarget) {
+        val prompt = promptLength(text, target)
+        buffer.append(text.substring(0, text.length - prompt), isError = true)
+        buffer.append(text.substring(text.length - prompt), isError = false)
     }
 
     private suspend fun installPython(): PythonPaths? {
@@ -200,7 +233,7 @@ class ConsoleViewModel(
     /** Call on [work] only. */
     private fun publish(
         running: Boolean? = null,
-        scriptName: String? = null,
+        title: String? = null,
         acceptsInput: Boolean? = null,
     ) {
         val lines = buffer.lines
@@ -211,7 +244,7 @@ class ConsoleViewModel(
                 version = version,
                 running = running ?: it.running,
                 acceptsInput = acceptsInput ?: it.acceptsInput,
-                scriptName = scriptName ?: it.scriptName,
+                title = title ?: it.title,
             )
         }
     }
@@ -229,10 +262,12 @@ class ConsoleViewModel(
             return if (afterNewline) footer else "\n" + footer
         }
 
-        fun factory(app: Application): ViewModelProvider.Factory = viewModelFactory {
+        /** @param projectsRoot working directory of the interpreter and the terminal. */
+        fun factory(app: Application, projectsRoot: File): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val installer = PythonInstaller(app)
                 ConsoleViewModel(
+                    projectsRoot = projectsRoot,
                     install = installer::ensureInstalled,
                     newProcess = { PythonScriptProcess(PythonProcess(it)) },
                 )

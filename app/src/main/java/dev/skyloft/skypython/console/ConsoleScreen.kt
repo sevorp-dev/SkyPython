@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.console
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,9 +11,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -27,10 +30,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -42,8 +45,11 @@ import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.flow.filter
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
@@ -53,15 +59,32 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.skyloft.skypython.ui.theme.ErrorRed
 
+/** Terminal-like colours, independent of the app theme . */
+private val ConsoleBackground = Color(0xFF0B0F14)
+private val ConsoleBar = Color(0xFF11161D)
+private val ConsoleText = Color(0xFFD8DEE9)
+private val ConsoleDim = Color(0xFF6B7682)
+private val ConsolePrompt = Color(0xFFFFD54F)
+
+private val ConsoleTextStyle = TextStyle(
+    color = ConsoleText,
+    fontFamily = FontFamily.Monospace,
+    fontSize = 14.sp,
+    lineHeight = 19.sp,
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConsoleScreen(viewModel: ConsoleViewModel, onBack: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     Scaffold(
+        containerColor = ConsoleBackground,
+        contentColor = ConsoleText,
         topBar = {
             TopAppBar(
-                title = { Text(state.scriptName ?: "Console") },
+                title = { Text(state.title ?: "Console") },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = ConsoleBar),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -138,12 +161,7 @@ private fun ConsoleOutput(lines: List<ConsoleLine>, version: Long) {
             modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
         ) {
             itemsIndexed(lines) { _, line ->
-                Text(
-                    text = remember(line) { line.toAnnotated() },
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 13.sp,
-                    lineHeight = 17.sp,
-                )
+                Text(text = remember(line) { line.toAnnotated() }, style = ConsoleTextStyle)
             }
         }
     }
@@ -156,6 +174,7 @@ private fun ConsoleLine.toAnnotated(): AnnotatedString = buildAnnotatedString {
     }
 }
 
+/** Input line drawn as part of the console: a prompt caret, a borderless field, a small Send. */
 @Composable
 private fun InputRow(enabled: Boolean, onSend: (String) -> Unit) {
     var text by rememberSaveable { mutableStateOf("") }
@@ -164,22 +183,36 @@ private fun InputRow(enabled: Boolean, onSend: (String) -> Unit) {
         text = ""
     }
     Row(
-        Modifier.fillMaxWidth().padding(8.dp),
+        Modifier.fillMaxWidth().background(ConsoleBackground).padding(start = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        OutlinedTextField(
-            value = text,
-            onValueChange = { text = it },
-            modifier = Modifier.weight(1f),
-            enabled = enabled,
-            singleLine = true,
-            placeholder = { Text(if (enabled) "Input" else "Program is not running") },
-            textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-            keyboardActions = KeyboardActions(onSend = { send() }),
+        Text(
+            "\u276F ",
+            style = ConsoleTextStyle.copy(color = if (enabled) ConsolePrompt else ConsoleDim),
         )
+        Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+            if (!enabled && text.isEmpty()) {
+                Text("Not running", style = ConsoleTextStyle.copy(color = ConsoleDim))
+            }
+            BasicTextField(
+                value = text,
+                onValueChange = { text = it },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = enabled,
+                singleLine = true,
+                textStyle = ConsoleTextStyle,
+                cursorBrush = SolidColor(ConsolePrompt),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                keyboardActions = KeyboardActions(onSend = { send() }),
+            )
+        }
         IconButton(onClick = send, enabled = enabled) {
-            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
+            Icon(
+                Icons.AutoMirrored.Filled.Send,
+                contentDescription = "Send",
+                modifier = Modifier.size(18.dp),
+                tint = if (enabled) ConsolePrompt else ConsoleDim,
+            )
         }
     }
 }
