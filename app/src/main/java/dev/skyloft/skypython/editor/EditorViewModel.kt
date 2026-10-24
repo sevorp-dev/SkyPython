@@ -15,17 +15,15 @@ import dev.skyloft.skypython.data.SessionStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -47,20 +45,35 @@ data class EditorUiState(
  */
 class EditorViewModel(
     app: Application,
-    private val projectsRoot: File,
+    projectsRoot: File,
     private val firstRunFile: () -> File,
     private val sessionStore: SessionStore = SessionStore(app),
 ) : AndroidViewModel(app) {
 
     private val docsState = DocumentsState()
+    /** Resolved once; tab paths are resolved too (see [DocSource.Local]), so labels relativise cleanly. */
+    private val projectsRoot: File = resolvedFile(projectsRoot)
     private val _state = MutableStateFlow(EditorUiState())
     val state: StateFlow<EditorUiState> = _state.asStateFlow()
 
-    private val _messages = MutableSharedFlow<String>(extraBufferCapacity = 8, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    /** One-shot user-facing messages (e.g. save errors) for a snackbar. */
-    val messages: SharedFlow<String> = _messages.asSharedFlow()
+    // A buffered Channel, not a SharedFlow: messages emitted before the screen starts collecting
+    // (e.g. during session restore in init) must be kept, not dropped for lack of subscribers.
+    private val _messages = Channel<String>(capacity = 8, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    /** One-shot user-facing messages (e.g. save errors) for a snackbar; each is delivered once. */
+    val messages: Flow<String> = _messages.receiveAsFlow()
 
-    private val saveMutex = Mutex()
+    private val saver = DocumentSaver(
+        docs = docsState,
+        io = Dispatchers.IO,
+        write = { src, text ->
+            when (src) {
+                is DocSource.Local -> src.file.writeText(text, Charsets.UTF_8)
+                is DocSource.External -> writeExternal(src.uri, text)
+            }
+        },
+        onSaved = { publish(persistSession = false) },
+        onError = { doc, e -> message("Can't save ${doc.name}: ${e.message}") },
+    )
     private var restored = false
     private val sessionToSave = MutableStateFlow<Session?>(null)
     private val resolver get() = getApplication<Application>().contentResolver
@@ -80,12 +93,13 @@ class EditorViewModel(
 
     fun open(file: File) {
         viewModelScope.launch {
-            val id = OpenDocument.idOf(DocSource.Local(file))
+            val source = withContext(Dispatchers.IO) { DocSource.Local(file) }
+            val id = OpenDocument.idOf(source)
             if (docsState.find(id) != null) {
                 docsState.select(id); publish(); return@launch
             }
-            val text = withContext(Dispatchers.IO) { runCatching { readLocal(file) } }
-            text.onSuccess { docsState.open(OpenDocument.local(file, it)); publish() }
+            val text = withContext(Dispatchers.IO) { runCatching { readLocal(source.file) } }
+            text.onSuccess { docsState.open(OpenDocument.of(source, it)); publish() }
                 .onFailure { message("Can't open ${file.name}: ${it.message}") }
         }
     }
@@ -125,7 +139,12 @@ class EditorViewModel(
         docsState.closeLocal(file); publish()
     }
 
-    /** Called by the editor on every text change. */
+    /** [old] (file or folder) was renamed to [new] in Files: re-point affected tabs, keeping unsaved text. */
+    fun onRenamed(old: File, new: File) {
+        docsState.rename(old, new); publish()
+    }
+
+    /** Called by the editor when the text changed. */
     fun onTextChanged(id: String, text: String) {
         val before = docsState.find(id) ?: return
         if (before.text == text) return
@@ -139,6 +158,7 @@ class EditorViewModel(
         docsState.current?.let { save(it) }
     }
 
+    /** Saves every dirty doc. Once started the save survives viewModelScope cancellation (onCleared). */
     fun saveAll(): Job = viewModelScope.launch { saveAllNow() }
 
     /**
@@ -182,34 +202,11 @@ class EditorViewModel(
     }
 
     /** Tab label: the file name, or a path relative to the projects root if names clash. */
-    fun labelFor(doc: OpenDocument, all: List<OpenDocument>): String {
-        val src = doc.source
-        if (src !is DocSource.Local || all.count { it.name == doc.name } < 2) return doc.name
-        val rel = runCatching { src.file.relativeTo(projectsRoot).path }.getOrNull()
-        return if (rel == null || rel.startsWith("..")) src.file.path else rel
-    }
+    fun labelFor(doc: OpenDocument, all: List<OpenDocument>): String = tabLabel(doc, all, projectsRoot)
 
-    private suspend fun saveAllNow(): Boolean {
-        var ok = true
-        for (doc in docsState.docs) if (doc.dirty) ok = save(doc) && ok
-        return ok
-    }
+    private suspend fun saveAllNow(): Boolean = saver.saveAll()
 
-    /** Writes [doc]'s current text; returns false (and reports) on failure. */
-    private suspend fun save(doc: OpenDocument): Boolean = saveMutex.withLock {
-        val text = docsState.find(doc.id)?.text ?: return@withLock true
-        val result = withContext(Dispatchers.IO) {
-            runCatching {
-                when (val src = doc.source) {
-                    is DocSource.Local -> src.file.writeText(text, Charsets.UTF_8)
-                    is DocSource.External -> writeExternal(src.uri, text)
-                }
-            }
-        }
-        result.onSuccess { docsState.markSaved(doc.id, text); publish(persistSession = false) }
-            .onFailure { message("Can't save ${doc.name}: ${it.message}") }
-        result.isSuccess
-    }
+    private suspend fun save(doc: OpenDocument): Boolean = saver.save(doc)
 
     // ---- session ----
 
@@ -222,18 +219,13 @@ class EditorViewModel(
                 .onFailure { message("Can't create example file: ${it.message}") }
             return
         }
-        val loaded = withContext(Dispatchers.IO) {
-            session.tabs.map { tab ->
-                runCatching {
-                    when (tab.kind) {
-                        SavedTab.Kind.LOCAL -> File(tab.location).let { OpenDocument.local(it, readLocal(it)) }
-                        SavedTab.Kind.EXTERNAL -> Uri.parse(tab.location).let {
-                            OpenDocument.of(DocSource.External(it, tab.name), readExternal(it))
-                        }
-                    }
-                }.getOrNull()
+        val reopened = withContext(Dispatchers.IO) {
+            restoreTabs(session.tabs, ::readLocal) { tab ->
+                Uri.parse(tab.location).let { OpenDocument.of(DocSource.External(it, tab.name), readExternal(it)) }
             }
         }
+        reopened.messages.forEach(::message)
+        val loaded = reopened.docs
         loaded.filterNotNull().forEach { docsState.open(it) }
         loaded.getOrNull(session.currentIndex)?.let { docsState.select(it.id) }
     }
@@ -255,7 +247,7 @@ class EditorViewModel(
     }
 
     private fun message(text: String) {
-        _messages.tryEmit(text)
+        _messages.trySend(text)
     }
 
     // ---- IO helpers (call on Dispatchers.IO) ----

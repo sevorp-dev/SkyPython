@@ -7,6 +7,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
@@ -67,6 +68,13 @@ private class SkyColorScheme(registry: ThemeRegistry) :
 /** Imperative handle for toolbar / symbol-bar actions on the live editor view. */
 class EditorController {
     internal var view: CodeEditor? = null
+    internal var flusher: (() -> Unit)? = null
+
+    /**
+     * Pushes any not-yet-reported edit to the ViewModel right now. Text changes are reported
+     * debounced, so call this before anything that reads the doc text (save, run, close, Files).
+     */
+    fun flushPendingText() { flusher?.invoke() }
 
     fun undo() { view?.undo() }
     fun redo() { view?.redo() }
@@ -80,7 +88,8 @@ class EditorController {
 /**
  * Sora [CodeEditor] showing the document [docId]. Each doc keeps its own [Content] (and so its
  * own undo history) while this composable lives; [initialText] seeds a doc the first time it is
- * shown. Edits are reported via [onTextChanged].
+ * shown. Edits are reported via [onTextChanged], debounced ([TextChangeDebouncer]) so the full text
+ * isn't copied on every keystroke; [EditorController.flushPendingText] forces delivery.
  */
 @Composable
 fun CodeEditor(
@@ -94,6 +103,8 @@ fun CodeEditor(
     val contents = remember { HashMap<String, Content>() }
     val currentId by rememberUpdatedState(docId)
     val onChange by rememberUpdatedState(onTextChanged)
+    val scope = rememberCoroutineScope()
+    val debouncer = remember { TextChangeDebouncer(scope) { id, text -> onChange(id, text) } }
 
     AndroidView(
         modifier = modifier,
@@ -110,10 +121,13 @@ fun CodeEditor(
                 setEditorLanguage(TextMateLanguage.create(PYTHON_SCOPE, true))
                 subscribeAlways(ContentChangeEvent::class.java) { e ->
                     if (e.action != ContentChangeEvent.ACTION_SET_NEW_TEXT) {
-                        onChange(currentId, e.editor.text.toString())
+                        // Capture this doc's Content (not the view): after a tab switch the view shows another doc.
+                        val content = e.editor.text
+                        debouncer.onChanged(currentId) { content.toString() }
                     }
                 }
                 controller.view = this
+                controller.flusher = debouncer::flush
             }
         },
         onRelease = { view ->
@@ -125,6 +139,7 @@ fun CodeEditor(
     // Switch the shown document when the tab changes.
     LaunchedEffect(docId) {
         val view = controller.view ?: return@LaunchedEffect
+        debouncer.flush() // the previous doc's pending edit, before the view switches docs
         val content = contents.getOrPut(docId) { Content(initialText) }
         // reuseContentObject = true keeps this doc's Content (and its undo stack) instead of copying it.
         if (view.text !== content) view.setText(content, true, null)
@@ -136,6 +151,9 @@ fun CodeEditor(
     }
 
     DisposableEffect(controller) {
-        onDispose { contents.clear() }
+        onDispose {
+            debouncer.flush()
+            contents.clear()
+        }
     }
 }

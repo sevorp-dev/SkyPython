@@ -68,7 +68,12 @@ fun EditorScreen(viewModel: EditorViewModel, onRun: (File) -> Unit, onOpenFiles:
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { snackbar.showSnackbar(it) }
     }
-    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.saveAll() }
+    // ON_PAUSE always precedes finishing/backgrounding; ON_STOP is kept as a cheap second chance
+    // (it is a no-op when nothing is dirty). Saves are NonCancellable, see DocumentSaver.
+    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { controller.flushPendingText(); viewModel.saveAll() }
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { controller.flushPendingText(); viewModel.saveAll() }
+    // Edits reach the ViewModel debounced; flush before anything that reads the text.
+    val openFiles = { controller.flushPendingText(); onOpenFiles() }
 
     val current = state.current
 
@@ -83,10 +88,13 @@ fun EditorScreen(viewModel: EditorViewModel, onRun: (File) -> Unit, onOpenFiles:
                     IconButton(onClick = controller::redo, enabled = current != null) {
                         Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo")
                     }
-                    IconButton(onClick = { viewModel.saveCurrent() }, enabled = current != null) {
+                    IconButton(
+                        onClick = { controller.flushPendingText(); viewModel.saveCurrent() },
+                        enabled = current != null,
+                    ) {
                         Icon(Icons.Filled.Save, contentDescription = "Save")
                     }
-                    IconButton(onClick = onOpenFiles) {
+                    IconButton(onClick = openFiles) {
                         Icon(Icons.Filled.Folder, contentDescription = "Files")
                     }
                     Box {
@@ -99,6 +107,7 @@ fun EditorScreen(viewModel: EditorViewModel, onRun: (File) -> Unit, onOpenFiles:
                                 enabled = current != null,
                                 onClick = {
                                     menuOpen = false
+                                    controller.flushPendingText()
                                     current?.let { saveAsLauncher.launch(it.name) }
                                 },
                             )
@@ -113,6 +122,7 @@ fun EditorScreen(viewModel: EditorViewModel, onRun: (File) -> Unit, onOpenFiles:
                     onClick = {
                         if (running) return@FloatingActionButton
                         running = true
+                        controller.flushPendingText()
                         scope.launch {
                             try {
                                 viewModel.runCurrent()?.let(onRun)
@@ -136,9 +146,9 @@ fun EditorScreen(viewModel: EditorViewModel, onRun: (File) -> Unit, onOpenFiles:
                 state.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
-                current == null -> EmptyEditor(onOpenFiles)
+                current == null -> EmptyEditor(openFiles)
                 else -> {
-                    DocTabs(state, viewModel)
+                    DocTabs(state, viewModel, onClose = { id -> controller.flushPendingText(); viewModel.close(id) })
                     CodeEditor(
                         docId = current.id,
                         initialText = current.text,
@@ -155,7 +165,7 @@ fun EditorScreen(viewModel: EditorViewModel, onRun: (File) -> Unit, onOpenFiles:
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel) {
+private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel, onClose: (String) -> Unit) {
     val selected = state.docs.indexOfFirst { it.id == state.currentId }.coerceAtLeast(0)
     PrimaryScrollableTabRow(selectedTabIndex = selected, edgePadding = 0.dp) {
         state.docs.forEachIndexed { index, doc ->
@@ -178,7 +188,7 @@ private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel) {
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                         DropdownMenuItem(text = { Text("Close") }, onClick = {
                             menu = false
-                            viewModel.close(doc.id)
+                            onClose(doc.id)
                         })
                     }
                 }

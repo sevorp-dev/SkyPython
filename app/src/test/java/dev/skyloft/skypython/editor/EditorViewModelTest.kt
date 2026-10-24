@@ -130,6 +130,54 @@ class EditorViewModelTest {
         assertEquals(OpenDocument.idOf(DocSource.Local(File("/p/y.py"))), s.currentId)
     }
 
+    // --- rename re-points tabs (review finding #6) ---
+
+    private fun id(path: String) = OpenDocument.idOf(DocSource.Local(File(path)))
+
+    @Test
+    fun renameFileRepointsTabKeepingTextDirtyPositionAndSelection() {
+        val s = DocumentsState()
+        val a = s.open(doc("/p/a.py", "old"))
+        s.open(doc("/p/b.py"))
+        s.update(a.id, "edited")
+        s.select(a.id)
+        s.rename(File("/p/a.py"), File("/p/z.py"))
+        assertEquals(listOf(id("/p/z.py"), id("/p/b.py")), s.docs.map { it.id })
+        val z = s.find(id("/p/z.py"))!!
+        assertEquals("z.py", z.name)
+        assertEquals("edited", z.text)
+        assertTrue(z.dirty)
+        assertEquals(File("/p/z.py").canonicalPath, (z.source as DocSource.Local).file.path)
+        assertEquals(z.id, s.currentId)
+    }
+
+    @Test
+    fun renameFolderRepointsEveryTabUnderItAndLeavesOthers() {
+        val s = DocumentsState()
+        val a = s.open(doc("/p/dir/a.py", "A"))
+        s.open(doc("/p/dir/sub/b.py", "B"))
+        s.open(doc("/p/dir2/c.py", "C"))
+        s.update(a.id, "A2")
+        s.rename(File("/p/dir"), File("/p/new"))
+        assertEquals(
+            listOf(id("/p/new/a.py"), id("/p/new/sub/b.py"), id("/p/dir2/c.py")),
+            s.docs.map { it.id },
+        )
+        assertEquals(listOf("a.py", "b.py", "c.py"), s.docs.map { it.name })
+        assertEquals(listOf("A2", "B", "C"), s.docs.map { it.text })
+        assertEquals(listOf(true, false, false), s.docs.map { it.dirty })
+        assertEquals(id("/p/dir2/c.py"), s.currentId) // selection untouched
+    }
+
+    @Test
+    fun renameFolderMovesSelectionWithTheSelectedTab() {
+        val s = DocumentsState()
+        s.open(doc("/p/x.py"))
+        s.open(doc("/p/dir/a.py"))
+        s.rename(File("/p/dir"), File("/p/d2"))
+        assertEquals(id("/p/d2/a.py"), s.currentId)
+    }
+
     @Test
     fun selectUnknownIdIsIgnored() {
         val s = DocumentsState()

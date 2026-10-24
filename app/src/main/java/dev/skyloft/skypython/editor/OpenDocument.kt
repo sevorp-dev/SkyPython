@@ -2,11 +2,51 @@ package dev.skyloft.skypython.editor
 
 import android.net.Uri
 import java.io.File
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+
+/**
+ * The real path of [file]: absolute, `.`/`..` removed and symlinks resolved (on Android
+ * `/data/user/0` is a symlink to `/data/data`). Works for paths that no longer exist (e.g. the
+ * old name after a rename) by resolving the longest existing prefix. Never throws.
+ */
+fun resolvedFile(file: File): File {
+    val canonical = try {
+        file.canonicalFile
+    } catch (e: IOException) {
+        file.absoluteFile
+    }
+    // File.canonicalFile already resolves symlinks on Unix/Android; toRealPath also does on Windows.
+    return try {
+        var existing: Path? = canonical.toPath()
+        val tail = ArrayDeque<String>()
+        while (existing != null && !Files.exists(existing)) {
+            tail.addFirst(existing.fileName?.toString() ?: break)
+            existing = existing.parent
+        }
+        if (existing == null) return canonical
+        tail.fold(existing.toRealPath()) { p, seg -> p.resolve(seg) }.toFile()
+    } catch (e: Exception) {
+        canonical
+    }
+}
 
 /** Where an open document lives. */
 sealed interface DocSource {
-    /** A file inside the app (normally under the projects root). */
-    data class Local(val file: File) : DocSource
+    /**
+     * A file inside the app (normally under the projects root). [file] is always resolved
+     * ([resolvedFile]) so one file has one identity however its path was spelled.
+     */
+    class Local private constructor(val file: File) : DocSource {
+        override fun equals(other: Any?): Boolean = other is Local && other.file == file
+        override fun hashCode(): Int = file.hashCode()
+        override fun toString(): String = "Local(file=$file)"
+
+        companion object {
+            operator fun invoke(file: File): Local = Local(resolvedFile(file))
+        }
+    }
 
     /** A SAF document edited in place through its URI. */
     data class External(val uri: Uri, val name: String) : DocSource
@@ -21,7 +61,7 @@ data class OpenDocument(
 ) {
     companion object {
         fun idOf(source: DocSource): String = when (source) {
-            is DocSource.Local -> "file:" + source.file.absolutePath
+            is DocSource.Local -> "file:" + source.file.path
             is DocSource.External -> "uri:" + source.uri.toString()
         }
 
@@ -80,12 +120,16 @@ class DocumentsState {
 
     /** Closes the local doc for [file], and every local doc under it if it is a directory. */
     fun closeLocal(file: File) {
-        val path = file.absolutePath
+        val under = localMatcher(file)
+        docs.filter { d -> (d.source as? DocSource.Local)?.let { under(it.file) } == true }
+            .forEach { close(it.id) }
+    }
+
+    /** Matches [file] itself and, if it is a directory, everything under it (resolved paths). */
+    private fun localMatcher(file: File): (File) -> Boolean {
+        val path = resolvedFile(file).path
         val prefix = path.trimEnd(File.separatorChar) + File.separator
-        docs.filter { d ->
-            val src = d.source
-            src is DocSource.Local && src.file.absolutePath.let { it == path || it.startsWith(prefix) }
-        }.forEach { close(it.id) }
+        return { f -> f.path == path || f.path.startsWith(prefix) }
     }
 
     fun update(id: String, text: String) {
@@ -110,4 +154,34 @@ class DocumentsState {
             .map { if (it.id == id) newDoc else it }
         if (currentId == id) currentId = newDoc.id
     }
+
+    /**
+     * [old] (a file or folder) was renamed to [new]: re-points the local tab of [old] and of every
+     * file under it, keeping text, dirty flag, tab position and selection.
+     */
+    fun rename(old: File, new: File) {
+        val oldPath = resolvedFile(old).path
+        val newPath = resolvedFile(new).path
+        val under = localMatcher(old)
+        val renamed = HashMap<String, OpenDocument>()
+        for (d in docs) {
+            val src = d.source as? DocSource.Local ?: continue
+            if (!under(src.file)) continue
+            val moved = DocSource.Local(File(newPath + src.file.path.substring(oldPath.length)))
+            renamed[d.id] = d.copy(id = OpenDocument.idOf(moved), source = moved, name = moved.file.name)
+        }
+        if (renamed.isEmpty()) return
+        val newIds = renamed.values.mapTo(HashSet()) { it.id }
+        // A rename never targets an existing path, but drop any stale tab already holding a new id.
+        docs = docs.filter { it.id in renamed || it.id !in newIds }.map { renamed[it.id] ?: it }
+        currentId = currentId?.let { renamed[it]?.id ?: it }?.takeIf { find(it) != null } ?: docs.firstOrNull()?.id
+    }
+}
+
+/** Tab label: the file name, or a path relative to [projectsRoot] if names clash. */
+fun tabLabel(doc: OpenDocument, all: List<OpenDocument>, projectsRoot: File): String {
+    val src = doc.source
+    if (src !is DocSource.Local || all.count { it.name == doc.name } < 2) return doc.name
+    val rel = runCatching { src.file.relativeTo(resolvedFile(projectsRoot)).path }.getOrNull()
+    return if (rel == null || rel.startsWith("..")) src.file.path else rel
 }
