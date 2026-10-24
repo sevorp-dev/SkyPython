@@ -12,6 +12,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import io.github.rosemoe.sora.event.ContentChangeEvent
+import io.github.rosemoe.sora.event.SelectionChangeEvent
 import io.github.rosemoe.sora.langs.textmate.TextMateColorScheme
 import io.github.rosemoe.sora.langs.textmate.TextMateLanguage
 import io.github.rosemoe.sora.langs.textmate.registry.FileProviderRegistry
@@ -85,6 +86,23 @@ class EditorController {
     }
 }
 
+private fun CodeEditor.cursorPosition(): CursorPosition {
+    val c = cursor
+    return CursorPosition(line = c.leftLine, column = c.leftColumn, lineCount = text.lineCount)
+}
+
+/** Applies user settings; each setter is skipped when unchanged so a re-apply doesn't relayout. */
+private fun CodeEditor.applyConfig(config: EditorViewConfig) {
+    // Sora's setTextSize takes sp and scales by the display's font metrics itself.
+    val px = android.util.TypedValue.applyDimension(
+        android.util.TypedValue.COMPLEX_UNIT_SP, config.textSizeSp, resources.displayMetrics,
+    )
+    if (textSizePx != px) setTextSize(config.textSizeSp)
+    if (isWordwrap != config.wordWrap) isWordwrap = config.wordWrap
+    if (isLineNumberEnabled != config.lineNumbers) isLineNumberEnabled = config.lineNumbers
+    keepScreenOn = config.keepScreenOn
+}
+
 /**
  * Sora [CodeEditor] showing the document [docId]. Each doc keeps its own [Content] (and so its
  * own undo history) while this composable lives; [initialText] seeds a doc the first time it is
@@ -97,12 +115,15 @@ fun CodeEditor(
     initialText: String,
     openIds: Set<String>,
     controller: EditorController,
+    config: EditorViewConfig,
     onTextChanged: (id: String, text: String) -> Unit,
+    onCursorChanged: (CursorPosition) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val contents = remember { HashMap<String, Content>() }
     val currentId by rememberUpdatedState(docId)
     val onChange by rememberUpdatedState(onTextChanged)
+    val onCursor by rememberUpdatedState(onCursorChanged)
     val scope = rememberCoroutineScope()
     val debouncer = remember { TextChangeDebouncer(scope) { id, text -> onChange(id, text) } }
 
@@ -113,10 +134,12 @@ fun CodeEditor(
             CodeEditor(ctx).apply {
                 typefaceText = Typeface.MONOSPACE
                 typefaceLineNumber = Typeface.MONOSPACE
-                isLineNumberEnabled = true
-                isWordwrap = false
                 tabWidth = 4
-                setTextSize(14f)
+                // Breathing room around the line-number gutter.
+                val dp = resources.displayMetrics.density
+                lineNumberMarginLeft = 6 * dp
+                setDividerMargin(6 * dp, 6 * dp)
+                applyConfig(config)
                 colorScheme = SkyColorScheme(ThemeRegistry.getInstance())
                 setEditorLanguage(TextMateLanguage.create(PYTHON_SCOPE, true))
                 subscribeAlways(ContentChangeEvent::class.java) { e ->
@@ -126,6 +149,7 @@ fun CodeEditor(
                         debouncer.onChanged(currentId) { content.toString() }
                     }
                 }
+                subscribeAlways(SelectionChangeEvent::class.java) { e -> onCursor(e.editor.cursorPosition()) }
                 controller.view = this
                 controller.flusher = debouncer::flush
             }
@@ -143,6 +167,12 @@ fun CodeEditor(
         val content = contents.getOrPut(docId) { Content(initialText) }
         // reuseContentObject = true keeps this doc's Content (and its undo stack) instead of copying it.
         if (view.text !== content) view.setText(content, true, null)
+        onCursor(view.cursorPosition())
+    }
+
+    // Settings changes apply live to the existing view.
+    LaunchedEffect(config) {
+        controller.view?.applyConfig(config)
     }
 
     // Forget contents of closed tabs.

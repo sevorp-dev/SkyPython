@@ -8,6 +8,13 @@ import androidx.compose.ui.graphics.Color
 val SkyBlue = Color(0xFF4FC3F7)
 val ErrorRed = Color(0xFFFF6B6B)
 
+/** dark blue-grey of the top bar, tab strip and symbol bar. */
+val BarBlue = Color(0xFF1C2B36)
+/** Code area background (also used by the Sora view, see CodeEditor). */
+val EditorBackground = Color(0xFF0F1720)
+/** Run FAB. */
+val RunAmber = Color(0xFFFFD54F)
+
 private val SkyColors = darkColorScheme(
     primary = SkyBlue,
     onPrimary = Color(0xFF00283A),
