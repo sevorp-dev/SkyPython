@@ -54,7 +54,7 @@ class EditorChromeTest {
         assertEquals(24f, EditorViewConfig.from(EditorSettings(fontSizeSp = 99)).textSizeSp)
     }
 
-    @Test fun `symbol bar has the full classic IDE symbol list`() {
+    @Test fun `symbol bar has the full symbol list`() {
         val labels = SYMBOL_KEYS.map { it.first }
         assertEquals(
             listOf("Tab", ":", ";", "'", "\"", "#", "(", ")", "[", "]", "{", "}", "=", ".", ",", "_", "+", "-", "*", "/", "<", ">", "\\", "|"),
