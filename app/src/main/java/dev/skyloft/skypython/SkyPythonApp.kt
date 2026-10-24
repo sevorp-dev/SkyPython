@@ -38,7 +38,7 @@ fun SkyPythonApp() {
     val editorVm: EditorViewModel = viewModel(
         factory = EditorViewModel.factory(app, workspace.root, workspace::ensureHello),
     )
-    val consoleVm: ConsoleViewModel = viewModel()
+    val consoleVm: ConsoleViewModel = viewModel(factory = ConsoleViewModel.factory(app))
     val filesVm: FilesViewModel = viewModel(factory = FilesViewModel.Factory(workspace))
 
     val nav = rememberNavController()
