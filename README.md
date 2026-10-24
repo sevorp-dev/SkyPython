@@ -53,7 +53,7 @@ The following features are planned or under development:
 - [x] 🌙 Modern dark theme
 - [ ] 💡 Code completion and diagnostics
 
-> v0.1 includes the editor, running scripts with an interactive console (`print` / `input`, Stop, Restart) and a file manager. Package management (pip) is planned for v0.2 and the terminal for v0.3.
+> Version 0.0.1 includes the editor, running scripts with an interactive console (`print` / `input`, Stop, Restart) and a file manager. Package management (pip) and a terminal are next on the roadmap.
 
 ## 📱 Screenshots
 
