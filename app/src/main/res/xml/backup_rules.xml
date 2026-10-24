@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 6-11: back up user projects and settings, skip the unpacked Python runtime (it is re-created from the APK). -->
+<full-backup-content>
+    <exclude domain="file" path="python/" />
+    <exclude domain="file" path="home/" />
+</full-backup-content>

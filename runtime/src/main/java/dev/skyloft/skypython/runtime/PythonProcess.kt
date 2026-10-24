@@ -4,10 +4,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -54,11 +56,21 @@ class PythonProcess(private val paths: PythonPaths) {
         synchronized(stdinLock) { stdin = OutputStreamWriter(p.outputStream, Charsets.UTF_8) }
         process = p
         try {
-            val out = launch(Dispatchers.IO) { pump(p.inputStream, this@channelFlow) { ConsoleEvent.Stdout(it) } }
-            val err = launch(Dispatchers.IO) { pump(p.errorStream, this@channelFlow) { ConsoleEvent.Stderr(it) } }
+            // Pumps live outside this flow's scope: a child process the script started can keep
+            // the pipes open after the script exits, and a blocked read can't be cancelled.
+            val out = killerScope.launch { pump(p.inputStream, this@channelFlow) { ConsoleEvent.Stdout(it) } }
+            val err = killerScope.launch { pump(p.errorStream, this@channelFlow) { ConsoleEvent.Stderr(it) } }
             val code = runInterruptible(Dispatchers.IO) { p.waitFor() }
-            out.join()
-            err.join()
+            val drained = withTimeoutOrNull(DRAIN_TIMEOUT_MS) {
+                out.join()
+                err.join()
+            }
+            if (drained == null) {
+                runCatching { p.inputStream.close() }
+                runCatching { p.errorStream.close() }
+                out.cancel()
+                err.cancel()
+            }
             send(ConsoleEvent.Exited(code))
         } finally {
             synchronized(stdinLock) {
@@ -92,7 +104,7 @@ class PythonProcess(private val paths: PythonPaths) {
         }
     }
 
-    private suspend fun pump(
+    private fun pump(
         stream: InputStream,
         channel: SendChannel<ConsoleEvent>,
         event: (String) -> ConsoleEvent,
@@ -106,8 +118,16 @@ class PythonProcess(private val paths: PythonPaths) {
                     -1 // stream closed by destroy()
                 }
                 if (n < 0) break
-                if (n > 0) channel.send(event(String(buf, 0, n)))
+                if (n > 0) {
+                    // The flow may already be finished (see DRAIN_TIMEOUT_MS); then stop reading.
+                    if (channel.trySendBlocking(event(String(buf, 0, n))).isFailure) break
+                }
             }
         }
+    }
+
+    private companion object {
+        /** How long to wait for remaining output after the script itself has exited. */
+        const val DRAIN_TIMEOUT_MS = 2_000L
     }
 }
