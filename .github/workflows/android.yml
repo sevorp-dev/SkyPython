@@ -53,6 +53,21 @@ jobs:
           disable-animations: true
           script: ./gradlew connectedDebugAndroidTest --console=plain
 
+      - name: Summarize instrumented tests
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          for f in glob.glob('**/build/outputs/androidTest-results/connected/**/*.xml', recursive=True):
+              r = ET.parse(f).getroot()
+              suites = [r] if r.tag == 'testsuite' else r.findall('testsuite')
+              for s in suites:
+                  print(f"::notice title=Instrumented {s.get('name')}::tests={s.get('tests')} failures={s.get('failures')} errors={s.get('errors')} skipped={s.get('skipped')}")
+                  for c in s.findall('testcase'):
+                      if c.find('failure') is not None or c.find('error') is not None:
+                          print(f"::error title=FAILED {c.get('classname')}.{c.get('name')}::failed")
+          PY
+
       - uses: actions/upload-artifact@v5
         if: always()
         with:

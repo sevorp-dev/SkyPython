@@ -138,6 +138,31 @@ class PythonProcessTest {
         assertEquals(ConsoleEvent.Exited(0), events.last())
     }
 
+    @Test
+    fun exitsEvenIfAChildProcessKeepsOutputOpen() = runBlocking {
+        // The forked child inherits stdout/stderr and sleeps; the script itself ends at once.
+        val source = """
+            import os, time
+            if os.fork() == 0:
+                time.sleep(30)
+                os._exit(0)
+            print("parent done")
+        """.trimIndent()
+        val startedAt = System.nanoTime()
+        val events = withTimeout(TIMEOUT_MS) { PythonProcess(paths).start(script(source)).toList() }
+        val elapsedMs = (System.nanoTime() - startedAt) / 1_000_000
+        assertTrue(events.stdout(), events.stdout().contains("parent done"))
+        assertEquals(ConsoleEvent.Exited(0), events.last())
+        assertTrue("took $elapsedMs ms", elapsedMs < 10_000)
+    }
+
+    @Test
+    fun extraNativeModulesLoad() {
+        val events = run("import ctypes, lzma, bz2, zlib, _decimal; print(\"ok\")")
+        assertTrue(events.stdout() + events.stderr(), events.stdout().contains("ok"))
+        assertEquals(ConsoleEvent.Exited(0), events.last())
+    }
+
     private companion object {
         const val TIMEOUT_MS = 60_000L
     }
