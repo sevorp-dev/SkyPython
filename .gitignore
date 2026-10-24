@@ -11,3 +11,4 @@ build/
 # Generated at build time from the python.org Android release
 /runtime/src/main/jniLibs/
 /runtime/src/main/assets/python/
+/.superpowers/
