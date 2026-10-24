@@ -72,7 +72,7 @@ Screenshots of the application will be added as the interface develops.
 
 ## 📥 Installation
 
-Requires Android 8.0+ on a 64-bit device (arm64-v8a) or an x86_64 emulator.
+Requires Android 7.0+ on a 64-bit device (arm64-v8a) or an x86_64 emulator.
 
 APK releases will be published on the [Releases](https://github.com/sevorp-dev/SkyPython/releases) page. Until then, every CI run on [Actions](https://github.com/sevorp-dev/SkyPython/actions) attaches a debug APK (`SkyPython-debug-apk`).
 
