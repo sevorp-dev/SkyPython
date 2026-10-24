@@ -13,6 +13,10 @@ object PythonEnvironment {
         "PYTHONIOENCODING" to "utf-8",
         "HOME" to paths.homeDir.path,
         "TMPDIR" to paths.tmpDir.path,
+        // pip --user installs here, and every script/REPL sees those packages.
+        "PYTHONUSERBASE" to paths.userBase.path,
+        // No network round-trip (and nag) on every pip call.
+        "PIP_DISABLE_PIP_VERSION_CHECK" to "1",
     )
 
     fun command(paths: PythonPaths, script: File): List<String> =
