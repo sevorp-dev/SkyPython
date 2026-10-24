@@ -1,13 +1,14 @@
 package dev.skyloft.skypython.console
 
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -37,6 +38,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.filter
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
@@ -81,27 +84,53 @@ fun ConsoleScreen(viewModel: ConsoleViewModel, onBack: () -> Unit) {
         Column(
             Modifier
                 .padding(padding)
+                // Scaffold already applied the nav-bar inset; don't count it again for the IME.
+                .consumeWindowInsets(padding)
                 .fillMaxSize()
-                .imePadding()
-                .navigationBarsPadding(),
+                .imePadding(),
         ) {
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when {
                     state.installError != null -> InstallError(state.installError!!, viewModel::retryInstall)
                     state.installing -> Installing()
-                    else -> ConsoleOutput(state.lines)
+                    else -> ConsoleOutput(state.lines, state.version)
                 }
             }
-            InputRow(enabled = state.running, onSend = viewModel::send)
+            InputRow(enabled = state.acceptsInput, onSend = viewModel::send)
         }
     }
 }
 
+/**
+ * Whether the viewport counts as "at the bottom", i.e. new output should keep following.
+ * [slack] items of tolerance so a nearly-at-the-end user still follows.
+ */
+internal fun isNearBottom(lastVisibleIndex: Int, totalItems: Int, slack: Int = 1): Boolean =
+    totalItems == 0 || lastVisibleIndex >= totalItems - 1 - slack
+
 @Composable
-private fun ConsoleOutput(lines: List<ConsoleLine>) {
+private fun ConsoleOutput(lines: List<ConsoleLine>, version: Long) {
     val listState = rememberLazyListState()
-    LaunchedEffect(lines.size) {
-        if (lines.isNotEmpty()) listState.scrollToItem(lines.lastIndex)
+    // Follow output until the user scrolls away from the bottom; resume when they return.
+    var follow by remember { mutableStateOf(true) }
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }
+            .filter { !it }
+            .collect {
+                val info = listState.layoutInfo
+                follow = isNearBottom(
+                    lastVisibleIndex = info.visibleItemsInfo.lastOrNull()?.index ?: -1,
+                    totalItems = info.totalItemsCount,
+                )
+            }
+    }
+    // Keyed on version, not line count: the count is constant at the cap, or when only
+    // the last line grows.
+    LaunchedEffect(version) {
+        if (lines.isNotEmpty() && follow && !listState.isScrollInProgress) {
+            listState.scrollToItem(lines.lastIndex)
+            listState.scrollBy(100_000f) // to the end of a multi-row (wrapped) last line
+        }
     }
     SelectionContainer {
         LazyColumn(
@@ -110,7 +139,7 @@ private fun ConsoleOutput(lines: List<ConsoleLine>) {
         ) {
             itemsIndexed(lines) { _, line ->
                 Text(
-                    text = line.toAnnotated(),
+                    text = remember(line) { line.toAnnotated() },
                     fontFamily = FontFamily.Monospace,
                     fontSize = 13.sp,
                     lineHeight = 17.sp,
