@@ -45,6 +45,7 @@ class PythonInstaller(context: Context) {
         // Version plus ABI: a restored backup from a device with another ABI must reinstall.
         val markerContent = "${BuildConfig.PYTHON_VERSION} $abi"
         if (!InstallSupport.isInstalled(home, MARKER, markerContent)) {
+            InstallSupport.requireFreeSpace(context.filesDir, InstallSupport.REQUIRED_FREE_BYTES)
             context.assets.open("python/stdlib-$abi.zip").use { zip ->
                 InstallSupport.install(zip, home, MARKER, markerContent)
             }
