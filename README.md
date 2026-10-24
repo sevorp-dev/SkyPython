@@ -1,4 +1,19 @@
-# SkyPython
+<div align="center">
+  <img src="assets/banner.png" alt="SkyPython — Python IDE for Android" width="100%">
+
+  <h1>SkyPython</h1>
+  <p><strong>Python development, anywhere.</strong></p>
+  <p>Open-source Python IDE for Android.</p>
+
+  <p>
+    Developed by <a href="https://github.com/sevorp-dev">@Sevorp</a>
+    ·
+    <a href="https://t.me/SkyLoft_Studio">SkyLoft Studio 🌥</a>
+  </p>
+</div>
+
+---
+
 
 <div align="center">
 
