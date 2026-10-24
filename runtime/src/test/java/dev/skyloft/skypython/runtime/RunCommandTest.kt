@@ -48,10 +48,13 @@ class RunCommandTest {
     }
 
     @Test
-    fun shellEnvironmentIsPythonEnvironmentPlusPath() {
+    fun shellEnvironmentIsPythonEnvironmentPlusPathAndRc() {
         val env = PythonEnvironment.shellEnvironment(paths)
-        assertEquals(paths.binDir.path + ":/system/bin", env["PATH"])
-        assertEquals(PythonEnvironment.build(paths), env - "PATH")
+        assertEquals("/system/bin", env["PATH"])
+        // mksh sources \$ENV in interactive shells: that's where python/pip are defined.
+        assertEquals(ShellShims.rcFile(paths).path, env["ENV"])
+        assertEquals(File(paths.homeDir, ".skypythonrc"), ShellShims.rcFile(paths))
+        assertEquals(PythonEnvironment.build(paths), env - "PATH" - "ENV")
     }
 
     @Test

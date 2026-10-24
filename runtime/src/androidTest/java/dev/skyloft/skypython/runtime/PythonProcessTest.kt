@@ -25,7 +25,7 @@ class PythonProcessTest {
     private lateinit var scriptDir: File
 
     @Before
-    fun setUp() = runBlocking {
+    fun setUp(): Unit = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         paths = PythonInstaller(context).ensureInstalled().getOrThrow()
         scriptDir = File(context.filesDir, "my scripts").apply {
@@ -70,7 +70,7 @@ class PythonProcessTest {
     }
 
     @Test
-    fun readsStdin() = runBlocking {
+    fun readsStdin(): Unit = runBlocking {
         withTimeout(TIMEOUT_MS) {
             val process = PythonProcess(paths)
             val c = Collector(process.start(script("print(input())")), this)
@@ -83,7 +83,7 @@ class PythonProcessTest {
     }
 
     @Test
-    fun promptWithoutNewlineArrivesBeforeInput() = runBlocking {
+    fun promptWithoutNewlineArrivesBeforeInput(): Unit = runBlocking {
         withTimeout(TIMEOUT_MS) {
             val process = PythonProcess(paths)
             val c = Collector(
@@ -115,7 +115,7 @@ class PythonProcessTest {
     }
 
     @Test
-    fun stopEndsInfiniteLoopWithinTwoSeconds() = runBlocking {
+    fun stopEndsInfiniteLoopWithinTwoSeconds(): Unit = runBlocking {
         withTimeout(TIMEOUT_MS) {
             val process = PythonProcess(paths)
             val c = Collector(process.start(script("while True: pass")), this)
@@ -139,7 +139,7 @@ class PythonProcessTest {
     }
 
     @Test
-    fun exitsEvenIfAChildProcessKeepsOutputOpen() = runBlocking {
+    fun exitsEvenIfAChildProcessKeepsOutputOpen(): Unit = runBlocking {
         // The forked child inherits stdout/stderr and sleeps; the script itself ends at once.
         val source = """
             import os, time

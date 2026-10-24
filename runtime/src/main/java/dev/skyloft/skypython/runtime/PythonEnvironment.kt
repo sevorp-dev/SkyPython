@@ -35,9 +35,9 @@ object PythonEnvironment {
     fun environment(paths: PythonPaths, command: RunCommand): Map<String, String> =
         if (command is RunCommand.Shell) shellEnvironment(paths) else build(paths)
 
-    /** [build] plus a PATH that finds the `python` / `pip` shims in [PythonPaths.binDir]. */
+    /** [build] plus PATH and `ENV`, the start-up file that defines `python` / `pip` ([ShellShims]). */
     fun shellEnvironment(paths: PythonPaths): Map<String, String> =
-        build(paths) + ("PATH" to "${paths.binDir.path}:/system/bin")
+        build(paths) + ("PATH" to "/system/bin") + ("ENV" to ShellShims.rcFile(paths).path)
 
     private const val SHELL = "/system/bin/sh"
 }

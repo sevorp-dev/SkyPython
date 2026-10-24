@@ -14,43 +14,53 @@ class ShellShimsTest {
     private val launcher = File("/data/app/~~abc/dev.skyloft.skypython-1/lib/x86_64/libpylauncher.so")
 
     @Test
-    fun shimScriptsExecTheLauncher() {
+    fun rcDefinesPythonAndPipAsFunctionsCallingTheLauncher() {
+        // Functions, not scripts: Android 10+ can't exec files from app storage.
         val l = launcher.path
-        assertEquals(
-            mapOf(
-                "python" to "#!/system/bin/sh\nexec '$l' \"\$@\"\n",
-                "python3" to "#!/system/bin/sh\nexec '$l' \"\$@\"\n",
-                "pip" to "#!/system/bin/sh\nexec '$l' -m pip \"\$@\"\n",
-            ),
-            ShellShims.scripts(launcher),
-        )
+        val rc = ShellShims.rc(launcher)
+        assertTrue(rc, rc.contains("python() { '$l' \"\$@\"; }\n"))
+        assertTrue(rc, rc.contains("python3() { '$l' \"\$@\"; }\n"))
+        assertTrue(rc, rc.contains("pip() { '$l' -m pip \"\$@\"; }\n"))
+        assertTrue(rc, rc.contains("pip3() { '$l' -m pip \"\$@\"; }\n"))
+    }
+
+    @Test
+    fun rcSetsAShortPromptWithTheFolderName() {
+        assertTrue(ShellShims.rc(launcher).contains("PS1='\${PWD##*/} \$ '\n"))
     }
 
     @Test
     fun singleQuotesInTheLauncherPathAreEscaped() {
         val odd = File("/x/it's/libpylauncher.so")
-        assertEquals(
-            "#!/system/bin/sh\nexec '${odd.path.replace("'", "'\\''")}' \"\$@\"\n",
-            ShellShims.scripts(odd).getValue("python"),
-        )
+        val quoted = "'" + odd.path.replace("'", "'\\''") + "'"
+        assertTrue(ShellShims.rc(odd).contains("python() { $quoted \"\$@\"; }"))
     }
 
     @Test
-    fun installWritesExecutableShimsCreatingTheBinDir() {
-        val bin = File(tmp.root, "home/bin")
-        ShellShims.install(bin, launcher)
-        for ((name, content) in ShellShims.scripts(launcher)) {
-            val f = File(bin, name)
-            assertEquals(content, f.readText())
-            assertTrue("$name must be executable", f.canExecute())
-        }
+    fun installWritesTheRcFileCreatingItsFolder() {
+        val rc = File(tmp.root, "home/.skypythonrc")
+        ShellShims.install(rc, launcher)
+        assertEquals(ShellShims.rc(launcher), rc.readText())
     }
 
     @Test
-    fun installRewritesAStaleShim() {
-        val bin = File(tmp.root, "bin").apply { mkdirs() }
-        File(bin, "python").writeText("#!/system/bin/sh\nexec /old/launcher \"\$@\"\n")
-        ShellShims.install(bin, launcher)
-        assertEquals(ShellShims.scripts(launcher).getValue("python"), File(bin, "python").readText())
+    fun installRewritesAStaleRc() {
+        val rc = File(tmp.root, ".skypythonrc").apply { writeText("python() { /old \"\$@\"; }\n") }
+        ShellShims.install(rc, launcher)
+        assertEquals(ShellShims.rc(launcher), rc.readText())
+    }
+
+    @Test
+    fun noTtyWarningsAreDroppedFromShellOutput() {
+        val chunk = "/system/bin/sh: can't find tty fd: No such device or address\n" +
+            "/system/bin/sh: warning: won't have full job control\n" +
+            "projects \$ "
+        assertEquals("projects \$ ", ShellShims.stripNoise(chunk))
+    }
+
+    @Test
+    fun otherShellErrorsAreKept() {
+        val chunk = "/system/bin/sh: foo: inaccessible or not found\n"
+        assertEquals(chunk, ShellShims.stripNoise(chunk))
     }
 }

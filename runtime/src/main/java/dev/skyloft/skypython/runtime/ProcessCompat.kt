@@ -35,20 +35,24 @@ internal object ProcessCompat {
         }
     }
 
-    /** Kills [p] with SIGKILL (a script can catch or ignore the SIGTERM of `destroy()`). */
+    /**
+     * Kills [p] with SIGKILL (a script can catch or ignore the SIGTERM of `destroy()`).
+     * Android's own `destroyForcibly()` only sends SIGTERM, so on every version the signal is
+     * sent to the child's id directly, falling back to the platform call if the id is unreadable.
+     */
     fun destroyForcibly(p: Process) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            p.destroyForcibly()
+        val pid = pidOf(p)
+        if (pid != null) {
+            android.os.Process.sendSignal(pid, android.os.Process.SIGNAL_KILL)
             return
         }
-        val killed = try {
-            // API 24/25: java.lang.UNIXProcess keeps the child's id in a private "pid" field.
-            val field = p.javaClass.getDeclaredField("pid").apply { isAccessible = true }
-            android.os.Process.sendSignal(field.getInt(p), android.os.Process.SIGNAL_KILL)
-            true
-        } catch (e: Exception) {
-            false
-        }
-        if (!killed) p.destroy()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) p.destroyForcibly() else p.destroy()
+    }
+
+    /** The child's process id: java.lang.UNIXProcess keeps it in a private "pid" field. */
+    private fun pidOf(p: Process): Int? = try {
+        p.javaClass.getDeclaredField("pid").apply { isAccessible = true }.getInt(p)
+    } catch (e: Exception) {
+        null
     }
 }

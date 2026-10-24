@@ -25,7 +25,7 @@ class PipInstrumentedTest {
     private val repo = PipRepository.create(context)
 
     @Test
-    fun ensurePipBootstrapsOfflineAndPipRuns() = runBlocking {
+    fun ensurePipBootstrapsOfflineAndPipRuns(): Unit = runBlocking {
         withTimeout(BOOTSTRAP_TIMEOUT_MS) {
             repo.ensurePip().getOrThrow()
             val version = repo.pipVersion().getOrThrow()
@@ -36,7 +36,7 @@ class PipInstrumentedTest {
     }
 
     @Test
-    fun installedPackageImportsFromAScript() = runBlocking {
+    fun installedPackageImportsFromAScript(): Unit = runBlocking {
         assumeTrue("no network to PyPI", canReach("pypi.org") && canReach("files.pythonhosted.org"))
         withTimeout(INSTALL_TIMEOUT_MS) {
             val log = StringBuilder()

@@ -4,31 +4,50 @@ import java.io.File
 import java.io.IOException
 
 /**
- * Executable `python`, `python3` and `pip` scripts for the terminal's PATH. They exec the
- * launcher by absolute path, which changes on app updates, so [install] rewrites stale ones.
+ * Makes `python`, `python3`, `pip` and `pip3` work in the terminal.
+ *
+ * They are shell functions in a start-up file (`$ENV`, read by Android's mksh for interactive
+ * shells), not executable scripts: Android 10+ refuses to exec files from app storage. The
+ * functions call the launcher by absolute path, which changes on app updates, so [install]
+ * rewrites a stale file.
  */
 object ShellShims {
 
-    fun scripts(launcher: File): Map<String, String> {
-        val exec = "#!/system/bin/sh\nexec ${shellQuote(launcher.path)}"
-        return linkedMapOf(
-            "python" to "$exec \"\$@\"\n",
-            "python3" to "$exec \"\$@\"\n",
-            "pip" to "$exec -m pip \"\$@\"\n",
-        )
-    }
+    fun rcFile(paths: PythonPaths): File = File(paths.homeDir, ".skypythonrc")
 
-    /** Writes the shims into [binDir] (created if missing) and marks them executable. */
-    fun install(binDir: File, launcher: File) {
-        if (!binDir.isDirectory && !binDir.mkdirs()) throw IOException("Cannot create $binDir")
-        for ((name, content) in scripts(launcher)) {
-            val file = File(binDir, name)
-            if (!file.isFile || file.readText() != content) file.writeText(content)
-            if (!file.canExecute() && !file.setExecutable(true, false)) {
-                throw IOException("Cannot make $file executable")
-            }
+    fun rc(launcher: File): String {
+        val l = shellQuote(launcher.path)
+        return buildString {
+            append("# Written by SkyPython on every terminal start.\n")
+            append("python() { $l \"\$@\"; }\n")
+            append("python3() { $l \"\$@\"; }\n")
+            append("pip() { $l -m pip \"\$@\"; }\n")
+            append("pip3() { $l -m pip \"\$@\"; }\n")
+            append("PS1='\${PWD##*/} \$ '\n")
         }
     }
+
+    /** Writes the start-up file at [rcFile] (its folder is created if missing). */
+    fun install(rcFile: File, launcher: File) {
+        val dir = rcFile.parentFile
+        if (dir != null && !dir.isDirectory && !dir.mkdirs()) throw IOException("Cannot create $dir")
+        val content = rc(launcher)
+        if (!rcFile.isFile || rcFile.readText() != content) rcFile.writeText(content)
+    }
+
+    /** Drops the warnings an interactive shell prints when it has no terminal (no PTY yet). */
+    fun stripNoise(chunk: String): String =
+        chunk.split('\n').let { lines ->
+            lines.filterIndexed { i, line ->
+                // Keep the trailing piece (a prompt or partial line); drop only complete noise lines.
+                i == lines.lastIndex || NOISE.none { line.endsWith(it) }
+            }.joinToString("\n")
+        }
+
+    private val NOISE = listOf(
+        "can't find tty fd: No such device or address",
+        "warning: won't have full job control",
+    )
 
     private fun shellQuote(s: String) = "'" + s.replace("'", "'\\''") + "'"
 }

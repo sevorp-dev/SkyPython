@@ -68,7 +68,7 @@ class PythonProcess(private val paths: PythonPaths) {
             // Pumps live outside this flow's scope: a child process the script started can keep
             // the pipes open after the script exits, and a blocked read can't be cancelled.
             val out = killerScope.launch { pump(p.inputStream, this@channelFlow) { ConsoleEvent.Stdout(it) } }
-            val err = killerScope.launch { pump(p.errorStream, this@channelFlow) { ConsoleEvent.Stderr(it) } }
+            val err = killerScope.launch { pump(p.errorStream, this@channelFlow) { ConsoleEvent.Stderr(if (command is RunCommand.Shell) ShellShims.stripNoise(it) else it) } }
             val code = runInterruptible(Dispatchers.IO) { p.waitFor() }
             val drained = withTimeoutOrNull(DRAIN_TIMEOUT_MS) {
                 out.join()
@@ -97,7 +97,7 @@ class PythonProcess(private val paths: PythonPaths) {
             is RunCommand.Interpreter -> command.cwd.mkdirs()
             is RunCommand.Shell -> {
                 command.cwd.mkdirs()
-                ShellShims.install(paths.binDir, paths.launcher)
+                ShellShims.install(ShellShims.rcFile(paths), paths.launcher)
             }
         }
         val builder = ProcessBuilder(PythonEnvironment.command(paths, command))
