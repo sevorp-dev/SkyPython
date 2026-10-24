@@ -1,0 +1,13 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+build/
+/captures
+.externalNativeBuild/
+.cxx/
+.kotlin/
+# Generated at build time from the python.org Android release
+/runtime/src/main/jniLibs/
+/runtime/src/main/assets/python/
