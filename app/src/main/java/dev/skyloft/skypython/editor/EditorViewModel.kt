@@ -24,8 +24,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -60,7 +58,18 @@ class EditorViewModel(
     /** One-shot user-facing messages (e.g. save errors) for a snackbar. */
     val messages: SharedFlow<String> = _messages.asSharedFlow()
 
-    private val saveMutex = Mutex()
+    private val saver = DocumentSaver(
+        docs = docsState,
+        io = Dispatchers.IO,
+        write = { src, text ->
+            when (src) {
+                is DocSource.Local -> src.file.writeText(text, Charsets.UTF_8)
+                is DocSource.External -> writeExternal(src.uri, text)
+            }
+        },
+        onSaved = { publish(persistSession = false) },
+        onError = { doc, e -> message("Can't save ${doc.name}: ${e.message}") },
+    )
     private var restored = false
     private val sessionToSave = MutableStateFlow<Session?>(null)
     private val resolver get() = getApplication<Application>().contentResolver
@@ -182,34 +191,11 @@ class EditorViewModel(
     }
 
     /** Tab label: the file name, or a path relative to the projects root if names clash. */
-    fun labelFor(doc: OpenDocument, all: List<OpenDocument>): String {
-        val src = doc.source
-        if (src !is DocSource.Local || all.count { it.name == doc.name } < 2) return doc.name
-        val rel = runCatching { src.file.relativeTo(projectsRoot).path }.getOrNull()
-        return if (rel == null || rel.startsWith("..")) src.file.path else rel
-    }
+    fun labelFor(doc: OpenDocument, all: List<OpenDocument>): String = tabLabel(doc, all, projectsRoot)
 
-    private suspend fun saveAllNow(): Boolean {
-        var ok = true
-        for (doc in docsState.docs) if (doc.dirty) ok = save(doc) && ok
-        return ok
-    }
+    private suspend fun saveAllNow(): Boolean = saver.saveAll()
 
-    /** Writes [doc]'s current text; returns false (and reports) on failure. */
-    private suspend fun save(doc: OpenDocument): Boolean = saveMutex.withLock {
-        val text = docsState.find(doc.id)?.text ?: return@withLock true
-        val result = withContext(Dispatchers.IO) {
-            runCatching {
-                when (val src = doc.source) {
-                    is DocSource.Local -> src.file.writeText(text, Charsets.UTF_8)
-                    is DocSource.External -> writeExternal(src.uri, text)
-                }
-            }
-        }
-        result.onSuccess { docsState.markSaved(doc.id, text); publish(persistSession = false) }
-            .onFailure { message("Can't save ${doc.name}: ${it.message}") }
-        result.isSuccess
-    }
+    private suspend fun save(doc: OpenDocument): Boolean = saver.save(doc)
 
     // ---- session ----
 
@@ -222,18 +208,13 @@ class EditorViewModel(
                 .onFailure { message("Can't create example file: ${it.message}") }
             return
         }
-        val loaded = withContext(Dispatchers.IO) {
-            session.tabs.map { tab ->
-                runCatching {
-                    when (tab.kind) {
-                        SavedTab.Kind.LOCAL -> File(tab.location).let { OpenDocument.local(it, readLocal(it)) }
-                        SavedTab.Kind.EXTERNAL -> Uri.parse(tab.location).let {
-                            OpenDocument.of(DocSource.External(it, tab.name), readExternal(it))
-                        }
-                    }
-                }.getOrNull()
+        val reopened = withContext(Dispatchers.IO) {
+            restoreTabs(session.tabs, ::readLocal) { tab ->
+                Uri.parse(tab.location).let { OpenDocument.of(DocSource.External(it, tab.name), readExternal(it)) }
             }
         }
+        reopened.messages.forEach(::message)
+        val loaded = reopened.docs
         loaded.filterNotNull().forEach { docsState.open(it) }
         loaded.getOrNull(session.currentIndex)?.let { docsState.select(it.id) }
     }

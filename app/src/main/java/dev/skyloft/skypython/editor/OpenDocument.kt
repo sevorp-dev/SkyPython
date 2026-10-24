@@ -110,4 +110,17 @@ class DocumentsState {
             .map { if (it.id == id) newDoc else it }
         if (currentId == id) currentId = newDoc.id
     }
+
+    /** [old] (a file or folder) was renamed to [new]: re-points affected local tabs. */
+    fun rename(old: File, new: File) {
+        closeLocal(old)
+    }
+}
+
+/** Tab label: the file name, or a path relative to [projectsRoot] if names clash. */
+fun tabLabel(doc: OpenDocument, all: List<OpenDocument>, projectsRoot: File): String {
+    val src = doc.source
+    if (src !is DocSource.Local || all.count { it.name == doc.name } < 2) return doc.name
+    val rel = runCatching { src.file.relativeTo(projectsRoot).path }.getOrNull()
+    return if (rel == null || rel.startsWith("..")) src.file.path else rel
 }
