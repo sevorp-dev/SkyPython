@@ -72,8 +72,8 @@ class TerminalSessionDeviceTest {
     /** Everything on screen and in the scrollback, one line per row (main thread only). */
     private fun TerminalViewModel.screen(): String = session.emulator.screen.transcriptText
 
-    private fun TerminalViewModel.awaitScreen(regex: Regex): String =
-        waitFor("/$regex/") { screen().takeIf { regex.containsMatchIn(it) } }
+    private fun TerminalViewModel.awaitScreen(regex: Regex, timeoutMs: Long = TIMEOUT_MS): String =
+        waitFor("/$regex/", timeoutMs) { screen().takeIf { regex.containsMatchIn(it) } }
 
     private fun TerminalViewModel.type(text: String) = onMain {
         val bytes = text.toByteArray()
@@ -151,7 +151,8 @@ class TerminalSessionDeviceTest {
         // screen), as plain text does on a slow device: the reader always has more ready.
         vm.type("import os; line = b'\\x1b#8' * 20 + b'0123456789' * 7 + b'\\r\\n'; chunk = line * 200\r")
         vm.type("while True: os.write(1, chunk)\r\r")
-        vm.awaitScreen(Regex("(0123456789){7}"))
+        // The 32-bit CI emulator is slow to render this deliberately heavy output: allow a minute.
+        vm.awaitScreen(Regex("(0123456789){7}"), timeoutMs = 60_000)
         var worst = 0L
         val until = SystemClock.elapsedRealtime() + 3_000
         while (SystemClock.elapsedRealtime() < until) {
