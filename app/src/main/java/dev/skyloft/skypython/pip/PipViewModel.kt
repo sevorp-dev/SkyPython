@@ -237,11 +237,20 @@ class PipViewModel(
                 is InstallOutcome.Succeeded -> PipNotice.Done(op)
                 is InstallOutcome.Failed -> PipNotice.Failed(op)
             }
-            _state.update { it.copy(running = null, outcome = outcome, notice = notice) }
+            // What pip says it installed shows at once everywhere (popular rows, search result,
+            // Installed tab); `pip list` then confirms it.
+            val fresh = PipLog.installed(_state.value.log)
+            _state.update { it.copy(running = null, outcome = outcome, notice = notice, packages = merged(it.packages, fresh)) }
             // Even a failed requirements run may have installed some packages.
-            listStale = true
-            if (_state.value.tab == PipTab.Installed) refresh()
+            reload()
         }
+    }
+
+    private fun merged(packages: List<PipPackage>, fresh: List<PipPackage>): List<PipPackage> {
+        if (fresh.isEmpty()) return packages
+        val names = fresh.map { PyPiJson.normalize(it.name) }.toSet()
+        return (packages.filter { PyPiJson.normalize(it.name) !in names } + fresh)
+            .sortedBy { PyPiJson.normalize(it.name) }
     }
 
     private fun validSpec(): String? = when (val check = PackageSpec.check(_state.value.spec)) {
@@ -254,8 +263,19 @@ class PipViewModel(
 
     // --- Installed -------------------------------------------------------------------------
 
+    /** The screen became visible: the popular rows need to know what's installed. */
+    fun onShown() {
+        if (listStale) refresh()
+    }
+
     fun refresh() {
         if (listJob?.isActive == true) return
+        reload()
+    }
+
+    /** Runs `pip list` now, replacing a run that started before pip changed something. */
+    private fun reload() {
+        listJob?.cancel()
         listStale = false
         _state.update { it.copy(loading = true, listError = null) }
         listJob = viewModelScope.launch { loadList() }
@@ -280,11 +300,14 @@ class PipViewModel(
                 _state.update { it.copy(listError = describe(e)) }
                 return@launch
             }
-            _state.update { it.copy(notice = PipNotice.Uninstalled(pkg.name)) }
-            listJob?.join()
-            listStale = false
-            _state.update { it.copy(loading = true) }
-            loadList()
+            val gone = PyPiJson.normalize(pkg.name)
+            _state.update { s ->
+                s.copy(
+                    notice = PipNotice.Uninstalled(pkg.name),
+                    packages = s.packages.filter { PyPiJson.normalize(it.name) != gone },
+                )
+            }
+            reload()
         }
     }
 

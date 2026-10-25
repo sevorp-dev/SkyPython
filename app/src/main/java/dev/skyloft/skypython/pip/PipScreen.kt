@@ -129,6 +129,8 @@ fun PipScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberMainScope()
+    // The popular rows and search results mark what's already installed.
+    LaunchedEffect(viewModel) { viewModel.onShown() }
 
     val notice = state.notice
     val noticeText = notice?.let { noticeText(it) }
@@ -490,7 +492,7 @@ private fun PopularRow(pkg: PopularPackage, installed: Boolean, action: PopularA
             action == PopularAction.Needs64Bit -> DisabledNote(stringResource(R.string.pip_needs_64bit))
             action == PopularAction.Not32Bit -> DisabledNote(stringResource(R.string.pip_prebuilt_32bit))
             action == PopularAction.NotThisDevice -> DisabledNote(stringResource(R.string.pip_prebuilt_other_abi))
-            installed -> InstalledBadge()
+            installed -> Box(Modifier.testTag(popularInstalledTag(pkg.name))) { InstalledBadge() }
             else -> TextButton(
                 onClick = onInstall,
                 enabled = !busy,
@@ -505,6 +507,9 @@ const val PREBUILT_BADGE_TAG = "pip_prebuilt_badge"
 
 /** Test tag of the Install button of popular package [name]. */
 fun popularInstallTag(name: String) = "pip_popular_install_$name"
+
+/** Test tag of the "Installed" mark of popular package [name]. */
+fun popularInstalledTag(name: String) = "pip_popular_installed_$name"
 
 /** "Prebuilt for Android": the package comes from SkyPython's wheel index. */
 @Composable

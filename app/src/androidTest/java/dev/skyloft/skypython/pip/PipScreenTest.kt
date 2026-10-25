@@ -74,6 +74,22 @@ class PipScreenTest {
     }
 
     @Test
+    fun anInstalledPopularPackageSaysSoWithoutLeavingTheTab() {
+        show()
+        val install = hasTestTag(popularInstallTag("rich"))
+        rule.onNode(hasScrollAction()).performScrollToNode(install)
+        pip.installed = listOf(PipPackage("rich", "14.0.0"), PipPackage("six", "1.16.0"))
+        rule.onNode(install).performClick()
+        rule.waitUntilAtLeastOneExists(hasTestTag(popularInstalledTag("rich")), 5_000)
+        rule.onNode(install).assertDoesNotExist()
+        rule.onNode(hasTestTag(popularInstalledTag("rich"))).assertIsDisplayed()
+        // The Installed tab lists it straight away as well.
+        rule.onNode(hasText(str(R.string.pip_tab_installed))).performClick()
+        rule.waitUntilAtLeastOneExists(hasText("rich"), 5_000)
+        rule.onNode(hasText("14.0.0", substring = true)).assertExists()
+    }
+
+    @Test
     fun searchShowsTheProjectAndItsWheelSupport() {
         show(
             PackageIndex { name ->
