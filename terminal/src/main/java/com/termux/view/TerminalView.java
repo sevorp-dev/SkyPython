@@ -38,8 +38,10 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.termux.terminal.KeyHandler;
+import com.termux.terminal.TerminalColors;
 import com.termux.terminal.TerminalEmulator;
 import com.termux.terminal.TerminalSession;
+import com.termux.terminal.TextStyle;
 import com.termux.view.textselection.TextSelectionCursorController;
 
 /** View displaying and interacting with a {@link TerminalSession}. */
@@ -466,14 +468,9 @@ public final class TerminalView extends View {
         }
 
         if (!skipScrolling && mTopRow != 0) {
-            // Scroll down if not already there.
-            if (mTopRow < -3) {
-                // Awaken scroll bars only if scrolling a noticeable amount
-                // - we do not want visible scroll bars during normal typing
-                // of one row at a time.
-                awakenScrollBars();
-            }
-            mTopRow = 0;
+            // SkyPython: someone scrolled back to read: keep the same lines in view while output
+            // goes on below (typing, or scrolling to the bottom, follows the output again).
+            mTopRow = Math.max(-rowsInHistory, mTopRow - mEmulator.getScrollCounter());
         }
 
         mEmulator.clearScrollCounter();
@@ -883,6 +880,7 @@ public final class TerminalView extends View {
             }
 
             // If left alt, send escape before the code point to make e.g. Alt+B and Alt+F work in readline:
+            scrollToBottom(); // SkyPython: typing follows the output again
             mTermSession.writeCodePoint(altDown, codePoint);
         }
     }
@@ -899,6 +897,7 @@ public final class TerminalView extends View {
         TerminalEmulator term = mTermSession.getEmulator();
         String code = KeyHandler.getCode(keyCode, keyMod, term.isCursorKeysApplicationMode(), term.isKeypadApplicationMode());
         if (code == null) return false;
+        scrollToBottom(); // SkyPython: typing follows the output again
         mTermSession.write(code);
         return true;
     }
@@ -984,10 +983,37 @@ public final class TerminalView extends View {
         }
     }
 
+    /** SkyPython: back to the newest output. */
+    public void scrollToBottom() {
+        if (mTopRow == 0) return;
+        mTopRow = 0;
+        invalidate();
+    }
+
+    /** SkyPython: to the oldest line kept. */
+    public void scrollToTop() {
+        if (mEmulator == null) return;
+        mTopRow = -mEmulator.getScreen().getActiveTranscriptRows();
+        awakenScrollBars();
+        invalidate();
+    }
+
+    /** SkyPython: whether the newest output is in view. */
+    public boolean isAtBottom() {
+        return mTopRow == 0;
+    }
+
+    private boolean mReportedAtBottom = true;
+
     @Override
     protected void onDraw(Canvas canvas) {
+        boolean atBottom = mTopRow == 0;
+        if (atBottom != mReportedAtBottom && mClient != null) {
+            mReportedAtBottom = atBottom;
+            mClient.onScrolledToBottomChanged(atBottom);
+        }
         if (mEmulator == null) {
-            canvas.drawColor(0XFF000000);
+            canvas.drawColor(TerminalColors.COLOR_SCHEME.mDefaultColors[TextStyle.COLOR_INDEX_BACKGROUND]);
         } else {
             // render the terminal view and highlight any selected text
             int[] sel = mDefaultSelectors;

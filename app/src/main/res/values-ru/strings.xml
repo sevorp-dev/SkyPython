@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Экраны терминала: ▶ Запуск, Интерпретатор, Терминал -->
+    <string name="terminal_title_interpreter">Интерпретатор</string>
+    <string name="terminal_title_shell">Терминал</string>
+    <string name="terminal_title_run">Запуск</string>
+    <string name="terminal_start_failed">Не удалось открыть терминал</string>
+    <string name="use_simple_output">Простой вывод</string>
+    <string name="use_simple_console">Простая консоль</string>
+
+    <string name="run_stop">Остановить</string>
+    <string name="run_again">Запустить снова</string>
+    <string name="run_restart">Перезапустить</string>
+    <string name="back_to_editor">К редактору</string>
+    <string name="run_exit_code">Код выхода %1$d</string>
+
+    <string name="output_more">Другие действия</string>
+    <string name="output_copy_all">Копировать всё</string>
+    <string name="output_share">Поделиться выводом</string>
+    <string name="output_save">Сохранить вывод</string>
+    <string name="output_save_as">Сохранить как…</string>
+    <string name="output_clear">Очистить</string>
+    <string name="output_scroll_top">В начало</string>
+    <string name="output_scroll_bottom">В конец</string>
+    <string name="output_font_smaller">Мельче</string>
+    <string name="output_font_bigger">Крупнее</string>
+    <string name="output_font_size">Текст %1$d sp</string>
+    <string name="output_copied">Вывод скопирован</string>
+    <string name="output_nothing">Вывода пока нет</string>
+    <string name="output_saved">Сохранено: %1$s</string>
+    <string name="output_save_failed">Не удалось сохранить: %1$s</string>
+
+    <string name="run_busy_title">Ещё работает</string>
+    <string name="run_busy_text">Программа ещё работает. Остановить её и запустить %1$s?</string>
+    <string name="run_busy_confirm">Остановить и запустить</string>
+    <string name="run_busy_cancel">Отмена</string>
+</resources>

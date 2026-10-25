@@ -27,6 +27,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
+/** Where the editor should put the cursor once [file] is the shown tab (a traceback was tapped). */
+data class LineJump(val file: File, val line: Int)
+
 data class EditorUiState(
     val docs: List<OpenDocument> = emptyList(),
     val currentId: String? = null,
@@ -89,7 +92,22 @@ class EditorViewModel(
         }
     }
 
+    private val _jump = MutableStateFlow<LineJump?>(null)
+
+    /** A pending [openAt]; the screen moves the cursor there and calls [jumpDone]. */
+    val jump: StateFlow<LineJump?> = _jump.asStateFlow()
+
     // ---- tabs ----
+
+    /** Opens [file] (or switches to its tab) with the cursor on [line] (1-based). */
+    fun openAt(file: File, line: Int) {
+        _jump.value = LineJump(file, line)
+        open(file)
+    }
+
+    fun jumpDone() {
+        _jump.value = null
+    }
 
     fun open(file: File) {
         viewModelScope.launch {

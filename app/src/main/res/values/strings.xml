@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Terminal screens: ▶ Run, Interpreter, Terminal -->
+    <string name="terminal_title_interpreter">Interpreter</string>
+    <string name="terminal_title_shell">Terminal</string>
+    <string name="terminal_title_run">Run</string>
+    <string name="terminal_start_failed">Could not open a terminal</string>
+    <string name="use_simple_output">Use simple output</string>
+    <string name="use_simple_console">Use the simple console</string>
+
+    <string name="run_stop">Stop</string>
+    <string name="run_again">Run again</string>
+    <string name="run_restart">Restart</string>
+    <string name="back_to_editor">Back to editor</string>
+    <string name="run_exit_code">Exit code %1$d</string>
+
+    <string name="output_more">More options</string>
+    <string name="output_copy_all">Copy all</string>
+    <string name="output_share">Share output</string>
+    <string name="output_save">Save output</string>
+    <string name="output_save_as">Save as…</string>
+    <string name="output_clear">Clear</string>
+    <string name="output_scroll_top">Scroll to top</string>
+    <string name="output_scroll_bottom">Scroll to bottom</string>
+    <string name="output_font_smaller">Smaller text</string>
+    <string name="output_font_bigger">Bigger text</string>
+    <string name="output_font_size">Text %1$d sp</string>
+    <string name="output_copied">Output copied</string>
+    <string name="output_nothing">No output yet</string>
+    <string name="output_saved">Saved to %1$s</string>
+    <string name="output_save_failed">Couldn\'t save: %1$s</string>
+
+    <string name="run_busy_title">Still running</string>
+    <string name="run_busy_text">Something is still running. Stop it and start %1$s?</string>
+    <string name="run_busy_confirm">Stop &amp; start</string>
+    <string name="run_busy_cancel">Cancel</string>
+</resources>

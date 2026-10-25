@@ -78,8 +78,29 @@ class PtyCommandTest {
         assertTrue(env.all { '=' in it })
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun scriptsDoNotRunInAPty() {
-        PtyCommand.of(paths, RunCommand.Script(File(projects, "a.py")), appEnv)
+    @Test
+    fun scriptRunsUnbufferedInItsOwnFolder() {
+        val script = File(projects, "demo/a.py")
+        val cmd = PtyCommand.of(paths, RunCommand.Script(script), appEnv)
+        assertEquals(launcher.path, cmd.executable)
+        assertEquals(listOf(launcher.path, "-u", script.path), cmd.argv)
+        // The script's folder (absolute; on the host test JVM that may add a drive letter).
+        assertEquals(File(projects, "demo").absoluteFile, cmd.cwd)
+    }
+
+    @Test
+    fun scriptGetsPythonsVariablesAndAColourTerminal() {
+        val env = PtyCommand.of(paths, RunCommand.Script(File(projects, "a.py")), appEnv).env.asMap()
+        for ((k, v) in PythonEnvironment.build(paths)) assertEquals(k, v, env[k])
+        assertEquals("xterm-256color", env["TERM"])
+        // Colour output (tracebacks, rich, colorama) must not be switched off.
+        assertEquals(null, env["NO_COLOR"])
+        assertEquals(null, env["PYTHON_COLORS"])
+    }
+
+    @Test
+    fun noColorFromTheAppIsNotPassedOn() {
+        val env = PtyCommand.of(paths, RunCommand.Script(File(projects, "a.py")), appEnv + ("NO_COLOR" to "1")).env.asMap()
+        assertEquals(null, env["NO_COLOR"])
     }
 }

@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -43,6 +44,7 @@ import java.io.File
 private object Routes {
     const val EDITOR = "editor"
     const val CONSOLE = "console"
+    const val RUN = "run"
     const val INTERPRETER = "interpreter"
     const val TERMINAL = "terminal"
     const val FILES = "files"
@@ -80,10 +82,21 @@ fun SkyPythonApp() {
         key = "terminal-shell",
         factory = TerminalViewModel.factory(app, workspace.root, TerminalKind.Shell),
     )
+    // ▶ Run: the script on a terminal of its own (real input(), colours, Ctrl+C).
+    val runVm: TerminalViewModel = viewModel(
+        key = "terminal-run",
+        factory = TerminalViewModel.factory(app, workspace.root, TerminalKind.Run),
+    )
 
     val nav = rememberNavController()
     val scope = rememberCoroutineScope()
     val openConsole = { nav.go(Routes.CONSOLE) }
+    val openRun = { nav.go(Routes.RUN) }
+    val openInEditor = { file: File, line: Int ->
+        editorVm.openAt(file, line)
+        nav.popBackStack(Routes.EDITOR, inclusive = false)
+        Unit
+    }
 
     NavHost(navController = nav, startDestination = Routes.EDITOR) {
         composable(Routes.EDITOR) {
@@ -91,8 +104,8 @@ fun SkyPythonApp() {
                 viewModel = editorVm,
                 settings = settings,
                 onRun = { file ->
-                    // Only one program at a time: a running one makes this ask first.
-                    if (consoleVm.requestRun(file)) openConsole()
+                    // One script at a time: a running one makes this ask first (RunBusyDialog).
+                    if (runVm.requestRun(file)) openRun()
                 },
                 onOpenFiles = {
                     // Save first so a rename/delete in Files never loses edits.
@@ -129,9 +142,23 @@ fun SkyPythonApp() {
                 },
             )
             RestartDialog(consoleVm = consoleVm, onConfirmed = openConsole)
+            RunBusyDialog(runVm = runVm, onConfirmed = openRun)
         }
         composable(Routes.CONSOLE) {
             ConsoleScreen(viewModel = consoleVm, onBack = { nav.popBackStack() })
+        }
+        composable(Routes.RUN) {
+            TerminalScreen(
+                viewModel = runVm,
+                onBack = { nav.popBackStack() },
+                // No pseudo-terminal: the same script on the line-mode console over pipes.
+                onUseSimpleConsole = onUseSimpleOutput@{
+                    val script = runVm.state.value.script ?: return@onUseSimpleOutput
+                    nav.popBackStack()
+                    if (consoleVm.requestRun(script)) openConsole()
+                },
+                onOpenInEditor = openInEditor,
+            )
         }
         // Fallback if the pseudo-terminal can't be opened: the line-mode console over pipes.
         val simpleConsole = { start: () -> Boolean ->
@@ -144,6 +171,7 @@ fun SkyPythonApp() {
                 viewModel = interpreterVm,
                 onBack = { nav.popBackStack() },
                 onUseSimpleConsole = { simpleConsole(consoleVm::startInterpreter) },
+                onOpenInEditor = openInEditor,
             )
         }
         composable(Routes.TERMINAL) {
@@ -151,6 +179,7 @@ fun SkyPythonApp() {
                 viewModel = shellVm,
                 onBack = { nav.popBackStack() },
                 onUseSimpleConsole = { simpleConsole(consoleVm::startTerminal) },
+                onOpenInEditor = openInEditor,
             )
         }
         composable(Routes.FILES) {
@@ -210,6 +239,27 @@ private fun RestartDialog(consoleVm: ConsoleViewModel, onConfirmed: () -> Unit) 
         },
         dismissButton = {
             TextButton(onClick = consoleVm::dismissPendingRun) { Text("Cancel") }
+        },
+    )
+}
+
+/** "One script at a time" for ▶ Run: asks before replacing the script still running. */
+@Composable
+private fun RunBusyDialog(runVm: TerminalViewModel, onConfirmed: () -> Unit) {
+    val state by runVm.state.collectAsStateWithLifecycle()
+    val pending = state.pending ?: return
+    AlertDialog(
+        onDismissRequest = runVm::dismissPendingRun,
+        title = { Text(stringResource(R.string.run_busy_title)) },
+        text = { Text(stringResource(R.string.run_busy_text, pending.name)) },
+        confirmButton = {
+            TextButton(onClick = {
+                runVm.confirmPendingRun()
+                onConfirmed()
+            }) { Text(stringResource(R.string.run_busy_confirm)) }
+        },
+        dismissButton = {
+            TextButton(onClick = runVm::dismissPendingRun) { Text(stringResource(R.string.run_busy_cancel)) }
         },
     )
 }

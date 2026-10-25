@@ -109,6 +109,13 @@ class EditorController {
     fun undo() { view?.undo() }
     fun redo() { view?.redo() }
 
+    /** Puts the cursor at the start of [line] (1-based, clamped) and scrolls it into view. */
+    fun goToLine(line: Int) {
+        val v = view ?: return
+        val index = (line - 1).coerceIn(0, (v.text.lineCount - 1).coerceAtLeast(0))
+        v.setSelection(index, 0, true)
+    }
+
     /** Inserts [text] at the cursor (replacing any selection) and places the cursor after it. */
     fun insert(text: String) {
         view?.insertText(text, text.length)

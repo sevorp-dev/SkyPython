@@ -33,7 +33,10 @@ public class TextSelectionCursorController implements CursorController {
     private ActionMode mActionMode;
     public final int ACTION_COPY = 1;
     public final int ACTION_PASTE = 2;
-    public final int ACTION_MORE = 3;
+    // SkyPython: "More…" (a context menu the host had to build) is replaced by these.
+    public final int ACTION_SELECT_ALL = 4;
+    public final int ACTION_SHARE = 5;
+    public final int ACTION_COPY_ALL = 6;
 
     public TextSelectionCursorController(TerminalView terminalView) {
         this.terminalView = terminalView;
@@ -70,7 +73,9 @@ public class TextSelectionCursorController implements CursorController {
 
         if (mActionMode != null) {
             // This will hide the TextSelectionCursorController
-            mActionMode.finish();
+            ActionMode mode = mActionMode;
+            mActionMode = null; // SkyPython: so onDestroyActionMode knows we ended it
+            mode.finish();
         }
 
         mSelX1 = mSelY1 = mSelX2 = mSelY2 = -1;
@@ -109,15 +114,22 @@ public class TextSelectionCursorController implements CursorController {
     }
     
     public void setActionModeCallBacks() {
+        // SkyPython: Copy, Paste (only while the program can take input), Select all, Share and
+        // Copy all; the floating toolbar moves what does not fit into its own overflow.
         final ActionMode.Callback callback = new ActionMode.Callback() {
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                 int show = MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT;
 
                 ClipboardManager clipboard = (ClipboardManager) terminalView.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                menu.add(Menu.NONE, ACTION_COPY, Menu.NONE, R.string.copy_text).setShowAsAction(show);
-                menu.add(Menu.NONE, ACTION_PASTE, Menu.NONE, R.string.paste_text).setEnabled(clipboard != null && clipboard.hasPrimaryClip()).setShowAsAction(show);
-                menu.add(Menu.NONE, ACTION_MORE, Menu.NONE, R.string.text_selection_more);
+                boolean canPaste = terminalView.mClient == null || terminalView.mClient.canPaste();
+                menu.add(Menu.NONE, ACTION_COPY, 1, R.string.copy_text).setShowAsAction(show);
+                if (canPaste && clipboard != null && clipboard.hasPrimaryClip()) {
+                    menu.add(Menu.NONE, ACTION_PASTE, 2, R.string.paste_text).setShowAsAction(show);
+                }
+                menu.add(Menu.NONE, ACTION_SELECT_ALL, 3, R.string.select_all_text).setShowAsAction(show);
+                menu.add(Menu.NONE, ACTION_SHARE, 4, R.string.share_text).setShowAsAction(show);
+                menu.add(Menu.NONE, ACTION_COPY_ALL, 5, R.string.copy_all_text).setShowAsAction(show);
                 return true;
             }
 
@@ -134,24 +146,28 @@ public class TextSelectionCursorController implements CursorController {
                 }
 
                 switch (item.getItemId()) {
-                    case ACTION_COPY:
+                    case ACTION_COPY: {
                         String selectedText = getSelectedText();
                         terminalView.mTermSession.onCopyTextToClipboard(selectedText);
-                        terminalView.stopTextSelectionMode();
+                        stopNow();
                         break;
+                    }
                     case ACTION_PASTE:
-                        terminalView.stopTextSelectionMode();
+                        stopNow();
                         terminalView.mTermSession.onPasteTextFromClipboard();
                         break;
-                    case ACTION_MORE:
-                        // We first store the selected text in case TerminalViewClient needs the
-                        // selected text before MORE button was pressed since we are going to
-                        // stop selection mode
-                        mStoredSelectedText = getSelectedText();
-                        // The text selection needs to be stopped before showing context menu,
-                        // otherwise handles will show above popup
-                        terminalView.stopTextSelectionMode();
-                        terminalView.showContextMenu();
+                    case ACTION_SELECT_ALL:
+                        selectAll();
+                        break;
+                    case ACTION_SHARE: {
+                        String selectedText = getSelectedText();
+                        stopNow();
+                        if (terminalView.mClient != null) terminalView.mClient.onShareText(selectedText);
+                        break;
+                    }
+                    case ACTION_COPY_ALL:
+                        stopNow();
+                        if (terminalView.mClient != null) terminalView.mClient.onCopyAll();
                         break;
                 }
 
@@ -182,7 +198,12 @@ public class TextSelectionCursorController implements CursorController {
 
             @Override
             public void onDestroyActionMode(ActionMode mode) {
-                // Ignore.
+                // SkyPython: the system closed the menu (Back, tap outside it): end the selection
+                // too, instead of leaving handles with no menu.
+                if (mActionMode == mode) {
+                    mActionMode = null;
+                    if (isActive()) stopNow();
+                }
             }
 
             @Override
@@ -207,6 +228,29 @@ public class TextSelectionCursorController implements CursorController {
                 outRect.set(x1, top, x2, bottom);
             }
         }, ActionMode.TYPE_FLOATING);
+    }
+
+    /** SkyPython: ends the selection now (a menu action), even right after it started. */
+    private void stopNow() {
+        mShowStartTime = 0;
+        terminalView.stopTextSelectionMode();
+    }
+
+    /** SkyPython: selects the whole transcript, from the oldest line kept to the last non-empty one. */
+    public void selectAll() {
+        TerminalBuffer screen = terminalView.mEmulator.getScreen();
+        int columns = terminalView.mEmulator.mColumns;
+        int top = -screen.getActiveTranscriptRows();
+        int bottom = terminalView.mEmulator.mRows - 1;
+        while (bottom > top && screen.getSelectedText(0, bottom, columns - 1, bottom).trim().isEmpty()) {
+            bottom--;
+        }
+        mSelX1 = 0;
+        mSelY1 = top;
+        mSelX2 = columns - 1;
+        mSelY2 = bottom;
+        render();
+        terminalView.invalidate();
     }
 
     @Override
