@@ -118,7 +118,9 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
     // canonical paths, so the editor must see the same spelling for the same file.
     val workspace = remember { Workspace(File(app.filesDir, "projects").canonicalFile) }
     val settingsStore = remember { SettingsStore(app) }
-    val settings by settingsStore.settings.collectAsState(initial = EditorSettings())
+    // Null until DataStore has been read: the screens that use it wait, so nothing starts with the
+    // defaults and is then undone (the language server with completion off, font sizes jumping).
+    val loadedSettings: EditorSettings? by settingsStore.settings.collectAsState(initial = null)
 
     val editorVm: EditorViewModel = viewModel(
         factory = EditorViewModel.factory(app, workspace.root, workspace::ensureHello),
@@ -246,6 +248,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
         ) {
             NavHost(navController = nav, startDestination = Routes.EDITOR) {
                 composable(Routes.EDITOR) {
+                    val settings = loadedSettings ?: return@composable
                     val debugMarks = rememberDebugMarks(
                         debugVm,
                         currentPath,
@@ -305,6 +308,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                 }
                 val saveTerminalFont: (Int) -> Unit = { sp -> scope.launch { settingsStore.update { it.copy(terminalFontSizeSp = sp) } } }
                 composable(Routes.RUN) {
+                    val settings = loadedSettings ?: return@composable
                     TerminalScreen(
                         viewModel = runVm,
                         onBack = { nav.popBackStack() },
@@ -326,6 +330,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                     else Toast.makeText(context, R.string.script_still_running, Toast.LENGTH_SHORT).show()
                 }
                 composable(Routes.INTERPRETER) {
+                    val settings = loadedSettings ?: return@composable
                     TerminalScreen(
                         viewModel = interpreterVm,
                         onBack = { nav.popBackStack() },
@@ -336,6 +341,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                     )
                 }
                 composable(Routes.TERMINAL) {
+                    val settings = loadedSettings ?: return@composable
                     TerminalScreen(
                         viewModel = shellVm,
                         onBack = { nav.popBackStack() },
@@ -393,6 +399,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                     "${Routes.REPORT}?${Routes.REPORT_ID}={${Routes.REPORT_ID}}",
                     arguments = listOf(navArgument(Routes.REPORT_ID) { type = NavType.StringType; nullable = true; defaultValue = null }),
                 ) { entry ->
+                    val settings = loadedSettings ?: return@composable
                     ReportScreen(
                         reportId = entry.arguments?.getString(Routes.REPORT_ID),
                         settings = settings,
