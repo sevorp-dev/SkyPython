@@ -247,6 +247,26 @@
     <string name="share_chooser_title">Share %1$s</string>
     <string name="share_no_app">No app can share this file</string>
 
+    <!-- ▶ Run on a terminal: output actions -->
+    <string name="use_simple_output">Use simple output</string>
+    <string name="run_again">Run again</string>
+    <string name="back_to_editor">Back to editor</string>
+    <string name="run_exit_code">Exit code %1$d</string>
+    <string name="output_more">More options</string>
+    <string name="output_copy_all">Copy all</string>
+    <string name="output_share">Share output</string>
+    <string name="output_save">Save output</string>
+    <string name="output_save_as">Save as…</string>
+    <string name="output_clear">Clear</string>
+    <string name="output_scroll_top">Scroll to top</string>
+    <string name="output_scroll_bottom">Scroll to bottom</string>
+    <string name="output_font_smaller">Smaller text</string>
+    <string name="output_font_bigger">Bigger text</string>
+    <string name="output_font_size">Text %1$d sp</string>
+    <string name="output_copied">Output copied</string>
+    <string name="output_nothing">No output yet</string>
+    <string name="output_saved">Saved to %1$s</string>
+    <string name="output_save_failed">Couldn\'t save: %1$s</string>
     <!-- Debugger -->
     <string name="title_debug">Debug</string>
     <string name="debug_run_menu_run">Run</string>
@@ -372,10 +392,6 @@
     <string name="settings_terminal_theme_dark">Dark</string>
     <string name="settings_terminal_theme_black">Black</string>
     <string name="terminal_command_hint">Type a command…</string>
-    <string name="terminal_clear">Clear</string>
-    <string name="terminal_copy">Copy</string>
-    <string name="terminal_copied">Output copied</string>
-    <string name="terminal_more">More</string>
     <string name="samples_search">Search samples</string>
     <string name="samples_search_hint">Search…</string>
     <string name="samples_no_match">No samples match “%1$s”</string>

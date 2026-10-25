@@ -17,5 +17,14 @@ Changes made for SkyPython:
     The original jni/termux.c is not included.
   - TerminalSession.java: a failure to start the process is shown on the screen and
     reported through getStartError() instead of crashing; a finished session no longer
-    resizes its closed (possibly reused) file descriptor.
+    resizes its closed (possibly reused) file descriptor; output written just before
+    the process exits is never dropped (the exit waits for the reader and drains the
+    whole queue); the line written at exit can be replaced (setExitMessage).
+  - TerminalView.java, TerminalViewClient.java: a view scrolled back stays on the lines
+    being read while output continues (typing returns to the bottom); scrollToTop /
+    scrollToBottom / isAtBottom and an at-bottom callback; hooks for the selection menu.
+  - TextSelectionCursorController.java: the selection menu offers Copy, Paste (only
+    when the program can take input), Select all, Share and Copy all instead of
+    "More…"; closing the menu ends the selection.
+  - res/: strings for the new menu items, Russian translations.
 All other files are unchanged.

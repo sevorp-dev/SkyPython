@@ -2,12 +2,14 @@ package dev.skyloft.skypython.editor
 
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.skyloft.skypython.MainActivity
+import io.github.rosemoe.sora.lang.completion.CompletionItem
 import io.github.rosemoe.sora.widget.CodeEditor
 import io.github.rosemoe.sora.widget.component.EditorAutoCompletion
 import org.junit.After
@@ -40,6 +42,19 @@ class EditorHintsEndToEndTest {
         return find(rule.activity.window.decorView) ?: error("no code editor on screen")
     }
 
+    private fun completion(): EditorAutoCompletion = editor().getComponent(EditorAutoCompletion::class.java)
+
+    /** Labels of the proposals in the completion popup's list, in display order (main thread). */
+    private fun proposals(c: EditorAutoCompletion): List<String> {
+        fun list(v: View): AdapterView<*>? = when (v) {
+            is AdapterView<*> -> v
+            is ViewGroup -> (0 until v.childCount).firstNotNullOfOrNull { list(v.getChildAt(it)) }
+            else -> null
+        }
+        val adapter = c.popup.contentView?.let(::list)?.adapter ?: return emptyList()
+        return (0 until adapter.count).map { (adapter.getItem(it) as CompletionItem).label.toString() }
+    }
+
     /** Types [text] at the end of the document, as the keyboard would (one edit). */
     private fun typeAtEnd(text: String) = onMain {
         val e = editor()
@@ -61,18 +76,22 @@ class EditorHintsEndToEndTest {
 
         typeAtEnd("\n")
         typeAtEnd("import js")
-        var completion: EditorAutoCompletion? = null
+        // Wait for the popup to be on screen offering `json`. (Not `!isCompletionInProgress`:
+        // Sora counts a showing popup as "in progress", so that never turns false while shown.)
         rule.waitUntil(30_000) {
-            var shown = false
+            var offered = false
             onMain {
-                val c = editor().getComponent(EditorAutoCompletion::class.java)
-                shown = c.isShowing && !c.isCompletionInProgress
-                completion = c
+                val c = completion()
+                offered = c.isShowing && "json" in proposals(c)
             }
-            shown
+            offered
         }
-        // Commit the first proposal: jedi lists `json` first for `js`.
-        onMain { completion!!.select(0) }
+        // Commit `json` by its position, looked up in the same main-thread step as the commit.
+        onMain {
+            val c = completion()
+            val index = proposals(c).indexOf("json")
+            assertTrue("json no longer offered", index >= 0 && c.select(index))
+        }
         var text = ""
         onMain { text = editor().text.toString() }
         assertTrue(text, text.trimEnd().endsWith("import json"))

@@ -240,6 +240,26 @@
     <string name="share_chooser_title">Поделиться %1$s</string>
     <string name="share_no_app">Нет приложения, чтобы поделиться файлом</string>
 
+    <!-- ▶ Запуск в терминале: действия с выводом -->
+    <string name="use_simple_output">Простой вывод</string>
+    <string name="run_again">Запустить снова</string>
+    <string name="back_to_editor">К редактору</string>
+    <string name="run_exit_code">Код выхода %1$d</string>
+    <string name="output_more">Другие действия</string>
+    <string name="output_copy_all">Копировать всё</string>
+    <string name="output_share">Поделиться выводом</string>
+    <string name="output_save">Сохранить вывод</string>
+    <string name="output_save_as">Сохранить как…</string>
+    <string name="output_clear">Очистить</string>
+    <string name="output_scroll_top">В начало</string>
+    <string name="output_scroll_bottom">В конец</string>
+    <string name="output_font_smaller">Мельче</string>
+    <string name="output_font_bigger">Крупнее</string>
+    <string name="output_font_size">Текст %1$d sp</string>
+    <string name="output_copied">Вывод скопирован</string>
+    <string name="output_nothing">Вывода пока нет</string>
+    <string name="output_saved">Сохранено: %1$s</string>
+    <string name="output_save_failed">Не удалось сохранить: %1$s</string>
     <!-- Debugger -->
     <string name="title_debug">Отладка</string>
     <string name="debug_run_menu_run">Запуск</string>
@@ -361,10 +381,6 @@
     <string name="settings_terminal_theme_dark">Тёмная</string>
     <string name="settings_terminal_theme_black">Чёрная</string>
     <string name="terminal_command_hint">Введите команду…</string>
-    <string name="terminal_clear">Очистить</string>
-    <string name="terminal_copy">Копировать</string>
-    <string name="terminal_copied">Вывод скопирован</string>
-    <string name="terminal_more">Ещё</string>
     <string name="samples_search">Поиск примеров</string>
     <string name="samples_search_hint">Поиск…</string>
     <string name="samples_no_match">Нет примеров по запросу «%1$s»</string>

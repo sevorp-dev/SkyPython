@@ -17,8 +17,8 @@ const val MAX_FONT_SIZE_SP = 24
 
 fun clampFontSize(sp: Int): Int = sp.coerceIn(MIN_FONT_SIZE_SP, MAX_FONT_SIZE_SP)
 
-const val MIN_TERMINAL_FONT_SP = 10
-const val MAX_TERMINAL_FONT_SP = 24
+const val MIN_TERMINAL_FONT_SP = 8
+const val MAX_TERMINAL_FONT_SP = 32
 
 fun clampTerminalFontSize(sp: Int): Int = sp.coerceIn(MIN_TERMINAL_FONT_SP, MAX_TERMINAL_FONT_SP)
 

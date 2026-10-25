@@ -122,8 +122,12 @@ import dev.skyloft.skypython.ui.theme.MutedText
 import dev.skyloft.skypython.ui.theme.RunButton
 import dev.skyloft.skypython.ui.theme.skyTopBarColors
 import dev.skyloft.skypython.ui.theme.Slate
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
+
+/** How long a traceback jump waits for the editor view to show the opened tab. */
+private const val JUMP_SETTLE_MILLIS = 150L
 
 private val TabSelected = TextBright
 private val TabIdle = MutedText
@@ -179,6 +183,16 @@ fun EditorScreen(
 
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { snackbar.showSnackbar(it) }
+    }
+    // A tapped traceback line: once its file is the shown tab, put the cursor on that line.
+    val jump by viewModel.jump.collectAsStateWithLifecycle()
+    LaunchedEffect(jump, state.currentId) {
+        val target = jump ?: return@LaunchedEffect
+        val shown = (state.current?.source as? DocSource.Local)?.file ?: return@LaunchedEffect
+        if (shown.canonicalPath != target.file.canonicalPath) return@LaunchedEffect
+        delay(JUMP_SETTLE_MILLIS) // the editor view takes the new tab's text first
+        controller.goToLine(target.line - 1) // the controller counts from 0
+        viewModel.jumpDone()
     }
     // ON_PAUSE always precedes finishing/backgrounding; ON_STOP is kept as a cheap second chance
     // (it is a no-op when nothing is dirty). Saves are NonCancellable, see DocumentSaver.

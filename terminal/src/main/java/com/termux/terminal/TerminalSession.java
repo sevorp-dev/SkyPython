@@ -30,12 +30,16 @@ import java.util.UUID;
  * <p>
  * Modified for SkyPython: a failure to start the process is shown on the screen and reported
  * through {@link #getStartError()} instead of crashing the app; a finished session no longer
- * resizes its (closed, possibly reused) descriptor.
+ * resizes its (closed, possibly reused) descriptor; the last output before exit is never lost
+ * (the exit waits for the reader and drains the whole queue); the line written at exit can be
+ * replaced ({@link #setExitMessage}).
  */
 public final class TerminalSession extends TerminalOutput {
 
     private static final int MSG_NEW_INPUT = 1;
     private static final int MSG_PROCESS_EXITED = 4;
+    /** SkyPython: how long the exit waits for the last output. */
+    private static final long READER_DRAIN_MILLIS = 1000;
 
     public final String mHandle = UUID.randomUUID().toString();
 
@@ -85,6 +89,23 @@ public final class TerminalSession extends TerminalOutput {
 
 
     private static final String LOG_TAG = "TerminalSession";
+
+    /** SkyPython: the text written to the screen when the process ends. */
+    public interface ExitMessage {
+        /**
+         * @param exitStatus  the exit code (0..255), or minus the signal that killed the process.
+         * @param atLineStart whether the cursor is at the start of a line.
+         * @return terminal output (escape sequences allowed) to append, or null for nothing.
+         */
+        String text(int exitStatus, boolean atLineStart);
+    }
+
+    private ExitMessage mExitMessage;
+
+    /** SkyPython: replaces "[Process completed - press Enter]" (call before the process ends). */
+    public void setExitMessage(ExitMessage exitMessage) {
+        mExitMessage = exitMessage;
+    }
 
     public TerminalSession(String shellPath, String cwd, String[] args, String[] env, Integer transcriptRows, TerminalSessionClient client) {
         this.mShellPath = shellPath;
@@ -151,7 +172,7 @@ public final class TerminalSession extends TerminalOutput {
 
         final FileDescriptor terminalFileDescriptorWrapped = wrapFileDescriptor(mTerminalFileDescriptor, mClient);
 
-        new Thread("TermSessionInputReader[pid=" + mShellPid + "]") {
+        final Thread reader = new Thread("TermSessionInputReader[pid=" + mShellPid + "]") {
             @Override
             public void run() {
                 try (InputStream termIn = new FileInputStream(terminalFileDescriptorWrapped)) {
@@ -166,7 +187,8 @@ public final class TerminalSession extends TerminalOutput {
                     // Ignore, just shutting down.
                 }
             }
-        }.start();
+        };
+        reader.start();
 
         new Thread("TermSessionOutputWriter[pid=" + mShellPid + "]") {
             @Override
@@ -188,6 +210,13 @@ public final class TerminalSession extends TerminalOutput {
             @Override
             public void run() {
                 int processExitCode = JNI.waitFor(mShellPid);
+                // SkyPython: let the reader pass on the last output first (it ends when the terminal
+                // hangs up; a background child still holding it open must not delay us long).
+                try {
+                    reader.join(READER_DRAIN_MILLIS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
                 mMainThreadHandler.sendMessage(mMainThreadHandler.obtainMessage(MSG_PROCESS_EXITED, processExitCode));
             }
         }.start();
@@ -366,28 +395,39 @@ public final class TerminalSession extends TerminalOutput {
 
         @Override
         public void handleMessage(Message msg) {
-            int bytesRead = mProcessToTerminalIOQueue.read(mReceiveBuffer, false);
-            if (bytesRead > 0) {
+            // SkyPython: drain everything queued, not one buffer's worth: at exit the queue is closed.
+            int bytesRead;
+            boolean appended = false;
+            while ((bytesRead = mProcessToTerminalIOQueue.read(mReceiveBuffer, false)) > 0) {
                 mEmulator.append(mReceiveBuffer, bytesRead);
-                notifyScreenUpdate();
+                appended = true;
             }
+            if (appended) notifyScreenUpdate();
 
             if (msg.what == MSG_PROCESS_EXITED) {
                 int exitCode = (Integer) msg.obj;
                 cleanupResources(exitCode);
 
-                String exitDescription = "\r\n[Process completed";
-                if (exitCode > 0) {
-                    // Non-zero process exit.
-                    exitDescription += " (code " + exitCode + ")";
-                } else if (exitCode < 0) {
-                    // Negated signal.
-                    exitDescription += " (signal " + (-exitCode) + ")";
+                String exitDescription;
+                if (mExitMessage != null) {
+                    // SkyPython: the host's own line.
+                    exitDescription = mExitMessage.text(exitCode, mEmulator.getCursorCol() == 0);
+                } else {
+                    exitDescription = "\r\n[Process completed";
+                    if (exitCode > 0) {
+                        // Non-zero process exit.
+                        exitDescription += " (code " + exitCode + ")";
+                    } else if (exitCode < 0) {
+                        // Negated signal.
+                        exitDescription += " (signal " + (-exitCode) + ")";
+                    }
+                    exitDescription += " - press Enter]";
                 }
-                exitDescription += " - press Enter]";
 
-                byte[] bytesToWrite = exitDescription.getBytes(StandardCharsets.UTF_8);
-                mEmulator.append(bytesToWrite, bytesToWrite.length);
+                if (exitDescription != null) {
+                    byte[] bytesToWrite = exitDescription.getBytes(StandardCharsets.UTF_8);
+                    mEmulator.append(bytesToWrite, bytesToWrite.length);
+                }
                 notifyScreenUpdate();
 
                 mClient.onSessionFinished(TerminalSession.this);

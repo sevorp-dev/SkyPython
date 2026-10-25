@@ -55,6 +55,7 @@ import java.io.File
 private object Routes {
     const val EDITOR = "editor"
     const val CONSOLE = "console"
+    const val RUN = "run"
     const val INTERPRETER = "interpreter"
     const val TERMINAL = "terminal"
     const val FILES = "files"
@@ -92,6 +93,11 @@ fun SkyPythonApp() {
         key = "terminal-shell",
         factory = TerminalViewModel.factory(app, workspace.root, TerminalKind.Shell),
     )
+    // ▶ Run: the script on a terminal of its own (real input(), colours, Ctrl+C).
+    val runVm: TerminalViewModel = viewModel(
+        key = "terminal-run",
+        factory = TerminalViewModel.factory(app, workspace.root, TerminalKind.Run),
+    )
 
     val debugVm: DebugViewModel = viewModel(factory = DebugViewModel.factory(app, workspace.root))
     // Activity-scoped so other screens can call pipVm.installNow(...).
@@ -100,6 +106,12 @@ fun SkyPythonApp() {
     val nav = rememberNavController()
     val scope = rememberCoroutineScope()
     val openConsole = { nav.go(Routes.CONSOLE) }
+    val openRun = { nav.go(Routes.RUN) }
+    val openInEditor = { file: File, line: Int ->
+        editorVm.openAt(file, line)
+        nav.popBackStack(Routes.EDITOR, inclusive = false)
+        Unit
+    }
     // Debugging stays in the editor: the program runs in the console, its panel sits under the code.
     val attachDebugger = { target: RunTarget.Debug -> debugVm.attach(target) { consoleVm.isActive(target) } }
     val startDebug: (File) -> Unit = { file ->
@@ -142,8 +154,8 @@ fun SkyPythonApp() {
                 viewModel = editorVm,
                 settings = settings,
                 onRun = { file ->
-                    // Only one program at a time: a running one makes this ask first.
-                    if (consoleVm.requestRun(file)) openConsole()
+                    // One script at a time: a running one makes this ask first (RunBusyDialog).
+                    if (runVm.requestRun(file)) openRun()
                 },
                 onOpenFiles = openFilesScreen,
                 onDebug = startDebug,
@@ -184,6 +196,7 @@ fun SkyPythonApp() {
                     }
                 },
             )
+            RunBusyDialog(runVm = runVm, onConfirmed = openRun)
             RestartDialog(consoleVm = consoleVm, onConfirmed = onTargetConfirmed)
             conditionFor?.let { (path, line) ->
                 BreakpointConditionDialog(debugVm, path, line, onDismiss = { conditionFor = null })
@@ -192,13 +205,28 @@ fun SkyPythonApp() {
         composable(Routes.CONSOLE) {
             ConsoleScreen(viewModel = consoleVm, onBack = { nav.popBackStack() })
         }
+        val saveTerminalFont: (Int) -> Unit = { sp -> scope.launch { settingsStore.update { it.copy(terminalFontSizeSp = sp) } } }
+        composable(Routes.RUN) {
+            TerminalScreen(
+                viewModel = runVm,
+                onBack = { nav.popBackStack() },
+                // No pseudo-terminal: the same script on the line-mode console over pipes.
+                onUseSimpleConsole = onUseSimpleOutput@{
+                    val script = runVm.state.value.script ?: return@onUseSimpleOutput
+                    nav.popBackStack()
+                    if (consoleVm.requestRun(script)) openConsole()
+                },
+                onOpenInEditor = openInEditor,
+                settings = settings,
+                onFontSizeChange = saveTerminalFont,
+            )
+        }
         // Fallback if the pseudo-terminal can't be opened: the line-mode console over pipes.
         val simpleConsole = { start: () -> Boolean ->
             nav.popBackStack()
             if (start()) openConsole()
             else Toast.makeText(context, R.string.script_still_running, Toast.LENGTH_SHORT).show()
         }
-        val saveTerminalFont: (Int) -> Unit = { sp -> scope.launch { settingsStore.update { it.copy(terminalFontSizeSp = sp) } } }
         composable(Routes.INTERPRETER) {
             TerminalScreen(
                 viewModel = interpreterVm,
@@ -206,6 +234,7 @@ fun SkyPythonApp() {
                 onUseSimpleConsole = { simpleConsole(consoleVm::startInterpreter) },
                 settings = settings,
                 onFontSizeChange = saveTerminalFont,
+                onOpenInEditor = openInEditor,
             )
         }
         composable(Routes.TERMINAL) {
@@ -215,6 +244,7 @@ fun SkyPythonApp() {
                 onUseSimpleConsole = { simpleConsole(consoleVm::startTerminal) },
                 settings = settings,
                 onFontSizeChange = saveTerminalFont,
+                onOpenInEditor = openInEditor,
             )
         }
         composable(Routes.FILES) {
@@ -283,6 +313,27 @@ private fun RestartDialog(consoleVm: ConsoleViewModel, onConfirmed: (RunTarget) 
         },
         dismissButton = {
             TextButton(onClick = consoleVm::dismissPendingRun) { Text(stringResource(R.string.action_cancel)) }
+        },
+    )
+}
+
+/** "One script at a time" for ▶ Run: asks before replacing the script still running. */
+@Composable
+private fun RunBusyDialog(runVm: TerminalViewModel, onConfirmed: () -> Unit) {
+    val state by runVm.state.collectAsStateWithLifecycle()
+    val pending = state.pending ?: return
+    AlertDialog(
+        onDismissRequest = runVm::dismissPendingRun,
+        title = { Text(stringResource(R.string.restart_title)) },
+        text = { Text(stringResource(R.string.restart_text, pending.name)) },
+        confirmButton = {
+            TextButton(onClick = {
+                runVm.confirmPendingRun()
+                onConfirmed()
+            }) { Text(stringResource(R.string.restart_confirm)) }
+        },
+        dismissButton = {
+            TextButton(onClick = runVm::dismissPendingRun) { Text(stringResource(R.string.action_cancel)) }
         },
     )
 }
