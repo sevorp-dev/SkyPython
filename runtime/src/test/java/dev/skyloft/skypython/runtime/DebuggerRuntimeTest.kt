@@ -73,4 +73,19 @@ class DebuggerRuntimeTest {
         // sockaddr_un holds at most 107 bytes of path.
         assertTrue(a.path.toByteArray().size < 108)
     }
+
+    @Test
+    fun aNewChannelClearsSocketsLeftByEarlierSessions() {
+        val dir = tmp.newFolder("cache")
+        val now = System.currentTimeMillis()
+        val stale = File(dir, "dbg-old-1.sock").apply { writeText(""); setLastModified(now - 10 * 60_000) }
+        val recent = File(dir, "dbg-new-2.sock").apply { writeText("") } // a session still starting
+        val other = File(dir, "other.sock").apply { writeText(""); setLastModified(now - 10 * 60_000) }
+        val channel = DebuggerBundle.newChannel(dir)
+        assertFalse(stale.exists())
+        assertTrue(recent.exists())
+        assertTrue(other.exists())
+        assertEquals(dir, channel.parentFile)
+        assertTrue(channel.name.startsWith("dbg-") && channel.name.endsWith(".sock"))
+    }
 }

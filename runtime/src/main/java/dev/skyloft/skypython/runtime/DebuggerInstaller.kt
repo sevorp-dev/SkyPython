@@ -39,7 +39,7 @@ class DebuggerInstaller(context: Context) {
     }
 
     /** A fresh socket path for one debug session, in the app's private cache directory. */
-    fun newChannel(): File = DebuggerBundle.channelFile(context.cacheDir)
+    fun newChannel(): File = DebuggerBundle.newChannel(context.cacheDir)
 
     private companion object {
         const val DIR = "debugger"
@@ -67,6 +67,22 @@ internal object DebuggerBundle {
             if (!part.renameTo(script)) throw IOException("Cannot install $script")
         }
         return script
+    }
+
+    /** The driver removes its socket once connected; one left by a killed driver is this old. */
+    private const val STALE_CHANNEL_MS = 3 * 60_000L
+
+    /**
+     * A fresh channel path in [dir], after deleting socket files earlier sessions left behind
+     * (the driver was killed before the IDE connected). Recent ones may belong to a session that
+     * is still starting (the driver waits 60 s for the IDE) and are kept.
+     */
+    fun newChannel(dir: File): File {
+        val cutoff = System.currentTimeMillis() - STALE_CHANNEL_MS
+        dir.listFiles { f -> f.name.startsWith("dbg-") && f.name.endsWith(".sock") }?.forEach {
+            if (it.lastModified() < cutoff) it.delete()
+        }
+        return channelFile(dir)
     }
 
     /** Short (a Unix socket path is limited to 107 bytes) and unique within this process. */
