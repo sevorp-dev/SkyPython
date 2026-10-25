@@ -55,7 +55,7 @@ class RunTerminalDeviceTest {
         val script = File(dir, name).apply { writeText(code.trimIndent() + "\n") }
         val installer = PythonInstaller(app)
         val vm = onMain {
-            TerminalViewModel(TerminalKind.Run, projects, app, installer::ensureInstalled).also { it.run(script) }
+            TerminalViewModel(TerminalKind.Run, { projects }, app, installer::ensureInstalled).also { it.run(script) }
         }
         vms += vm
         val session = waitFor("a session") { vm.state.value.session }

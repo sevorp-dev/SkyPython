@@ -173,6 +173,8 @@ fun EditorScreen(
     controller: EditorController = remember { EditorController() },
     /** The ☰ drawer is opening / open (true) or fully closed (false). */
     onDrawerOpenChange: (Boolean) -> Unit = {},
+    /** The open project's name, shown in the drawer (null: not shown). */
+    projectName: String? = null,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
@@ -267,7 +269,7 @@ fun EditorScreen(
             when {
                 defs == null -> say(R.string.nav_unavailable)
                 defs.isEmpty() -> say(R.string.nav_no_definition, name)
-                else -> when (val t = Navigation.target(defs.first(), viewModel.projectsRoot)) {
+                else -> when (val t = Navigation.target(defs.first(), viewModel.projectsRoot, viewModel.currentProject)) {
                     null -> say(R.string.nav_no_definition, name)
                     is NavTarget.InFile -> controller.jumpTo(t.range)
                     is NavTarget.OtherFile -> {
@@ -406,6 +408,7 @@ fun EditorScreen(
                 fileName = current?.name,
                 cursor = cursor.value,
                 symbol = drawerSymbol,
+                projectName = projectName,
                 onClose = { scope.launch { drawerState.close() } },
             ) { action ->
                 scope.launch { drawerState.close() }

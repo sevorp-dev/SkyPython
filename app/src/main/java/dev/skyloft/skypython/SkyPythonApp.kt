@@ -1,5 +1,11 @@
 package dev.skyloft.skypython
 
+import dev.skyloft.skypython.project.OpenProjectScreen
+import dev.skyloft.skypython.project.ProjectsViewModel
+import dev.skyloft.skypython.project.StoragePermission
+import dev.skyloft.skypython.project.StorageRoot
+import dev.skyloft.skypython.project.friendlyPath
+import dev.skyloft.skypython.project.projectName
 import dev.skyloft.skypython.ui.rememberMainScope
 import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.padding
@@ -113,6 +119,7 @@ private object Routes {
     const val REPORT_ID = "id"
     const val IMAGE = "image"
     const val IMAGE_PATH = "path"
+    const val OPEN_PROJECT = "open-project"
 
     /** The image viewer showing [file]. */
     fun image(file: File) = "$IMAGE?$IMAGE_PATH=${android.net.Uri.encode(file.path)}"
@@ -139,29 +146,39 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
     // defaults and is then undone (the language server with completion off, font sizes jumping).
     val loadedSettings: EditorSettings? by settingsStore.settings.collectAsState(initial = null)
 
+    // The open project: the app's own folder, or one opened from the phone's storage. The others
+    // read it when they need it (new files, the interpreter's and terminal's working directory).
+    val projectsVm: ProjectsViewModel = viewModel(factory = ProjectsViewModel.factory(app, workspace.root))
+    val projectRoot: () -> File = { projectsVm.current.value }
+    val project by projectsVm.current.collectAsStateWithLifecycle()
     val editorVm: EditorViewModel = viewModel(
-        factory = EditorViewModel.factory(app, workspace.root, workspace::ensureHello),
+        factory = EditorViewModel.factory(app, workspace.root, workspace::ensureHello, projectRoot),
     )
-    val consoleVm: ConsoleViewModel = viewModel(factory = ConsoleViewModel.factory(app, workspace.root))
+    val consoleVm: ConsoleViewModel = viewModel(factory = ConsoleViewModel.factory(app, projectRoot))
     val filesVm: FilesViewModel = viewModel(factory = FilesViewModel.Factory(workspace) { describeFileError(AppLocale.localized(app), it) })
     // Both live as long as the activity: leaving the screen keeps the program running.
     val interpreterVm: TerminalViewModel = viewModel(
         key = "terminal-interpreter",
-        factory = TerminalViewModel.factory(app, workspace.root, TerminalKind.Interpreter),
+        factory = TerminalViewModel.factory(app, projectRoot, TerminalKind.Interpreter),
     )
     val shellVm: TerminalViewModel = viewModel(
         key = "terminal-shell",
-        factory = TerminalViewModel.factory(app, workspace.root, TerminalKind.Shell),
+        factory = TerminalViewModel.factory(app, projectRoot, TerminalKind.Shell),
     )
     // ▶ Run: the script on a terminal of its own (real input(), colours, Ctrl+C).
     val runVm: TerminalViewModel = viewModel(
         key = "terminal-run",
-        factory = TerminalViewModel.factory(app, workspace.root, TerminalKind.Run),
+        factory = TerminalViewModel.factory(app, projectRoot, TerminalKind.Run),
     )
 
-    val debugVm: DebugViewModel = viewModel(factory = DebugViewModel.factory(app, workspace.root))
+    val debugVm: DebugViewModel = viewModel(factory = DebugViewModel.factory(app, projectRoot))
     // Activity-scoped so other screens can call pipVm.installNow(...).
-    val pipVm: PipViewModel = viewModel(factory = PipViewModel.factory(app, workspace.root))
+    val pipVm: PipViewModel = viewModel(factory = PipViewModel.factory(app, projectRoot))
+
+    // Files follows the open project; the app's own folder is created when missing, others never are.
+    LaunchedEffect(project) { filesVm.setRoot(project, create = project.path == workspace.root.path) }
+    LaunchedEffect(projectsVm) { projectsVm.messages.collect { snackbar.showSnackbar(it) } }
+    val projectName = projectName(project, workspace.root, stringResource(R.string.projects_section_app))
 
     val nav = rememberNavController()
     val scope = rememberMainScope()
@@ -294,6 +311,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                         onFontSizeChange = { sp -> scope.launch { settingsStore.update { it.copy(fontSizeSp = sp) } } },
                         controller = editorController,
                         onDrawerOpenChange = { drawerOpen = it },
+                        projectName = projectName,
                         onDrawerAction = { action ->
                             when (action) {
                                 DrawerAction.Projects -> openFilesScreen()
@@ -399,6 +417,25 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                         },
                         onBack = { nav.popBackStack() },
                         onOpenImage = openImage,
+                        projectName = projectName,
+                        projectPath = if (project.path == workspace.root.path) null else {
+                            val internal = stringResource(R.string.projects_root_internal)
+                            val card = stringResource(R.string.projects_root_sd)
+                            remember(project) {
+                                friendlyPath(project, StoragePermission.roots(context)) {
+                                    if (it.kind == StorageRoot.Kind.Internal) internal else "$card (${it.dir.name})"
+                                }
+                            }
+                        },
+                        onOpenProject = { nav.go(Routes.OPEN_PROJECT) },
+                        onOpenAppProjects = projectsVm::openPrivate,
+                    )
+                }
+                composable(Routes.OPEN_PROJECT) {
+                    OpenProjectScreen(
+                        viewModel = projectsVm,
+                        onOpened = { nav.popBackStack() },
+                        onBack = { nav.popBackStack() },
                     )
                 }
                 composable(
@@ -426,7 +463,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                         viewModel = pipVm,
                         onBack = { nav.popBackStack() },
                         currentFile = (editorState.current?.source as? DocSource.Local)?.file,
-                        projectsRoot = workspace.root,
+                        projectsRoot = project,
                     )
                 }
                 composable(Routes.SETTINGS) {

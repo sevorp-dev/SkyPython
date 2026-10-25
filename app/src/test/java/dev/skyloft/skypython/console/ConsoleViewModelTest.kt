@@ -80,7 +80,7 @@ class ConsoleViewModelTest {
     fun setUp() {
         Dispatchers.setMain(dispatcher)
         vm = ConsoleViewModel(
-            projectsRoot = projects,
+            projectsRoot = { projects },
             install = { installGate.await() },
             newProcess = { FakeProcess().also { processes += it } },
             work = dispatcher,

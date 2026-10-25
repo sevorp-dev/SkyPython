@@ -50,7 +50,7 @@ class TerminalSessionDeviceTest {
     private fun open(kind: TerminalKind): TerminalViewModel {
         val installer = PythonInstaller(app)
         val vm = onMain {
-            TerminalViewModel(kind, File(app.filesDir, "projects"), app, installer::ensureInstalled).also { it.open() }
+            TerminalViewModel(kind, { File(app.filesDir, "projects") }, app, installer::ensureInstalled).also { it.open() }
         }
         vms += vm
         val session = waitFor("a session") { vm.state.value.session }

@@ -366,15 +366,15 @@ class PipViewModel(
 
         private fun withNewline(log: String) = if (log.isEmpty() || log.endsWith("\n")) log else "$log\n"
 
-        /** @param projectsRoot where the requirements tab looks for `.txt` files. */
-        fun factory(app: Application, projectsRoot: File): ViewModelProvider.Factory = viewModelFactory {
+        /** @param projectsRoot where the requirements tab looks for `.txt` files (the open project). */
+        fun factory(app: Application, projectsRoot: () -> File): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val wheels = WheelIndex.forApp(app)
                 PipViewModel(
                     pip = PipRepository.create(app, wheels),
                     prebuilt = wheels::catalog,
                     index = PyPiClient(),
-                    findRequirements = { withContext(Dispatchers.IO) { RequirementsFiles.find(projectsRoot) } },
+                    findRequirements = { withContext(Dispatchers.IO) { RequirementsFiles.find(projectsRoot()) } },
                     describe = { e -> describePipError(e) { id, args -> AppLocale.string(app, id, *args) } },
                 )
             }

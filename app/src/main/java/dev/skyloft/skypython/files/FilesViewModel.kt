@@ -28,16 +28,23 @@ data class FilesState(
     val entries: List<FileEntry> = emptyList(),
     val canGoUp: Boolean = false,
     val error: String? = null,
+    /** The project folder itself: the first breadcrumb. */
+    val root: File = currentDir,
+    /** False when the project folder is gone or can't be read (deleted, card removed, access revoked). */
+    val rootAvailable: Boolean = true,
 )
 
 class FilesViewModel(
-    private val workspace: Workspace,
+    workspace: Workspace,
     private val io: CoroutineDispatcher = Dispatchers.IO,
     /** Turns a failed operation into a message for the user (localized in the app). */
     private val describe: (Throwable) -> String = { it.message ?: "Operation failed" },
 ) : ViewModel() {
 
-    private val root: File = workspace.root.absoluteFile
+    private var workspace: Workspace = workspace
+    private var root: File = workspace.root.absoluteFile
+    /** The app's own projects folder is created when missing; a folder in shared storage never is. */
+    private var createRoot = true
 
     private val _state = MutableStateFlow(FilesState(currentDir = root))
     val state: StateFlow<FilesState> = _state.asStateFlow()
@@ -46,6 +53,19 @@ class FilesViewModel(
 
     init {
         refresh()
+    }
+
+    /**
+     * Shows the project in [newRoot] (the open project changed). [create]: make the folder if
+     * missing (only for the app's own projects folder).
+     */
+    fun setRoot(newRoot: File, create: Boolean) {
+        if (newRoot.absoluteFile == root && create == createRoot) return
+        workspace = Workspace(newRoot)
+        root = newRoot.absoluteFile
+        createRoot = create
+        _state.value = FilesState(currentDir = root)
+        load(root)
     }
 
     /** Re-lists the current directory (falls back to the nearest existing ancestor inside root). */
@@ -105,8 +125,16 @@ class FilesViewModel(
     }
 
     private fun snapshot(requested: File): FilesState {
-        workspace.root.mkdirs()
+        if (createRoot) workspace.root.mkdirs()
         val rootCanonical = root.canonicalFile
+        if (!rootCanonical.isDirectory || rootCanonical.list() == null) {
+            return FilesState(
+                currentDir = rootCanonical,
+                breadcrumbs = listOf(Crumb(rootCanonical.name, rootCanonical)),
+                root = rootCanonical,
+                rootAvailable = false,
+            )
+        }
         var dir = if (workspace.contains(requested)) requested.canonicalFile else rootCanonical
         // The folder may have been deleted or renamed meanwhile: fall back to the nearest existing ancestor.
         while (!dir.isDirectory && dir != rootCanonical) {
@@ -126,6 +154,7 @@ class FilesViewModel(
             breadcrumbs = crumbs,
             entries = entries,
             canGoUp = dir != rootCanonical,
+            root = rootCanonical,
         )
     }
 

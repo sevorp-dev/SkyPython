@@ -86,8 +86,8 @@ private class PythonScriptProcess(private val p: PythonProcess) : ScriptProcess 
  * at most once per [tickMillis].
  */
 class ConsoleViewModel(
-    /** Working directory of the interpreter and the terminal. */
-    private val projectsRoot: File,
+    /** Working directory of the interpreter and the terminal (the open project). */
+    private val projectsRoot: () -> File,
     private val install: suspend () -> Result<PythonPaths>,
     private val newProcess: (PythonPaths) -> ScriptProcess,
     private val work: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(1),
@@ -261,8 +261,8 @@ class ConsoleViewModel(
     private fun RunTarget.toCommand(): RunCommand = when (this) {
         is RunTarget.Script -> RunCommand.Script(file)
         is RunTarget.Debug -> RunCommand.Debug(file, driver, channel)
-        RunTarget.Interpreter -> RunCommand.Interpreter(projectsRoot)
-        RunTarget.Terminal -> RunCommand.Shell(projectsRoot)
+        RunTarget.Interpreter -> RunCommand.Interpreter(projectsRoot())
+        RunTarget.Terminal -> RunCommand.Shell(projectsRoot())
     }
 
     /**
@@ -340,8 +340,8 @@ class ConsoleViewModel(
             return if (afterNewline) footer else "\n" + footer
         }
 
-        /** @param projectsRoot working directory of the interpreter and the terminal. */
-        fun factory(app: Application, projectsRoot: File): ViewModelProvider.Factory = viewModelFactory {
+        /** @param projectsRoot working directory of the interpreter and the terminal (the open project). */
+        fun factory(app: Application, projectsRoot: () -> File): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val installer = PythonInstaller(app)
                 ConsoleViewModel(

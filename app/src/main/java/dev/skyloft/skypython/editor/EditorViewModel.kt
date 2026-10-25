@@ -72,11 +72,13 @@ data class EditorUiState(
  *
  * @param projectsRoot workspace root (`filesDir/projects`); used for tab labels of same-named files.
  * @param firstRunFile creates (if needed) and returns the file opened on first launch.
+ * @param projectRoot the open project (canonical): where "New file" creates files; its files are editable.
  */
 class EditorViewModel(
     app: Application,
     projectsRoot: File,
     private val firstRunFile: () -> File,
+    private val projectRoot: () -> File = { projectsRoot },
     private val sessionStore: SessionStore = SessionStore(app),
     private val recentStore: RecentFilesStore = RecentFilesStore(app),
 ) : AndroidViewModel(app) {
@@ -157,7 +159,7 @@ class EditorViewModel(
             val existing = docsState.find(id)
             if (existing != null) {
                 // A project file shown read-only (Go to definition) and now opened normally: editable.
-                if (reopenAsEditable(existing, readOnly, isUnder(source.file, projectsRoot))) docsState.makeEditable(id)
+                if (reopenAsEditable(existing, readOnly, isUnder(source.file, projectsRoot) || isUnder(source.file, currentProject))) docsState.makeEditable(id)
                 docsState.select(id); publish(); if (!readOnly) remember(source.file); onOpened(id); return@launch
             }
             val text = withContext(Dispatchers.IO) { runCatching { readLocal(source.file) } }
@@ -182,13 +184,17 @@ class EditorViewModel(
         }
     }
 
+    /** The open project's folder (the app's own projects folder unless another one was opened). */
+    val currentProject: File get() = projectRoot()
+
     /**
-     * Creates [name] in the projects root and opens it. [onResult] gets null on success or the
+     * Creates [name] in the open project's folder and opens it. [onResult] gets null on success or the
      * reason it failed (shown in the dialog).
      */
     fun newFile(name: String, onResult: (String?) -> Unit) {
         viewModelScope.launch {
-            val result = withContext(Dispatchers.IO) { Workspace(projectsRoot).createFile(projectsRoot, name.trim()) }
+            val root = currentProject
+            val result = withContext(Dispatchers.IO) { Workspace(root).createFile(root, name.trim()) }
             result.onSuccess { open(it); onResult(null) }
                 .onFailure { onResult(describeFileError(AppLocale.localized(getApplication()), it)) }
         }
@@ -405,8 +411,9 @@ class EditorViewModel(
             app: Application,
             projectsRoot: File,
             firstRunFile: () -> File,
+            projectRoot: () -> File = { projectsRoot },
         ): ViewModelProvider.Factory = viewModelFactory {
-            initializer { EditorViewModel(app, projectsRoot, firstRunFile) }
+            initializer { EditorViewModel(app, projectsRoot, firstRunFile, projectRoot) }
         }
     }
 }
