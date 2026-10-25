@@ -46,4 +46,13 @@ class PipListTest {
             assertNull(s, PipList.parse(s))
         }
     }
+
+    @Test
+    fun outdatedMapsNormalizedNamesToTheLatestVersion() {
+        val out = "[notice] x\n" + """[{"name": "Python_DateUtil", "version": "2.8", "latest_version": "2.9",
+            "latest_filetype": "wheel"}, {"name": "six", "version": "1"}, {"name": "pip", "version": "25", "latest_version": "26"}]"""
+        assertEquals(mapOf("python-dateutil" to "2.9", "pip" to "26"), PipList.parseOutdated(out))
+        assertEquals(emptyMap<String, String>(), PipList.parseOutdated("[]"))
+        assertNull(PipList.parseOutdated("nope"))
+    }
 }

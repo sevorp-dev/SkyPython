@@ -125,13 +125,10 @@
     <string name="files_error_failed">Operation failed</string>
 
     <!-- Pip -->
-    <string name="pip_tab_install">Install</string>
     <string name="pip_tab_installed">Installed</string>
-    <string name="pip_package">Package</string>
     <string name="pip_package_hint">e.g. requests or six==1.16.0</string>
     <string name="pip_install">Install</string>
     <string name="pip_installed_spec">Installed %1$s</string>
-    <string name="pip_install_failed">Installation failed</string>
     <string name="pip_intro">Packages are installed from PyPI for your scripts.</string>
     <string name="pip_pure_python_hint">Only pure-Python packages are supported for now.</string>
     <string name="pip_no_packages">No packages installed yet</string>
@@ -143,6 +140,72 @@
     <string name="pip_spec_spaces">Install one package at a time, without spaces</string>
     <string name="pip_spec_options">Options are not supported here</string>
     <string name="pip_spec_invalid">Use a package name, e.g. six or requests==2.32.3</string>
+    <string name="pip_tab_search">Search</string>
+    <string name="pip_tab_requirements">From file</string>
+    <string name="pip_search_label">Search PyPI</string>
+    <string name="pip_search_action">Find</string>
+    <string name="pip_clear">Clear</string>
+    <string name="pip_result_not_found">PyPI has no package named “%1$s”</string>
+    <string name="pip_result_offline">No internet connection. Check the network and try again.</string>
+    <string name="pip_result_failed">Couldn’t reach PyPI: %1$s</string>
+    <string name="pip_latest_version">Latest version %1$s</string>
+    <string name="pip_version">Version %1$s</string>
+    <string name="pip_license">License: %1$s</string>
+    <string name="pip_home_page">Home page</string>
+    <string name="pip_wheel_pure">Pure Python: ready to install</string>
+    <string name="pip_wheel_android">Prebuilt for Android (64-bit devices)</string>
+    <string name="pip_wheel_source">No ready-made build: pip will try to build it, which works only for pure-Python code</string>
+    <string name="pip_wheel_native">Needs native code, not supported yet</string>
+    <string name="pip_wheel_none">This release has no files to install</string>
+    <string name="pip_install_anyway">Try anyway</string>
+    <string name="pip_popular">Popular packages</string>
+    <string name="pip_popular_none">No popular package matches. Tap Find to look it up on PyPI.</string>
+    <string name="pip_coming_later">Coming later</string>
+    <string name="pip_needs_64bit">64-bit only</string>
+    <string name="pip_installed_badge">Installed</string>
+    <string name="pip_upgrade">Upgrade</string>
+    <string name="pip_update_available">Update available: %1$s</string>
+    <string name="pip_checking_updates">Checking for updates…</string>
+    <string name="pip_updates_failed">Couldn’t check for updates (no internet?)</string>
+    <string name="pip_details_requires">Requires: %1$s</string>
+    <string name="pip_details_required_by">Required by: %1$s</string>
+    <string name="pip_details_none">nothing</string>
+    <string name="pip_req_intro">Install every package listed in a requirements file (pip install -r), one package per line.</string>
+    <string name="pip_req_open_file">Open in the editor</string>
+    <string name="pip_req_project_files">Text files in Projects</string>
+    <string name="pip_req_none">No .txt files in Projects yet. Create requirements.txt with one package per line, e.g. requests==2.32.3.</string>
+    <string name="pip_req_install">Install all</string>
+    <string name="pip_running_install">Installing %1$s…</string>
+    <string name="pip_running_upgrade">Upgrading %1$s…</string>
+    <string name="pip_running_requirements">Installing packages from %1$s…</string>
+    <string name="pip_done_upgrade">Upgraded %1$s</string>
+    <string name="pip_done_requirements">Installed packages from %1$s</string>
+    <string name="pip_failed_install">Couldn’t install %1$s</string>
+    <string name="pip_failed_upgrade">Couldn’t upgrade %1$s</string>
+    <string name="pip_failed_requirements">Couldn’t install packages from %1$s</string>
+    <string name="pip_uninstalled">Removed %1$s</string>
+    <string name="pip_show_log">Show log</string>
+    <string name="pip_hide_log">Hide log</string>
+    <string name="pip_pkg_requests">Simple HTTP requests</string>
+    <string name="pip_pkg_rich">Colors, tables and progress bars in the terminal</string>
+    <string name="pip_pkg_colorama">Colored terminal text</string>
+    <string name="pip_pkg_beautifulsoup4">Read data from HTML pages</string>
+    <string name="pip_pkg_dateutil">Date parsing and date arithmetic</string>
+    <string name="pip_pkg_tabulate">Pretty text tables</string>
+    <string name="pip_pkg_tqdm">Progress bars for loops</string>
+    <string name="pip_pkg_httpx">Modern HTTP client, sync and async</string>
+    <string name="pip_pkg_click">Command-line interfaces</string>
+    <string name="pip_pkg_art">ASCII art and text fonts</string>
+    <string name="pip_pkg_pyfiglet">Big ASCII banners</string>
+    <string name="pip_pkg_termcolor">Color text in the terminal</string>
+    <string name="pip_pkg_emoji">Emoji by name</string>
+    <string name="pip_pkg_faker">Fake names, addresses and text for testing</string>
+    <string name="pip_pkg_sympy">Symbolic math</string>
+    <string name="pip_pkg_mpmath">Arbitrary-precision math</string>
+    <string name="pip_pkg_networkx">Graphs and networks</string>
+    <string name="pip_pkg_prompt_toolkit">Interactive command-line input</string>
+    <string name="pip_pkg_jinja2">Text and HTML templates</string>
+    <string name="pip_pkg_pillow">Images (needs native code)</string>
 
     <!-- Samples -->
     <string name="samples_open_failed">Could not open sample: %1$s</string>
