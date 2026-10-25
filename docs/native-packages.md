@@ -2,8 +2,9 @@
 
 ## Current state (implemented)
 
-`.github/workflows/build-wheels.yml` builds **NumPy 2.5.4** for cp314 / API 24 and publishes
-it on the orphan branch **`wheels`** (one commit, force-pushed on every publish):
+`.github/workflows/build-wheels.yml` builds **NumPy 2.5.4** and **Pillow 13.0.0** for cp314 /
+API 24 and publishes them on the orphan branch **`wheels`** (one commit, force-pushed on every
+publish):
 
 - `https://raw.githubusercontent.com/sevorp-dev/SkyPython/wheels/index.json` — catalogue
   for the app: `{"schema": 1, "python": "cp314", "packages": {"numpy": [{"version", "abi"
@@ -16,15 +17,27 @@ it on the orphan branch **`wheels`** (one commit, force-pushed on every publish)
 - 32-bit: cibuildwheel patched by `.github/wheels/patch_cibw_32bit.py` (+ logger entries,
   + x86 testing on an x86_64 emulator), our CPython from `cpython-builds`, no BLAS
   (lapack_lite), libc++ linked statically with the 16 KB-page link flags repeated.
-- `.github/wheels/finish_wheels.py` adds the OpenBLAS / libc++ license texts to
-  `*.dist-info/licenses/` and strips build-machine RUNPATHs; `verify_wheels.py` checks the
-  tag, ELF machine, 16 KB LOAD alignment, NEEDED and RUNPATH of every `.so`;
-  `make_index.py` keeps one wheel per project × ABI and writes `index.json` + `SHA256SUMS`.
-- Trigger: push to `build-wheels` (paths `.github/wheels/**`, the workflow) or "Run
-  workflow". The publish refuses to run unless both 64-bit wheels were built; failed
-  32-bit legs keep their previously published wheels. A published file name is never
-  overwritten (raw.githubusercontent.com caches each file for ~5 minutes, so a rebuilt file
-  could be served next to a stale `index.json`); ship a new NumPy version, or run the
+- Pillow (all four ABIs, same cibuildwheel setup): `.github/wheels/build_pillow_deps.sh`
+  runs as cibuildwheel's before-build and builds libjpeg-turbo 3.2.0, libpng 1.6.58,
+  FreeType 2.14.3, libwebp 1.6.0, libtiff 4.7.2 and Little CMS 2.19.1 from pinned,
+  hash-checked tarballs as static PIC libraries; zlib is Android's `libz.so`. Pillow's
+  `setup.py` finds them through `<LIB>_ROOT` variables (platform guessing disabled; jpeg,
+  zlib, freetype, webp, tiff, lcms required; raqm/imagequant/openjpeg/avif off), and links
+  them statically, so nothing is vendored and `requires` stays empty. `libfreetype.so` and
+  `libwebp.so` in the prefix are linker scripts that add libpng / libsharpyuv. The x86_64
+  and x86 wheels are smoke-tested (draw text with the default FreeType font, save PNG, JPEG,
+  WebP, TIFF; `features.check` for each library).
+- `.github/wheels/finish_wheels.py` adds the license texts of vendored / statically linked
+  libraries (OpenBLAS, libc++, Pillow's dependencies) to `*.dist-info/licenses/` and strips
+  build-machine RUNPATHs; `verify_wheels.py` checks the tag, ELF machine, 16 KB LOAD
+  alignment, NEEDED and RUNPATH of every `.so`; `make_index.py` keeps one wheel per
+  project × ABI and writes `index.json` + `SHA256SUMS`.
+- Trigger: push to `build-wheels` (paths `.github/wheels/**`, the workflow; "[skip publish]"
+  in the commit message builds without publishing) or "Run workflow" (input `packages`
+  picks e.g. only `pillow`). A package is published only if both of its 64-bit wheels were
+  built; failed 32-bit legs keep their previously published wheels. A published file name
+  is never overwritten (raw.githubusercontent.com caches each file for ~5 minutes, so a
+  rebuilt file could be served next to a stale `index.json`); ship a new version, or run the
   workflow with `replace`, to change a wheel.
 
 The rest of this document is the original research spike (October 2026).
