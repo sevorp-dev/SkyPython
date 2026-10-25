@@ -54,14 +54,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.skyloft.skypython.ui.theme.BarBlue
-import dev.skyloft.skypython.ui.theme.DividerBlue
+import dev.skyloft.skypython.ui.theme.BarNavy
+import dev.skyloft.skypython.ui.theme.DividerNavy
 import dev.skyloft.skypython.ui.theme.ErrorRed
+import dev.skyloft.skypython.ui.theme.GlowLine
+import dev.skyloft.skypython.ui.theme.brandButtonColors
 import dev.skyloft.skypython.ui.theme.MutedText
+import dev.skyloft.skypython.ui.theme.NightNavy
+import dev.skyloft.skypython.ui.theme.SuccessGreen
 
-private val LogBackground = Color(0xFF0A1118)
-private val LogText = Color(0xFFD6E4F0)
-private val SuccessGreen = Color(0xFF81C784)
+private val LogBackground = NightNavy
+private val LogText = Color(0xFFDCE3F5)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,6 +76,7 @@ fun PipScreen(viewModel: PipViewModel, onBack: () -> Unit) {
             SkyTopBar(
                 title = "Pip",
                 onBack = onBack,
+                glow = false,
                 actions = {
                     if (state.tab == PipTab.Installed) {
                         IconButton(onClick = viewModel::refresh, enabled = !state.loading) {
@@ -92,7 +96,7 @@ fun PipScreen(viewModel: PipViewModel, onBack: () -> Unit) {
         ) {
             PrimaryTabRow(
                 selectedTabIndex = state.tab.ordinal,
-                containerColor = BarBlue,
+                containerColor = BarNavy,
                 contentColor = Color.White,
                 divider = {},
             ) {
@@ -106,6 +110,7 @@ fun PipScreen(viewModel: PipViewModel, onBack: () -> Unit) {
                     )
                 }
             }
+            GlowLine()
             when (state.tab) {
                 PipTab.Install -> InstallTab(state, viewModel)
                 PipTab.Installed -> InstalledTab(state, viewModel)
@@ -156,6 +161,7 @@ private fun InstallTab(state: PipState, viewModel: PipViewModel) {
                 onClick = viewModel::install,
                 enabled = !state.installing,
                 shape = RoundedCornerShape(6.dp),
+                colors = brandButtonColors(),
                 // The outlined field reserves 8dp above its box for the floating label.
                 modifier = Modifier.padding(top = 8.dp).height(56.dp),
             ) { Text("Install") }
@@ -243,7 +249,7 @@ private fun InstalledTab(state: PipState, viewModel: PipViewModel) {
                     enabled = state.uninstalling == null,
                     onUninstall = { viewModel.requestUninstall(pkg) },
                 )
-                HorizontalDivider(color = DividerBlue)
+                HorizontalDivider(color = DividerNavy)
             }
         }
     }

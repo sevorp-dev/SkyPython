@@ -25,8 +25,8 @@ import io.github.rosemoe.sora.widget.CodeEditor
 import io.github.rosemoe.sora.widget.schemes.EditorColorScheme
 import org.eclipse.tm4e.core.registry.IThemeSource
 
-private const val EDITOR_BG = 0xFF0F1720.toInt()
-private const val GUTTER_DIVIDER = 0xFF26323E.toInt()
+private const val EDITOR_BG = 0xFF0B1230.toInt()
+private const val GUTTER_DIVIDER = 0xFF1E2A55.toInt()
 private const val THEME_PATH = "textmate/skypython-dark.json"
 private const val THEME_NAME = "skypython-dark"
 private const val PYTHON_SCOPE = "source.python"

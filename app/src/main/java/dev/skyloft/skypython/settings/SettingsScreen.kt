@@ -47,8 +47,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.skyloft.skypython.ui.theme.DividerBlue
+import dev.skyloft.skypython.ui.theme.DividerNavy
 import dev.skyloft.skypython.ui.theme.EditorBackground
+import dev.skyloft.skypython.ui.theme.OutlinedIconTile
+import dev.skyloft.skypython.ui.theme.SectionLabel
+import dev.skyloft.skypython.ui.theme.brandSwitchColors
 import kotlinx.coroutines.launch
 
 /** Settings list. Changes are saved immediately. */
@@ -79,7 +82,7 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 onChange = { sp -> update { it.copy(fontSizeSp = clampFontSize(sp)) } },
             )
             CodePreview(s.fontSizeSp)
-            HorizontalDivider(Modifier.padding(top = 12.dp), color = DividerBlue)
+            HorizontalDivider(Modifier.padding(top = 12.dp), color = DividerNavy)
             SwitchRow(
                 icon = Icons.AutoMirrored.Filled.WrapText,
                 title = "Word wrap",
@@ -107,12 +110,7 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
 
 @Composable
 private fun SectionTitle(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
-    )
+    SectionLabel(text, Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp))
 }
 
 @Composable
@@ -123,7 +121,7 @@ private fun FontSizeRow(sizeSp: Int, onChange: (Int) -> Unit) {
             .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Filled.TextFields, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        OutlinedIconTile(Icons.Filled.TextFields, size = 40.dp)
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
             Text("Font size", style = MaterialTheme.typography.bodyLarge)
@@ -153,11 +151,11 @@ private fun FontSizeRow(sizeSp: Int, onChange: (Int) -> Unit) {
 private fun CodePreview(sizeSp: Int) {
     val code = remember {
         buildAnnotatedString {
-            withStyle(SpanStyle(color = Color(0xFF569CD6))) { append("def ") }
-            withStyle(SpanStyle(color = Color(0xFFDCDCAA))) { append("greet") }
+            withStyle(SpanStyle(color = Color(0xFF6EA8FF))) { append("def ") }
+            withStyle(SpanStyle(color = Color(0xFF5ED3F7))) { append("greet") }
             append("(name):  ")
-            withStyle(SpanStyle(color = Color(0xFFC586C0))) { append("return ") }
-            withStyle(SpanStyle(color = Color(0xFFCE9178))) { append("f\"Hi {name}\"") }
+            withStyle(SpanStyle(color = Color(0xFFC4A1FF))) { append("return ") }
+            withStyle(SpanStyle(color = Color(0xFFF5B97A))) { append("f\"Hi {name}\"") }
         }
     }
     Row(
@@ -165,11 +163,11 @@ private fun CodePreview(sizeSp: Int) {
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .background(EditorBackground, RoundedCornerShape(6.dp))
-            .border(1.dp, DividerBlue, RoundedCornerShape(6.dp))
+            .border(1.dp, DividerNavy, RoundedCornerShape(6.dp))
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
-        Text(code, fontFamily = FontFamily.Monospace, fontSize = sizeSp.sp, color = Color(0xFFD4D4D4), softWrap = false)
+        Text(code, fontFamily = FontFamily.Monospace, fontSize = sizeSp.sp, color = Color(0xFFDCE3F5), softWrap = false)
     }
 }
 
@@ -189,11 +187,11 @@ private fun SwitchRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        OutlinedIconTile(icon, size = 40.dp)
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
             Text(summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Switch(checked = checked, onCheckedChange = onChange)
+        Switch(checked = checked, onCheckedChange = onChange, colors = brandSwitchColors())
     }
 }

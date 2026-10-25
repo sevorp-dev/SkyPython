@@ -34,7 +34,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -70,14 +69,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import dev.skyloft.skypython.ui.theme.BarBlue
-import dev.skyloft.skypython.ui.theme.DividerBlue
+import dev.skyloft.skypython.ui.theme.BarNavy
+import dev.skyloft.skypython.ui.theme.DividerNavy
 import dev.skyloft.skypython.ui.theme.EditorBackground
 import dev.skyloft.skypython.ui.theme.MutedText
-import dev.skyloft.skypython.ui.theme.RunAmber
+import dev.skyloft.skypython.ui.theme.GlowLine
+import dev.skyloft.skypython.ui.theme.GradientFab
+import dev.skyloft.skypython.ui.theme.SoftViolet
 import dev.skyloft.skypython.ui.theme.SkyPythonTheme
 import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.ui.graphics.Color
@@ -240,6 +240,7 @@ private fun FilesContent(
             SkyTopBar(
                 title = "Files",
                 onBack = onBack,
+                glow = false,
                 actions = {
                     IconButton(onClick = onOpenExternal) {
                         Icon(Icons.Filled.FileOpen, contentDescription = "Open external…")
@@ -256,6 +257,7 @@ private fun FilesContent(
                 .padding(padding),
         ) {
             Breadcrumbs(state = state, onUp = onUp, onNavigate = onNavigate)
+            GlowLine()
             if (state.entries.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
@@ -276,7 +278,7 @@ private fun FilesContent(
                             onRename = { onRename(entry) },
                             onDelete = { onDelete(entry) },
                         )
-                        HorizontalDivider(Modifier.padding(start = 72.dp), color = DividerBlue)
+                        HorizontalDivider(Modifier.padding(start = 72.dp), color = DividerNavy)
                     }
                 }
             }
@@ -289,7 +291,7 @@ private fun Breadcrumbs(state: FilesState, onUp: () -> Unit, onNavigate: (File) 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(BarBlue)
+            .background(BarNavy)
             .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -344,7 +346,7 @@ private fun EntryRow(entry: FileEntry, onClick: () -> Unit, onRename: () -> Unit
                     else -> Icons.Filled.Description
                 },
                 contentDescription = if (entry.isDirectory) "Folder" else "File",
-                tint = if (entry.isDirectory) RunAmber else MaterialTheme.colorScheme.primary,
+                tint = if (entry.isDirectory) SoftViolet else MaterialTheme.colorScheme.primary,
             )
         },
         headlineContent = { Text(entry.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -380,14 +382,7 @@ private fun EntryRow(entry: FileEntry, onClick: () -> Unit, onRename: () -> Unit
 private fun NewItemFab(onNewFile: () -> Unit, onNewFolder: () -> Unit) {
     var menuOpen by remember { mutableStateOf(false) }
     Box {
-        FloatingActionButton(
-            onClick = { menuOpen = true },
-            shape = CircleShape,
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-        ) {
-            Icon(Icons.Filled.Add, contentDescription = "New")
-        }
+        GradientFab(onClick = { menuOpen = true }, icon = Icons.Filled.Add, contentDescription = "New")
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
             DropdownMenuItem(
                 text = { Text("New file") },

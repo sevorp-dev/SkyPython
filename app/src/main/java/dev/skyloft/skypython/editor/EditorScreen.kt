@@ -22,13 +22,11 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.SaveAs
 import androidx.compose.material.icons.outlined.Folder
@@ -37,8 +35,6 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -49,7 +45,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -71,16 +66,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.skyloft.skypython.settings.EditorSettings
 import dev.skyloft.skypython.ui.drawer.DrawerAction
 import dev.skyloft.skypython.ui.drawer.SkyDrawer
-import dev.skyloft.skypython.ui.theme.BarBlue
+import dev.skyloft.skypython.ui.theme.BarNavy
+import dev.skyloft.skypython.ui.theme.BrandText
+import dev.skyloft.skypython.ui.theme.GlowLine
+import dev.skyloft.skypython.ui.theme.GlowLineBrush
+import dev.skyloft.skypython.ui.theme.MutedText
+import dev.skyloft.skypython.ui.theme.RunButton
+import dev.skyloft.skypython.ui.theme.skyTopBarColors
 import dev.skyloft.skypython.ui.theme.EditorBackground
-import dev.skyloft.skypython.ui.theme.RunAmber
-import dev.skyloft.skypython.ui.theme.SkyBlue
 import kotlinx.coroutines.launch
 import java.io.File
 
 private val TabSelected = Color.White
-private val TabIdle = Color(0xFF93A4B3)
-private val SubtitleColor = Color(0xFFB3C2CE)
+private val TabIdle = Color(0xFF8E9CC6)
+private val SubtitleColor = MutedText
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -151,14 +150,9 @@ fun EditorScreen(
         Scaffold(
             containerColor = EditorBackground,
             topBar = {
-                Column(Modifier.background(BarBlue)) {
+                Column(Modifier.background(BarNavy)) {
                     TopAppBar(
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = BarBlue,
-                            navigationIconContentColor = Color.White,
-                            titleContentColor = Color.White,
-                            actionIconContentColor = Color.White,
-                        ),
+                        colors = skyTopBarColors(),
                         navigationIcon = {
                             IconButton(onClick = { controller.hideKeyboard(); scope.launch { drawerState.open() } }) {
                                 Icon(Icons.Filled.Menu, contentDescription = "Menu")
@@ -210,20 +204,14 @@ fun EditorScreen(
                     if (current != null) {
                         DocTabs(state, viewModel, onClose = { id -> controller.flushPendingText(); viewModel.close(id) })
                     }
+                    GlowLine()
                 }
             },
             floatingActionButton = {
                 // With the keyboard up the FAB would sit on the lines being typed; Run moves
                 // into the symbol bar instead.
                 if (current != null && !imeVisible) {
-                    FloatingActionButton(
-                        onClick = runCurrent,
-                        shape = CircleShape,
-                        containerColor = RunAmber,
-                        contentColor = Color(0xFF2B2200),
-                        elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp),
-                        modifier = Modifier.size(64.dp),
-                    ) { Icon(Icons.Filled.PlayArrow, contentDescription = "Run", modifier = Modifier.size(36.dp)) }
+                    RunButton(onClick = runCurrent)
                 }
             },
             bottomBar = {
@@ -263,7 +251,7 @@ fun EditorScreen(
 @Composable
 private fun EditorTitle(doc: OpenDocument?, projectsRoot: File) {
     if (doc == null) {
-        Text("SkyPython", fontWeight = FontWeight.Bold)
+        BrandText("SkyPython", fontSize = 21.sp)
         return
     }
     Column {
@@ -316,7 +304,7 @@ private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel, onClose: (
                 if (selected && state.docs.size > 1) {
                     // matchParentSize, not fillMaxWidth: the strip scrolls, so max width is unbounded.
                     Box(Modifier.matchParentSize(), contentAlignment = Alignment.BottomCenter) {
-                        Box(Modifier.fillMaxWidth().height(2.dp).background(SkyBlue))
+                        Box(Modifier.fillMaxWidth().height(2.dp).background(GlowLineBrush))
                     }
                 }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {

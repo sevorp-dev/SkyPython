@@ -42,6 +42,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import dev.skyloft.skypython.R
+import dev.skyloft.skypython.ui.theme.BrandText
+import dev.skyloft.skypython.ui.theme.OutlinedIconTile
+import dev.skyloft.skypython.ui.theme.SectionLabel
+import dev.skyloft.skypython.ui.theme.SoftViolet
+import dev.skyloft.skypython.ui.theme.TextBright
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 
 private const val GITHUB_URL = "https://github.com/sevorp-dev/SkyPython"
 private const val TELEGRAM_URL = "https://t.me/SkyLoft_Studio"
@@ -75,16 +85,22 @@ fun AboutScreen(onBack: () -> Unit) {
             Column(
                 Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
+                    // The banner's night sky, fading into the page.
+                    .background(Brush.verticalGradient(listOf(Color(0xFF14309A).copy(alpha = 0.45f), Color(0xFF4A2C9E).copy(alpha = 0.18f), Color.Transparent)))
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Image(
                     painterResource(R.drawable.ic_launcher_foreground),
                     contentDescription = null,
-                    modifier = Modifier.size(96.dp),
+                    modifier = Modifier.size(128.dp),
                 )
-                Text("SkyPython", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                BrandText("SkyPython", fontSize = 36.sp, fontWeight = FontWeight.ExtraBold)
+                Row {
+                    Text("Python development, ", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = TextBright)
+                    BrandText("anywhere.", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
                 Text("Version $version", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(8.dp))
                 Text(
@@ -92,11 +108,6 @@ fun AboutScreen(onBack: () -> Unit) {
                         "Write and run Python scripts on your phone, completely offline.",
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodyMedium,
-                )
-                Text(
-                    "Developed by SkyLoft Studio",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             HorizontalDivider()
@@ -106,7 +117,7 @@ fun AboutScreen(onBack: () -> Unit) {
             HorizontalDivider()
             SectionTitle("License")
             ListItem(
-                leadingContent = { Icon(Icons.Filled.Gavel, contentDescription = null) },
+                leadingContent = { OutlinedIconTile(Icons.Filled.Gavel, size = 40.dp, tint = SoftViolet) },
                 headlineContent = { Text("Apache License 2.0") },
                 supportingContent = { Text("SkyPython is free software; see LICENSE in the source code.") },
             )
@@ -118,26 +129,35 @@ fun AboutScreen(onBack: () -> Unit) {
                     supportingContent = { Text(n.license, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 )
             }
-            Spacer(Modifier.height(16.dp))
+            HorizontalDivider()
+            Column(
+                Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    BrandText("SkyLoft Studio", fontSize = 15.sp)
+                    Text(
+                        " · Ideas. Code. Future.",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        letterSpacing = 0.6.sp,
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
 private fun SectionTitle(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
-    )
+    SectionLabel(text, Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp))
 }
 
 @Composable
 private fun LinkRow(icon: ImageVector, title: String, url: String, onClick: () -> Unit) {
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
-        leadingContent = { Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+        leadingContent = { OutlinedIconTile(icon, size = 40.dp) },
         headlineContent = { Text(title) },
         supportingContent = { Text(url, color = MaterialTheme.colorScheme.onSurfaceVariant) },
         trailingContent = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },

@@ -54,7 +54,13 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.skyloft.skypython.ui.theme.DividerNavy
+import dev.skyloft.skypython.ui.theme.EditorBackground
 import dev.skyloft.skypython.ui.theme.ErrorRed
+import androidx.compose.material3.HorizontalDivider
+import dev.skyloft.skypython.ui.theme.NightNavy
+import dev.skyloft.skypython.ui.theme.SkyCyan
+import dev.skyloft.skypython.ui.theme.brandButtonColors
 import dev.skyloft.skypython.ui.theme.SkyTopBar
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.heightIn
@@ -64,10 +70,10 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 
 /** Terminal-like colours for the output area, independent of the app theme. */
-private val ConsoleBackground = Color(0xFF0B0F14)
-private val ConsoleText = Color(0xFFD8DEE9)
-private val ConsoleDim = Color(0xFF6B7682)
-private val ConsolePrompt = Color(0xFFFFD54F)
+private val ConsoleBackground = NightNavy
+private val ConsoleText = Color(0xFFDCE3F5)
+private val ConsoleDim = Color(0xFF7480AB)
+private val ConsolePrompt = SkyCyan
 
 private val ConsoleTextStyle = TextStyle(
     color = ConsoleText,
@@ -117,6 +123,7 @@ fun ConsoleScreen(viewModel: ConsoleViewModel, onBack: () -> Unit) {
                     else -> ConsoleOutput(state.lines, state.version)
                 }
             }
+            HorizontalDivider(color = DividerNavy)
             InputRow(
                 enabled = state.acceptsInput,
                 // The REPL and the shell always want typing; a script may never read input, so the
@@ -200,7 +207,7 @@ private fun InputRow(enabled: Boolean, autoFocus: Boolean, onSend: (String) -> U
         Modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
-            .background(ConsoleBackground)
+            .background(EditorBackground)
             .clickable(enabled = enabled, indication = null, interactionSource = null) { focus.requestFocus() }
             .padding(start = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -263,6 +270,6 @@ private fun InstallError(message: String, onRetry: () -> Unit) {
     ) {
         Text("Could not set up Python", style = MaterialTheme.typography.titleMedium)
         Text(message, Modifier.padding(vertical = 12.dp), color = ErrorRed)
-        Button(onClick = onRetry) { Text("Retry") }
+        Button(onClick = onRetry, colors = brandButtonColors()) { Text("Retry") }
     }
 }
