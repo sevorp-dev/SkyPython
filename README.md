@@ -110,6 +110,16 @@ Everything works **offline** except installing packages and checking for updates
   <img src="docs/screenshots/image_chip.png" width="24%" alt="Script that saved a picture">
   <img src="docs/screenshots/image_viewer.png" width="24%" alt="Image viewer">
 </p>
+<p align="center">
+  <img src="docs/screenshots/open_project.png" width="24%" alt="Open project">
+  <img src="docs/screenshots/folder_browser.png" width="24%" alt="Choosing a project folder">
+  <img src="docs/screenshots/files_project.png" width="24%" alt="Project files">
+  <img src="docs/screenshots/pillow_card.png" width="24%" alt="Picture card made with Pillow">
+</p>
+<p align="center">
+  <img src="docs/screenshots/update_banner.png" width="24%" alt="Update banner">
+  <img src="docs/screenshots/update.png" width="24%" alt="Update screen">
+</p>
 
 ## 📥 Install
 
