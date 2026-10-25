@@ -10,6 +10,7 @@ import android.graphics.drawable.Drawable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -491,6 +492,8 @@ internal fun CodeEditor.applyConfig(config: EditorViewConfig) {
  * and a parameter hint floats above the cursor inside a call's parentheses.
  *
  * A [readOnly] doc (library code opened by "Go to definition") can't be edited and isn't checked.
+ *
+ * [debugMarks]: the debugger's breakpoints and paused line for this doc ([DebugAwareCodeEditor]).
  */
 @Composable
 fun CodeEditor(
@@ -505,6 +508,7 @@ fun CodeEditor(
     onDiagnostics: (List<Diagnostic>) -> Unit,
     modifier: Modifier = Modifier,
     readOnly: Boolean = false,
+    debugMarks: EditorDebugMarks = EditorDebugMarks.None,
 ) {
     val context = LocalContext.current
     val contents = remember { HashMap<String, Content>() }
@@ -592,7 +596,7 @@ fun CodeEditor(
         modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
             TextMateSetup.ensure(ctx)
-            CodeEditor(ctx).apply {
+            DebugAwareCodeEditor(ctx).apply {
                 typefaceText = Typeface.MONOSPACE
                 typefaceLineNumber = Typeface.MONOSPACE
                 tabWidth = 4
@@ -698,6 +702,14 @@ fun CodeEditor(
         view.diagnostics = if (check) diagnosticsContainer(content, known) else null
         onProblems(if (check) known else emptyList())
         requestDiagnostics(content, immediate = true)
+    }
+
+    // Debugger marks; the paused line is scrolled into view (after the doc switch above).
+    SideEffect { (controller.view as? DebugAwareCodeEditor)?.marks = debugMarks }
+    LaunchedEffect(docId, debugMarks.executionLine) {
+        val line = debugMarks.executionLine ?: return@LaunchedEffect
+        val view = controller.view ?: return@LaunchedEffect
+        if (line - 1 in 0 until view.text.lineCount) view.ensurePositionVisible(line - 1, 0)
     }
 
     // Settings changes apply live to the existing view.

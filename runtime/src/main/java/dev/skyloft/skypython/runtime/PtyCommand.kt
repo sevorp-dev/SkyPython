@@ -32,7 +32,7 @@ data class PtyCommand(
             command: RunCommand,
             appEnv: Map<String, String> = System.getenv(),
         ): PtyCommand {
-            require(command !is RunCommand.Script) { "Scripts run on pipes, not in a terminal" }
+            require(command !is RunCommand.Script && command !is RunCommand.Debug) { "Scripts run on pipes, not in a terminal" }
             // argv[0] stays the full path, as with ProcessBuilder: Python derives sys.executable
             // from it (subprocess, venv and pip rely on that).
             val line = PythonEnvironment.command(paths, command)

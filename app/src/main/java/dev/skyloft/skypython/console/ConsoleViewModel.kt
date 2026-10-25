@@ -101,7 +101,7 @@ class ConsoleViewModel(
     private var paths: PythonPaths? = null
     @Volatile private var process: ScriptProcess? = null
     private var runJob: Job? = null
-    private var lastTarget: RunTarget? = null
+    @Volatile private var lastTarget: RunTarget? = null
 
     // A REPL/shell prompt read from stderr, not yet shown (confined to [work]). stdout and stderr
     // are separate pipes, so the prompt that follows a result can be read before the result
@@ -183,6 +183,9 @@ class ConsoleViewModel(
         return true
     }
 
+    /** True while [target] is the program being started or run (any thread). */
+    fun isActive(target: RunTarget): Boolean = _state.value.running && lastTarget == target
+
     /** [request] for a script. */
     fun requestRun(script: File): Boolean = request(RunTarget.Script(script))
 
@@ -256,6 +259,7 @@ class ConsoleViewModel(
 
     private fun RunTarget.toCommand(): RunCommand = when (this) {
         is RunTarget.Script -> RunCommand.Script(file)
+        is RunTarget.Debug -> RunCommand.Debug(file, driver, channel)
         RunTarget.Interpreter -> RunCommand.Interpreter(projectsRoot)
         RunTarget.Terminal -> RunCommand.Shell(projectsRoot)
     }

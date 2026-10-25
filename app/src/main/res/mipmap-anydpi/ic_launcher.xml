@@ -3,8 +3,8 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="oval">
-            <!-- Same flat navy as ic_launcher_background. -->
-            <solid android:color="#FF151C2F" />
+            <!-- Same dark colour as ic_launcher_background. -->
+            <solid android:color="#FF151A22" />
         </shape>
     </item>
     <!-- The foreground is drawn for a 108dp canvas; enlarge it so the 66dp safe zone fills the circle. -->
