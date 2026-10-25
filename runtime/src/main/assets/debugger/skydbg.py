@@ -20,8 +20,9 @@ Events:
     continued  {}                                           the program runs again
     exited     {code}                                       last message before the process ends
 
-    frame      {id, name, file, line, hasLocals}            innermost first; id = index, valid
-                                                            until the program runs again
+    frame      {id, name, file, line, hasLocals, user}      innermost first; id = index, valid
+                                                            until the program runs again; user:
+                                                            under userRoots
 
 Methods (any time):
     setBreakpoints  {file, breakpoints: [{line, condition?}]}
@@ -30,7 +31,9 @@ Methods (any time):
     pause           {}  -> true      stop as soon as the program executes Python code again
     stop            {}  -> true      ends the process at once (exit code 137)
 Before the program starts:
-    start           {stopOnEntry?}   -> true       run the script (send breakpoints first)
+    start           {stopOnEntry?, userRoots?}  -> true    run the script (send breakpoints
+                    first). With userRoots (directories), stepping and pausing only stop in
+                    code under them ("just my code"); breakpoints work everywhere
 While stopped:
     continue | next | stepIn | stepOut  {}  -> true
     variables       {frameId, scope: "locals" | "globals"}  or  {ref}
@@ -255,6 +258,8 @@ class Debugger(bdb.Bdb):
         self.exit_code = None
         self.canonic_cache = {}
         self.detached = False
+        self.user_roots = []
+        self.user_cache = {}
 
     # --- paths -----------------------------------------------------------------------------
 
@@ -267,7 +272,21 @@ class Debugger(bdb.Bdb):
             self.canonic_cache[filename] = cached
         return cached
 
+    def is_user(self, filename):
+        if not self.user_roots:
+            return True
+        known = self.user_cache.get(filename)
+        if known is None:
+            path = self.canonic(filename)
+            known = self.user_cache[filename] = any(path.startswith(root) for root in self.user_roots)
+        return known
+
     # --- tracing -----------------------------------------------------------------------------
+
+    def stop_here(self, frame):
+        if not self.is_user(frame.f_code.co_filename):
+            return False
+        return super().stop_here(frame)
 
     def dispatch_call(self, frame, arg):
         if self.botframe is not None and _internal(frame.f_code.co_filename):
@@ -289,12 +308,14 @@ class Debugger(bdb.Bdb):
 
     def user_return(self, frame, value):
         # Leaving a function while stepping: stop at the caller's next line, not at the return.
-        if self.mode == "stepIn":
-            self.set_step()
-        elif frame.f_back is not None and frame.f_back is not self.botframe:
-            self.set_next(frame.f_back)
-        else:
+        caller = frame.f_back
+        if caller is None or caller is self.botframe:
             self.set_continue()
+        elif self.mode == "stepIn" or not self.is_user(caller.f_code.co_filename):
+            # Library code isn't traced, so it can't be the frame to stop in: the next user line.
+            self.set_step()
+        else:
+            self.set_next(caller)
 
     def user_call(self, frame, args):
         pass
@@ -422,6 +443,7 @@ class Debugger(bdb.Bdb):
             "file": self.canonic(f.f_code.co_filename),
             "line": lineno,
             "hasLocals": f.f_locals is not f.f_globals,
+            "user": self.is_user(f.f_code.co_filename),
         }
 
     # --- requests ----------------------------------------------------------------------------
@@ -453,6 +475,9 @@ class Debugger(bdb.Bdb):
                 self.reply(message, self.evaluate(params))
             elif method == "start":
                 self.stop_on_entry = bool(params.get("stopOnEntry"))
+                roots = [self.canonic(r) for r in params.get("userRoots") or []]
+                self.user_roots = [r if r.endswith(os.sep) else r + os.sep for r in roots]
+                self.user_cache = {}
                 with self.state_lock:
                     self.running = True  # from now on, stepping requests are refused until a stop
                 self.reply(message, True)

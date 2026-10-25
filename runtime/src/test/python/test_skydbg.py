@@ -39,9 +39,15 @@ def _free_port():
 class Session:
     """The driver running one script, plus a minimal client of its protocol."""
 
-    def __init__(self, source, args=(), stdin_data=None):
+    def __init__(self, source, args=(), files=None, script="main.py"):
         self.tmp = tempfile.mkdtemp(prefix="dbg-test-")
-        self.script = os.path.join(self.tmp, "main.py")
+        self.script = os.path.join(self.tmp, *script.split("/"))
+        os.makedirs(os.path.dirname(self.script), exist_ok=True)
+        for name, text in (files or {}).items():
+            path = os.path.join(self.tmp, name)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8", newline="\n") as f:
+                f.write(textwrap.dedent(text).lstrip("\n"))
         with open(self.script, "w", encoding="utf-8", newline="\n") as f:
             f.write(textwrap.dedent(source).lstrip("\n"))
         if hasattr(socket, "AF_UNIX"):
@@ -145,8 +151,10 @@ class Session:
             breakpoints=[{"line": n, "condition": conditions.get(n)} for n in lines],
         )
 
-    def start(self, stop_on_entry=False):
-        return self.request("start", stopOnEntry=stop_on_entry)
+    def start(self, stop_on_entry=False, user_roots=None):
+        if user_roots is None:
+            return self.request("start", stopOnEntry=stop_on_entry)
+        return self.request("start", stopOnEntry=stop_on_entry, userRoots=user_roots)
 
     def locals(self, frame_id=0, scope="locals"):
         result = self.request("variables", frameId=frame_id, scope=scope)
@@ -333,6 +341,77 @@ class DebuggerTest(unittest.TestCase):
         s.resume("next")
         stop = s.stopped()
         self.assertEqual((stop["frames"][0]["name"], stop["frames"][0]["line"]), ("<module>", 5))
+
+    LIB = """
+        def twice(fn, x):
+            y = fn(x)
+            return fn(y)
+
+        def plain(x):
+            z = x + 1
+            return z
+    """
+
+    APP = """
+        import sys, os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "lib"))
+        import helpers
+
+        def inc(v):
+            return v + 1
+
+        a = helpers.plain(1)
+        b = helpers.twice(inc, a)
+        c = b
+    """
+
+    def app_session(self):
+        s = self.session(self.APP, script="app/main.py", files={"lib/helpers.py": self.LIB})
+        return s, [os.path.dirname(s.script)]
+
+    def test_just_my_code_steps_over_library_code(self):
+        s, roots = self.app_session()
+        s.breakpoints(8)
+        s.start(user_roots=roots)
+        s.stopped()
+        s.resume("stepIn")
+        stop = s.stopped()
+        self.assertEqual((stop["frames"][0]["name"], stop["frames"][0]["line"]), ("<module>", 9))
+        self.assertTrue(stop["frames"][0]["user"])
+        self.assertEqual(s.locals(scope="globals")["a"]["value"], "2")
+        s.resume()
+        self.assertEqual(s.finish(), (0, 0))
+
+    def test_just_my_code_stops_in_callbacks_from_library_code(self):
+        s, roots = self.app_session()
+        s.breakpoints(9)
+        s.start(user_roots=roots)
+        s.stopped()
+        s.resume("stepIn")
+        stop = s.stopped()
+        self.assertEqual((stop["frames"][0]["name"], stop["frames"][0]["line"]), ("inc", 6))
+        # The library frame between them is shown, marked as not the user's.
+        self.assertEqual([f["name"] for f in stop["frames"]], ["inc", "twice", "<module>"])
+        self.assertEqual([f["user"] for f in stop["frames"]], [True, False, True])
+        self.assertEqual(s.locals()["v"]["value"], "2")
+        # Returning into library code: the next user line is the second callback.
+        s.resume("next")
+        stop = s.stopped()
+        self.assertEqual((stop["frames"][0]["name"], s.locals()["v"]["value"]), ("inc", "3"))
+        s.resume("stepOut")
+        stop = s.stopped()
+        self.assertEqual((stop["frames"][0]["name"], stop["frames"][0]["line"]), ("<module>", 10))
+        s.resume()
+        self.assertEqual(s.finish(), (0, 0))
+
+    def test_breakpoints_in_library_code_still_stop(self):
+        s, roots = self.app_session()
+        lib = os.path.join(s.tmp, "lib", "helpers.py")
+        s.request("setBreakpoints", file=lib, breakpoints=[{"line": 7}])
+        s.start(user_roots=roots)
+        stop = s.stopped()
+        self.assertEqual((stop["frames"][0]["name"], stop["frames"][0]["user"]), ("plain", False))
+        self.assertTrue(same_file(stop["frames"][0]["file"], lib))
 
     def test_stop_on_entry(self):
         s = self.session("""
