@@ -491,13 +491,20 @@ private fun PopularRow(pkg: PopularPackage, installed: Boolean, action: PopularA
             action == PopularAction.Not32Bit -> DisabledNote(stringResource(R.string.pip_prebuilt_32bit))
             action == PopularAction.NotThisDevice -> DisabledNote(stringResource(R.string.pip_prebuilt_other_abi))
             installed -> InstalledBadge()
-            else -> TextButton(onClick = onInstall, enabled = !busy) { Text(stringResource(R.string.pip_install)) }
+            else -> TextButton(
+                onClick = onInstall,
+                enabled = !busy,
+                modifier = Modifier.testTag(popularInstallTag(pkg.name)),
+            ) { Text(stringResource(R.string.pip_install)) }
         }
     }
 }
 
 /** Test tag of the "Prebuilt for Android" badge. */
 const val PREBUILT_BADGE_TAG = "pip_prebuilt_badge"
+
+/** Test tag of the Install button of popular package [name]. */
+fun popularInstallTag(name: String) = "pip_popular_install_$name"
 
 /** "Prebuilt for Android": the package comes from SkyPython's wheel index. */
 @Composable

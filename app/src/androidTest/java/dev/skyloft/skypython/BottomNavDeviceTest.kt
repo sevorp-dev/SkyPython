@@ -47,7 +47,12 @@ class BottomNavDeviceTest {
     fun restoreDefault() = setBar(true)
 
     private fun tap(destination: TopLevelDestination) {
-        rule.waitUntilAtLeastOneExists(hasTestTag(destination.tag), 10_000)
+        // The bar hides while the keyboard is up, and a slow emulator can open it late: keep hiding it.
+        rule.waitUntil(30_000) {
+            val shown = rule.onAllNodes(hasTestTag(destination.tag)).fetchSemanticsNodes().isNotEmpty()
+            if (!shown) hideKeyboard()
+            shown
+        }
         rule.onNode(hasTestTag(destination.tag)).performClick()
         rule.waitForIdle()
     }

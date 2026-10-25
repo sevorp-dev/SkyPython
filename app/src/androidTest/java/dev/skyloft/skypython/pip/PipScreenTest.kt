@@ -130,17 +130,19 @@ class PipScreenTest {
     @Test
     fun aPrebuiltPopularPackageHasTheBadgeAndInstalls() {
         showWithCatalog(catalog("x86_64"))
-        rule.onNode(hasScrollAction()).performScrollToNode(hasText("numpy"))
-        rule.waitUntilAtLeastOneExists(hasTestTag(PREBUILT_BADGE_TAG), 5_000)
+        // Scroll to the badge itself (on a short screen numpy's row starts below the edge);
+        // retry until the catalog has loaded and the badge exists.
+        rule.waitUntil(10_000) {
+            runCatching { rule.onNode(hasScrollAction()).performScrollToNode(hasTestTag(PREBUILT_BADGE_TAG)) }.isSuccess
+        }
         rule.onNode(hasTestTag(PREBUILT_BADGE_TAG)).assertIsDisplayed()
         rule.onNode(hasText(str(R.string.pip_prebuilt_badge))).assertExists()
         // Only pillow is still "coming later".
         assertEquals(1, rule.onAllNodes(hasText(str(R.string.pip_coming_later))).fetchSemanticsNodes().size)
-        val installs = rule.onAllNodes(hasText(str(R.string.pip_install)))
-        // numpy is the last popular entry: its Install is the last one.
-        val count = installs.fetchSemanticsNodes().size
-        installs[count - 1].performClick()
-        rule.waitUntilAtLeastOneExists(hasText(str(R.string.pip_installed_spec, "numpy")), 5_000)
+        val install = hasTestTag(popularInstallTag("numpy"))
+        rule.onNode(hasScrollAction()).performScrollToNode(install)
+        rule.onNode(install).assertIsDisplayed().performClick()
+        rule.waitUntilAtLeastOneExists(hasText(str(R.string.pip_installed_spec, "numpy")), 20_000)
         assertEquals(listOf("install numpy"), pip.runs)
     }
 
