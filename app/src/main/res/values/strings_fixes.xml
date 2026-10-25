@@ -6,4 +6,7 @@
     <string name="share_folder_failed">Couldn\'t pack the folder for sharing (%1$s)</string>
     <!-- Debugger -->
     <string name="debug_error_connect">The debugger couldn\'t connect to the program (%1$s)</string>
+    <!-- Find & replace -->
+    <string name="find_replace_timeout">The pattern ran over %1$d s and was stopped; nothing was replaced</string>
+    <string name="find_replace_changed">The text changed while replacing; nothing was replaced</string>
 </resources>

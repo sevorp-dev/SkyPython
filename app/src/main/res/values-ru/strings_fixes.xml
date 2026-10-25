@@ -5,4 +5,7 @@
     <string name="share_folder_failed">Не удалось упаковать папку для отправки (%1$s)</string>
     <!-- Debugger -->
     <string name="debug_error_connect">Отладчик не смог подключиться к программе (%1$s)</string>
+    <!-- Find & replace -->
+    <string name="find_replace_timeout">Выражение работало дольше %1$d с и было остановлено; ничего не заменено</string>
+    <string name="find_replace_changed">Текст изменился во время замены; ничего не заменено</string>
 </resources>

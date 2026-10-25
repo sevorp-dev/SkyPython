@@ -526,11 +526,17 @@ fun EditorScreen(
                             showReplace = showReplace,
                             onToggleReplace = { showReplace = !showReplace },
                             onClose = { findOpen = false },
-                            onReplacedAll = { n ->
+                            onReplacedAll = { result ->
                                 scope.launch {
                                     snackbar.showSnackbar(
-                                        if (n > 0) AppLocale.string(context, R.string.find_replaced_count, n)
-                                        else AppLocale.string(context, R.string.find_no_matches),
+                                        when (result) {
+                                            is ReplaceAllResult.Replaced ->
+                                                if (result.count > 0) AppLocale.string(context, R.string.find_replaced_count, result.count)
+                                                else AppLocale.string(context, R.string.find_no_matches)
+                                            ReplaceAllResult.TimedOut ->
+                                                AppLocale.string(context, R.string.find_replace_timeout, (REPLACE_ALL_TIMEOUT_MS / 1000).toInt())
+                                            ReplaceAllResult.TextChanged -> AppLocale.string(context, R.string.find_replace_changed)
+                                        },
                                     )
                                 }
                             },
