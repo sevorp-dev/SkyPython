@@ -103,6 +103,12 @@ Everything works **offline** except installing packages with pip.
   <img src="docs/screenshots/about.png" width="24%" alt="About">
   <img src="docs/screenshots/editor_ru.png" width="24%" alt="Russian interface">
 </p>
+<p align="center">
+  <img src="docs/screenshots/numpy_run.png" width="24%" alt="NumPy script output">
+  <img src="docs/screenshots/numpy_install.png" width="24%" alt="Installing NumPy">
+  <img src="docs/screenshots/image_chip.png" width="24%" alt="Script that saved a picture">
+  <img src="docs/screenshots/image_viewer.png" width="24%" alt="Image viewer">
+</p>
 
 ## 📥 Install
 
