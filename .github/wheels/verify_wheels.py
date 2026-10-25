@@ -135,6 +135,9 @@ def check_wheel(path: str, max_api: int, python_tag: str | None) -> list[str]:
                 if lib in SYSTEM_LIBS or re.fullmatch(r"libpython3\.\d+\.so", lib) or lib in basenames:
                     continue
                 errors.append(f"{where}: needs {lib}, which is neither a system library nor in the wheel")
+            for r in info["runpath"]:
+                if any(p.startswith("/") for p in r.split(":")):
+                    errors.append(f"{where}: absolute RUNPATH {r!r} (a build-machine path)")
             line = f"{n}: ELF{info['class']} machine={info['machine']:#x} align={sorted(set(info['aligns']))} needed={info['needed']} runpath={info['runpath']}"
             print("  " + line)
             if ".cpython-" in posixpath.basename(n):

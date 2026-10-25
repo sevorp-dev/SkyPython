@@ -237,21 +237,22 @@ jobs:
               errs = [l for l in lines if re.search(r"error|failed|FAILED|Traceback", l)][:40]
               if errs:
                   emit("error lines", errs)
-          tail = lines[-150:]
-          for k in range(0, len(tail), 50):
-              emit(f"log tail {k // 50 + 1}", tail[k:k + 50])
+              tail = lines[-150:]
+              for k in range(0, len(tail), 50):
+                  emit(f"log tail {k // 50 + 1}", tail[k:k + 50])
           PY
         env:
           OUTCOME: ${{ steps.build.outcome }}
 
-      - name: Add license texts of vendored libraries
+      - name: Add license texts, strip build-machine RUNPATHs
         run: |
           set -euo pipefail
+          pip install -q patchelf
           lic=(--license "libc++-LICENSE.txt=.github/wheels/licenses/libc++-LICENSE.txt$([ "$BITS" = 64 ] && echo '@libc++_shared')")
           if [ "$BITS" = 64 ]; then
             lic+=(--license "OpenBLAS-LICENSE.txt=$RUNNER_TEMP/OpenBLAS-LICENSE.txt@libopenblas")
           fi
-          python .github/wheels/add_licenses.py wheelhouse/*.whl "${lic[@]}"
+          python .github/wheels/finish_wheels.py wheelhouse/*.whl "${lic[@]}"
 
       - name: Verify the wheel (tag, ELF machine, 16 KB alignment, dependencies)
         run: python .github/wheels/verify_wheels.py --max-api 24 --python-tag cp314 wheelhouse/*.whl
@@ -264,9 +265,10 @@ jobs:
 
   publish:
     needs: numpy
-    # 32-bit legs may fail (continue-on-error keeps the matrix result "success"); a failed
-    # 64-bit leg makes it "failure", and then nothing is published.
-    if: ${{ !cancelled() && needs.numpy.result == 'success' && inputs.publish != false }}
+    # 32-bit legs may fail (continue-on-error), and then `needs.numpy.result` is still
+    # "failure", so it is not checked here: the step below refuses to publish unless both
+    # 64-bit wheels were built.
+    if: ${{ !cancelled() && inputs.publish != false }}
     runs-on: ubuntu-24.04
     permissions:
       contents: write

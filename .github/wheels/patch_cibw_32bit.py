@@ -65,7 +65,15 @@ def main() -> int:
         + "}",
     )
 
-    # 3. Where the target CPython comes from (our own release instead of python.org).
+    # 3. Build descriptions printed by the logger.
+    replace_once(
+        pkg / "logger.py",
+        '    "android_x86_64": "Android x86_64",\n',
+        '    "android_x86_64": "Android x86_64",\n'
+        + "".join(f'    "android_{a}": "Android {a}",\n' for a in TRIPLETS),
+    )
+
+    # 4. Where the target CPython comes from (our own release instead of python.org).
     toml = pkg / "resources" / "build-platforms.toml"
     text = toml.read_text(encoding="utf-8")
     if f'identifier = "{identifier}"' not in text:
