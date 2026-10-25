@@ -148,6 +148,148 @@ class CompleteTest(unittest.TestCase):
         self.assertEqual(len(sig["params"]), 2)
         self.assertIsNone(ls.signature("x = 1", 1, 5))
 
+    def test_print_signature_for_the_hint(self):
+        sig = ls.signature("print(", 1, 6)
+        self.assertEqual(sig["name"], "print")
+        self.assertEqual(sig["index"], 0)
+        self.assertEqual(sig["params"][0], "*values: object")
+        self.assertIn('sep: str | None=" "', sig["params"])
+        # Without annotations, for a hint that fits a phone screen.
+        self.assertEqual(sig["short"], ["*values", 'sep=" "', 'end="\\n"', "file=None", "flush=False"])
+
+    def test_short_params(self):
+        self.assertEqual(ls.short_param("x: Dict[str, int]={'a': 1}"), "x={'a': 1}")
+        self.assertEqual(ls.short_param("key: Literal['a=b']='a=b'"), "key='a=b'")
+        self.assertEqual(ls.short_param("**kwargs: Any"), "**kwargs")
+        self.assertEqual(ls.short_param("self"), "self")
+        self.assertEqual(ls.short_param("/"), "/")
+
+
+class DefinitionTest(unittest.TestCase):
+    def setUp(self):
+        self.folder = os.path.realpath(tempfile.mkdtemp(prefix="skylang-def-"))
+        self.addCleanup(shutil.rmtree, self.folder, True)
+
+    def write(self, name, text):
+        path = os.path.join(self.folder, name)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(text)
+        return path
+
+    def test_name_defined_in_the_same_file(self):
+        src = "def greet(who):\n    return who\n\ngreet('x')\n"
+        [d] = ls.definition(src, 4, 1, None)
+        self.assertEqual(d["name"], "greet")
+        self.assertTrue(d["inFile"])
+        self.assertEqual((d["line"], d["column"], d["endColumn"]), (1, 4, 9))
+
+    def test_same_file_with_a_path(self):
+        path = self.write("main.py", "")
+        src = "counter = 1\nprint(counter)\n"
+        [d] = ls.definition(src, 2, 8, path)
+        self.assertTrue(d["inFile"])
+        self.assertEqual((d["line"], d["column"]), (1, 0))
+        self.assertEqual(d["kind"], "project")
+
+    def test_another_project_file(self):
+        helper = self.write("helper.py", "X = 1\n\ndef shout(text):\n    return text.upper()\n")
+        main = self.write("main.py", "")
+        src = "from helper import shout\nshout('hi')\n"
+        [d] = ls.definition(src, 2, 2, main)
+        self.assertFalse(d["inFile"])
+        self.assertEqual(os.path.normcase(d["path"]), os.path.normcase(helper))
+        self.assertEqual((d["line"], d["column"], d["endColumn"]), (3, 4, 9))
+        self.assertEqual(d["kind"], "project")
+
+    def test_stdlib_module_follows_the_import(self):
+        [d] = ls.definition("import json\njson.dumps\n", 2, 6, None)
+        self.assertEqual(d["name"], "dumps")
+        self.assertFalse(d["inFile"])
+        self.assertEqual(d["kind"], "stdlib")
+        self.assertTrue(d["path"].replace("\\", "/").endswith("json/__init__.py"), d["path"])
+
+    def test_builtin_goes_to_the_stub(self):
+        [d] = ls.definition("print('x')\n", 1, 2, None)
+        self.assertEqual(d["name"], "print")
+        self.assertEqual(d["kind"], "stdlib")
+        self.assertTrue(d["path"].endswith("builtins.pyi"), d["path"])
+
+    def test_columns_are_utf16(self):
+        src = "s = '😀'; value = 1\nprint(value)\n"
+        [d] = ls.definition(src, 2, 7, None)
+        self.assertEqual((d["line"], d["column"], d["endColumn"]), (1, 10, 15))
+
+    def test_nothing_on_whitespace_or_a_literal(self):
+        self.assertEqual(ls.definition("x = 1\n\n", 2, 0, None), [])
+        self.assertEqual(ls.definition("x = 12345\n", 1, 6, None), [])
+
+    def test_classify(self):
+        sp = os.path.join("opt", "lib", "python3.14", "site-packages", "requests", "api.py")
+        self.assertEqual(ls.classify(sp), "site-packages")
+        self.assertEqual(ls.classify(os.path.join("x", "dist-packages", "a.py")), "site-packages")
+        import json
+        self.assertEqual(ls.classify(json.__file__), "stdlib")
+        self.assertEqual(ls.classify(os.path.join(self.folder, "mine.py")), "project")
+
+
+class ReferencesTest(unittest.TestCase):
+    def test_usages_in_the_file(self):
+        src = "total = 0\nfor i in range(3):\n    total += i\nprint(total)\n"
+        refs = ls.references(src, 4, 7, None)
+        self.assertEqual([(r["line"], r["column"], r["endColumn"]) for r in refs],
+                         [(1, 0, 5), (3, 4, 9), (4, 6, 11)])
+
+    def test_nothing_on_a_keyword(self):
+        self.assertEqual(ls.references("for i in range(3):\n    pass\n", 1, 1, None), [])
+
+
+class OutlineTest(unittest.TestCase):
+    SRC = (
+        "import os\n"                      # 1
+        "\n"                               # 2
+        "class Shape:\n"                   # 3
+        "    def area(self):\n"            # 4
+        "        return 0\n"               # 5
+        "\n"                               # 6
+        "    class Meta:\n"                # 7
+        "        def deep(self):\n"        # 8
+        "            pass\n"               # 9
+        "\n"                               # 10
+        "async def main():\n"              # 11
+        "    def helper():\n"              # 12
+        "        pass\n"                   # 13
+        "    return helper\n"              # 14
+        "\n"                               # 15
+        "x = lambda: 0\n"                  # 16
+    )
+
+    def test_nested_classes_functions_and_methods(self):
+        items = ls.outline(self.SRC)
+
+        def flat(nodes, depth=0):
+            for n in nodes:
+                yield (depth, n["name"], n["kind"], n["line"], n["endLine"])
+                yield from flat(n["children"], depth + 1)
+
+        self.assertEqual(list(flat(items)), [
+            (0, "Shape", "class", 3, 9),
+            (1, "area", "method", 4, 5),
+            (1, "Meta", "class", 7, 9),
+            (2, "deep", "method", 8, 9),
+            (0, "main", "function", 11, 14),
+            (1, "helper", "function", 12, 13),
+        ])
+        self.assertEqual(items[0]["column"], 6)  # the name, not `class`
+
+    def test_survives_syntax_errors(self):
+        items = ls.outline("def ok():\n    pass\n\ndef broken(:\n    pass\n\nclass After:\n    pass\n")
+        names = [i["name"] for i in items]
+        self.assertIn("ok", names)
+        self.assertIn("After", names)
+
+    def test_empty(self):
+        self.assertEqual(ls.outline(""), [])
+
 
 class ServerLoopTest(unittest.TestCase):
     """The request loop in-process: everything queued before the loop starts is one batch."""
