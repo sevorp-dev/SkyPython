@@ -1,6 +1,9 @@
 package dev.skyloft.skypython.terminal
 
 import android.app.Application
+import androidx.annotation.StringRes
+import dev.skyloft.skypython.R
+import dev.skyloft.skypython.locale.AppLocale
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -8,7 +11,6 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -18,7 +20,6 @@ import com.termux.terminal.TerminalEmulator
 import com.termux.terminal.TerminalSession
 import com.termux.terminal.TerminalSessionClient
 import com.termux.view.TerminalView
-import dev.skyloft.skypython.R
 import dev.skyloft.skypython.runtime.PtyCommand
 import dev.skyloft.skypython.runtime.PythonInstaller
 import dev.skyloft.skypython.runtime.PythonPaths
@@ -36,15 +37,15 @@ import java.io.IOException
 import java.lang.ref.WeakReference
 
 /** The programs that run on a real terminal. */
-enum class TerminalKind(@StringRes val titleRes: Int) {
+enum class TerminalKind(val title: String, @StringRes val titleRes: Int) {
     /** `python -i -q`: Python's own line editing, colours, Ctrl+C → KeyboardInterrupt. */
-    Interpreter(R.string.terminal_title_interpreter),
+    Interpreter("Interpreter", R.string.title_interpreter),
 
     /** `/system/bin/sh -i` with `python` / `pip` defined (see ShellShims). */
-    Shell(R.string.terminal_title_shell),
+    Shell("Terminal", R.string.title_terminal),
 
     /** `python -u <script>` in the script's folder (▶ Run); titled with the file name. */
-    Run(R.string.terminal_title_run),
+    Run("Run", R.string.action_run),
 }
 
 data class TerminalState(
@@ -130,7 +131,10 @@ class TerminalViewModel(
     private val clipboard get() = app.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
     val title: String
-        get() = _state.value.script?.name.takeIf { kind == TerminalKind.Run } ?: app.getString(kind.titleRes)
+        get() = _state.value.script?.name.takeIf { kind == TerminalKind.Run } ?: AppLocale.string(app, kind.titleRes)
+
+    /** The localized [title]. */
+    @get:StringRes val titleRes: Int get() = kind.titleRes
 
     /** Shows the running session, or starts a new one if there is none or it has ended. */
     fun open() {
@@ -284,10 +288,10 @@ class TerminalViewModel(
                 }
             }
             result.onSuccess { file ->
-                message(app.getString(R.string.output_saved, file.relativeToOrSelf(projectsRoot.parentFile ?: projectsRoot).path))
+                message(AppLocale.string(app, R.string.output_saved, file.relativeToOrSelf(projectsRoot.parentFile ?: projectsRoot).path))
                 onSaved(file)
             }.onFailure { e ->
-                message(app.getString(R.string.output_save_failed, e.message ?: e.toString()))
+                message(AppLocale.string(app, R.string.output_save_failed, e.message ?: e.toString()))
             }
         }
     }
@@ -305,8 +309,8 @@ class TerminalViewModel(
                     out.use { it.write((text + "\n").toByteArray(Charsets.UTF_8)) }
                 }
             }
-            result.onSuccess { message(app.getString(R.string.output_saved, uri.lastPathSegment ?: "")) }
-                .onFailure { e -> message(app.getString(R.string.output_save_failed, e.message ?: e.toString())) }
+            result.onSuccess { message(AppLocale.string(app, R.string.output_saved, uri.lastPathSegment ?: "")) }
+                .onFailure { e -> message(AppLocale.string(app, R.string.output_save_failed, e.message ?: e.toString())) }
         }
     }
 
@@ -374,7 +378,7 @@ class TerminalViewModel(
         _state.update { it.copy(atBottom = atBottom) }
     }
 
-    private fun message(@StringRes res: Int) = message(app.getString(res))
+    private fun message(@StringRes res: Int) = message(AppLocale.string(app, res))
 
     private fun message(text: String) = emit(TerminalEvent.Message(text))
 
@@ -424,7 +428,11 @@ class TerminalViewModel(
                 TRANSCRIPT_ROWS,
                 client,
             )
-            if (kind == TerminalKind.Run) session.setExitMessage(RunFooter::text)
+            if (kind == TerminalKind.Run) {
+                session.setExitMessage { status, atLineStart ->
+                    RunFooter.text(status, atLineStart) { AppLocale.string(app, R.string.console_exit_footer, it) }
+                }
+            }
             _state.update {
                 it.copy(session = session, running = true, modifiers = Modifiers(), hasOutput = false, atBottom = true)
             }

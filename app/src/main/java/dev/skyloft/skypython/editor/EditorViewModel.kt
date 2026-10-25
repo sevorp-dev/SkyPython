@@ -9,7 +9,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.annotation.StringRes
+import dev.skyloft.skypython.R
 import dev.skyloft.skypython.data.SavedTab
+import dev.skyloft.skypython.locale.AppLocale
 import dev.skyloft.skypython.data.Session
 import dev.skyloft.skypython.data.SessionStore
 import kotlinx.coroutines.Dispatchers
@@ -75,7 +78,7 @@ class EditorViewModel(
             }
         },
         onSaved = { publish(persistSession = false) },
-        onError = { doc, e -> message("Can't save ${doc.name}: ${e.message}") },
+        onError = { doc, e -> message(R.string.editor_error_save, doc.name, e.reason()) },
     )
     private var restored = false
     private val sessionToSave = MutableStateFlow<Session?>(null)
@@ -118,7 +121,7 @@ class EditorViewModel(
             }
             val text = withContext(Dispatchers.IO) { runCatching { readLocal(source.file) } }
             text.onSuccess { docsState.open(OpenDocument.of(source, it)); publish() }
-                .onFailure { message("Can't open ${file.name}: ${it.message}") }
+                .onFailure { message(R.string.editor_error_open, file.name, it.reason()) }
         }
     }
 
@@ -135,7 +138,7 @@ class EditorViewModel(
                 }
             }
             result.onSuccess { (src, text) -> docsState.open(OpenDocument.of(src, text)); publish() }
-                .onFailure { message("Can't open file: ${it.message}") }
+                .onFailure { message(R.string.editor_error_open_file, it.reason()) }
         }
     }
 
@@ -195,7 +198,7 @@ class EditorViewModel(
                     val safeName = src.name.replace('/', '_').ifBlank { "script.py" }
                     File(dir, safeName).apply { writeText(doc.text, Charsets.UTF_8) }
                 }
-            }.onFailure { message("Can't prepare ${doc.name} to run: ${it.message}") }.getOrNull()
+            }.onFailure { message(R.string.editor_error_prepare_run, doc.name, it.reason()) }.getOrNull()
         }
     }
 
@@ -215,7 +218,7 @@ class EditorViewModel(
                 val newDoc = OpenDocument.of(src, latest.text).copy(dirty = latest.text != doc.text)
                 docsState.replace(doc.id, newDoc)
                 publish()
-            }.onFailure { message("Save as failed: ${it.message}") }
+            }.onFailure { message(R.string.editor_error_save_as, it.reason()) }
         }
     }
 
@@ -234,11 +237,16 @@ class EditorViewModel(
             withContext(Dispatchers.IO) {
                 runCatching { firstRunFile().let { it to readLocal(it) } }
             }.onSuccess { (file, text) -> docsState.open(OpenDocument.local(file, text)) }
-                .onFailure { message("Can't create example file: ${it.message}") }
+                .onFailure { message(R.string.editor_error_create_example, it.reason()) }
             return
         }
         val reopened = withContext(Dispatchers.IO) {
-            restoreTabs(session.tabs, ::readLocal) { tab ->
+            val strings = RestoreStrings(
+                couldNotReopen = { name, reason -> str(R.string.editor_error_reopen, name, reason) },
+                permissionLost = str(R.string.editor_reason_permission_lost),
+                unavailable = str(R.string.editor_reason_unavailable),
+            )
+            restoreTabs(session.tabs, ::readLocal, strings = strings) { tab ->
                 Uri.parse(tab.location).let { OpenDocument.of(DocSource.External(it, tab.name), readExternal(it)) }
             }
         }
@@ -268,10 +276,18 @@ class EditorViewModel(
         _messages.trySend(text)
     }
 
+    private fun message(@StringRes id: Int, vararg args: Any) = message(str(id, *args))
+
+    /** A string in the app language, resolved now (it may change while the view model lives). */
+    private fun str(@StringRes id: Int, vararg args: Any): String =
+        AppLocale.string(getApplication(), id, *args)
+
+    private fun Throwable.reason(): String = message ?: toString()
+
     // ---- IO helpers (call on Dispatchers.IO) ----
 
     private fun readLocal(file: File): String {
-        require(file.length() <= MAX_FILE_BYTES) { "file is larger than ${MAX_FILE_BYTES / 1_000_000} MB" }
+        require(file.length() <= MAX_FILE_BYTES) { tooLarge() }
         return file.readText(Charsets.UTF_8)
     }
 
@@ -287,9 +303,11 @@ class EditorViewModel(
             }
             out.toByteArray()
         }
-        require(bytes.size <= MAX_FILE_BYTES) { "file is larger than ${MAX_FILE_BYTES / 1_000_000} MB" }
+        require(bytes.size <= MAX_FILE_BYTES) { tooLarge() }
         return bytes.toString(Charsets.UTF_8)
     }
+
+    private fun tooLarge(): String = str(R.string.editor_error_too_large, MAX_FILE_BYTES / 1_000_000)
 
     private fun writeExternal(uri: Uri, text: String) {
         val stream = resolver.openOutputStream(uri, "wt") ?: error("provider returned no stream")

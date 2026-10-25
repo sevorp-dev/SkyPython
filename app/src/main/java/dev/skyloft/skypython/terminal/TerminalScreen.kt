@@ -63,6 +63,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -93,6 +94,7 @@ import dev.skyloft.skypython.console.InstallError
 import dev.skyloft.skypython.console.Installing
 import dev.skyloft.skypython.console.InterruptButton
 import dev.skyloft.skypython.ui.theme.SkyTopBar
+import kotlinx.coroutines.launch
 import java.io.File
 import kotlin.math.roundToInt
 
@@ -115,7 +117,6 @@ fun TerminalScreen(
     onOpenInEditor: (File, Int) -> Unit = { _, _ -> },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val events by viewModel.events.collectAsStateWithLifecycle()
     val colors = MaterialTheme.colorScheme
     val context = LocalContext.current
     val snackbar = remember { SnackbarHostState() }
@@ -127,13 +128,18 @@ fun TerminalScreen(
         if (uri != null) viewModel.saveOutputTo(uri)
     }
 
-    LaunchedEffect(events) {
-        val event = events.firstOrNull() ?: return@LaunchedEffect
-        viewModel.consumed(event)
-        when (event) {
-            is TerminalEvent.Message -> snackbar.showSnackbar(event.text)
-            is TerminalEvent.Share -> shareOutput(context, event)
-            is TerminalEvent.OpenInEditor -> onOpenInEditor(event.file, event.line)
+    val currentOpenInEditor by rememberUpdatedState(onOpenInEditor)
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { pending ->
+            for (event in pending) {
+                viewModel.consumed(event)
+                when (event) {
+                    // Not awaited: the next event must not wait for the snackbar to go.
+                    is TerminalEvent.Message -> launch { snackbar.showSnackbar(event.text) }
+                    is TerminalEvent.Share -> shareOutput(context, event)
+                    is TerminalEvent.OpenInEditor -> currentOpenInEditor(event.file, event.line)
+                }
+            }
         }
     }
 
@@ -212,7 +218,7 @@ private fun TopActions(
     if (actions.canInterrupt) {
         InterruptButton(onClick = viewModel::interrupt)
         IconButton(onClick = viewModel::kill) {
-            Icon(Icons.Filled.Stop, contentDescription = stringResource(R.string.run_stop), tint = colors.error)
+            Icon(Icons.Filled.Stop, contentDescription = stringResource(R.string.action_stop), tint = colors.error)
         }
     } else if (actions.canRunAgain) {
         IconButton(onClick = viewModel::restart) {
@@ -220,7 +226,7 @@ private fun TopActions(
         }
     } else if (actions.canRestart && (state.session != null || state.startError != null)) {
         IconButton(onClick = viewModel::restart) {
-            Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.run_restart))
+            Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.action_restart))
         }
     }
     IconButton(onClick = viewModel::copyAll, enabled = actions.canCopy) {
@@ -531,13 +537,14 @@ private fun KeyRow(modifiers: Modifiers, enabled: Boolean, onKey: (ExtraKey) -> 
         verticalAlignment = Alignment.CenterVertically,
     ) {
         for (key in ExtraKey.ROW) {
+            val description = stringResource(key.descriptionRes)
             val armed = (key == ExtraKey.Ctrl && modifiers.ctrl) || (key == ExtraKey.Alt && modifiers.alt)
             TextButton(
                 onClick = { onKey(key) },
                 enabled = enabled,
                 modifier = Modifier
                     .widthIn(min = 44.dp)
-                    .semantics { contentDescription = key.description },
+                    .semantics { contentDescription = description },
                 contentPadding = PaddingValues(horizontal = 6.dp),
             ) {
                 Text(
@@ -563,10 +570,10 @@ private fun StartError(message: String, kind: TerminalKind, onUseSimpleConsole: 
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringResource(R.string.terminal_start_failed), style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.terminal_open_failed), style = MaterialTheme.typography.titleMedium)
         Text(message, Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.error)
         Button(onClick = onUseSimpleConsole) {
-            Text(stringResource(if (kind == TerminalKind.Run) R.string.use_simple_output else R.string.use_simple_console))
+            Text(stringResource(if (kind == TerminalKind.Run) R.string.use_simple_output else R.string.terminal_use_simple_console))
         }
     }
 }

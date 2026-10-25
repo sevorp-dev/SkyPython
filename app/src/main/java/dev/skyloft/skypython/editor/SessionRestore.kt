@@ -3,6 +3,13 @@ package dev.skyloft.skypython.editor
 import dev.skyloft.skypython.data.SavedTab
 import java.io.File
 
+/** Texts of the restore messages; English by default, localized by the view model. */
+class RestoreStrings(
+    val couldNotReopen: (name: String, reason: String) -> String = { name, reason -> "Couldn't reopen $name: $reason" },
+    val permissionLost: String = "permission lost",
+    val unavailable: String = "unavailable",
+)
+
 /** Result of reopening a saved session: one entry per saved tab (null = couldn't reopen) plus user messages. */
 class RestoredTabs(val docs: List<OpenDocument?>, val messages: List<String>)
 
@@ -13,6 +20,7 @@ class RestoredTabs(val docs: List<OpenDocument?>, val messages: List<String>)
 fun restoreTabs(
     tabs: List<SavedTab>,
     readLocal: (File) -> String,
+    strings: RestoreStrings = RestoreStrings(),
     openExternal: (SavedTab) -> OpenDocument,
 ): RestoredTabs {
     val messages = mutableListOf<String>()
@@ -25,8 +33,8 @@ fun restoreTabs(
         }.onFailure { e ->
             // A missing local file was deleted on purpose; an external doc vanishing is news to the user.
             if (tab.kind == SavedTab.Kind.EXTERNAL) {
-                val reason = if (e is SecurityException) "permission lost" else e.message ?: "unavailable"
-                messages += "Couldn't reopen ${tab.name}: $reason"
+                val reason = if (e is SecurityException) strings.permissionLost else e.message ?: strings.unavailable
+                messages += strings.couldNotReopen(tab.name, reason)
             }
         }.getOrNull()
     }

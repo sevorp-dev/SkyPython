@@ -408,18 +408,26 @@ public final class TerminalSession extends TerminalOutput {
                 int exitCode = (Integer) msg.obj;
                 cleanupResources(exitCode);
 
-                String exitDescription = "\r\n[Process completed";
-                if (exitCode > 0) {
-                    // Non-zero process exit.
-                    exitDescription += " (code " + exitCode + ")";
-                } else if (exitCode < 0) {
-                    // Negated signal.
-                    exitDescription += " (signal " + (-exitCode) + ")";
+                String exitDescription;
+                if (mExitMessage != null) {
+                    // SkyPython: the host's own line.
+                    exitDescription = mExitMessage.text(exitCode, mEmulator.getCursorCol() == 0);
+                } else {
+                    exitDescription = "\r\n[Process completed";
+                    if (exitCode > 0) {
+                        // Non-zero process exit.
+                        exitDescription += " (code " + exitCode + ")";
+                    } else if (exitCode < 0) {
+                        // Negated signal.
+                        exitDescription += " (signal " + (-exitCode) + ")";
+                    }
+                    exitDescription += " - press Enter]";
                 }
-                exitDescription += " - press Enter]";
 
-                byte[] bytesToWrite = exitDescription.getBytes(StandardCharsets.UTF_8);
-                mEmulator.append(bytesToWrite, bytesToWrite.length);
+                if (exitDescription != null) {
+                    byte[] bytesToWrite = exitDescription.getBytes(StandardCharsets.UTF_8);
+                    mEmulator.append(bytesToWrite, bytesToWrite.length);
+                }
                 notifyScreenUpdate();
 
                 mClient.onSessionFinished(TerminalSession.this);

@@ -1,19 +1,195 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Terminal screens: ▶ Run, Interpreter, Terminal -->
-    <string name="terminal_title_interpreter">Interpreter</string>
-    <string name="terminal_title_shell">Terminal</string>
-    <string name="terminal_title_run">Run</string>
-    <string name="terminal_start_failed">Could not open a terminal</string>
-    <string name="use_simple_output">Use simple output</string>
-    <string name="use_simple_console">Use the simple console</string>
+    <!-- Not translated: product and language names. -->
+    <string name="app_name" translatable="false">SkyPython</string>
+    <string name="language_english" translatable="false">English</string>
+    <string name="language_russian" translatable="false">Русский</string>
 
-    <string name="run_stop">Stop</string>
+    <!-- Common actions -->
+    <string name="action_back">Back</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+    <string name="action_create">Create</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_interrupt">Interrupt</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_rename">Rename</string>
+    <string name="action_restart">Restart</string>
+    <string name="action_retry">Retry</string>
+    <string name="action_run">Run</string>
+    <string name="action_send">Send</string>
+    <string name="action_stop">Stop</string>
+
+    <!-- Screen titles and drawer items -->
+    <string name="title_about">About</string>
+    <string name="title_console">Console</string>
+    <string name="title_files">Files</string>
+    <string name="title_interpreter">Interpreter</string>
+    <string name="title_pip">Pip</string>
+    <string name="title_samples">Samples</string>
+    <string name="title_settings">Settings</string>
+    <string name="title_share">Share</string>
+    <string name="title_terminal">Terminal</string>
+
+    <!-- Drawer -->
+    <string name="drawer_section_run">Run</string>
+    <string name="drawer_section_tools">Tools</string>
+    <string name="drawer_section_settings">Settings</string>
+    <string name="drawer_line">Line: %1$d/%2$d</string>
+    <string name="drawer_line_offset">Line offset: %1$d</string>
+    <string name="no_file_open">No file open</string>
+
+    <!-- App root -->
+    <string name="share_save_to_projects_first">Save the file to Projects to share it</string>
+    <string name="script_still_running">A script is still running</string>
+    <string name="restart_title">Still running</string>
+    <string name="restart_text">Something is still running. Stop it and start %1$s?</string>
+    <string name="restart_confirm">Stop &amp; start</string>
+
+    <!-- Console -->
+    <!-- Keep the brackets: the console dims lines in this exact shape. -->
+    <string name="console_exit_footer">[Program finished, exit code %1$d]</string>
+    <string name="console_cancelled">[Cancelled]</string>
+    <string name="console_not_running">Not running</string>
+    <string name="console_preparing_python">Preparing Python…</string>
+    <string name="console_setup_failed">Could not set up Python</string>
+
+    <!-- Terminal -->
+    <string name="terminal_open_failed">Could not open a terminal</string>
+    <string name="terminal_use_simple_console">Use the simple console</string>
+    <string name="key_escape">Escape</string>
+    <string name="key_tab">Tab</string>
+    <string name="key_control">Control</string>
+    <string name="key_alt">Alt</string>
+    <string name="key_minus">Minus</string>
+    <string name="key_slash">Slash</string>
+    <string name="key_pipe">Pipe</string>
+    <string name="key_left">Left</string>
+    <string name="key_up">Up</string>
+    <string name="key_down">Down</string>
+    <string name="key_right">Right</string>
+
+    <!-- Editor -->
+    <string name="editor_menu">Menu</string>
+    <string name="editor_undo">Undo</string>
+    <string name="editor_redo">Redo</string>
+    <string name="editor_more">More</string>
+    <string name="editor_save">Save</string>
+    <string name="editor_save_as">Save as…</string>
+    <string name="editor_no_open_files">No open files</string>
+    <string name="editor_open_files">Open Files</string>
+    <string name="editor_external_document">External document</string>
+    <!-- How the projects root folder is named in the UI. -->
+    <string name="projects_label">Projects</string>
+    <string name="editor_error_save">Can\'t save %1$s: %2$s</string>
+    <string name="editor_error_open">Can\'t open %1$s: %2$s</string>
+    <string name="editor_error_open_file">Can\'t open file: %1$s</string>
+    <string name="editor_error_prepare_run">Can\'t prepare %1$s to run: %2$s</string>
+    <string name="editor_error_save_as">Save as failed: %1$s</string>
+    <string name="editor_error_create_example">Can\'t create example file: %1$s</string>
+    <string name="editor_error_reopen">Couldn\'t reopen %1$s: %2$s</string>
+    <string name="editor_reason_permission_lost">permission lost</string>
+    <string name="editor_reason_unavailable">unavailable</string>
+    <string name="editor_error_too_large">file is larger than %1$d MB</string>
+
+    <!-- Files -->
+    <string name="files_open_external">Open external…</string>
+    <string name="files_empty_folder">This folder is empty</string>
+    <string name="files_up_one_folder">Up one folder</string>
+    <string name="files_folder">Folder</string>
+    <string name="files_file">File</string>
+    <string name="files_more_options">More options for %1$s</string>
+    <string name="files_new">New</string>
+    <string name="files_new_file">New file</string>
+    <string name="files_new_folder">New folder</string>
+    <string name="files_rename_file">Rename file</string>
+    <string name="files_rename_folder">Rename folder</string>
+    <string name="files_name">Name</string>
+    <string name="files_delete_file_title">Delete file?</string>
+    <string name="files_delete_folder_title">Delete folder?</string>
+    <string name="files_delete_file_text">“%1$s” will be permanently deleted.</string>
+    <string name="files_delete_folder_text">“%1$s” and everything inside it will be permanently deleted.</string>
+    <string name="name_error_empty">Name must not be empty</string>
+    <string name="name_error_dots">Name must not be “.” or “..”</string>
+    <string name="name_error_separator">Name must not contain / or \\</string>
+    <string name="name_error_invalid_char">Name contains an invalid character</string>
+    <string name="name_error_too_long">Name is too long</string>
+    <string name="files_error_already_exists">“%1$s” already exists</string>
+    <string name="files_error_create_folder">Could not create folder “%1$s”</string>
+    <string name="files_error_folder_missing">Folder does not exist</string>
+    <string name="files_error_does_not_exist">“%1$s” does not exist</string>
+    <string name="files_error_rename">Could not rename “%1$s”</string>
+    <string name="files_error_delete">Could not delete “%1$s”</string>
+    <string name="files_error_outside">Path is outside the workspace</string>
+    <string name="files_error_root">Cannot modify the projects folder itself</string>
+    <string name="files_error_failed">Operation failed</string>
+
+    <!-- Pip -->
+    <string name="pip_tab_install">Install</string>
+    <string name="pip_tab_installed">Installed</string>
+    <string name="pip_package">Package</string>
+    <string name="pip_package_hint">e.g. requests or six==1.16.0</string>
+    <string name="pip_install">Install</string>
+    <string name="pip_installed_spec">Installed %1$s</string>
+    <string name="pip_install_failed">Installation failed</string>
+    <string name="pip_intro">Packages are installed from PyPI for your scripts.</string>
+    <string name="pip_pure_python_hint">Only pure-Python packages are supported for now.</string>
+    <string name="pip_no_packages">No packages installed yet</string>
+    <string name="pip_uninstall">Uninstall</string>
+    <string name="pip_uninstall_title">Uninstall %1$s?</string>
+    <string name="pip_uninstall_text">Version %1$s will be removed.</string>
+    <string name="pip_setting_up">Setting up pip (first run)…</string>
+    <string name="pip_spec_empty">Enter a package name</string>
+    <string name="pip_spec_spaces">Install one package at a time, without spaces</string>
+    <string name="pip_spec_options">Options are not supported here</string>
+    <string name="pip_spec_invalid">Use a package name, e.g. six or requests==2.32.3</string>
+
+    <!-- Samples -->
+    <string name="samples_open_failed">Could not open sample: %1$s</string>
+
+    <!-- Settings -->
+    <string name="settings_section_editor">Editor</string>
+    <string name="settings_section_app">App</string>
+    <string name="settings_font_size">Font size</string>
+    <string name="settings_font_size_range">%1$d–%2$d sp</string>
+    <string name="settings_smaller">Smaller</string>
+    <string name="settings_larger">Larger</string>
+    <string name="settings_word_wrap">Word wrap</string>
+    <string name="settings_word_wrap_summary">Wrap long lines instead of scrolling sideways</string>
+    <string name="settings_line_numbers">Line numbers</string>
+    <string name="settings_line_numbers_summary">Show line numbers in the editor</string>
+    <string name="settings_keep_screen_on">Keep screen on</string>
+    <string name="settings_keep_screen_on_summary">Don\'t let the screen turn off while editing</string>
+    <string name="settings_language">Language</string>
+    <string name="language_system">System default</string>
+
+    <!-- About -->
+    <string name="about_tagline_start">Python development,\u0020</string>
+    <string name="about_tagline_end">anywhere.</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_description">A free, open-source Python 3 IDE for Android. Write and run Python scripts on your phone, completely offline.</string>
+    <string name="about_links">Links</string>
+    <string name="about_source_code">Source code on GitHub</string>
+    <string name="about_telegram">Telegram channel</string>
+    <string name="about_license">License</string>
+    <string name="about_license_text">SkyPython is free software; see LICENSE in the source code.</string>
+    <string name="about_third_party">Third-party software</string>
+    <string name="about_notice_grammar">MagicPython grammar</string>
+    <string name="about_notice_theme">VS Code Dark+ theme</string>
+    <string name="about_notice_terminal">Termux terminal-emulator and terminal-view</string>
+    <string name="about_slogan">\u0020· Ideas. Code. Future.</string>
+    <string name="about_no_app_for_link">No app can open %1$s</string>
+
+    <!-- Share -->
+    <string name="share_cannot_share">This file can\'t be shared</string>
+    <string name="share_chooser_title">Share %1$s</string>
+    <string name="share_no_app">No app can share this file</string>
+
+    <!-- ▶ Run on a terminal: output actions -->
+    <string name="use_simple_output">Use simple output</string>
     <string name="run_again">Run again</string>
-    <string name="run_restart">Restart</string>
     <string name="back_to_editor">Back to editor</string>
     <string name="run_exit_code">Exit code %1$d</string>
-
     <string name="output_more">More options</string>
     <string name="output_copy_all">Copy all</string>
     <string name="output_share">Share output</string>
@@ -29,9 +205,4 @@
     <string name="output_nothing">No output yet</string>
     <string name="output_saved">Saved to %1$s</string>
     <string name="output_save_failed">Couldn\'t save: %1$s</string>
-
-    <string name="run_busy_title">Still running</string>
-    <string name="run_busy_text">Something is still running. Stop it and start %1$s?</string>
-    <string name="run_busy_confirm">Stop &amp; start</string>
-    <string name="run_busy_cancel">Cancel</string>
 </resources>

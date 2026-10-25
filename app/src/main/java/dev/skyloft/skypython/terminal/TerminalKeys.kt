@@ -1,21 +1,23 @@
 package dev.skyloft.skypython.terminal
 
 import android.view.KeyEvent
+import androidx.annotation.StringRes
+import dev.skyloft.skypython.R
 import com.termux.terminal.KeyHandler
 
 /** The keys a phone keyboard lacks, shown in a row above it. */
-enum class ExtraKey(val label: String, val description: String) {
-    Esc("ESC", "Escape"),
-    Tab("TAB", "Tab"),
-    Ctrl("CTRL", "Control"),
-    Alt("ALT", "Alt"),
-    Dash("-", "Minus"),
-    Slash("/", "Slash"),
-    Pipe("|", "Pipe"),
-    Left("←", "Left"),
-    Up("↑", "Up"),
-    Down("↓", "Down"),
-    Right("→", "Right"),
+enum class ExtraKey(val label: String, val description: String, @StringRes val descriptionRes: Int) {
+    Esc("ESC", "Escape", R.string.key_escape),
+    Tab("TAB", "Tab", R.string.key_tab),
+    Ctrl("CTRL", "Control", R.string.key_control),
+    Alt("ALT", "Alt", R.string.key_alt),
+    Dash("-", "Minus", R.string.key_minus),
+    Slash("/", "Slash", R.string.key_slash),
+    Pipe("|", "Pipe", R.string.key_pipe),
+    Left("←", "Left", R.string.key_left),
+    Up("↑", "Up", R.string.key_up),
+    Down("↓", "Down", R.string.key_down),
+    Right("→", "Right", R.string.key_right),
     ;
 
     val isModifier: Boolean get() = this == Ctrl || this == Alt

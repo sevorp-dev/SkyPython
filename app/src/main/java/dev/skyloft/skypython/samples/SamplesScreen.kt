@@ -36,6 +36,8 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import dev.skyloft.skypython.ui.theme.OutlinedIconTile
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import dev.skyloft.skypython.R
 
 /**
  * Lists the bundled samples. Tapping one copies it to `projectsRoot/samples/<name>`
@@ -53,7 +55,7 @@ fun SamplesScreen(projectsRoot: File, onOpen: (File) -> Unit, onBack: () -> Unit
 
     Scaffold(
         topBar = {
-            SkyTopBar(title = "Samples", onBack = onBack)
+            SkyTopBar(title = stringResource(R.string.title_samples), onBack = onBack)
         },
     ) { padding ->
         val list = samples
@@ -87,7 +89,7 @@ fun SamplesScreen(projectsRoot: File, onOpen: (File) -> Unit, onBack: () -> Unit
                                 runCatching { context.copyBundledSample(sample.name, projectsRoot) }
                             }
                             file.onSuccess(onOpen).onFailure {
-                                Toast.makeText(context, "Could not open sample: ${it.message}", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.samples_open_failed, it.message ?: it.toString()), Toast.LENGTH_SHORT).show()
                             }
                         }
                     },

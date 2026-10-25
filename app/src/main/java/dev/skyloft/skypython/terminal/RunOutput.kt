@@ -11,9 +11,16 @@ object RunFooter {
     /** The session's exit status as a shell shows it: a signal `s` (status `-s`) is `128 + s`. */
     fun exitCode(status: Int): Int = if (status < 0) 128 - status else status
 
-    /** `[Program finished, exit code N]`, dimmed, on a line of its own. */
-    fun text(status: Int, atLineStart: Boolean): String {
-        val line = "$DIM[Program finished, exit code ${exitCode(status)}]$RESET\r\n"
+    /**
+     * `[Program finished, exit code N]` (or its translation, from [label]), dimmed, on a line of
+     * its own.
+     */
+    fun text(
+        status: Int,
+        atLineStart: Boolean,
+        label: (Int) -> String = { "[Program finished, exit code $it]" },
+    ): String {
+        val line = "$DIM${label(exitCode(status))}$RESET\r\n"
         return if (atLineStart) line else "\r\n" + line
     }
 }

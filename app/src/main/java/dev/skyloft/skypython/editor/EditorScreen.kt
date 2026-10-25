@@ -62,6 +62,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import dev.skyloft.skypython.R
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -179,30 +181,30 @@ fun EditorScreen(
                         colors = skyTopBarColors(),
                         navigationIcon = {
                             IconButton(onClick = { controller.hideKeyboard(); scope.launch { drawerState.open() } }) {
-                                Icon(Icons.Filled.Menu, contentDescription = "Menu")
+                                Icon(Icons.Filled.Menu, contentDescription = stringResource(R.string.editor_menu))
                             }
                         },
                         title = { EditorTitle(current, viewModel.projectsRoot) },
                         actions = {
                             IconButton(onClick = openFiles) {
-                                Icon(Icons.Outlined.Folder, contentDescription = "Files")
+                                Icon(Icons.Outlined.Folder, contentDescription = stringResource(R.string.title_files))
                             }
                             IconButton(onClick = controller::undo, enabled = current != null) {
-                                Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo")
+                                Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = stringResource(R.string.editor_undo))
                             }
                             Box {
                                 IconButton(onClick = { menuOpen = true }) {
-                                    Icon(Icons.Filled.MoreVert, contentDescription = "More")
+                                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.editor_more))
                                 }
                                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                                     DropdownMenuItem(
-                                        text = { Text("Redo") },
+                                        text = { Text(stringResource(R.string.editor_redo)) },
                                         leadingIcon = { Icon(Icons.AutoMirrored.Filled.Redo, null) },
                                         enabled = current != null,
                                         onClick = { menuOpen = false; controller.redo() },
                                     )
                                     DropdownMenuItem(
-                                        text = { Text("Save") },
+                                        text = { Text(stringResource(R.string.editor_save)) },
                                         leadingIcon = { Icon(Icons.Filled.Save, null) },
                                         enabled = current != null,
                                         onClick = {
@@ -212,7 +214,7 @@ fun EditorScreen(
                                         },
                                     )
                                     DropdownMenuItem(
-                                        text = { Text("Save as…") },
+                                        text = { Text(stringResource(R.string.editor_save_as)) },
                                         leadingIcon = { Icon(Icons.Filled.SaveAs, null) },
                                         enabled = current != null,
                                         onClick = {
@@ -281,7 +283,7 @@ fun EditorScreen(
 @Composable
 private fun EditorTitle(doc: OpenDocument?, projectsRoot: File) {
     if (doc == null) {
-        BrandText("SkyPython", fontSize = 21.sp)
+        BrandText(stringResource(R.string.app_name), fontSize = 21.sp)
         return
     }
     Column {
@@ -293,7 +295,12 @@ private fun EditorTitle(doc: OpenDocument?, projectsRoot: File) {
             overflow = TextOverflow.Ellipsis,
         )
         Text(
-            docSubtitle(doc, projectsRoot),
+            docSubtitle(
+                doc,
+                projectsRoot,
+                projectsLabel = stringResource(R.string.projects_label),
+                externalLabel = stringResource(R.string.editor_external_document),
+            ),
             fontSize = 14.sp,
             color = SubtitleColor,
             maxLines = 1,
@@ -338,7 +345,7 @@ private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel, onClose: (
                     }
                 }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                    DropdownMenuItem(text = { Text("Close") }, onClick = {
+                    DropdownMenuItem(text = { Text(stringResource(R.string.action_close)) }, onClick = {
                         menu = false
                         onClose(doc.id)
                     })
@@ -383,7 +390,7 @@ private fun EmptyEditor(onOpenFiles: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("No open files", style = MaterialTheme.typography.titleMedium)
-        TextButton(onClick = onOpenFiles) { Text("Open Files") }
+        Text(stringResource(R.string.editor_no_open_files), style = MaterialTheme.typography.titleMedium)
+        TextButton(onClick = onOpenFiles) { Text(stringResource(R.string.editor_open_files)) }
     }
 }
