@@ -216,19 +216,8 @@ fun SkyDrawer(
             IconButton(onClick = onClose) {
                 Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.action_close), tint = MutedText)
             }
-            if (header.line != null && symbol != null) {
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    stringResource(R.string.drawer_in_symbol, symbol),
-                    color = MaterialTheme.colorScheme.primary,
-                    fontSize = 13.sp,
-                    fontFamily = CodeFont,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
         }
-        FileCard(header)
+        FileCard(header, symbol)
         Hairline(Modifier.padding(top = 12.dp))
         BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
             val minHeight = maxHeight
@@ -263,7 +252,7 @@ fun SkyDrawer(
 
 /** The open file and the cursor, on a quiet card under the brand row. */
 @Composable
-private fun FileCard(header: DrawerHeader) {
+private fun FileCard(header: DrawerHeader, symbol: String?) {
     val shape = RoundedCornerShape(12.dp)
     Row(
         Modifier
@@ -298,6 +287,18 @@ private fun FileCard(header: DrawerHeader) {
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                // The function / class around the cursor, under its line.
+                if (symbol != null) {
+                    Text(
+                        stringResource(R.string.drawer_in_symbol, symbol),
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 13.sp,
+                        fontFamily = CodeFont,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
             }
         }
     }
