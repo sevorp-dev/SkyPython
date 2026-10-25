@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Settings
@@ -81,7 +82,7 @@ fun drawerHeader(
 data class DrawerSection(val title: String, @StringRes val titleRes: Int, val actions: List<DrawerAction>)
 
 val DRAWER_SECTIONS: List<DrawerSection> = listOf(
-    DrawerSection("Run", R.string.drawer_section_run, listOf(DrawerAction.Interpreter, DrawerAction.Terminal)),
+    DrawerSection("Run", R.string.drawer_section_run, listOf(DrawerAction.Debug, DrawerAction.Interpreter, DrawerAction.Terminal)),
     DrawerSection("Tools", R.string.drawer_section_tools, listOf(DrawerAction.Pip, DrawerAction.Share, DrawerAction.Samples)),
     DrawerSection("Settings", R.string.drawer_section_settings, listOf(DrawerAction.Settings, DrawerAction.About)),
 )
@@ -95,6 +96,7 @@ private fun DrawerAction.labelRes(): Int = when (this) {
     DrawerAction.Samples -> R.string.title_samples
     DrawerAction.Settings -> R.string.title_settings
     DrawerAction.About -> R.string.title_about
+    DrawerAction.Debug -> R.string.title_debug
 }
 
 private val SheetColor = Color(0xFF0D1536)
@@ -117,6 +119,7 @@ private fun DrawerAction.icon(): ImageVector = when (this) {
     DrawerAction.Samples -> Icons.Filled.School
     DrawerAction.Settings -> Icons.Filled.Settings
     DrawerAction.About -> Icons.Filled.Info
+    DrawerAction.Debug -> Icons.Filled.BugReport
 }
 
 /** Content of the left tool drawer: file/cursor header, then the Run / Tools / Settings sections. */

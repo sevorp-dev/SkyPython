@@ -184,4 +184,46 @@
     <string name="share_cannot_share">This file can\'t be shared</string>
     <string name="share_chooser_title">Share %1$s</string>
     <string name="share_no_app">No app can share this file</string>
+
+    <!-- Debugger -->
+    <string name="title_debug">Debug</string>
+    <string name="debug_run_menu_run">Run</string>
+    <string name="debug_run_menu_debug">Debug</string>
+    <string name="debug_tab_variables">Variables</string>
+    <string name="debug_tab_watches">Watches</string>
+    <string name="debug_tab_stack">Call stack</string>
+    <string name="debug_tab_console">Console</string>
+    <string name="debug_continue">Continue</string>
+    <string name="debug_pause">Pause</string>
+    <string name="debug_step_over">Step over</string>
+    <string name="debug_step_into">Step into</string>
+    <string name="debug_step_out">Step out</string>
+    <string name="debug_collapse">Collapse the debugger</string>
+    <string name="debug_expand">Expand the debugger</string>
+    <string name="debug_close">Close the debugger</string>
+    <string name="debug_status_starting">Starting the debugger…</string>
+    <string name="debug_status_running">Running…</string>
+    <string name="debug_status_breakpoint">Breakpoint: %1$s, line %2$d</string>
+    <string name="debug_status_paused">Paused: %1$s, line %2$d</string>
+    <string name="debug_status_exception">Uncaught exception: %1$s</string>
+    <string name="debug_status_finished">Program finished, exit code %1$d</string>
+    <string name="debug_status_ended">Debugging ended</string>
+    <string name="debug_error_start">The debugger couldn\'t start: %1$s</string>
+    <string name="debug_locals">Locals</string>
+    <string name="debug_globals">Globals</string>
+    <string name="debug_more">…and %1$d more</string>
+    <string name="debug_no_variables">Nothing here</string>
+    <string name="debug_variables_when_paused">Variables show up while the program is paused</string>
+    <string name="debug_stack_when_paused">The call stack shows up while the program is paused</string>
+    <string name="debug_watch_hint">Expression, e.g. len(items)</string>
+    <string name="debug_watch_add">Add watch</string>
+    <string name="debug_watch_remove">Remove watch</string>
+    <string name="debug_no_watches">No watches yet: add an expression below to see its value at every stop</string>
+    <string name="debug_frame_library">library</string>
+    <string name="debug_condition_title">Breakpoint on line %1$d</string>
+    <string name="debug_condition_hint">Stop only when this is true, e.g. i == 10. Leave empty to always stop.</string>
+    <string name="debug_condition_label">Condition</string>
+    <string name="debug_condition_remove">Remove</string>
+    <string name="debug_condition_save">Save</string>
+    <string name="debug_breakpoints_need_project_file">Breakpoints work in files saved in SkyPython\'s projects</string>
 </resources>

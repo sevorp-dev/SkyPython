@@ -324,3 +324,22 @@ internal fun InterruptButton(onClick: () -> Unit) {
         Text("^C", fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 16.sp)
     }
 }
+
+/**
+ * The console's output and input line without the screen around it, for the debugger panel:
+ * the program being debugged prints here and reads its input from here.
+ */
+@Composable
+internal fun EmbeddedConsole(state: ConsoleState, onSend: (String) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier.background(ConsoleBackground)) {
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            when {
+                state.installError != null -> Text(state.installError, Modifier.padding(12.dp), color = ErrorRed)
+                state.installing -> Installing()
+                else -> ConsoleOutput(state.lines, state.version, statusLineRegex())
+            }
+        }
+        HorizontalDivider(color = DividerNavy)
+        InputRow(enabled = state.acceptsInput, autoFocus = false, onSend = onSend)
+    }
+}

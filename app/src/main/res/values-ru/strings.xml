@@ -177,4 +177,46 @@
     <string name="share_cannot_share">Этим файлом нельзя поделиться</string>
     <string name="share_chooser_title">Поделиться %1$s</string>
     <string name="share_no_app">Нет приложения, чтобы поделиться файлом</string>
+
+    <!-- Debugger -->
+    <string name="title_debug">Отладка</string>
+    <string name="debug_run_menu_run">Запуск</string>
+    <string name="debug_run_menu_debug">Отладка</string>
+    <string name="debug_tab_variables">Переменные</string>
+    <string name="debug_tab_watches">Наблюдение</string>
+    <string name="debug_tab_stack">Стек вызовов</string>
+    <string name="debug_tab_console">Консоль</string>
+    <string name="debug_continue">Продолжить</string>
+    <string name="debug_pause">Пауза</string>
+    <string name="debug_step_over">Шаг с обходом</string>
+    <string name="debug_step_into">Шаг с заходом</string>
+    <string name="debug_step_out">Шаг с выходом</string>
+    <string name="debug_collapse">Свернуть отладчик</string>
+    <string name="debug_expand">Развернуть отладчик</string>
+    <string name="debug_close">Закрыть отладчик</string>
+    <string name="debug_status_starting">Запуск отладчика…</string>
+    <string name="debug_status_running">Программа выполняется…</string>
+    <string name="debug_status_breakpoint">Точка останова: %1$s, строка %2$d</string>
+    <string name="debug_status_paused">Пауза: %1$s, строка %2$d</string>
+    <string name="debug_status_exception">Необработанное исключение: %1$s</string>
+    <string name="debug_status_finished">Программа завершена, код выхода %1$d</string>
+    <string name="debug_status_ended">Отладка завершена</string>
+    <string name="debug_error_start">Не удалось запустить отладчик: %1$s</string>
+    <string name="debug_locals">Локальные</string>
+    <string name="debug_globals">Глобальные</string>
+    <string name="debug_more">…и ещё %1$d</string>
+    <string name="debug_no_variables">Здесь пусто</string>
+    <string name="debug_variables_when_paused">Переменные видны, когда программа на паузе</string>
+    <string name="debug_stack_when_paused">Стек вызовов виден, когда программа на паузе</string>
+    <string name="debug_watch_hint">Выражение, например len(items)</string>
+    <string name="debug_watch_add">Добавить выражение</string>
+    <string name="debug_watch_remove">Убрать выражение</string>
+    <string name="debug_no_watches">Выражений пока нет: добавьте его ниже, чтобы видеть значение при каждой остановке</string>
+    <string name="debug_frame_library">библиотека</string>
+    <string name="debug_condition_title">Точка останова на строке %1$d</string>
+    <string name="debug_condition_hint">Останавливаться, только когда условие истинно, например i == 10. Пустое поле — останавливаться всегда.</string>
+    <string name="debug_condition_label">Условие</string>
+    <string name="debug_condition_remove">Удалить</string>
+    <string name="debug_condition_save">Сохранить</string>
+    <string name="debug_breakpoints_need_project_file">Точки останова работают в файлах, сохранённых в проектах SkyPython</string>
 </resources>

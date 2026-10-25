@@ -100,10 +100,19 @@ class BreakpointStore(saved: String?, private val persist: (String) -> Unit) {
         if (now != list) update(path, now)
     }
 
+    /** A file or folder was renamed: breakpoints of [from] and of every file under it move along. */
     @Synchronized
     fun rename(from: String, to: String) {
-        val list = _state.value[from] ?: return
-        _state.value = _state.value - from + (to to list)
+        val prefix = from.trimEnd('/') + "/"
+        val moved = _state.value.mapKeys { (path, _) ->
+            when {
+                path == from -> to
+                path.startsWith(prefix) -> to.trimEnd('/') + "/" + path.removePrefix(prefix)
+                else -> path
+            }
+        }
+        if (moved == _state.value) return
+        _state.value = moved
         save()
     }
 

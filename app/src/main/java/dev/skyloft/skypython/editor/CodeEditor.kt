@@ -5,6 +5,7 @@ import android.graphics.Typeface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -170,6 +171,8 @@ private fun CodeEditor.applyConfig(config: EditorViewConfig) {
  * With [EditorViewConfig.codeCompletion] on, the language server ([LanguageService], started
  * when this is first shown) supplies the completion popup and error squiggles; the shown doc's
  * problems are reported through [onDiagnostics] ([docPath] lets it resolve sibling imports).
+ *
+ * [debugMarks]: the debugger's breakpoints and paused line for this doc ([DebugAwareCodeEditor]).
  */
 @Composable
 fun CodeEditor(
@@ -183,6 +186,7 @@ fun CodeEditor(
     onCursorChanged: (CursorPosition) -> Unit,
     onDiagnostics: (List<Diagnostic>) -> Unit,
     modifier: Modifier = Modifier,
+    debugMarks: EditorDebugMarks = EditorDebugMarks.None,
 ) {
     val context = LocalContext.current
     val contents = remember { HashMap<String, Content>() }
@@ -224,7 +228,7 @@ fun CodeEditor(
         modifier = modifier,
         factory = { ctx ->
             TextMateSetup.ensure(ctx)
-            CodeEditor(ctx).apply {
+            DebugAwareCodeEditor(ctx).apply {
                 typefaceText = Typeface.MONOSPACE
                 typefaceLineNumber = Typeface.MONOSPACE
                 tabWidth = 4
@@ -273,6 +277,14 @@ fun CodeEditor(
         view.diagnostics = if (config.codeCompletion) diagnosticsContainer(content, known) else null
         onProblems(if (config.codeCompletion) known else emptyList())
         requestDiagnostics(content, immediate = true)
+    }
+
+    // Debugger marks; the paused line is scrolled into view (after the doc switch above).
+    SideEffect { (controller.view as? DebugAwareCodeEditor)?.marks = debugMarks }
+    LaunchedEffect(docId, debugMarks.executionLine) {
+        val line = debugMarks.executionLine ?: return@LaunchedEffect
+        val view = controller.view ?: return@LaunchedEffect
+        if (line - 1 in 0 until view.text.lineCount) view.ensurePositionVisible(line - 1, 0)
     }
 
     // Settings changes apply live to the existing view.

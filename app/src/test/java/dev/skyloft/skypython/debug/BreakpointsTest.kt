@@ -112,6 +112,16 @@ class BreakpointStoreTest {
         assertEquals(listOf(Breakpoint(5)), store.state.value["/data/files/projects/app.py"])
     }
 
+    @Test fun `renaming a folder moves the breakpoints of the files inside`() {
+        val store = BreakpointStore(null) {}
+        store.toggle(other, 2)
+        store.toggle("/data/files/projects/libra.py", 1)
+        store.rename("/data/files/projects/lib", "/data/files/projects/tools")
+        assertEquals(listOf(Breakpoint(2)), store.state.value["/data/files/projects/tools/util.py"])
+        assertEquals(listOf(Breakpoint(1)), store.state.value["/data/files/projects/libra.py"])
+        assertFalse(other in store.state.value)
+    }
+
     @Test fun `corrupt saved data starts empty`() {
         val store = BreakpointStore("{not json") {}
         assertTrue(store.state.value.isEmpty())

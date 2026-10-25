@@ -2,7 +2,9 @@ package dev.skyloft.skypython.ui.theme
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -47,7 +49,11 @@ fun BrandText(
     )
 }
 
-/** Round glowing button: blue → violet gradient with a white icon, as on the banner's phone. */
+/**
+ * Round glowing button: blue → violet gradient with a white icon, as on the banner's phone.
+ * [onLongClick], if set, is offered on a long press.
+ */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GradientFab(
     onClick: () -> Unit,
@@ -56,6 +62,7 @@ fun GradientFab(
     modifier: Modifier = Modifier,
     size: Dp = 56.dp,
     iconSize: Dp = 26.dp,
+    onLongClick: (() -> Unit)? = null,
 ) {
     Box(
         contentAlignment = Alignment.Center,
@@ -64,16 +71,25 @@ fun GradientFab(
             .shadow(10.dp, CircleShape, ambientColor = ElectricBlue, spotColor = Violet)
             .background(RunBrush, CircleShape)
             .border(1.dp, Color.White.copy(alpha = 0.22f), CircleShape)
-            .clickable(role = Role.Button, onClick = onClick),
+            .then(
+                if (onLongClick == null) Modifier.clickable(role = Role.Button, onClick = onClick)
+                else Modifier.combinedClickable(role = Role.Button, onClick = onClick, onLongClick = onLongClick),
+            ),
     ) {
         Icon(icon, contentDescription = contentDescription, tint = Color.White, modifier = Modifier.size(iconSize))
     }
 }
 
-/** The Run button: a round [GradientFab] with a white ▶. */
+/** The Run button: a round [GradientFab] with a white ▶; [onLongClick] opens more ways to run. */
 @Composable
-fun RunButton(onClick: () -> Unit, modifier: Modifier = Modifier, size: Dp = 64.dp, iconSize: Dp = 36.dp) {
-    GradientFab(onClick, Icons.Filled.PlayArrow, stringResource(R.string.action_run), modifier, size, iconSize)
+fun RunButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    size: Dp = 64.dp,
+    iconSize: Dp = 36.dp,
+    onLongClick: (() -> Unit)? = null,
+) {
+    GradientFab(onClick, Icons.Filled.PlayArrow, stringResource(R.string.action_run), modifier, size, iconSize, onLongClick)
 }
 
 /** Filled buttons in electric blue with white text (4.5:1), like the banner's accents. */

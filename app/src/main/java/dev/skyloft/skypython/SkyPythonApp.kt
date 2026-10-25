@@ -7,7 +7,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
@@ -22,6 +25,11 @@ import dev.skyloft.skypython.about.AboutScreen
 import dev.skyloft.skypython.console.ConsoleScreen
 import dev.skyloft.skypython.console.ConsoleViewModel
 import dev.skyloft.skypython.console.RunTarget
+import dev.skyloft.skypython.debug.BreakpointConditionDialog
+import dev.skyloft.skypython.debug.DebugPanelHost
+import dev.skyloft.skypython.debug.DebugPhase
+import dev.skyloft.skypython.debug.DebugViewModel
+import dev.skyloft.skypython.debug.rememberDebugMarks
 import dev.skyloft.skypython.editor.DocSource
 import dev.skyloft.skypython.editor.EditorScreen
 import dev.skyloft.skypython.editor.EditorViewModel
@@ -85,12 +93,41 @@ fun SkyPythonApp() {
         factory = TerminalViewModel.factory(app, workspace.root, TerminalKind.Shell),
     )
 
+    val debugVm: DebugViewModel = viewModel(factory = DebugViewModel.factory(app, workspace.root))
+
     val nav = rememberNavController()
     val scope = rememberCoroutineScope()
     val openConsole = { nav.go(Routes.CONSOLE) }
+    // Debugging stays in the editor: the program runs in the console, its panel sits under the code.
+    val attachDebugger = { target: RunTarget.Debug -> debugVm.attach(target) { consoleVm.isActive(target) } }
+    val startDebug: (File) -> Unit = { file ->
+        scope.launch {
+            val target = debugVm.prepare(file) ?: return@launch
+            if (consoleVm.request(target)) attachDebugger(target)
+        }
+    }
+    val onTargetConfirmed = { target: RunTarget -> if (target is RunTarget.Debug) attachDebugger(target) else openConsole() }
+    val debugState by debugVm.state.collectAsStateWithLifecycle()
+    val editorState by editorVm.state.collectAsStateWithLifecycle()
+    val currentPath = (editorState.current?.source as? DocSource.Local)?.file?.path
+    // Paused in (or a frame selected in) another of the user's files: show that file.
+    LaunchedEffect(debugState.phase, debugState.currentFrame) {
+        val frame = debugState.currentFrame ?: return@LaunchedEffect
+        if (debugState.phase == DebugPhase.Paused && frame.user && frame.file != currentPath) {
+            val file = File(frame.file)
+            if (file.isFile) editorVm.open(file)
+        }
+    }
+    var conditionFor by remember { mutableStateOf<Pair<String, Int>?>(null) }
 
     NavHost(navController = nav, startDestination = Routes.EDITOR) {
         composable(Routes.EDITOR) {
+            val debugMarks = rememberDebugMarks(
+                debugVm,
+                currentPath,
+                onEditCondition = { path, line -> conditionFor = path to line },
+                onUnsupported = { Toast.makeText(context, R.string.debug_breakpoints_need_project_file, Toast.LENGTH_SHORT).show() },
+            )
             EditorScreen(
                 viewModel = editorVm,
                 settings = settings,
@@ -106,8 +143,12 @@ fun SkyPythonApp() {
                         nav.go(Routes.FILES)
                     }
                 },
+                onDebug = startDebug,
+                debugMarks = debugMarks,
+                debugPanel = if (debugState.phase == DebugPhase.Idle) null else { { DebugPanelHost(debugVm, consoleVm) } },
                 onDrawerAction = { action ->
                     when (action) {
+                        DrawerAction.Debug -> scope.launch { editorVm.runCurrent()?.let(startDebug) }
                         DrawerAction.Interpreter -> {
                             interpreterVm.open()
                             nav.go(Routes.INTERPRETER)
@@ -132,7 +173,10 @@ fun SkyPythonApp() {
                     }
                 },
             )
-            RestartDialog(consoleVm = consoleVm, onConfirmed = openConsole)
+            RestartDialog(consoleVm = consoleVm, onConfirmed = onTargetConfirmed)
+            conditionFor?.let { (path, line) ->
+                BreakpointConditionDialog(debugVm, path, line, onDismiss = { conditionFor = null })
+            }
         }
         composable(Routes.CONSOLE) {
             ConsoleScreen(viewModel = consoleVm, onBack = { nav.popBackStack() })
@@ -169,7 +213,10 @@ fun SkyPythonApp() {
                     nav.popBackStack()
                 },
                 onDeleted = editorVm::closeFile,
-                onRenamed = editorVm::onRenamed,
+                onRenamed = { old, new ->
+                    editorVm.onRenamed(old, new)
+                    debugVm.store.rename(old.path, new.path)
+                },
                 onBack = { nav.popBackStack() },
             )
         }
@@ -199,7 +246,7 @@ private fun NavHostController.go(route: String) = navigate(route) { launchSingle
 
 /** "Only one program at a time": asks before replacing a running script, interpreter or terminal. */
 @Composable
-private fun RestartDialog(consoleVm: ConsoleViewModel, onConfirmed: () -> Unit) {
+private fun RestartDialog(consoleVm: ConsoleViewModel, onConfirmed: (RunTarget) -> Unit) {
     val state by consoleVm.state.collectAsStateWithLifecycle()
     val pending = state.pending ?: return
     AlertDialog(
@@ -209,7 +256,7 @@ private fun RestartDialog(consoleVm: ConsoleViewModel, onConfirmed: () -> Unit) 
         confirmButton = {
             TextButton(onClick = {
                 consoleVm.confirmPendingRun()
-                onConfirmed()
+                onConfirmed(pending)
             }) { Text(stringResource(R.string.restart_confirm)) }
         },
         dismissButton = {
@@ -222,6 +269,7 @@ private fun RestartDialog(consoleVm: ConsoleViewModel, onConfirmed: () -> Unit) 
 @Composable
 fun runTargetTitle(target: RunTarget): String = when (target) {
     is RunTarget.Script -> target.file.name
+    is RunTarget.Debug -> target.file.name
     RunTarget.Interpreter -> stringResource(R.string.title_interpreter)
     RunTarget.Terminal -> stringResource(R.string.title_terminal)
 }
