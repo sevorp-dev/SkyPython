@@ -65,6 +65,15 @@ def main() -> int:
         + "}",
     )
 
+    # x86_64 emulators also run 32-bit x86 apps, so the x86 wheel can be tested on an x86_64
+    # runner (cibuildwheel only tests the runner's own ABI).
+    if args.abi == "x86":
+        replace_once(
+            android,
+            "    if state.config.arch != native_arch:\n",
+            '    if state.config.arch != native_arch and not (state.config.arch == "x86" and native_arch == "x86_64"):\n',
+        )
+
     # 3. Build descriptions printed by the logger.
     replace_once(
         pkg / "logger.py",

@@ -73,7 +73,7 @@ jobs:
           - abi: x86
             triplet: i686-linux-android
             bits: 32
-            test: false   # cibuildwheel tests only the runner's native ABI
+            test: true    # on the x86_64 emulator (see patch_cibw_32bit.py)
     env:
       ABI: ${{ matrix.abi }}
       TRIPLET: ${{ matrix.triplet }}
@@ -177,8 +177,12 @@ jobs:
               repair = "auditwheel repair --ldpaths {ldpaths}:%s -w {dest_dir} {wheel}" % lib
           else:
               # No BLAS (lapack_lite), static libc++: auditwheel does not know 32-bit Android.
+              # Setting cpp_link_args makes meson ignore $LDFLAGS for C++ targets, so repeat
+              # the flags from CPython's android-env.sh (16 KB pages above all).
+              cpp_link = ["-static-libstdc++", "-Wl,--build-id=sha1", "-Wl,--no-rosegment",
+                          "-Wl,-z,max-page-size=16384", "-Wl,--no-undefined", "-lm"]
               setup_args = ["-Dallow-noblas=true", "-Dblas=none", "-Dlapack=none",
-                            "-Dcpp_link_args=-static-libstdc++"]
+                            "-Dcpp_link_args=" + repr(cpp_link)]
               # Clear setup-python's PKG_CONFIG_PATH, or meson finds the runner's python3.pc
               # instead of the target's.
               env = {"PKG_CONFIG_PATH": ""}
@@ -206,7 +210,7 @@ jobs:
           import tomllib; tomllib.load(open(path, "rb"))  # fail early on a TOML mistake
           PY
 
-      - name: Build (and test x86_64 on an emulator)
+      - name: Build (and test x86_64, x86 on an emulator)
         id: build
         run: |
           set -o pipefail
