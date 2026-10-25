@@ -60,6 +60,12 @@ class ConsoleViewModelTest {
         override fun stop() {
             events.trySend(ConsoleEvent.Exited(-15))
         }
+
+        var interrupts = 0
+
+        override fun interrupt() {
+            interrupts++
+        }
     }
 
     private val dispatcher = StandardTestDispatcher()
@@ -222,6 +228,32 @@ class ConsoleViewModelTest {
         runCurrent()
         assertFalse(vm.state.value.running)
         assertEquals("[Program finished, exit code -15]", texts.last())
+    }
+
+    @Test
+    fun interruptSendsCtrlCToTheRunningScriptWithoutStoppingIt() = test {
+        installGate.complete(Result.success(paths))
+        vm.run(script)
+        runCurrent()
+
+        vm.interrupt()
+        runCurrent()
+        assertEquals(1, processes.single().interrupts)
+        // The script decides: KeyboardInterrupt may be caught, so the run goes on until it exits.
+        assertTrue(vm.state.value.running)
+        processes.single().events.send(ConsoleEvent.Stderr("KeyboardInterrupt\n"))
+        processes.single().events.send(ConsoleEvent.Exited(130))
+        runCurrent()
+        assertFalse(vm.state.value.running)
+        assertEquals("[Program finished, exit code 130]", texts.last())
+    }
+
+    @Test
+    fun interruptWithNothingRunningDoesNothing() = test {
+        vm.interrupt()
+        runCurrent()
+        assertTrue(processes.isEmpty())
+        assertFalse(vm.state.value.running)
     }
 
     @Test
