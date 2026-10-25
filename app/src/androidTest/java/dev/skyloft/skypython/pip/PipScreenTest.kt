@@ -55,7 +55,7 @@ class PipScreenTest {
     private val pip = FakePip()
 
     private fun show(index: PackageIndex = PackageIndex { LookupResult.Offline("offline") }): PipViewModel {
-        val vm = PipViewModel(pip, index) { emptyList() }
+        val vm = PipViewModel(pip, index, findRequirements = { emptyList() })
         rule.setContent { SkyPythonTheme { PipScreen(vm, onBack = {}) } }
         return vm
     }

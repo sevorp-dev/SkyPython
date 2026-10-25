@@ -77,7 +77,7 @@ class InstallMissingDeviceTest {
     fun aMissingModuleCanBeInstalledFromTheRunScreen() {
         val script = File(dir, "cam.py").apply { writeText("import cv2\nprint(cv2.__version__)\n") }
         val pipFake = FakePip()
-        val pip = PipViewModel(pipFake, PackageIndex { LookupResult.Offline("offline") }) { emptyList() }
+        val pip = PipViewModel(pipFake, PackageIndex { LookupResult.Offline("offline") }, findRequirements = { emptyList() })
         val installer = PythonInstaller(app)
         lateinit var run: TerminalViewModel
         instrumentation.runOnMainSync {
