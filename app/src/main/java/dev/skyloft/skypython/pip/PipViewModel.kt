@@ -80,8 +80,13 @@ data class PipState(
     // requirements.txt
     val requirementFiles: List<File> = emptyList(),
     val scanningFiles: Boolean = false,
+    /** SkyPython's prebuilt wheels for this device; null until loaded, or when there's no index. */
+    val catalog: WheelCatalog? = null,
 ) {
     val installing: Boolean get() = running != null
+
+    /** Whether [name] is in the wheel index (for this device or not); null if not, or no index. */
+    fun prebuiltFor(name: String): PrebuiltStatus? = catalog?.status(name)
 
     /** The newer version of [pkg], if the update check found one. */
     fun updateFor(pkg: PipPackage): String? = updates[PyPiJson.normalize(pkg.name)]
@@ -103,10 +108,25 @@ class PipViewModel(
     private val findRequirements: suspend () -> List<File> = { emptyList() },
     /** A failure as the user reads it (localized in the app; the English message in tests). */
     private val describe: (Throwable) -> String = { it.message ?: it.toString() },
+    /** SkyPython's wheel index for this device (null: none). */
+    private val prebuilt: suspend () -> WheelCatalog? = { null },
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PipState())
     val state: StateFlow<PipState> = _state.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            val catalog = try {
+                prebuilt()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
+            if (catalog != null) _state.update { it.copy(catalog = catalog) }
+        }
+    }
 
     /** The Installed list must be (re)loaded before it is shown. */
     private var listStale = true
@@ -349,8 +369,10 @@ class PipViewModel(
         /** @param projectsRoot where the requirements tab looks for `.txt` files. */
         fun factory(app: Application, projectsRoot: File): ViewModelProvider.Factory = viewModelFactory {
             initializer {
+                val wheels = WheelIndex.forApp(app)
                 PipViewModel(
-                    pip = PipRepository.create(app),
+                    pip = PipRepository.create(app, wheels),
+                    prebuilt = wheels::catalog,
                     index = PyPiClient(),
                     findRequirements = { withContext(Dispatchers.IO) { RequirementsFiles.find(projectsRoot) } },
                     describe = { e -> describePipError(e) { id, args -> AppLocale.string(app, id, *args) } },

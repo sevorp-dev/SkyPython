@@ -98,6 +98,22 @@ class PipViewModelTest {
         manager.output.close()
     }
 
+    // --- Prebuilt wheels --------------------------------------------------------------------
+
+    @Test
+    fun theWheelCatalogIsLoadedForTheScreen() = runTest(dispatcher) {
+        val wheel = IndexWheel("numpy", "2.5.4", "x86_64", "numpy.whl", "0".repeat(64), 1, emptyList(), null)
+        val catalog = WheelCatalog(WheelIndexData("cp314", mapOf("numpy" to listOf(wheel))), "x86_64")
+        val loaded = PipViewModel(manager, prebuilt = { catalog })
+        assertNull(loaded.state.value.catalog)
+        runCurrent()
+        assertEquals(catalog, loaded.state.value.catalog)
+        assertEquals(PrebuiltStatus.Available(wheel), loaded.state.value.prebuiltFor("NumPy"))
+        assertNull(loaded.state.value.prebuiltFor("requests"))
+        // Without an index nothing is prebuilt.
+        assertNull(state.prebuiltFor("numpy"))
+    }
+
     // --- Install -------------------------------------------------------------------------
 
     @Test

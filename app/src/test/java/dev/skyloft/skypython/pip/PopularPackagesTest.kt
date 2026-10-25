@@ -28,6 +28,8 @@ class PopularPackagesTest {
     fun nativeOnesAreMarked() {
         assertEquals(Availability.Needs64Bit, all.single { it.name == "jinja2" }.availability)
         assertEquals(Availability.ComingLater, all.single { it.name == "pillow" }.availability)
+        // Shown as installable only when SkyPython's wheel index has it for the device.
+        assertEquals(Availability.ComingLater, all.single { it.name == "numpy" }.availability)
         // No Android wheel and no pure wheel: left out rather than shown broken.
         assertTrue(all.none { it.name == "pyyaml" })
     }

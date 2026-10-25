@@ -12,6 +12,19 @@ enum class Availability {
     ComingLater,
 }
 
+/** The right-hand side of a popular row (see [PopularPackages.action]). */
+enum class PopularAction {
+    Install,
+    /** Install, with the "Prebuilt for Android" badge. */
+    Prebuilt,
+    ComingLater,
+    Needs64Bit,
+    /** In the wheel index, for 64-bit devices only. */
+    Not32Bit,
+    /** In the wheel index, but not for this device's ABI. */
+    NotThisDevice,
+}
+
 data class PopularPackage(
     val name: String,
     @param:StringRes val summary: Int,
@@ -21,7 +34,8 @@ data class PopularPackage(
 /**
  * The quick list on the Search tab. Each entry was checked against PyPI's JSON API: the
  * latest release (and every dependency) has a `py3-none-any` wheel, except where marked.
- * Left out: pyyaml and numpy (no Android wheel, and building needs a C compiler).
+ * Left out: pyyaml (no Android wheel, and building needs a C compiler). numpy comes from
+ * SkyPython's own wheel index ([WheelIndex]).
  */
 object PopularPackages {
 
@@ -47,7 +61,21 @@ object PopularPackages {
         // markupsafe ships cp314 Android wheels for arm64-v8a and x86_64 only.
         PopularPackage("jinja2", R.string.pip_pkg_jinja2, Availability.Needs64Bit),
         PopularPackage("pillow", R.string.pip_pkg_pillow, Availability.ComingLater),
+        // Installable from SkyPython's wheel index once it has a build for the device.
+        PopularPackage("numpy", R.string.pip_pkg_numpy, Availability.ComingLater),
     )
+
+    /**
+     * What a row offers. A wheel in SkyPython's index for the device ([prebuilt]) wins over
+     * [PopularPackage.availability]; one for other ABIs only says so.
+     */
+    fun action(pkg: PopularPackage, prebuilt: PrebuiltStatus?, is64Bit: Boolean): PopularAction = when {
+        prebuilt is PrebuiltStatus.Available -> PopularAction.Prebuilt
+        pkg.availability == Availability.Ready -> PopularAction.Install
+        pkg.availability == Availability.Needs64Bit -> if (is64Bit) PopularAction.Install else PopularAction.Needs64Bit
+        prebuilt is PrebuiltStatus.OtherAbis -> if (is64Bit) PopularAction.NotThisDevice else PopularAction.Not32Bit
+        else -> PopularAction.ComingLater
+    }
 
     /** Entries whose normalized name contains the name part of [query]; all for a blank one. */
     fun matching(query: String): List<PopularPackage> {

@@ -28,18 +28,27 @@ class PythonInstaller(context: Context) {
         }
     }
 
+    /**
+     * The ABI of the interpreter (what native wheels must match), without installing anything;
+     * null if this APK has no Python for the device. [PythonPaths.abi] is the same.
+     */
+    fun runtimeAbi(): String? {
+        val libPython = File(context.applicationInfo.nativeLibraryDir, "libpython${BuildConfig.PYTHON_SHORT_VERSION}.so")
+        return InstallSupport.chooseAbi(
+            InstallSupport.elfAbi(libPython),
+            Build.SUPPORTED_ABIS,
+            InstallSupport.parseAbis(BuildConfig.PYTHON_ABIS),
+        )
+    }
+
     private fun install(): PythonPaths {
         val nativeLibDir = File(context.applicationInfo.nativeLibraryDir)
         val launcher = File(nativeLibDir, LAUNCHER)
         check(launcher.isFile) {
             "Python launcher not found at $launcher (native libs must be extracted: useLegacyPackaging)"
         }
-        val libPython = File(nativeLibDir, "libpython${BuildConfig.PYTHON_SHORT_VERSION}.so")
-        val abi = InstallSupport.chooseAbi(
-            InstallSupport.elfAbi(libPython),
-            Build.SUPPORTED_ABIS,
-            InstallSupport.parseAbis(BuildConfig.PYTHON_ABIS),
-        ) ?: error("No bundled Python for this device (ABIs: ${Build.SUPPORTED_ABIS.joinToString()})")
+        val abi = runtimeAbi()
+            ?: error("No bundled Python for this device (ABIs: ${Build.SUPPORTED_ABIS.joinToString()})")
 
         val home = File(context.filesDir, "python")
         // Version plus ABI: a restored backup from a device with another ABI must reinstall.
@@ -59,6 +68,7 @@ class PythonInstaller(context: Context) {
             launcher = launcher,
             homeDir = homeDir,
             tmpDir = tmpDir,
+            abi = abi,
         )
     }
 
