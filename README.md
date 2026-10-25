@@ -39,15 +39,15 @@ Everything a mobile Python developer needs, in the open: a comfortable editor wi
 drawer, an interactive console, a terminal and a package manager — free of ads and premium
 walls, and built to work on as many phones as possible, including old and low-end ones.
 
-## 🆕 What's new in 0.0.4
+## 🆕 What's new in 0.0.5
 
-- 🔢 **NumPy on your phone** — Pip installs **NumPy 2.5** prebuilt for Android in one tap, no compiler needed. Packages built by SkyPython carry a **"Prebuilt for Android"** badge
-- 🌑 **IDE dark theme** — near-black editor and terminal like desktop IDEs, neutral greys, the same orange accent and retuned syntax colours
-- 🖼️ **Image viewer** — pictures your script saves show up as chips under the finished run; open them with pinch and double-tap zoom, share or delete. PNG, JPEG, GIF, WebP and BMP files open from Projects too
-- 🎨 New sample **"Draw a picture"** — a Mandelbrot fractal drawn with the standard library only
-- 🛠️ Fixes: the debugger could crash the app when it closed at the wrong moment; Pip re-reads the package list if it changed while you were offline
+- 📂 **Open any folder on your phone as a project** — Documents, Download, SD card; recent projects; programs run inside the project folder
+- 🔔 **Updates right in the app** — "SkyPython X is available" → What's new → **Install**: the right file for your phone, checked and installed over the old version
+- 🖼️ **Pillow** prebuilt for Android — photos, JPEG/PNG/WebP, drawing text; new sample "Make a picture card"
+- 🎨 **Clearer interface** — Pip as cards with sections and badges, "Installed" shows right away; settings, samples and dialogs stand out from the background
+- 🛠️ Huge program output no longer freezes the app on slow phones
 
-0.0.3 brought the real terminal, the smart editor, the debugger, PyPI search and the Russian interface.
+0.0.4 brought NumPy, the IDE dark theme and the image viewer; 0.0.3 the real terminal, smart editor and debugger.
 
 Full details for every version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -68,14 +68,15 @@ is simply part of SkyPython.
 | 🐞 **Debugger** | Tap a line number to set a breakpoint (long-press for a condition), long-press ▶ → Debug. Step over / into / out, continue, variables tree, watches, call stack. |
 | 🐍 **Interpreter** | Interactive Python (`>>>`) with history, colours and Ctrl+C that interrupts without losing your session. |
 | ⌨️ **Terminal** | A real terminal with `python`, `pip`, Esc / Tab / Ctrl / Alt / arrows. |
-| 📦 **Pip** | Search PyPI, popular packages in one tap, install from `requirements.txt`, updates and uninstall. Pure-Python packages from PyPI, plus packages with native code that SkyPython builds for Android — **NumPy** today, more coming. |
+| 📦 **Pip** | Search PyPI, popular packages in one tap, install from `requirements.txt`, updates and uninstall. Pure-Python packages from PyPI, plus packages with native code that SkyPython builds for Android — **NumPy** and **Pillow** today, more coming. Cards with sections, badges and live install status. |
 | 🖼️ **Images** | Pictures your program saves appear right under the run output; a built-in viewer with zoom, share, open with and delete. |
-| 📁 **Projects** | Create, rename, delete files and folders; open and save files from other apps; **share** a file as is or a whole folder as `.zip` (Telegram, mail, cloud…). |
-| 🎓 **Samples** | Ready-to-run examples with search: input, loops, functions, classes, files, JSON, a small game, drawing a picture. |
+| 📁 **Projects** | **Open any folder on the phone** (internal storage, SD card) as a project, recent projects, a built-in folder browser; programs run inside the project folder. Create, rename, delete files and folders; open and save files from other apps; **share** a file as is or a whole folder as `.zip` (Telegram, mail, cloud…). |
+| 🎓 **Samples** | Ready-to-run examples with search: input, loops, functions, classes, files, JSON, a small game, drawing a picture, a Pillow picture card. |
 | ⚙️ **Settings** | Font size and family, word wrap, line numbers, completion, auto-close, keyboard suggestions, symbol bar keys, terminal size and theme, bottom bar on/off, language (English / Русский). |
+| 🔔 **Updates** | SkyPython tells you when a new version is out and installs the right APK for your phone from inside the app — checked, over the old version, your files kept. |
 | 🚨 **Report a problem** | If something goes wrong, SkyPython offers to send a report (error + device info, no personal data) as a GitHub issue or via any app — nothing is ever sent automatically. |
 
-Everything works **offline** except installing packages with pip.
+Everything works **offline** except installing packages and checking for updates.
 
 ## 📱 Screenshots
 
@@ -123,7 +124,11 @@ and open it on your phone (allow *Install unknown apps* for your browser or file
 | Emulators, x86 Chromebooks | `SkyPython-<version>-x86_64.apk` (`-x86.apk` for 32-bit) | ~15 MB |
 
 If Android says *"App not installed"*, you picked the wrong one — take `universal`.
-`SHA256SUMS` in the release lets you verify the download. New versions install over old ones.
+`SHA256SUMS` in the release lets you verify the download.
+
+**Updating:** new versions install **over** the old one — no need to uninstall, your projects and
+settings stay. Since 0.0.5 SkyPython also tells you about new releases itself and installs them
+from inside the app (*Settings → Check for updates*).
 
 ### Supported devices
 
@@ -228,7 +233,10 @@ What's new in every version: [CHANGELOG.md](CHANGELOG.md) and the [Releases](htt
 - [x] Android 7.0+ and 32-bit devices, English and Russian
 - [x] Prebuilt packages with native code: **NumPy** ✅
 - [x] Images your scripts save shown right in the app
-- [ ] More native packages: Pillow → matplotlib → pandas
+- [x] Pillow (images and photos)
+- [x] Open projects from the phone's storage
+- [x] Updates right in the app
+- [ ] More native packages: matplotlib → pandas
 - [ ] Plots from matplotlib shown right in the app
 - [ ] GUI apps (Kivy / Tkinter-style windows)
 - [x] IDE dark theme
