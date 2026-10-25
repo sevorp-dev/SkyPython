@@ -94,6 +94,8 @@ fun SkyPythonApp() {
     )
 
     val debugVm: DebugViewModel = viewModel(factory = DebugViewModel.factory(app, workspace.root))
+    // Activity-scoped so other screens can call pipVm.installNow(...).
+    val pipVm: PipViewModel = viewModel(factory = PipViewModel.factory(app, workspace.root))
 
     val nav = rememberNavController()
     val scope = rememberCoroutineScope()
@@ -146,6 +148,7 @@ fun SkyPythonApp() {
                 onDebug = startDebug,
                 debugMarks = debugMarks,
                 debugPanel = if (debugState.phase == DebugPhase.Idle) null else { { DebugPanelHost(debugVm, consoleVm) } },
+                onFontSizeChange = { sp -> scope.launch { settingsStore.update { it.copy(fontSizeSp = sp) } } },
                 onDrawerAction = { action ->
                     when (action) {
                         DrawerAction.Debug -> scope.launch { editorVm.runCurrent()?.let(startDebug) }
@@ -157,7 +160,11 @@ fun SkyPythonApp() {
                             shellVm.open()
                             nav.go(Routes.TERMINAL)
                         }
-                        DrawerAction.Pip -> nav.go(Routes.PIP)
+                        // Save first: the requirements tab installs from files on disk.
+                        DrawerAction.Pip -> scope.launch {
+                            editorVm.saveAll().join()
+                            nav.go(Routes.PIP)
+                        }
                         DrawerAction.Samples -> nav.go(Routes.SAMPLES)
                         DrawerAction.Settings -> nav.go(Routes.SETTINGS)
                         DrawerAction.About -> nav.go(Routes.ABOUT)
@@ -221,7 +228,13 @@ fun SkyPythonApp() {
             )
         }
         composable(Routes.PIP) {
-            PipScreen(viewModel(factory = PipViewModel.factory(app)), onBack = { nav.popBackStack() })
+            val editorState by editorVm.state.collectAsStateWithLifecycle()
+            PipScreen(
+                viewModel = pipVm,
+                onBack = { nav.popBackStack() },
+                currentFile = (editorState.current?.source as? DocSource.Local)?.file,
+                projectsRoot = workspace.root,
+            )
         }
         composable(Routes.SETTINGS) {
             SettingsScreen(store = settingsStore, onBack = { nav.popBackStack() })

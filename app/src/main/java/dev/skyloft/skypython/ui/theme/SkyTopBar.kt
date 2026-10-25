@@ -1,14 +1,11 @@
 package dev.skyloft.skypython.ui.theme
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -16,8 +13,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -25,35 +20,36 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import dev.skyloft.skypython.R
 
-/** Colours shared by every top bar: [BarNavy], white icons and title. */
+/** Colours shared by every top bar: flat [BarNavy], light icons and title. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun skyTopBarColors() = TopAppBarDefaults.topAppBarColors(
     containerColor = BarNavy,
-    navigationIconContentColor = Color.White,
-    titleContentColor = Color.White,
-    actionIconContentColor = Color.White,
+    scrolledContainerColor = BarNavy,
+    navigationIconContentColor = TextBright,
+    titleContentColor = TextBright,
+    actionIconContentColor = TextBright,
 )
 
-/** A faint cyan → violet hairline under a top bar, the banner's glow in one pixel. */
+/** 1dp hairline under a bar or between sections. */
 @Composable
-fun GlowLine(modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().height(1.dp).alpha(0.55f).background(GlowLineBrush))
+fun Hairline(modifier: Modifier = Modifier) {
+    HorizontalDivider(modifier, thickness = 1.dp, color = DividerNavy)
 }
 
-/** The one top bar of every secondary screen: [BarNavy], white back arrow, bold title, [GlowLine] under it. */
+/** The one top bar of every secondary screen: [BarNavy], back arrow, title, a [Hairline] under it. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SkyTopBar(
     title: String,
     onBack: () -> Unit,
     actions: @Composable RowScope.() -> Unit = {},
-    glow: Boolean = true,
+    divider: Boolean = true,
 ) {
     Column {
         TopAppBar(
             title = {
-                Text(title, fontSize = 19.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(title, fontSize = 20.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             },
             navigationIcon = {
                 IconButton(onClick = onBack) {
@@ -64,6 +60,6 @@ fun SkyTopBar(
             colors = skyTopBarColors(),
         )
         // Screens with their own strip under the bar (tabs, breadcrumbs) draw the line below it.
-        if (glow) GlowLine()
+        if (divider) Hairline()
     }
 }

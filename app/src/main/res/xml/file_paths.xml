@@ -3,4 +3,5 @@
 <paths>
     <files-path name="projects" path="projects/" />
     <cache-path name="run" path="run/" />
+    <cache-path name="share" path="share/" />
 </paths>

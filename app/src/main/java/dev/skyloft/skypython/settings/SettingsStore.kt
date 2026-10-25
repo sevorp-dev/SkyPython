@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -23,6 +24,9 @@ object SettingsMapping {
     private val LINE_NUMBERS = booleanPreferencesKey("line_numbers")
     private val KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on")
     private val CODE_COMPLETION = booleanPreferencesKey("code_completion")
+    private val AUTO_CLOSE_PAIRS = booleanPreferencesKey("auto_close_pairs")
+    private val SYMBOL_KEYS = stringPreferencesKey("symbol_keys")
+    private val KEYBOARD_SUGGESTIONS = booleanPreferencesKey("keyboard_suggestions")
 
     fun read(prefs: Preferences): EditorSettings {
         val d = EditorSettings()
@@ -32,6 +36,9 @@ object SettingsMapping {
             lineNumbers = prefs[LINE_NUMBERS] ?: d.lineNumbers,
             keepScreenOn = prefs[KEEP_SCREEN_ON] ?: d.keepScreenOn,
             codeCompletion = prefs[CODE_COMPLETION] ?: d.codeCompletion,
+            autoClosePairs = prefs[AUTO_CLOSE_PAIRS] ?: d.autoClosePairs,
+            symbolKeys = normalizeSymbolKeys(prefs[SYMBOL_KEYS] ?: d.symbolKeys),
+            keyboardSuggestions = prefs[KEYBOARD_SUGGESTIONS] ?: d.keyboardSuggestions,
         )
     }
 
@@ -41,6 +48,9 @@ object SettingsMapping {
         prefs[LINE_NUMBERS] = settings.lineNumbers
         prefs[KEEP_SCREEN_ON] = settings.keepScreenOn
         prefs[CODE_COMPLETION] = settings.codeCompletion
+        prefs[AUTO_CLOSE_PAIRS] = settings.autoClosePairs
+        prefs[SYMBOL_KEYS] = normalizeSymbolKeys(settings.symbolKeys)
+        prefs[KEYBOARD_SUGGESTIONS] = settings.keyboardSuggestions
     }
 }
 

@@ -30,6 +30,12 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import dev.skyloft.skypython.share.shareFile
+import dev.skyloft.skypython.share.shareFolder
+import kotlinx.coroutines.launch
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -73,9 +79,10 @@ import dev.skyloft.skypython.ui.theme.BarNavy
 import dev.skyloft.skypython.ui.theme.DividerNavy
 import dev.skyloft.skypython.ui.theme.EditorBackground
 import dev.skyloft.skypython.ui.theme.MutedText
-import dev.skyloft.skypython.ui.theme.GlowLine
-import dev.skyloft.skypython.ui.theme.GradientFab
-import dev.skyloft.skypython.ui.theme.SoftViolet
+import dev.skyloft.skypython.ui.theme.BrandFab
+import dev.skyloft.skypython.ui.theme.Hairline
+import dev.skyloft.skypython.ui.theme.SkyBlue
+import dev.skyloft.skypython.ui.theme.TextBright
 import dev.skyloft.skypython.ui.theme.SkyPythonTheme
 import androidx.compose.foundation.background
 import androidx.compose.material.icons.filled.Code
@@ -137,6 +144,8 @@ fun FilesScreen(
     }
     val onOpResult: (String?) -> Unit = { error -> if (error == null) closeDialog() else dialogError = error }
 
+    val shareContext = LocalContext.current
+    val shareScope = rememberCoroutineScope()
     FilesContent(
         state = state,
         onBack = onBack,
@@ -149,6 +158,11 @@ fun FilesScreen(
         onRename = { dialog = FilesDialog.Rename(it) },
         onDelete = { dialog = FilesDialog.Delete(it) },
         onErrorShown = viewModel::clearError,
+        onShare = { entry ->
+            // One file goes as a file; a folder goes as a .zip of the whole project.
+            if (entry.isDirectory) shareScope.launch { shareFolder(shareContext, entry.file) }
+            else shareFile(shareContext, entry.file)
+        },
     )
 
     when (val d = dialog) {
@@ -228,6 +242,7 @@ private fun FilesContent(
     onRename: (FileEntry) -> Unit,
     onDelete: (FileEntry) -> Unit,
     onErrorShown: () -> Unit,
+    onShare: (FileEntry) -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(state.error) {
@@ -242,7 +257,7 @@ private fun FilesContent(
             SkyTopBar(
                 title = stringResource(R.string.title_files),
                 onBack = onBack,
-                glow = false,
+                divider = false,
                 actions = {
                     IconButton(onClick = onOpenExternal) {
                         Icon(Icons.Filled.FileOpen, contentDescription = stringResource(R.string.files_open_external))
@@ -259,7 +274,7 @@ private fun FilesContent(
                 .padding(padding),
         ) {
             Breadcrumbs(state = state, onUp = onUp, onNavigate = onNavigate)
-            GlowLine()
+            Hairline()
             if (state.entries.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
@@ -279,6 +294,7 @@ private fun FilesContent(
                             onClick = { onEntryClick(entry) },
                             onRename = { onRename(entry) },
                             onDelete = { onDelete(entry) },
+                            onShare = { onShare(entry) },
                         )
                         HorizontalDivider(Modifier.padding(start = 72.dp), color = DividerNavy)
                     }
@@ -301,7 +317,7 @@ private fun Breadcrumbs(state: FilesState, onUp: () -> Unit, onNavigate: (File) 
             Icon(
                 Icons.Filled.ArrowUpward,
                 contentDescription = stringResource(R.string.files_up_one_folder),
-                tint = if (state.canGoUp) Color.White else MutedText.copy(alpha = 0.4f),
+                tint = if (state.canGoUp) TextBright else MutedText.copy(alpha = 0.5f),
             )
         }
         Row(
@@ -325,7 +341,7 @@ private fun Breadcrumbs(state: FilesState, onUp: () -> Unit, onNavigate: (File) 
                         // The root is called "Projects" everywhere else (editor subtitle).
                         if (index == 0) stringResource(R.string.projects_label) else crumb.label,
                         maxLines = 1,
-                        color = if (isLast) Color.White else MutedText,
+                        color = if (isLast) TextBright else MutedText,
                         fontWeight = if (isLast) FontWeight.Medium else FontWeight.Normal,
                     )
                 }
@@ -335,7 +351,13 @@ private fun Breadcrumbs(state: FilesState, onUp: () -> Unit, onNavigate: (File) 
 }
 
 @Composable
-private fun EntryRow(entry: FileEntry, onClick: () -> Unit, onRename: () -> Unit, onDelete: () -> Unit) {
+private fun EntryRow(
+    entry: FileEntry,
+    onClick: () -> Unit,
+    onRename: () -> Unit,
+    onDelete: () -> Unit,
+    onShare: () -> Unit = {},
+) {
     var menuOpen by remember { mutableStateOf(false) }
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
@@ -348,7 +370,7 @@ private fun EntryRow(entry: FileEntry, onClick: () -> Unit, onRename: () -> Unit
                     else -> Icons.Filled.Description
                 },
                 contentDescription = stringResource(if (entry.isDirectory) R.string.files_folder else R.string.files_file),
-                tint = if (entry.isDirectory) SoftViolet else MaterialTheme.colorScheme.primary,
+                tint = if (entry.isDirectory) SkyBlue else MutedText,
             )
         },
         headlineContent = { Text(entry.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -358,6 +380,14 @@ private fun EntryRow(entry: FileEntry, onClick: () -> Unit, onRename: () -> Unit
                     Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.files_more_options, entry.name))
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.title_share)) },
+                        leadingIcon = { Icon(Icons.Filled.Share, contentDescription = null) },
+                        onClick = {
+                            menuOpen = false
+                            onShare()
+                        },
+                    )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.action_rename)) },
                         leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
@@ -384,7 +414,7 @@ private fun EntryRow(entry: FileEntry, onClick: () -> Unit, onRename: () -> Unit
 private fun NewItemFab(onNewFile: () -> Unit, onNewFolder: () -> Unit) {
     var menuOpen by remember { mutableStateOf(false) }
     Box {
-        GradientFab(onClick = { menuOpen = true }, icon = Icons.Filled.Add, contentDescription = stringResource(R.string.files_new))
+        BrandFab(onClick = { menuOpen = true }, icon = Icons.Filled.Add, contentDescription = stringResource(R.string.files_new))
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.files_new_file)) },

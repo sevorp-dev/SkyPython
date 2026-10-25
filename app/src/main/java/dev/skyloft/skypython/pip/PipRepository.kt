@@ -10,6 +10,7 @@ import dev.skyloft.skypython.runtime.userBase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -24,9 +25,17 @@ interface PipManager {
      * [IllegalArgumentException] for a spec that [PackageSpec] rejects.
      */
     fun install(spec: String): Flow<String>
+    /** `pip install --upgrade <name>`; like [install]. */
+    fun upgrade(name: String): Flow<String>
+    /** `pip install -r <file>` ([file] absolute and existing); like [install]. */
+    fun installRequirements(file: File): Flow<String>
     suspend fun uninstall(name: String): Result<Unit>
     /** User-installed packages, sorted by name, without pip itself. */
     suspend fun listInstalled(): Result<List<PipPackage>>
+    /** User packages with a newer release: normalized name → latest version (needs network). */
+    suspend fun listOutdated(): Result<Map<String, String>>
+    /** `pip show <name>`. */
+    suspend fun show(name: String): Result<PackageDetails>
 }
 
 /** pip (or ensurepip) failed. [exitCode] is null if Python could not be started. */
@@ -65,11 +74,46 @@ class PipRepository(
             is SpecCheck.Valid -> check.spec
             is SpecCheck.Invalid -> throw IllegalArgumentException(check.reason)
         }
+        runInstall(listOf(valid))
+    }
+
+    override fun upgrade(name: String): Flow<String> = flow {
+        require(PackageSpec.isName(name)) { "Not a package name: $name" }
+        runInstall(listOf("--upgrade", name))
+    }
+
+    override fun installRequirements(file: File): Flow<String> = flow {
+        require(file.isAbsolute) { "Not an absolute path: $file" }
+        require(withContext(Dispatchers.IO) { file.isFile }) { "No such file: $file" }
+        runInstall(listOf("-r", file.absolutePath))
+    }
+
+    /** `pip install --user …` + [args], streaming the output into the flow. */
+    private suspend fun FlowCollector<String>.runInstall(args: List<String>) {
         lock.withLock {
             val p = paths()
             bootstrap(p) { emit(it) }
-            val args = listOf("install", "--user", "--no-input", "--progress-bar", "off", valid)
-            run(p, "pip", args) { emit(it) }.orThrow("pip", includeOutput = false)
+            run(p, "pip", INSTALL + args) { emit(it) }.orThrow("pip", includeOutput = false)
+        }
+    }
+
+    override suspend fun listOutdated(): Result<Map<String, String>> = catching {
+        lock.withLock {
+            val p = paths()
+            bootstrap(p) {}
+            val out = run(p, "pip", listOf("list", "--outdated", "--user", "--format=json") + QUICK_NETWORK) {}.orThrow("pip").stdout
+            val outdated = PipList.parseOutdated(out) ?: error("Unexpected output from pip list:\n${out.take(500)}")
+            outdated - "pip"
+        }
+    }
+
+    override suspend fun show(name: String): Result<PackageDetails> = catching {
+        require(PackageSpec.isName(name)) { "Not a package name: $name" }
+        lock.withLock {
+            val p = paths()
+            bootstrap(p) {}
+            val out = run(p, "pip", listOf("show", name)) {}.orThrow("pip").stdout
+            PipShow.parse(out) ?: error("Unexpected output from pip show:\n${out.take(500)}")
         }
     }
 
@@ -161,6 +205,9 @@ class PipRepository(
         /** In the user base, so wiping `.local` also forgets the bootstrap. */
         const val MARKER = ".pip-bootstrapped"
         private const val OUTPUT_LINES_IN_ERROR = 15
+        /** An update check must not hold the pip lock for a minute of retries when offline. */
+        private val QUICK_NETWORK = listOf("--retries", "1", "--timeout", "10")
+        private val INSTALL = listOf("install", "--user", "--no-input", "--progress-bar", "off")
 
         fun create(context: Context): PipRepository {
             val app = context.applicationContext

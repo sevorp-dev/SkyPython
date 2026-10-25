@@ -1,7 +1,12 @@
 package dev.skyloft.skypython.editor
 
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.ColorFilter
+import android.graphics.Paint
+import android.graphics.PixelFormat
 import android.graphics.Typeface
+import android.graphics.drawable.Drawable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -19,7 +24,11 @@ import dev.skyloft.skypython.lang.DiagnosticsRunner
 import dev.skyloft.skypython.lang.LanguageService
 import dev.skyloft.skypython.lang.Severity
 import io.github.rosemoe.sora.event.ContentChangeEvent
+import io.github.rosemoe.sora.event.EditorKeyEvent
+import io.github.rosemoe.sora.event.PublishSearchResultEvent
+import io.github.rosemoe.sora.event.TextSizeChangeEvent
 import io.github.rosemoe.sora.event.SelectionChangeEvent
+import io.github.rosemoe.sora.lang.completion.CompletionItemKind
 import io.github.rosemoe.sora.lang.diagnostic.DiagnosticDetail
 import io.github.rosemoe.sora.lang.diagnostic.DiagnosticRegion
 import io.github.rosemoe.sora.lang.diagnostic.DiagnosticsContainer
@@ -33,11 +42,16 @@ import io.github.rosemoe.sora.langs.textmate.registry.model.ThemeModel
 import io.github.rosemoe.sora.langs.textmate.registry.provider.AssetsFileResolver
 import io.github.rosemoe.sora.text.Content
 import io.github.rosemoe.sora.widget.CodeEditor
+import io.github.rosemoe.sora.widget.EditorSearcher
+import io.github.rosemoe.sora.widget.component.EditorTextActionWindow
+import dev.skyloft.skypython.settings.MAX_FONT_SIZE_SP
+import dev.skyloft.skypython.settings.MIN_FONT_SIZE_SP
+import dev.skyloft.skypython.settings.symbolInsertion
 import io.github.rosemoe.sora.widget.schemes.EditorColorScheme
 import org.eclipse.tm4e.core.registry.IThemeSource
 
-private const val EDITOR_BG = 0xFF0B1230.toInt()
-private const val GUTTER_DIVIDER = 0xFF1E2A55.toInt()
+private const val EDITOR_BG = 0xFF0E1424.toInt()
+private const val GUTTER_DIVIDER = 0xFF1E2638.toInt()
 private const val THEME_PATH = "textmate/skypython-dark.json"
 private const val THEME_NAME = "skypython-dark"
 private const val PYTHON_SCOPE = "source.python"
@@ -74,24 +88,69 @@ private class SkyColorScheme(registry: ThemeRegistry) :
         WHOLE_BACKGROUND, LINE_NUMBER_BACKGROUND -> EDITOR_BG
         LINE_DIVIDER -> GUTTER_DIVIDER
         // The theme has no suggest-widget / tooltip colors; Sora's defaults are light-on-light.
-        COMPLETION_WND_BACKGROUND, COMPLETION_WND_CORNER, DIAGNOSTIC_TOOLTIP_BACKGROUND -> POPUP_BG
-        COMPLETION_WND_ITEM_CURRENT -> POPUP_SELECTED
+        COMPLETION_WND_BACKGROUND, DIAGNOSTIC_TOOLTIP_BACKGROUND -> POPUP_BG
+        COMPLETION_WND_CORNER -> POPUP_BORDER
+        // Find matches: the selection colour, so highlighted (often yellow string) text stays readable.
+        COMPLETION_WND_ITEM_CURRENT, MATCHED_TEXT_BACKGROUND -> POPUP_SELECTED
         COMPLETION_WND_TEXT_PRIMARY, DIAGNOSTIC_TOOLTIP_BRIEF_MSG -> POPUP_TEXT
         COMPLETION_WND_TEXT_SECONDARY, DIAGNOSTIC_TOOLTIP_DETAILED_MSG -> POPUP_TEXT_SECONDARY
         COMPLETION_WND_TEXT_MATCHED -> POPUP_MATCHED
+        // Selection toolbar (cut / copy / paste …): the same dark popup as the suggestions.
+        TEXT_ACTION_WINDOW_BACKGROUND -> POPUP_BG
+        TEXT_ACTION_WINDOW_ICON_COLOR -> POPUP_TEXT
         PROBLEM_ERROR -> SQUIGGLE_ERROR
         PROBLEM_WARNING -> SQUIGGLE_WARNING
         else -> super.getColor(type)
     }
 }
 
-private const val POPUP_BG = 0xFF16212C.toInt()
-private const val POPUP_SELECTED = 0xFF264F78.toInt()
-private const val POPUP_TEXT = 0xFFD4D4D4.toInt()
-private const val POPUP_TEXT_SECONDARY = 0xFF93A4B3.toInt()
-private const val POPUP_MATCHED = 0xFF4DAAFC.toInt()
-private const val SQUIGGLE_ERROR = 0xFFF14C4C.toInt()
-private const val SQUIGGLE_WARNING = 0xFFCCA700.toInt()
+private const val PINCH_SAVE_DELAY_MS = 600L
+// Completion popup and problem tooltip: the app's raised panel (PanelNavy) and text colours.
+private const val POPUP_BG = 0xFF1B2338.toInt()
+private const val POPUP_BORDER = 0xFF273149.toInt()
+private const val POPUP_SELECTED = 0xFF263457.toInt()
+private const val POPUP_TEXT = 0xFFE4E8F2.toInt()
+private const val POPUP_TEXT_SECONDARY = 0xFF9AA5BF.toInt()
+private const val POPUP_MATCHED = 0xFF86AEFF.toInt()
+private const val SQUIGGLE_ERROR = 0xFFFF7A8A.toInt()
+private const val SQUIGGLE_WARNING = 0xFFE3B95C.toInt()
+
+/**
+ * Completion-list badge: the kind's first letter on a soft tonal circle in the accent blue,
+ * instead of Sora's saturated per-kind colours.
+ */
+internal class CompletionBadge(kind: CompletionItemKind) : Drawable() {
+    private val letter = kind.name.first().uppercase()
+    private val circle = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = BADGE_BG }
+    private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = POPUP_MATCHED
+        textAlign = Paint.Align.CENTER
+        typeface = Typeface.DEFAULT_BOLD
+    }
+
+    override fun draw(canvas: Canvas) {
+        val b = bounds
+        val r = minOf(b.width(), b.height()) / 2f
+        canvas.drawCircle(b.exactCenterX(), b.exactCenterY(), r, circle)
+        text.textSize = r
+        canvas.drawText(letter, b.exactCenterX(), b.exactCenterY() - (text.descent() + text.ascent()) / 2, text)
+    }
+
+    override fun setAlpha(alpha: Int) {
+        circle.alpha = alpha
+        text.alpha = alpha
+    }
+
+    override fun setColorFilter(colorFilter: ColorFilter?) {
+        circle.colorFilter = colorFilter
+        text.colorFilter = colorFilter
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
+}
+
+private const val BADGE_BG = 0xFF2A3A63.toInt()
 
 /** Imperative handle for toolbar / symbol-bar actions on the live editor view. */
 class EditorController {
@@ -110,10 +169,161 @@ class EditorController {
     fun undo() { view?.undo() }
     fun redo() { view?.redo() }
 
+    /** Auto-close brackets/quotes (the setting); also used by [insertSymbol]. */
+    internal var autoClose: Boolean = true
+
     /** Inserts [text] at the cursor (replacing any selection) and places the cursor after it. */
     fun insert(text: String) {
         view?.insertText(text, text.length)
     }
+
+    /** A symbol-bar key: like [insert], but `(` `[` `{` and quotes get their pair when auto-close is on. */
+    fun insertSymbol(text: String) {
+        val ins = symbolInsertion(text, autoClose)
+        view?.insertText(ins.text, ins.cursor)
+    }
+
+    // ---- line commands ----
+
+    fun toggleComment() = applyLineEdit(LineEdits::toggleComment)
+    fun indent() = applyLineEdit(LineEdits::indent)
+    fun outdent() = applyLineEdit(LineEdits::outdent)
+    fun duplicateLine() = applyLineEdit(LineEdits::duplicate)
+    fun deleteLine() = applyLineEdit(LineEdits::deleteLines)
+    fun moveLineUp() = applyLineEdit(LineEdits::moveUp)
+    fun moveLineDown() = applyLineEdit(LineEdits::moveDown)
+
+    private fun applyLineEdit(command: (List<String>, TextSelection) -> LineEdit?) {
+        val v = view ?: return
+        if (!v.isEditable) return
+        val content = v.text
+        val lines = object : AbstractList<String>() {
+            override val size get() = content.lineCount
+            override fun get(index: Int) = content.getLineString(index)
+        }
+        val c = v.cursor
+        val edit = command(lines, TextSelection(c.leftLine, c.leftColumn, c.rightLine, c.rightColumn)) ?: return
+        content.beginBatchEdit()
+        content.replace(edit.startLine, edit.startColumn, edit.endLine, edit.endColumn, edit.text)
+        content.endBatchEdit()
+        select(v, edit.selection)
+    }
+
+    private fun select(v: CodeEditor, s: TextSelection) {
+        val t = v.text
+        fun line(l: Int) = l.coerceIn(0, t.lineCount - 1)
+        val sl = line(s.startLine)
+        val el = line(s.endLine)
+        val sc = s.startColumn.coerceIn(0, t.getColumnCount(sl))
+        val ec = s.endColumn.coerceIn(0, t.getColumnCount(el))
+        if (sl == el && sc == ec) v.setSelection(sl, sc) else v.setSelectionRegion(sl, sc, el, ec)
+    }
+
+    /** Lines in the shown document (at least 1). */
+    fun lineCount(): Int = view?.text?.lineCount ?: 1
+
+    /** Moves the cursor to the start of 0-based [line] and scrolls there. */
+    fun goToLine(line: Int) {
+        val v = view ?: return
+        v.setSelection(line.coerceIn(0, v.text.lineCount - 1), 0, true)
+        v.requestFocus()
+    }
+
+    // ---- find & replace ----
+
+    /** Find results for the bar: [index] of the selected match (-1 = none selected) of [count]. */
+    internal var onFindState: ((index: Int, count: Int) -> Unit)? = null
+    private var query: FindQuery? = null
+    private var jumpOnResult = false
+
+    /** Highlights every match of [q] and selects the first one at or after the cursor. */
+    fun find(q: FindQuery) {
+        val v = view ?: return
+        if (!q.isSearchable()) {
+            stopFind()
+            return
+        }
+        if (q == query && v.searcher.hasQuery()) return
+        query = q
+        jumpOnResult = true
+        // Every mode is a regex here, so the highlighter and replace-all agree (see FindQuery).
+        v.searcher.search(q.pattern!!, EditorSearcher.SearchOptions(EditorSearcher.SearchOptions.TYPE_REGULAR_EXPRESSION, !q.matchCase))
+    }
+
+    fun stopFind() {
+        query = null
+        jumpOnResult = false
+        val v = view
+        if (v != null && v.searcher.hasQuery()) v.searcher.stopSearch()
+        onFindState?.invoke(-1, 0)
+    }
+
+    fun findNext() {
+        val v = view ?: return
+        if (v.searcher.hasQuery()) { v.searcher.gotoNext(); publishFind(v) }
+    }
+
+    fun findPrevious() {
+        val v = view ?: return
+        if (v.searcher.hasQuery()) { v.searcher.gotoPrevious(); publishFind(v) }
+    }
+
+    /** Replaces the selected match (or jumps to the next one if none is selected), then moves on. */
+    fun replaceCurrent(replacement: String) {
+        val v = view ?: return
+        val q = query ?: return
+        if (!v.searcher.hasQuery() || !v.isEditable) return
+        if (v.searcher.isMatchedPositionSelected) {
+            val c = v.cursor
+            val matched = v.text.subContent(c.leftLine, c.leftColumn, c.rightLine, c.rightColumn).toString()
+            v.commitText(q.replacementFor(matched, replacement), false, false)
+        }
+        v.searcher.gotoNext()
+    }
+
+    /** Replaces every match in one undo step; returns how many were replaced. */
+    fun replaceAll(replacement: String): Int {
+        val v = view ?: return 0
+        val q = query ?: return 0
+        if (!v.isEditable) return 0
+        val content = v.text
+        val (out, n) = q.replaceAll(content.toString(), replacement)
+        if (n == 0) return 0
+        val c = v.cursor
+        val line = c.leftLine
+        val col = c.leftColumn
+        val last = content.lineCount - 1
+        content.beginBatchEdit()
+        content.replace(0, 0, last, content.getColumnCount(last), out)
+        content.endBatchEdit()
+        select(v, TextSelection(line, col))
+        return n
+    }
+
+    internal fun onSearchResult(v: CodeEditor) {
+        if (jumpOnResult && v.searcher.hasQuery()) {
+            jumpOnResult = false
+            // From the start of the current selection, so a match under the cursor counts.
+            val c = v.cursor
+            if (c.isSelected) v.setSelection(c.leftLine, c.leftColumn, false)
+            if (v.searcher.matchedPositionCount > 0) v.searcher.gotoNext()
+        }
+        publishFind(v)
+    }
+
+    internal fun publishFind(v: CodeEditor) {
+        val cb = onFindState ?: return
+        if (!v.searcher.hasQuery()) cb(-1, 0)
+        else cb(v.searcher.currentMatchedPositionIndex, v.searcher.matchedPositionCount)
+    }
+
+    // ---- keyboard shortcuts / zoom ----
+
+    /** Hardware-keyboard shortcut pressed in the editor ([editorShortcut]). */
+    internal var onShortcut: ((EditorShortcut) -> Unit)? = null
+
+    /** The user pinch-zoomed to this font size (whole sp, already clamped). */
+    internal var onPinchFontSize: ((Int) -> Unit)? = null
 
     /**
      * Moves the cursor to [d] (server positions: 1-based line) and scrolls there; as if tapped,
@@ -147,13 +357,23 @@ private fun CodeEditor.cursorPosition(): CursorPosition {
     return CursorPosition(line = c.leftLine, column = c.leftColumn, lineCount = text.lineCount)
 }
 
+/** True while [applyConfig] sets the text size, so that change isn't taken for a pinch. */
+private var applyingTextSize = false
+
 /** Applies user settings; each setter is skipped when unchanged so a re-apply doesn't relayout. */
-private fun CodeEditor.applyConfig(config: EditorViewConfig) {
+internal fun CodeEditor.applyConfig(config: EditorViewConfig) {
     // Sora's setTextSize takes sp and scales by the display's font metrics itself.
     val px = android.util.TypedValue.applyDimension(
         android.util.TypedValue.COMPLEX_UNIT_SP, config.textSizeSp, resources.displayMetrics,
     )
-    if (textSizePx != px) setTextSize(config.textSizeSp)
+    if (textSizePx != px) {
+        applyingTextSize = true
+        try { setTextSize(config.textSizeSp) } finally { applyingTextSize = false }
+    }
+    props.symbolPairAutoCompletion = config.autoClosePairs
+    // setInputType restarts the IME connection, so only on a real change.
+    val type = editorInputType(config.keyboardSuggestions)
+    if (inputType != type) inputType = type
     // Wrap at the exact width, not at word boundaries: Sora 0.24's anti-word-breaking splits a
     // line again at every following '.' or space, so `print("a", statistics.mode(x))` took three
     // rows with a lone `mode(x))` and the closing `")` of a string dropped to a row of its own.
@@ -232,6 +452,15 @@ fun CodeEditor(
                 typefaceText = Typeface.MONOSPACE
                 typefaceLineNumber = Typeface.MONOSPACE
                 tabWidth = 4
+                // Backspace in leading spaces removes a whole indent level (4 spaces).
+                props.deleteMultiSpaces = -1
+                // Pinch-to-zoom within the Settings font range.
+                val sp = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_SP, 1f, resources.displayMetrics)
+                setScaleTextSizes(MIN_FONT_SIZE_SP * sp, MAX_FONT_SIZE_SP * sp)
+                replaceComponent(
+                    EditorTextActionWindow::class.java,
+                    SkyTextActionWindow(this, onComment = controller::toggleComment, onIndent = controller::indent),
+                )
                 // Breathing room around the line-number gutter.
                 val dp = resources.displayMetrics.density
                 lineNumberMarginLeft = 6 * dp
@@ -252,7 +481,25 @@ fun CodeEditor(
                         requestDiagnostics(content, immediate = false)
                     }
                 }
-                subscribeAlways(SelectionChangeEvent::class.java) { e -> onCursor(e.editor.cursorPosition()) }
+                subscribeAlways(SelectionChangeEvent::class.java) { e ->
+                    onCursor(e.editor.cursorPosition())
+                    controller.publishFind(e.editor)
+                }
+                subscribeAlways(PublishSearchResultEvent::class.java) { e -> controller.onSearchResult(e.editor) }
+                subscribeAlways(EditorKeyEvent::class.java) { e ->
+                    if (e.eventType != EditorKeyEvent.Type.DOWN) return@subscribeAlways
+                    val shortcut = editorShortcut(e.keyCode, e.isCtrlPressed, e.isShiftPressed) ?: return@subscribeAlways
+                    val handler = controller.onShortcut ?: return@subscribeAlways
+                    if (e.repeatCount == 0) handler(shortcut)
+                    e.markAsConsumed()
+                }
+                // Pinch-zoom: keep the size the user settles on (debounced, rounded to whole sp).
+                val savePinch = Runnable { controller.onPinchFontSize?.invoke(pinchFontSp(textSizePx, sp)) }
+                subscribeAlways(TextSizeChangeEvent::class.java) { e ->
+                    if (applyingTextSize) return@subscribeAlways
+                    e.editor.removeCallbacks(savePinch)
+                    e.editor.postDelayed(savePinch, PINCH_SAVE_DELAY_MS)
+                }
                 controller.view = this
                 controller.flusher = debouncer::flush
             }
@@ -289,6 +536,7 @@ fun CodeEditor(
 
     // Settings changes apply live to the existing view.
     LaunchedEffect(config) {
+        controller.autoClose = config.autoClosePairs
         controller.view?.applyConfig(config)
     }
 
