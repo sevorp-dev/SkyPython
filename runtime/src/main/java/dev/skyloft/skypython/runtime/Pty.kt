@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.runtime
 
+import java.io.File
 import java.io.IOException
 
 /**
@@ -61,6 +62,39 @@ object Pty {
      */
     @JvmStatic
     external fun waitFor(pid: Int): Int
+
+    /**
+     * Blocks until [pid] has exited but leaves it unreaped (waitid with WNOWAIT): the pid can't be
+     * reused until [waitFor] collects it, so it is still safe to signal in between.
+     */
+    @JvmStatic
+    external fun awaitExit(pid: Int)
+
+    /**
+     * Sends [signal] to every process in the session led by [sessionId] (a program started by
+     * [start] leads its own session): its process group, and jobs a shell moved to other groups.
+     * @return 0, or the errno of signalling the group.
+     */
+    @JvmStatic
+    fun signalSession(sessionId: Int, signal: Int): Int {
+        if (sessionId <= 1) return 0
+        val result = sendSignal(-sessionId, signal)
+        File("/proc").listFiles()?.forEach { dir ->
+            val pid = dir.name.toIntOrNull() ?: return@forEach
+            if (sessionIdOf(dir) == sessionId) sendSignal(pid, signal)
+        }
+        return result
+    }
+
+    /** Field 6 of /proc/PID/stat (after "pid (comm)": state, ppid, pgrp, session), or -1. */
+    private fun sessionIdOf(procDir: File): Int {
+        val stat = try {
+            File(procDir, "stat").readText()
+        } catch (e: IOException) {
+            return -1
+        }
+        return stat.substringAfterLast(')').trim().split(' ').getOrNull(3)?.toIntOrNull() ?: -1
+    }
 
     /**
      * kill(2): [pid] > 0 is one process, a negative value the process group `-pid`.

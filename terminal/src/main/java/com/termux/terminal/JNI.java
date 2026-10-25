@@ -39,6 +39,16 @@ final class JNI {
         return Pty.waitFor(processId);
     }
 
+    /** SkyPython: blocks until the process has exited, without reaping it (its pid stays reserved). */
+    static void awaitExit(int processId) {
+        Pty.awaitExit(processId);
+    }
+
+    /** SkyPython: SIGKILL to every process of the session led by processId. @return 0 or an errno. */
+    static int killSession(int processId) {
+        return Pty.signalSession(processId, Pty.SIGKILL);
+    }
+
     /** Close a file descriptor through the close(2) system call. */
     static void close(int fileDescriptor) {
         Pty.close(fileDescriptor);

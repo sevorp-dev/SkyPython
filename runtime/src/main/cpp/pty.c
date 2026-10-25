@@ -239,6 +239,14 @@ JNIEXPORT jint JNICALL Java_dev_skyloft_skypython_runtime_Pty_waitFor(
     return 0;
 }
 
+JNIEXPORT void JNICALL Java_dev_skyloft_skypython_runtime_Pty_awaitExit(
+        JNIEnv UNUSED *env, jclass UNUSED clazz, jint pid) {
+    siginfo_t info;
+    while (waitid(P_PID, (id_t) pid, &info, WEXITED | WNOWAIT) < 0) {
+        if (errno != EINTR) return;
+    }
+}
+
 JNIEXPORT jint JNICALL Java_dev_skyloft_skypython_runtime_Pty_sendSignal(
         JNIEnv UNUSED *env, jclass UNUSED clazz, jint pid, jint sig) {
     return kill(pid, sig) == 0 ? 0 : errno;
