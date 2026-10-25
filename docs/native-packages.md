@@ -1,9 +1,30 @@
 # Native packages (NumPy & co.) on SkyPython — spike
 
-Status: **research spike, October 2026.** Nothing here is wired into the app yet. The draft
-workflow `.github/workflows/build-wheels.yml` and its helpers in `.github/wheels/` have not
-been run on GitHub Actions; they are syntax-checked, and the helpers were tested locally
-(see "What was verified").
+## Current state (implemented)
+
+`.github/workflows/build-wheels.yml` builds **NumPy 2.5.4** for cp314 / API 24 and publishes
+it on the orphan branch **`wheels`** (one commit, force-pushed on every publish):
+
+- `https://raw.githubusercontent.com/sevorp-dev/SkyPython/wheels/index.json` — catalogue
+  for the app: `{"schema": 1, "python": "cp314", "packages": {"numpy": [{"version", "abi"
+  (arm64-v8a / x86_64 / armeabi-v7a / x86), "file", "sha256", "size", "requires",
+  "summary"}]}}`; the wheel files sit next to it. The app downloads and installs them
+  itself, so the PEP 503 / GitHub Pages / release-assets plan in §3 below was **not** used.
+- 64-bit: stock cibuildwheel 4.3.4, OpenBLAS 0.3.33 (`chaquopy-openblas`) and libc++_shared
+  vendored into `numpy.libs/` by auditwheel (`requires` stays empty). x86_64 is
+  smoke-tested on the emulator (`import numpy`, `arange(10).sum()`, `linalg.inv`).
+- 32-bit: cibuildwheel patched by `.github/wheels/patch_cibw_32bit.py` (+ logger entries,
+  + x86 testing on an x86_64 emulator), our CPython from `cpython-builds`, no BLAS
+  (lapack_lite), libc++ linked statically with the 16 KB-page link flags repeated.
+- `.github/wheels/finish_wheels.py` adds the OpenBLAS / libc++ license texts to
+  `*.dist-info/licenses/` and strips build-machine RUNPATHs; `verify_wheels.py` checks the
+  tag, ELF machine, 16 KB LOAD alignment, NEEDED and RUNPATH of every `.so`;
+  `make_index.py` keeps one wheel per project × ABI and writes `index.json` + `SHA256SUMS`.
+- Trigger: push to `build-wheels` (paths `.github/wheels/**`, the workflow) or "Run
+  workflow". The publish refuses to run unless both 64-bit wheels were built; failed
+  32-bit legs keep their previously published wheels.
+
+The rest of this document is the original research spike (October 2026).
 
 ## TL;DR — recommendation
 

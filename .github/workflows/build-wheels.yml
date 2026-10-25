@@ -159,23 +159,6 @@ jobs:
           cp "$RUNNER_TEMP"/openblas/chaquopy_openblas-*.dist-info/LICENSE "$RUNNER_TEMP/OpenBLAS-LICENSE.txt"
           echo "::notice title=OpenBLAS $ABI::$(ls openblas-dl) sha256 $(sha256sum openblas-dl/*.whl | cut -d' ' -f1)"
 
-      - name: Start an x86_64 emulator that runs 32-bit x86 apps
-        if: matrix.abi == 'x86'
-        run: |
-          set -eu
-          trap 'echo "::error title=x86 emulator::failed at line $LINENO%0A$(tail -30 "$RUNNER_TEMP/emu-setup.log" "$RUNNER_TEMP/emulator.log" 2>/dev/null | sed ":a;N;\$!ba;s/\n/%0A/g")"' ERR
-          img="system-images;android-30;google_apis;x86_64"
-          bin="$ANDROID_HOME/cmdline-tools/latest/bin"
-          # (no pipefail: `yes` dies of SIGPIPE when sdkmanager is done)
-          yes | "$bin/sdkmanager" --install emulator platform-tools "$img" > "$RUNNER_TEMP/emu-setup.log" 2>&1
-          echo no | "$bin/avdmanager" create avd -n x86test -k "$img" -d pixel_5 >> "$RUNNER_TEMP/emu-setup.log" 2>&1
-          adb="$ANDROID_HOME/platform-tools/adb"
-          nohup "$ANDROID_HOME/emulator/emulator" -avd x86test -no-window -no-audio -no-boot-anim \
-            -no-snapshot -gpu swiftshader_indirect > "$RUNNER_TEMP/emulator.log" 2>&1 &
-          timeout 600 "$adb" wait-for-device
-          timeout 600 sh -c "until [ \"\$('$adb' shell getprop sys.boot_completed | tr -d '\r')\" = 1 ]; do sleep 5; done"
-          echo "::notice title=x86 test emulator::$("$adb" devices | tr '\n' ' ') abilist=$("$adb" shell getprop ro.product.cpu.abilist | tr -d '\r')"
-
       # Our own cibuildwheel config (replaces the one in NumPy's pyproject.toml).
       - name: Write the cibuildwheel config
         run: |
@@ -223,7 +206,7 @@ jobs:
           ]
           if os.environ["ABI"] == "x86":
               # The Gradle-managed emulator only accepts x86_64 APKs, so test on the emulator
-              # started by the previous step (an x86_64 image that also runs x86 apps).
+              # started by android-emulator-runner (an x86_64 image that also runs x86 apps).
               lines.append('test-runtime = { args = ["--connected", "emulator-5554"] }')
           path = f"{tmp}/cibw.toml"
           open(path, "w").write("\n".join(lines) + "\n")
@@ -231,7 +214,8 @@ jobs:
           import tomllib; tomllib.load(open(path, "rb"))  # fail early on a TOML mistake
           PY
 
-      - name: Build (and test x86_64, x86 on an emulator)
+      - name: Build (and test x86_64 on an emulator)
+        if: matrix.abi != 'x86'
         id: build
         run: |
           set -o pipefail
@@ -239,6 +223,20 @@ jobs:
             --only "cp314-android_$ABI" \
             --config-file "$RUNNER_TEMP/cibw.toml" \
             --output-dir wheelhouse 2>&1 | tee build.log
+
+      # cibuildwheel's Gradle-managed emulator only accepts x86_64 APKs; an x86_64 API 30
+      # image also runs 32-bit x86 apps, so the x86 wheel is tested on this connected one.
+      - name: Build and test x86 (on an x86_64 emulator)
+        if: matrix.abi == 'x86'
+        id: build_x86
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
+          script: bash -o pipefail -c 'echo "::notice title=x86 test emulator::abilist=$(adb shell getprop ro.product.cpu.abilist)"; cibuildwheel src --only "cp314-android_$ABI" --config-file "$RUNNER_TEMP/cibw.toml" --output-dir wheelhouse 2>&1 | tee build.log'
 
       - name: Report the build log tail
         if: always()
@@ -269,7 +267,7 @@ jobs:
                   emit(f"log tail {k // 50 + 1}", tail[k:k + 50])
           PY
         env:
-          OUTCOME: ${{ steps.build.outcome }}
+          OUTCOME: ${{ matrix.abi == 'x86' && steps.build_x86.outcome || steps.build.outcome }}
 
       - name: Add license texts, strip build-machine RUNPATHs
         run: |
