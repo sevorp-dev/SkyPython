@@ -385,4 +385,12 @@
     <string name="samples_search_hint">Поиск…</string>
     <string name="samples_no_match">Нет примеров по запросу «%1$s»</string>
     <string name="action_clear_search">Очистить поиск</string>
+    <!-- Нижняя панель навигации -->
+    <string name="nav_editor">Редактор</string>
+    <string name="nav_terminal">Терминал</string>
+    <string name="nav_packages">Пакеты</string>
+    <string name="nav_projects">Проекты</string>
+    <string name="nav_settings">Настройки</string>
+    <string name="settings_bottom_nav">Нижняя панель навигации</string>
+    <string name="settings_bottom_nav_summary">Редактор, Терминал, Пакеты, Проекты и Настройки в одно касание. Меню ☰ остаётся в любом случае.</string>
 </resources>

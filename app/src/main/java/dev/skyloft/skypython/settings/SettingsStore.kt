@@ -35,6 +35,7 @@ object SettingsMapping {
     private val CODE_FONT = stringPreferencesKey("code_font")
     private val TERMINAL_FONT_SIZE = intPreferencesKey("terminal_font_size_sp")
     private val TERMINAL_THEME = stringPreferencesKey("terminal_theme")
+    private val BOTTOM_NAV_BAR = booleanPreferencesKey("bottom_nav_bar")
 
     fun read(prefs: Preferences): EditorSettings {
         val d = EditorSettings()
@@ -50,6 +51,7 @@ object SettingsMapping {
             codeFont = prefs[CODE_FONT]?.let(CodeFontChoice::fromKey) ?: d.codeFont,
             terminalFontSizeSp = clampTerminalFontSize(prefs[TERMINAL_FONT_SIZE] ?: d.terminalFontSizeSp),
             terminalTheme = prefs[TERMINAL_THEME]?.let(TerminalTheme::fromKey) ?: d.terminalTheme,
+            bottomNavBar = prefs[BOTTOM_NAV_BAR] ?: d.bottomNavBar,
         )
     }
 
@@ -65,6 +67,7 @@ object SettingsMapping {
         prefs[CODE_FONT] = settings.codeFont.key
         prefs[TERMINAL_FONT_SIZE] = clampTerminalFontSize(settings.terminalFontSizeSp)
         prefs[TERMINAL_THEME] = settings.terminalTheme.key
+        prefs[BOTTOM_NAV_BAR] = settings.bottomNavBar
     }
 }
 

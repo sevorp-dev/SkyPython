@@ -21,6 +21,27 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import dev.skyloft.skypython.editor.EditorController
+import dev.skyloft.skypython.ui.nav.BottomNavPolicy
+import dev.skyloft.skypython.ui.nav.SkyBottomBar
+import dev.skyloft.skypython.ui.nav.TopLevelDestination
+import dev.skyloft.skypython.ui.theme.Slate
+import kotlinx.coroutines.flow.map
 import dev.skyloft.skypython.about.AboutScreen
 import dev.skyloft.skypython.console.ConsoleScreen
 import dev.skyloft.skypython.console.ConsoleViewModel
@@ -69,6 +90,7 @@ private object Routes {
  * App root. ViewModels are created here, outside the NavHost, so every screen
  * shares the same instances (scoped to the activity).
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SkyPythonApp() {
     val context = LocalContext.current
@@ -134,6 +156,67 @@ fun SkyPythonApp() {
     }
     var conditionFor by remember { mutableStateOf<Pair<String, Int>?>(null) }
 
+    // Bottom navigation (a setting; the ☰ drawer stays either way). Hidden until the setting is
+    // read so it never flashes for someone who turned it off.
+    val bottomNavEnabled by remember(settingsStore) { settingsStore.settings.map { it.bottomNavBar } }
+        .collectAsState(initial = false)
+    val editorController = remember { EditorController() }
+    var drawerOpen by remember { mutableStateOf(false) }
+    val backStackEntry by nav.currentBackStackEntryAsState()
+    val route = backStackEntry?.destination?.route
+    val showBottomBar = BottomNavPolicy.isVisible(
+        enabled = bottomNavEnabled,
+        route = route,
+        imeVisible = WindowInsets.isImeVisible,
+        drawerOpen = drawerOpen,
+        debugPanelOpen = debugState.phase != DebugPhase.Idle,
+    )
+    val barLabels = BottomNavPolicy.showLabels(LocalConfiguration.current.screenHeightDp)
+    // A top-level screen: a tab when the bar is on (back returns to the editor, tabs keep their
+    // state), a plain push from the editor when it is off (as before the bar existed).
+    val goTop: (String) -> Unit = { target -> if (bottomNavEnabled) nav.goTab(target) else nav.go(target) }
+    // Save first so a rename/delete in Files never loses edits.
+    val openFilesScreen: () -> Unit = {
+        scope.launch {
+            editorVm.saveAll().join()
+            filesVm.refresh()
+            goTop(Routes.FILES)
+        }
+    }
+    val openTerminal = {
+        shellVm.open()
+        goTop(Routes.TERMINAL)
+    }
+    // Save first: the requirements tab installs from files on disk.
+    val openPip: () -> Unit = {
+        scope.launch {
+            editorVm.saveAll().join()
+            goTop(Routes.PIP)
+        }
+    }
+    val onBottomItem: (TopLevelDestination) -> Unit = { destination ->
+        if (route == Routes.EDITOR) {
+            // Edits reach the ViewModel debounced: push the last keystrokes before leaving.
+            editorController.flushPendingText()
+            editorController.hideKeyboard()
+        }
+        when (destination) {
+            TopLevelDestination.Editor -> nav.popBackStack(Routes.EDITOR, inclusive = false, saveState = true)
+            TopLevelDestination.Terminal -> openTerminal()
+            TopLevelDestination.Packages -> openPip()
+            TopLevelDestination.Projects -> openFilesScreen()
+            TopLevelDestination.Settings -> goTop(Routes.SETTINGS)
+        }
+    }
+
+    Column(Modifier.fillMaxSize().background(Slate)) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .weight(1f)
+            // The bar below pads itself for the system navigation bar: the screens must not too.
+            .then(if (showBottomBar) Modifier.consumeWindowInsets(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)) else Modifier),
+    ) {
     NavHost(navController = nav, startDestination = Routes.EDITOR) {
         composable(Routes.EDITOR) {
             val debugMarks = rememberDebugMarks(
@@ -142,14 +225,6 @@ fun SkyPythonApp() {
                 onEditCondition = { path, line -> conditionFor = path to line },
                 onUnsupported = { Toast.makeText(context, R.string.debug_breakpoints_need_project_file, Toast.LENGTH_SHORT).show() },
             )
-            // Save first so a rename/delete in Files never loses edits.
-            val openFilesScreen: () -> Unit = {
-                scope.launch {
-                    editorVm.saveAll().join()
-                    filesVm.refresh()
-                    nav.go(Routes.FILES)
-                }
-            }
             EditorScreen(
                 viewModel = editorVm,
                 settings = settings,
@@ -162,6 +237,8 @@ fun SkyPythonApp() {
                 debugMarks = debugMarks,
                 debugPanel = if (debugState.phase == DebugPhase.Idle) null else { { DebugPanelHost(debugVm, consoleVm) } },
                 onFontSizeChange = { sp -> scope.launch { settingsStore.update { it.copy(fontSizeSp = sp) } } },
+                controller = editorController,
+                onDrawerOpenChange = { drawerOpen = it },
                 onDrawerAction = { action ->
                     when (action) {
                         DrawerAction.Projects -> openFilesScreen()
@@ -172,17 +249,10 @@ fun SkyPythonApp() {
                             interpreterVm.open()
                             nav.go(Routes.INTERPRETER)
                         }
-                        DrawerAction.Terminal -> {
-                            shellVm.open()
-                            nav.go(Routes.TERMINAL)
-                        }
-                        // Save first: the requirements tab installs from files on disk.
-                        DrawerAction.Pip -> scope.launch {
-                            editorVm.saveAll().join()
-                            nav.go(Routes.PIP)
-                        }
+                        DrawerAction.Terminal -> openTerminal()
+                        DrawerAction.Pip -> openPip()
                         DrawerAction.Samples -> nav.go(Routes.SAMPLES)
-                        DrawerAction.Settings -> nav.go(Routes.SETTINGS)
+                        DrawerAction.Settings -> goTop(Routes.SETTINGS)
                         DrawerAction.About -> nav.go(Routes.ABOUT)
                         DrawerAction.Share -> scope.launch {
                             editorVm.saveAll().join()
@@ -292,9 +362,28 @@ fun SkyPythonApp() {
             AboutScreen(onBack = { nav.popBackStack() })
         }
     }
+    }
+    if (showBottomBar) {
+        SkyBottomBar(
+            current = TopLevelDestination.fromRoute(route),
+            showLabels = barLabels,
+            onSelect = onBottomItem,
+        )
+    }
+    }
 }
 
 private fun NavHostController.go(route: String) = navigate(route) { launchSingleTop = true }
+
+/**
+ * A bottom-bar tab: one at a time above the editor (which is never popped, so it keeps its tabs
+ * and state), the left tab's state saved and this one's restored, never stacked twice.
+ */
+private fun NavHostController.goTab(route: String) = navigate(route) {
+    popUpTo(Routes.EDITOR) { saveState = true }
+    launchSingleTop = true
+    restoreState = true
+}
 
 /** "Only one program at a time": asks before replacing a running script, interpreter or terminal. */
 @Composable

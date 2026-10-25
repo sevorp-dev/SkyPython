@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.settings
 
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.mutablePreferencesOf
@@ -110,6 +111,22 @@ class SettingsMappingTest {
         // Stored in DataStore: renaming an enum constant must not lose the user's choice.
         assertEquals(listOf("jetbrains_mono", "system_mono"), CodeFontChoice.entries.map { it.key })
         assertEquals(listOf("dark", "black"), TerminalTheme.entries.map { it.key })
+    }
+
+    @Test
+    fun bottomNavBarIsOnByDefault() {
+        assertEquals(true, SettingsMapping.read(emptyPreferences()).bottomNavBar)
+    }
+
+    @Test
+    fun bottomNavBarRoundTrips() {
+        val prefs = mutablePreferencesOf()
+        SettingsMapping.write(prefs, EditorSettings(bottomNavBar = false))
+        assertEquals(false, SettingsMapping.read(prefs).bottomNavBar)
+        // Stored under a stable key: an older build's "off" must survive an update.
+        assertEquals(false, prefs[booleanPreferencesKey("bottom_nav_bar")])
+        SettingsMapping.write(prefs, EditorSettings(bottomNavBar = true))
+        assertEquals(true, SettingsMapping.read(prefs).bottomNavBar)
     }
 
     @Test

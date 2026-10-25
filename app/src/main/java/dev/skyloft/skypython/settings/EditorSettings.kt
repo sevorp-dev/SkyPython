@@ -20,6 +20,8 @@ data class EditorSettings(
     val terminalFontSizeSp: Int = 14,
     /** Colours of the interpreter and the terminal. */
     val terminalTheme: TerminalTheme = TerminalTheme.Dark,
+    /** The bottom bar (Editor · Terminal · Packages · Projects · Settings); the ☰ drawer stays either way. */
+    val bottomNavBar: Boolean = true,
 )
 
 /** Code typeface choices. [key] is what DataStore keeps (stable across renames). */

@@ -89,6 +89,7 @@ import android.content.ContextWrapper
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.ViewDay
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
@@ -208,6 +209,13 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
             SectionDivider()
             SectionTitle(stringResource(R.string.settings_section_app))
             LanguageRow()
+            SwitchRow(
+                icon = Icons.Outlined.ViewDay,
+                title = stringResource(R.string.settings_bottom_nav),
+                summary = stringResource(R.string.settings_bottom_nav_summary),
+                checked = s.bottomNavBar,
+                onChange = { v -> update { it.copy(bottomNavBar = v) } },
+            )
         }
     }
 }

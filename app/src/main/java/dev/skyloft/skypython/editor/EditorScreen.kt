@@ -122,7 +122,11 @@ import dev.skyloft.skypython.ui.theme.MutedText
 import dev.skyloft.skypython.ui.theme.RunButton
 import dev.skyloft.skypython.ui.theme.skyTopBarColors
 import dev.skyloft.skypython.ui.theme.Slate
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -152,9 +156,12 @@ fun EditorScreen(
     debugPanel: (@Composable () -> Unit)? = null,
     /** The user pinch-zoomed the editor to this font size (sp); persist it. */
     onFontSizeChange: (Int) -> Unit = {},
+    /** The live editor view's handle; the app root passes its own to flush edits before leaving. */
+    controller: EditorController = remember { EditorController() },
+    /** The ☰ drawer is opening / open (true) or fully closed (false). */
+    onDrawerOpenChange: (Boolean) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val controller = remember { EditorController() }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -255,6 +262,14 @@ fun EditorScreen(
         }
         controller.onPinchFontSize = onFontSizeChange
     }
+
+    val drawerOpenCallback by rememberUpdatedState(onDrawerOpenChange)
+    LaunchedEffect(drawerState) {
+        snapshotFlow { drawerState.currentValue == DrawerValue.Open || drawerState.targetValue == DrawerValue.Open }
+            .distinctUntilChanged()
+            .collect { drawerOpenCallback(it) }
+    }
+    DisposableEffect(Unit) { onDispose { drawerOpenCallback(false) } }
 
     BackHandler(enabled = drawerState.isOpen) { scope.launch { drawerState.close() } }
     BackHandler(enabled = findOpen && !drawerState.isOpen) { findOpen = false }
