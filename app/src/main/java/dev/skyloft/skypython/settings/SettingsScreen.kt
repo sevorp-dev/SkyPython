@@ -82,6 +82,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.skyloft.skypython.ui.theme.SlateLine
+import dev.skyloft.skypython.ui.theme.SlateRaised
+import dev.skyloft.skypython.ui.theme.CardGroup
+import dev.skyloft.skypython.ui.theme.CardDivider
+import dev.skyloft.skypython.ui.theme.SkyAlertDialog
+import dev.skyloft.skypython.ui.theme.skyFieldColors
 import dev.skyloft.skypython.ui.theme.Slate
 import dev.skyloft.skypython.ui.theme.IconTile
 import dev.skyloft.skypython.ui.theme.SectionLabel
@@ -125,12 +130,14 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 .padding(bottom = 24.dp),
         ) {
             SectionTitle(stringResource(R.string.settings_section_editor))
+            CardGroup {
             FontSizeRow(
                 sizeSp = s.fontSizeSp,
                 min = MIN_FONT_SIZE_SP,
                 max = MAX_FONT_SIZE_SP,
                 onChange = { sp -> update { it.copy(fontSizeSp = clampFontSize(sp)) } },
             )
+            CardDivider()
             ChoiceRow(
                 icon = Icons.Outlined.FontDownload,
                 title = stringResource(R.string.settings_font_family),
@@ -144,8 +151,11 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 stringResource(R.string.settings_pinch_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 20.dp, end = 16.dp, top = 2.dp, bottom = 4.dp),
+                modifier = Modifier.padding(start = 20.dp, end = 16.dp, top = 2.dp, bottom = 12.dp),
             )
+            }
+            SectionTitle(stringResource(R.string.settings_section_editing))
+            CardGroup {
             SwitchRow(
                 icon = Icons.AutoMirrored.Outlined.WrapText,
                 title = stringResource(R.string.settings_word_wrap),
@@ -153,6 +163,7 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 checked = s.wordWrap,
                 onChange = { v -> update { it.copy(wordWrap = v) } },
             )
+            CardDivider()
             SwitchRow(
                 icon = Icons.Outlined.FormatListNumbered,
                 title = stringResource(R.string.settings_line_numbers),
@@ -160,6 +171,7 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 checked = s.lineNumbers,
                 onChange = { v -> update { it.copy(lineNumbers = v) } },
             )
+            CardDivider()
             SwitchRow(
                 icon = Icons.Outlined.LightMode,
                 title = stringResource(R.string.settings_keep_screen_on),
@@ -167,6 +179,7 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 checked = s.keepScreenOn,
                 onChange = { v -> update { it.copy(keepScreenOn = v) } },
             )
+            CardDivider()
             SwitchRow(
                 icon = Icons.Outlined.AutoAwesome,
                 title = stringResource(R.string.settings_code_completion),
@@ -174,6 +187,7 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 checked = s.codeCompletion,
                 onChange = { v -> update { it.copy(codeCompletion = v) } },
             )
+            CardDivider()
             SwitchRow(
                 icon = Icons.Outlined.DataArray,
                 title = stringResource(R.string.settings_auto_close),
@@ -181,6 +195,7 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 checked = s.autoClosePairs,
                 onChange = { v -> update { it.copy(autoClosePairs = v) } },
             )
+            CardDivider()
             SwitchRow(
                 icon = Icons.Outlined.Keyboard,
                 title = stringResource(R.string.settings_keyboard_suggestions),
@@ -188,18 +203,21 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 checked = s.keyboardSuggestions,
                 onChange = { v -> update { it.copy(keyboardSuggestions = v) } },
             )
+            CardDivider()
             SymbolKeysRow(
                 saved = s.symbolKeys,
                 onSave = { spec -> update { it.copy(symbolKeys = spec) } },
             )
-            SectionDivider()
+            }
             SectionTitle(stringResource(R.string.settings_section_terminal))
+            CardGroup {
             FontSizeRow(
                 sizeSp = s.terminalFontSizeSp,
                 min = MIN_TERMINAL_FONT_SP,
                 max = MAX_TERMINAL_FONT_SP,
                 onChange = { sp -> update { it.copy(terminalFontSizeSp = clampTerminalFontSize(sp)) } },
             )
+            CardDivider()
             ChoiceRow(
                 icon = Icons.Outlined.Palette,
                 title = stringResource(R.string.settings_terminal_theme),
@@ -208,9 +226,11 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 label = { it.label() },
                 onSelect = { v -> update { it.copy(terminalTheme = v) } },
             )
-            SectionDivider()
+            }
             SectionTitle(stringResource(R.string.settings_section_app))
+            CardGroup {
             LanguageRow()
+            CardDivider()
             SwitchRow(
                 icon = Icons.Outlined.ViewDay,
                 title = stringResource(R.string.settings_bottom_nav),
@@ -218,13 +238,9 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 checked = s.bottomNavBar,
                 onChange = { v -> update { it.copy(bottomNavBar = v) } },
             )
+            }
         }
     }
-}
-
-@Composable
-private fun SectionDivider() {
-    HorizontalDivider(Modifier.padding(top = 8.dp), color = SlateLine)
 }
 
 @Composable
@@ -331,6 +347,8 @@ private fun SymbolKeysRow(saved: String, onSave: (String) -> Unit) {
                 capitalization = KeyboardCapitalization.None,
                 keyboardType = KeyboardType.Ascii,
             ),
+            colors = skyFieldColors(),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         )
         TextButton(
@@ -346,7 +364,7 @@ private fun SymbolKeysRow(saved: String, onSave: (String) -> Unit) {
 
 @Composable
 private fun SectionTitle(text: String) {
-    SectionLabel(text, Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp))
+    SectionLabel(text, Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 8.dp))
 }
 
 /** Font size with − / + steppers in a quiet pill (each button a full 48dp touch target). */
@@ -370,7 +388,7 @@ private fun FontSizeRow(sizeSp: Int, min: Int, max: Int, onChange: (Int) -> Unit
         }
         Row(
             Modifier
-                .background(SlatePanel, RoundedCornerShape(24.dp))
+                .background(SlateRaised, RoundedCornerShape(24.dp))
                 .border(1.dp, SlateLine, RoundedCornerShape(24.dp)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -474,7 +492,7 @@ private fun LanguageRow() {
         }
     }
     if (!open) return
-    AlertDialog(
+    SkyAlertDialog(
         onDismissRequest = { open = false },
         title = { Text(stringResource(R.string.settings_language)) },
         text = {

@@ -1,7 +1,7 @@
 package dev.skyloft.skypython.report
 
 import dev.skyloft.skypython.ui.rememberMainScope
-import androidx.compose.material3.AlertDialog
+import dev.skyloft.skypython.ui.theme.SkyAlertDialog
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -35,7 +35,7 @@ fun CrashPrompt(onSend: (ProblemReport) -> Unit) {
     LaunchedEffect(Unit) { crash = withContext(Dispatchers.IO) { store.unprompted() } }
     val shown = crash ?: return
     val answered = { scope.launch(Dispatchers.IO) { store.markPrompted() }; crash = null }
-    AlertDialog(
+    SkyAlertDialog(
         onDismissRequest = { answered() },
         title = { Text(stringResource(R.string.crash_dialog_title)) },
         text = { Text(stringResource(R.string.crash_dialog_text)) },

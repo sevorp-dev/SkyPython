@@ -3,7 +3,7 @@ package dev.skyloft.skypython.debug
 import dev.skyloft.skypython.ui.theme.CodeFont
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
+import dev.skyloft.skypython.ui.theme.SkyAlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -67,7 +67,7 @@ fun BreakpointConditionDialog(vm: DebugViewModel, path: String, line: Int, onDis
     val all by vm.store.state.collectAsStateWithLifecycle()
     val existing = all[path]?.firstOrNull { it.line == line }
     var text by remember(path, line) { mutableStateOf(existing?.condition.orEmpty()) }
-    AlertDialog(
+    SkyAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.debug_condition_title, line)) },
         text = {

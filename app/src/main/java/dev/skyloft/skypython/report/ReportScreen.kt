@@ -60,6 +60,13 @@ import androidx.compose.ui.unit.sp
 import dev.skyloft.skypython.R
 import dev.skyloft.skypython.settings.EditorSettings
 import dev.skyloft.skypython.ui.theme.SectionLabel
+import dev.skyloft.skypython.ui.theme.IconTile
+import dev.skyloft.skypython.ui.theme.SkyCard
+import dev.skyloft.skypython.ui.theme.SlateLine
+import dev.skyloft.skypython.ui.theme.skyFieldColors
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.PhoneAndroid
 import dev.skyloft.skypython.ui.theme.SkyTopBar
 import dev.skyloft.skypython.ui.theme.brandButtonColors
 import dev.skyloft.skypython.ui.theme.brandSwitchColors
@@ -163,20 +170,26 @@ fun ReportScreen(
                 label = { Text(stringResource(R.string.report_description_label)) },
                 placeholder = { Text(stringResource(R.string.report_description_hint)) },
                 minLines = 3,
+                colors = skyFieldColors(),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth().testTag(REPORT_DESCRIPTION_TAG),
             )
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.report_include_device), style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        stringResource(R.string.report_include_device_summary),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+            SkyCard(Modifier.fillMaxWidth(), contentPadding = 14.dp) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconTile(Icons.Filled.PhoneAndroid, size = 40.dp)
+                    Spacer(Modifier.width(14.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.report_include_device), style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            stringResource(R.string.report_include_device_summary),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Switch(checked = includeDevice, onCheckedChange = { includeDevice = it }, colors = brandSwitchColors())
                 }
-                Spacer(Modifier.width(12.dp))
-                Switch(checked = includeDevice, onCheckedChange = { includeDevice = it }, colors = brandSwitchColors())
             }
 
             if (!ready) LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -251,6 +264,7 @@ fun ReportScreen(
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainerLowest,
                 shape = MaterialTheme.shapes.medium,
+                border = BorderStroke(1.dp, SlateLine),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 SelectionContainer {
@@ -271,14 +285,10 @@ fun ReportScreen(
 
 @Composable
 private fun PrivacyNote() {
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        shape = MaterialTheme.shapes.medium,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-            Spacer(Modifier.width(12.dp))
+    SkyCard(Modifier.fillMaxWidth(), contentPadding = 14.dp) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconTile(Icons.Filled.Lock, size = 40.dp, accent = true)
+            Spacer(Modifier.width(14.dp))
             Text(
                 stringResource(R.string.report_privacy),
                 style = MaterialTheme.typography.bodySmall,

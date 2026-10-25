@@ -25,6 +25,11 @@ import androidx.compose.material.icons.outlined.Gavel
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.ui.graphics.Color
+import dev.skyloft.skypython.ui.theme.CardGroup
+import dev.skyloft.skypython.ui.theme.CardDivider
+import dev.skyloft.skypython.ui.theme.Chevron
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -126,32 +131,41 @@ fun AboutScreen(onBack: () -> Unit, onReport: () -> Unit = {}) {
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
-            Hairline()
             SectionTitle(stringResource(R.string.about_links))
-            LinkRow(Icons.Outlined.Code, stringResource(R.string.about_source_code), GITHUB_URL) { openUrl(context, GITHUB_URL) }
-            LinkRow(Icons.AutoMirrored.Outlined.Send, stringResource(R.string.about_telegram), TELEGRAM_URL) { openUrl(context, TELEGRAM_URL) }
-            ListItem(
-                modifier = Modifier.clickable(onClick = onReport),
-                leadingContent = { IconTile(Icons.Outlined.Feedback, size = 40.dp) },
-                headlineContent = { Text(stringResource(R.string.report_problem)) },
-                supportingContent = { Text(stringResource(R.string.about_report_summary), color = MaterialTheme.colorScheme.onSurfaceVariant) },
-            )
-            Hairline()
-            SectionTitle(stringResource(R.string.about_license))
-            ListItem(
-                leadingContent = { IconTile(Icons.Outlined.Gavel, size = 40.dp) },
-                headlineContent = { Text("Apache License 2.0") },
-                supportingContent = { Text(stringResource(R.string.about_license_text)) },
-            )
-            Hairline()
-            SectionTitle(stringResource(R.string.about_third_party))
-            for (n in NOTICES) {
+            CardGroup {
+                LinkRow(Icons.Outlined.Code, stringResource(R.string.about_source_code), GITHUB_URL) { openUrl(context, GITHUB_URL) }
+                CardDivider()
+                LinkRow(Icons.AutoMirrored.Outlined.Send, stringResource(R.string.about_telegram), TELEGRAM_URL) { openUrl(context, TELEGRAM_URL) }
+                CardDivider()
                 ListItem(
-                    headlineContent = { Text(n.name ?: stringResource(n.nameRes)) },
-                    supportingContent = { Text(n.license, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    modifier = Modifier.clickable(onClick = onReport),
+                    colors = inCard(),
+                    leadingContent = { IconTile(Icons.Outlined.Feedback, size = 40.dp) },
+                    headlineContent = { Text(stringResource(R.string.report_problem)) },
+                    supportingContent = { Text(stringResource(R.string.about_report_summary), color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    trailingContent = { Chevron() },
                 )
             }
-            Hairline()
+            SectionTitle(stringResource(R.string.about_license))
+            CardGroup {
+                ListItem(
+                    colors = inCard(),
+                    leadingContent = { IconTile(Icons.Outlined.Gavel, size = 40.dp) },
+                    headlineContent = { Text("Apache License 2.0") },
+                    supportingContent = { Text(stringResource(R.string.about_license_text), color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                )
+            }
+            SectionTitle(stringResource(R.string.about_third_party))
+            CardGroup {
+                NOTICES.forEachIndexed { i, n ->
+                    if (i > 0) CardDivider(inset = 16.dp)
+                    ListItem(
+                        colors = inCard(),
+                        headlineContent = { Text(n.name ?: stringResource(n.nameRes)) },
+                        supportingContent = { Text(n.license, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    )
+                }
+            }
             Column(
                 Modifier.fillMaxWidth().padding(vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -172,17 +186,22 @@ fun AboutScreen(onBack: () -> Unit, onReport: () -> Unit = {}) {
 
 @Composable
 private fun SectionTitle(text: String) {
-    SectionLabel(text, Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp))
+    SectionLabel(text, Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 8.dp))
 }
+
+/** List items sit on the card's surface, not their own. */
+@Composable
+private fun inCard() = ListItemDefaults.colors(containerColor = Color.Transparent)
 
 @Composable
 private fun LinkRow(icon: ImageVector, title: String, url: String, onClick: () -> Unit) {
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
+        colors = inCard(),
         leadingContent = { IconTile(icon, size = 40.dp) },
         headlineContent = { Text(title) },
         supportingContent = { Text(url, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-        trailingContent = { Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null) },
+        trailingContent = { Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)) },
     )
 }
 

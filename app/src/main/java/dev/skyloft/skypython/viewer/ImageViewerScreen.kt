@@ -21,7 +21,7 @@ import androidx.compose.material.icons.outlined.BrokenImage
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FitScreen
 import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material3.AlertDialog
+import dev.skyloft.skypython.ui.theme.SkyAlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -167,7 +167,7 @@ fun ImageViewerScreen(file: File, onBack: () -> Unit, onDeleted: (File) -> Unit)
     }
 
     if (confirmDelete) {
-        AlertDialog(
+        SkyAlertDialog(
             onDismissRequest = { confirmDelete = false },
             title = { Text(stringResource(R.string.files_delete_file_title)) },
             text = { Text(stringResource(R.string.files_delete_file_text, file.name)) },
