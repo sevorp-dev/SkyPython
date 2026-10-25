@@ -34,3 +34,34 @@ fun symbolInsertion(text: String, autoClose: Boolean): SymbolInsertion {
     return if (autoClose && close != null) SymbolInsertion(text + close, text.length)
     else SymbolInsertion(text, text.length)
 }
+
+/**
+ * The symbol-keys field (Settings) against the stored value: the field keeps its own text (spaces
+ * still being typed must not be normalized away), knows what is not saved yet, and shows a change
+ * made elsewhere but not the echo of its own save.
+ */
+class SymbolKeysDraft(saved: String) {
+    var text: String = saved
+        private set
+
+    /** The last value seen in the store or sent to it (normalized). */
+    private var stored = saved
+
+    fun edit(text: String) {
+        this.text = text
+    }
+
+    /** The text to save, or null when the store has it already. */
+    fun toSave(): String? = text.takeIf { normalizeSymbolKeys(it) != stored }
+
+    /** [spec] is on its way to the store. */
+    fun saving(spec: String) {
+        stored = normalizeSymbolKeys(spec)
+    }
+
+    fun storeChanged(saved: String) {
+        if (saved == stored) return
+        stored = saved
+        text = saved
+    }
+}

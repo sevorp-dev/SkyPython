@@ -8,6 +8,10 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -84,4 +88,11 @@ class SettingsStore(context: Context) {
     suspend fun update(transform: (EditorSettings) -> EditorSettings) {
         store.edit { prefs -> SettingsMapping.write(prefs, transform(SettingsMapping.read(prefs))) }
     }
+
+    /** [update] in the background, finished even if the screen that asked is gone by then. */
+    fun launchUpdate(transform: (EditorSettings) -> EditorSettings) {
+        writes.launch { runCatching { update(transform) } }
+    }
+
+    private val writes = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 }

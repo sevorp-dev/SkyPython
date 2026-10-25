@@ -62,10 +62,11 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import dev.skyloft.skypython.ui.theme.SkyTopBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -104,10 +105,8 @@ import dev.skyloft.skypython.ui.theme.Orange
 @Composable
 fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
     val settings by store.settings.collectAsState(initial = null)
-    val scope = rememberCoroutineScope()
-    fun update(transform: (EditorSettings) -> EditorSettings) {
-        scope.launch { store.update(transform) }
-    }
+    // Not this screen's scope: a change made just before leaving must still be written.
+    fun update(transform: (EditorSettings) -> EditorSettings) = store.launchUpdate(transform)
 
     Scaffold(
         topBar = {
@@ -282,16 +281,32 @@ private fun <T> ChoiceRow(
 
 /**
  * Free-text list of symbol-bar keys. The field keeps its own text (spaces the user is still
- * typing must not be normalized away) and saves after a short pause.
+ * typing must not be normalized away) and saves after a short pause, or at once when the user
+ * leaves the screen ([SymbolKeysDraft]).
  */
 @Composable
 private fun SymbolKeysRow(saved: String, onSave: (String) -> Unit) {
+    val draft = remember { SymbolKeysDraft(saved) }
     var text by remember { mutableStateOf(saved) }
-    LaunchedEffect(text) {
-        if (normalizeSymbolKeys(text) == saved) return@LaunchedEffect
-        delay(600)
-        onSave(text)
+    val currentOnSave by rememberUpdatedState(onSave)
+    val saveNow = {
+        draft.toSave()?.let { spec ->
+            draft.saving(spec)
+            currentOnSave(spec)
+        }
     }
+    // Changed elsewhere (another device row, a restore): show it; our own save echoing back is not.
+    LaunchedEffect(saved) {
+        draft.storeChanged(saved)
+        text = draft.text
+    }
+    LaunchedEffect(text) {
+        draft.edit(text)
+        if (draft.toSave() == null) return@LaunchedEffect
+        delay(600)
+        saveNow()
+    }
+    DisposableEffect(draft) { onDispose { saveNow() } }
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             IconTile(Icons.Outlined.SpaceBar, size = 40.dp)
