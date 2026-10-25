@@ -39,6 +39,24 @@ class EditorChromeTest {
         assertEquals(DocSource.Local(file).file.parentFile!!.path, docSubtitle(doc, root))
     }
 
+    @Test fun `subtitle of a doc outside projects uses the friendly name it is given`() {
+        val root = File(System.getProperty("java.io.tmpdir"), "sky-sub/projects")
+        val file = File(System.getProperty("java.io.tmpdir"), "elsewhere/main.py")
+        val doc = OpenDocument(id = "x", source = DocSource.Local(file), name = "main.py", text = "", dirty = false)
+        assertEquals("Internal storage/elsewhere", docSubtitle(doc, root, outside = { "Internal storage/" + it.name }))
+    }
+
+    @Test fun `clashing tab names outside projects show the folder name, not the whole path`() {
+        val tmp = System.getProperty("java.io.tmpdir")
+        val root = File(tmp, "sky-sub/projects")
+        fun doc(id: String, file: File) = OpenDocument(id = id, source = DocSource.Local(file), name = file.name, text = "", dirty = false)
+        val inside = doc("a", File(root, "demo/main.py"))
+        val outside = doc("b", File(tmp, "storage/Documents/WeatherBot/main.py"))
+        val all = listOf(inside, outside)
+        assertEquals("demo/main.py", tabLabel(inside, all, root).replace(File.separatorChar, '/'))
+        assertEquals("WeatherBot/main.py", tabLabel(outside, all, root))
+    }
+
     @Test fun `settings map to editor view config`() {
         val config = EditorViewConfig.from(EditorSettings(fontSizeSp = 18, wordWrap = false, lineNumbers = false, keepScreenOn = true))
         assertEquals(EditorViewConfig(textSizeSp = 18f, wordWrap = false, lineNumbers = false, keepScreenOn = true), config)

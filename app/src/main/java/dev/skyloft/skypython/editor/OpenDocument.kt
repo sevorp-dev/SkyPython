@@ -197,10 +197,13 @@ class DocumentsState {
 fun reopenAsEditable(existing: OpenDocument, readOnly: Boolean, insideProjects: Boolean): Boolean =
     existing.readOnly && !readOnly && insideProjects && existing.source is DocSource.Local
 
-/** Tab label: the file name, or a path relative to [projectsRoot] if names clash. */
+/** Tab label: the file name, or (if names clash) a path relative to [projectsRoot] or "folder/name". */
 fun tabLabel(doc: OpenDocument, all: List<OpenDocument>, projectsRoot: File): String {
     val src = doc.source
     if (src !is DocSource.Local || all.count { it.name == doc.name } < 2) return doc.name
     val rel = runCatching { src.file.relativeTo(resolvedFile(projectsRoot)).path }.getOrNull()
-    return if (rel == null || rel.startsWith("..")) src.file.path else rel
+    if (rel != null && !rel.startsWith("..")) return rel
+    // Outside the projects (a project in the phone's storage): "WeatherBot/main.py" is enough.
+    val parent = src.file.parentFile?.name
+    return if (parent.isNullOrEmpty()) src.file.path else "$parent/${src.file.name}"
 }

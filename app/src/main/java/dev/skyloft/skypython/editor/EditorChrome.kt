@@ -21,13 +21,15 @@ fun docSubtitle(
     projectsRoot: File? = null,
     projectsLabel: String = PROJECTS_LABEL,
     externalLabel: String = EXTERNAL_LABEL,
+    /** How a folder outside the projects is shown, e.g. "Internal storage/Documents/MyBot". */
+    outside: (File) -> String = { it.path },
 ): String = when (val src = doc.source) {
     is DocSource.Local -> {
         val folder = src.file.parentFile ?: src.file
         val root = projectsRoot?.let(::resolvedFile)
         val relative = root?.let { folder.relativeToOrNull(it) }
         when {
-            relative == null || relative.path.startsWith("..") -> folder.path
+            relative == null || relative.path.startsWith("..") -> outside(folder)
             relative.path.isEmpty() -> projectsLabel
             else -> projectsLabel + "/" + relative.invariantSeparatorsPath
         }

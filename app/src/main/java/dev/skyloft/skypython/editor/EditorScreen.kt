@@ -1,5 +1,8 @@
 package dev.skyloft.skypython.editor
 
+import dev.skyloft.skypython.project.friendlyPath
+import dev.skyloft.skypython.project.StorageRoot
+import dev.skyloft.skypython.project.StoragePermission
 import dev.skyloft.skypython.ui.theme.ErrorSurface
 import dev.skyloft.skypython.ui.theme.ErrorRed
 import dev.skyloft.skypython.ui.theme.OnErrorSurface
@@ -644,12 +647,21 @@ private fun EditorTitle(doc: OpenDocument?, projectsRoot: File) {
             )
             if (doc.readOnly) ReadOnlyBadge(Modifier.padding(start = 8.dp))
         }
+        val context = LocalContext.current
+        val internal = stringResource(R.string.projects_root_internal)
+        val card = stringResource(R.string.projects_root_sd)
+        val roots = remember { StoragePermission.roots(context) }
         Text(
             docSubtitle(
                 doc,
                 projectsRoot,
                 projectsLabel = stringResource(R.string.projects_label),
                 externalLabel = stringResource(R.string.editor_external_document),
+                outside = { dir ->
+                    friendlyPath(dir, roots) {
+                        if (it.kind == StorageRoot.Kind.Internal) internal else "$card (${it.dir.name})"
+                    }
+                },
             ),
             fontSize = 12.sp,
             color = SubtitleColor,
