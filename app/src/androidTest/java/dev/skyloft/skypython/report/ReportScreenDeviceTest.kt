@@ -9,7 +9,9 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -65,7 +67,7 @@ class ReportScreenDeviceTest {
         store.add(crash)
         show(crash.id)
         rule.onNode(hasTestTag(REPORT_DESCRIPTION_TAG)).performTextInput("Tapped Run twice")
-        rule.onNode(hasText(context.getString(R.string.report_share))).performClick()
+        rule.onNode(hasText(context.getString(R.string.report_share))).performScrollTo().assertIsEnabled().performClick()
         // The report file is written off the main thread, then the chooser starts.
         // The share file is written off the main thread; slow emulators need a moment.
         rule.waitUntil(20_000) { launched.isNotEmpty() }
@@ -94,7 +96,7 @@ class ReportScreenDeviceTest {
     @Test fun githubIssueLinkIsPrefilledAndTheFullReportIsCopied() {
         store.add(crash)
         show(crash.id)
-        rule.onNode(hasText(context.getString(R.string.report_open_issue))).performClick()
+        rule.onNode(hasText(context.getString(R.string.report_open_issue))).performScrollTo().performClick()
         rule.waitForIdle()
 
         val view = launched.single()
