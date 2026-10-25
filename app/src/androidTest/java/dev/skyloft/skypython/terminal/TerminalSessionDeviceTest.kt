@@ -149,10 +149,9 @@ class TerminalSessionDeviceTest {
         vm.awaitScreen(PROMPT)
         // Output that costs the emulator more than it costs the program (ESC # 8 fills the
         // screen), as plain text does on a slow device: the reader always has more ready.
-        vm.type("import os; line = b'\\x1b#8' * 20 + b'0123456789' * 7 + b'\\r\\n'; chunk = line * 200\r")
-        vm.type("while True: os.write(1, chunk)\r\r")
-        // The 32-bit CI emulator is slow to render this deliberately heavy output: allow a minute.
-        vm.awaitScreen(Regex("(0123456789){7}"), timeoutMs = 60_000)
+        // One line: on a slow emulator a second line typed while the first runs can be lost.
+        vm.type("import os; line = b'\\x1b#8' * 20 + b'0123456789' * 7 + b'\\r\\n'; chunk = line * 200; exec('while True: os.write(1, chunk)')\r")
+        vm.awaitScreen(Regex("(0123456789){7}"))
         var worst = 0L
         val until = SystemClock.elapsedRealtime() + 3_000
         while (SystemClock.elapsedRealtime() < until) {
