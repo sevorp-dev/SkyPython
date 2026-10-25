@@ -9,8 +9,11 @@ package dev.skyloft.skypython.editor
  */
 class DocBuffers<T : Any> {
 
-    /** Scroll offsets in pixels. */
-    data class Scroll(val x: Int, val y: Int)
+    /**
+     * Scroll offsets in pixels, and whether the cursor was on screen: if so it is brought back
+     * into view after the restore (the view may come back with another size, e.g. rotated).
+     */
+    data class Scroll(val x: Int, val y: Int, val cursorInView: Boolean = false)
 
     private val buffers = HashMap<String, T>()
     private val scrolls = HashMap<String, Scroll>()
@@ -22,8 +25,8 @@ class DocBuffers<T : Any> {
     /** [id]'s buffer, made by [create] the first time it is shown. */
     fun getOrPut(id: String, create: () -> T): T = buffers.getOrPut(id, create)
 
-    fun saveScroll(id: String, x: Int, y: Int) {
-        if (id in buffers) scrolls[id] = Scroll(x, y)
+    fun saveScroll(id: String, x: Int, y: Int, cursorInView: Boolean = false) {
+        if (id in buffers) scrolls[id] = Scroll(x, y, cursorInView)
     }
 
     fun scrollOf(id: String): Scroll? = scrolls[id]

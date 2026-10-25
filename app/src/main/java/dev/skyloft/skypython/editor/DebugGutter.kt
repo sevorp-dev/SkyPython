@@ -9,7 +9,9 @@ import io.github.rosemoe.sora.event.ClickEvent
 import io.github.rosemoe.sora.event.ContentChangeEvent
 import io.github.rosemoe.sora.event.EditorMotionEvent
 import io.github.rosemoe.sora.event.InterceptTarget
+import io.github.rosemoe.sora.event.LayoutStateChangeEvent
 import io.github.rosemoe.sora.event.LongPressEvent
+import io.github.rosemoe.sora.event.ScrollEvent
 import io.github.rosemoe.sora.widget.CodeEditor
 
 /**
@@ -57,7 +59,57 @@ internal class DebugAwareCodeEditor(context: Context) : CodeEditor(context) {
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val arrow = Path()
 
+    // ---- scrolling while word wrap lays the rows out ----
+    // With word wrap Sora breaks the rows in the background after setText or a resize, then
+    // snaps the scroll with scrollBy(0, 0): that ends a smooth "make the cursor visible" scroll
+    // where it happens to be (often still at the top), and the target was measured on the
+    // unwrapped rows anyway. So a position revealed meanwhile is revealed again once the rows
+    // are in, and [whenLaidOut] work waits for them.
+    private var layoutBusy = false
+    private var pendingReveal: Pair<Int, Int>? = null
+    private val whenSettled = ArrayList<() -> Unit>()
+
+    override fun ensurePositionVisible(line: Int, column: Int, noAnimation: Boolean) {
+        super.ensurePositionVisible(line, column, noAnimation)
+        if (layoutBusy) pendingReveal = line to column
+    }
+
+    /** Runs [action] once the view is measured and its rows are laid out (word wrap included). */
+    fun whenLaidOut(action: () -> Unit) {
+        when {
+            !isLaidOut || width == 0 -> addOnLayoutChangeListener(object : OnLayoutChangeListener {
+                override fun onLayoutChange(v: android.view.View, l: Int, t: Int, r: Int, b: Int, ol: Int, ot: Int, or: Int, ob: Int) {
+                    removeOnLayoutChangeListener(this)
+                    whenLaidOut(action)
+                }
+            })
+            layoutBusy -> whenSettled += action
+            else -> post(action)
+        }
+    }
+
     init {
+        subscribeAlways(LayoutStateChangeEvent::class.java) { e ->
+            layoutBusy = e.isLayoutBusy
+            if (layoutBusy) return@subscribeAlways
+            val reveal = pendingReveal
+            pendingReveal = null
+            val actions = whenSettled.toList()
+            whenSettled.clear()
+            // After Sora's own scrollBy(0, 0), which follows this event in the same message.
+            post {
+                if (reveal != null && reveal.first < text.lineCount) {
+                    super.ensurePositionVisible(reveal.first, reveal.second, true)
+                }
+                actions.forEach { it() }
+            }
+        }
+        // The user scrolling meanwhile wins over a pending reveal.
+        subscribeAlways(ScrollEvent::class.java) { e ->
+            if (layoutBusy && (e.cause == ScrollEvent.CAUSE_USER_DRAG || e.cause == ScrollEvent.CAUSE_USER_FLING)) {
+                pendingReveal = null
+            }
+        }
         subscribeAlways(ClickEvent::class.java) { e ->
             val tap = marks.onGutterTap
             if (tap != null && e.inGutter()) {

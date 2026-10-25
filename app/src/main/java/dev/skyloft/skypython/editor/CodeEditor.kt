@@ -765,7 +765,7 @@ fun CodeEditor(
             }
         },
         onRelease = { view ->
-            if (view.text === contents[currentId]) contents.saveScroll(currentId, view.offsetX, view.offsetY)
+            if (view.text === contents[currentId]) contents.saveScroll(currentId, view)
             if (controller.view === view) controller.view = null
             diagnostics.cancel()
             hideHint()
@@ -782,7 +782,7 @@ fun CodeEditor(
         hideHint()
         controller.clearUsages()
         controller.shownDocId?.let { shown ->
-            if (shown != docId && view.text === contents[shown]) contents.saveScroll(shown, view.offsetX, view.offsetY)
+            if (shown != docId && view.text === contents[shown]) contents.saveScroll(shown, view)
         }
         val content = contents.getOrPut(docId) { Content(initialText) }
         // reuseContentObject = true keeps this doc's Content (its cursor and undo stack) instead of copying it.
@@ -857,24 +857,27 @@ fun CodeEditor(
     }
 }
 
+private fun DocBuffers<Content>.saveScroll(id: String, view: CodeEditor) {
+    val line = view.cursor.rightLine
+    saveScroll(id, view.offsetX, view.offsetY, line in view.firstVisibleLine..view.lastVisibleLine)
+}
+
 /**
- * Scrolls to [s] (clamped) once the view is laid out, and again while word wrap is still laying
- * the rows out in the background, unless the user scrolled meanwhile.
+ * Scrolls to [s] (clamped) once the view is measured and its rows are laid out (word wrap lays
+ * them out in the background), then brings the cursor back into view if it was on screen.
  */
 private fun CodeEditor.restoreScroll(s: DocBuffers.Scroll) {
-    val last = intArrayOf(-1, -1)
-    val apply = {
+    val content = text
+    val restore = restore@{
+        if (text !== content) return@restore // another doc is shown by now
         val x = s.x.coerceIn(0, scrollMaxX.coerceAtLeast(0))
         val y = s.y.coerceIn(0, scrollMaxY.coerceAtLeast(0))
         scroller.forceFinished(true)
         scroller.startScroll(x, y, 0, 0, 0)
         scroller.abortAnimation()
-        last[0] = x
-        last[1] = y
+        if (s.cursorInView) ensurePositionVisible(cursor.rightLine, cursor.rightColumn, true)
         invalidate()
     }
-    post { apply() }
-    for (delayMs in JUMP_RESCROLL_MS) postDelayed({
-        if (offsetX == last[0] && offsetY == last[1] && (last[0] != s.x || last[1] != s.y)) apply()
-    }, delayMs)
+    val v = this as? DebugAwareCodeEditor
+    if (v != null) v.whenLaidOut(restore) else post(restore)
 }

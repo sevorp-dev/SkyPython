@@ -161,6 +161,8 @@ class NavigationStateDeviceTest {
         val edited = onMain { editor().text.toString() }
         assertTrue(edited.contains("typed"))
         hideKeyboard()
+        // Revealed even though word wrap was still laying the just-opened file out.
+        rule.waitUntil(10_000) { onMain { editor().firstVisibleLine <= LINE && LINE <= editor().lastVisibleLine } }
 
         // Another tab and back.
         clickBottomBar(TopLevelDestination.Terminal.tag)
