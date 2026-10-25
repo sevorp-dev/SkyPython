@@ -252,6 +252,19 @@ class WheelIndexTest {
     }
 
     @Test
+    fun refreshReadsTheWholeIndexAgainEvenWhenTheCacheIsFresh() = runTest {
+        http.reply = { _, _ -> ok(good, "etag" to "\"v1\"") }
+        val idx = wheelIndex(StandardTestDispatcher(testScheduler))
+        idx.load()
+        http.reply = { _, _ -> ok(index("numpy" to listOf(entry("numpy", "2.5.5")))) }
+        assertEquals("2.5.5", idx.refresh()!!.index.entries("numpy").single().version)
+        assertEquals(2, http.requests.size)
+        assertEquals(null, http.requests.last().second["If-None-Match"])
+        // The fresh copy is what later reads see.
+        assertEquals("2.5.5", idx.load()!!.entries("numpy").single().version)
+    }
+
+    @Test
     fun offlineFallsBackToTheCachedCopy() = runTest {
         http.reply = { _, _ -> ok(good) }
         wheelIndex(StandardTestDispatcher(testScheduler)).load()

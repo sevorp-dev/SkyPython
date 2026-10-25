@@ -139,7 +139,23 @@ class PipRepository(
      * A [request] for a package of the wheel index downloads its wheels first.
      */
     private suspend fun runInstall(options: List<String>, request: String?, log: suspend (String) -> Unit) {
-        val plan = request?.let { wheels?.catalog()?.plan(it) } ?: WheelPlan.NotInIndex
+        try {
+            installOnce(options, request, freshIndex = false, log)
+        } catch (e: WheelVerificationException) {
+            // The wheel on the server may be newer than the index cached on the phone: read the
+            // index again and try once more.
+            installOnce(options, request, freshIndex = true, log)
+        }
+    }
+
+    private suspend fun installOnce(
+        options: List<String>,
+        request: String?,
+        freshIndex: Boolean,
+        log: suspend (String) -> Unit,
+    ) {
+        val catalog = if (freshIndex) wheels?.refresh() else wheels?.catalog()
+        val plan = request?.let { catalog?.plan(it) } ?: WheelPlan.NotInIndex
         val targets = when (plan) {
             WheelPlan.NotInIndex -> listOfNotNull(request)
             is WheelPlan.Unavailable -> throw PrebuiltUnavailableException(plan.name, plan.abi, plan.abis)

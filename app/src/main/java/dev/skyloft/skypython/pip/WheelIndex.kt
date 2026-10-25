@@ -317,6 +317,8 @@ interface PrebuiltWheels {
     val wheelDir: File
     /** The index for this device, or null when there's none (not published, offline without a cache). */
     suspend fun catalog(): WheelCatalog?
+    /** The index read from the server again, ignoring the cached copy's age. */
+    suspend fun refresh(): WheelCatalog? = catalog()
     /** Downloads [wheel] into [wheelDir] and checks its sha256; returns the file. */
     suspend fun download(wheel: IndexWheel, progress: suspend (done: Long, total: Long) -> Unit): File
 }
@@ -357,19 +359,25 @@ class WheelIndex(
         return WheelCatalog(data, abi())
     }
 
+    override suspend fun refresh(): WheelCatalog? {
+        val data = lock.withLock { withContext(io) { loadLocked(force = true) } } ?: return null
+        return WheelCatalog(data, abi())
+    }
+
     /** The index: cached if fresh, else revalidated; the cached copy when that fails; null if none. */
     suspend fun load(): WheelIndexData? = lock.withLock {
         withContext(io) { loadLocked() }
     }
 
-    private fun loadLocked(): WheelIndexData? {
+    /** [force]: download the whole index even when the cached copy is fresh. */
+    private fun loadLocked(force: Boolean = false): WheelIndexData? {
         val meta = readMeta()
         val fetchedAt = meta.getProperty(FETCHED_AT)?.toLongOrNull()
         val cached = memory ?: readCached()?.also { memory = it }
-        if (cached != null && fetchedAt != null && clock() - fetchedAt in 0 until maxAgeMs) return cached
+        if (!force && cached != null && fetchedAt != null && clock() - fetchedAt in 0 until maxAgeMs) return cached
 
         val headers = buildMap {
-            if (cached != null) {
+            if (cached != null && !force) {
                 meta.getProperty(ETAG)?.let { put("If-None-Match", it) }
                 meta.getProperty(LAST_MODIFIED)?.let { put("If-Modified-Since", it) }
             }

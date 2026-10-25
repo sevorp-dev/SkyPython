@@ -44,10 +44,21 @@ class PrebuiltInstallTest {
     private inner class FakeWheels(var catalog: WheelCatalog?) : PrebuiltWheels {
         val downloaded = mutableListOf<String>()
         var fail: Exception? = null
+        /** Failures for the next downloads only (then they succeed). */
+        val failOnce = ArrayDeque<Exception>()
+        /** What a fresh index read returns. */
+        var fresh: WheelCatalog? = null
+        var refreshes = 0
         override val wheelDir: File get() = File(tmp.root, "wheels")
         override suspend fun catalog() = catalog
+        override suspend fun refresh(): WheelCatalog? {
+            refreshes++
+            fresh?.let { catalog = it }
+            return catalog
+        }
         override suspend fun download(wheel: IndexWheel, progress: suspend (Long, Long) -> Unit): File {
             fail?.let { throw it }
+            failOnce.removeFirstOrNull()?.let { throw it }
             progress(0, wheel.size)
             progress(500, wheel.size)
             progress(wheel.size, wheel.size)
@@ -142,6 +153,19 @@ class PrebuiltInstallTest {
     }
 
     @Test
+    fun aWheelThatChangedSinceTheCachedIndexIsRetriedWithAFreshIndex() = runTest {
+        // The index on the phone is older than the wheel on the server.
+        wheels.failOnce += WheelVerificationException("numpy.whl", "aa", "bb")
+        wheels.fresh = WheelCatalog(
+            WheelIndexData("cp314", mapOf("numpy" to listOf(wheel("numpy", "2.5.5")))),
+            "x86_64",
+        )
+        repo.install("numpy").toList()
+        assertEquals(1, wheels.refreshes)
+        assertEquals(listOf(base + findLinks() + "numpy==2.5.5"), calls)
+    }
+
+    @Test
     fun aFailedDownloadStopsBeforePip() = runTest {
         wheels.fail = WheelVerificationException("numpy.whl", "aa", "bb")
         try {
@@ -150,6 +174,8 @@ class PrebuiltInstallTest {
         } catch (e: WheelVerificationException) {
             // expected
         }
+        // One retry with a fresh index, then it gives up.
+        assertEquals(1, wheels.refreshes)
         assertTrue(calls.isEmpty())
     }
 
