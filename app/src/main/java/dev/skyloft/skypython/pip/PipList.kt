@@ -11,14 +11,7 @@ object PipList {
      * ignored.
      */
     fun parse(stdout: String): List<PipPackage>? {
-        // A "[notice] ..." line also starts with '[', so try each candidate line.
-        val items = ARRAY_LINE.findAll(stdout).firstNotNullOfOrNull { match ->
-            try {
-                JsonReader(stdout, match.range.last).readDocument() as? List<*>
-            } catch (e: IllegalArgumentException) {
-                null
-            }
-        } ?: return null
+        val items = array(stdout) ?: return null
         return items.mapNotNull { item ->
             val obj = item as? Map<*, *> ?: return@mapNotNull null
             val name = obj["name"] as? String ?: return@mapNotNull null
@@ -26,6 +19,30 @@ object PipList {
             PipPackage(name, version)
         }.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
     }
+
+    /**
+     * `pip list --outdated --format=json`: PEP 503 normalized name → `latest_version`, or null
+     * if the output isn't such an array.
+     */
+    fun parseOutdated(stdout: String): Map<String, String>? {
+        val items = array(stdout) ?: return null
+        return items.mapNotNull { item ->
+            val obj = item as? Map<*, *> ?: return@mapNotNull null
+            val name = obj["name"] as? String ?: return@mapNotNull null
+            val latest = obj["latest_version"] as? String ?: return@mapNotNull null
+            PyPiJson.normalize(name) to latest
+        }.toMap()
+    }
+
+    private fun array(stdout: String): List<*>? =
+        // A "[notice] ..." line also starts with '[', so try each candidate line.
+        ARRAY_LINE.findAll(stdout).firstNotNullOfOrNull { match ->
+            try {
+                JsonReader(stdout, match.range.last).readDocument() as? List<*>
+            } catch (e: IllegalArgumentException) {
+                null
+            }
+        }
 
     /** The first line that starts (after indentation) with `[`. */
     private val ARRAY_LINE = Regex("""(?m)^[ \t]*\[""")

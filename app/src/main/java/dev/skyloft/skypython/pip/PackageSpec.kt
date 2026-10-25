@@ -43,4 +43,9 @@ object PackageSpec {
 
     /** A bare distribution name (what `pip uninstall` gets). */
     fun isName(value: String): Boolean = nameRegex.matches(value)
+
+    /** The leading distribution name of [spec] (`requests[socks]>=2` → `requests`), or "". */
+    fun nameOf(spec: String): String = leadingName.find(spec.trim())?.value.orEmpty()
+
+    private val leadingName = Regex("^$NAME")
 }
