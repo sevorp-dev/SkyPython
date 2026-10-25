@@ -39,14 +39,15 @@ Everything a mobile Python developer needs, in the open: a comfortable editor wi
 drawer, an interactive console, a terminal and a package manager — free of ads and premium
 walls, and built to work on as many phones as possible, including old and low-end ones.
 
-## 🆕 What's new in 0.0.3
+## 🆕 What's new in 0.0.4
 
-- 🎨 **New look** — modern dark theme with an orange accent, new logo, Inter + JetBrains Mono, bottom navigation bar (can be turned off)
-- ▶️ **Run output in a real terminal** — colours, `input()`, Ctrl+C; long-press to select, **Copy all**, Share, Save; tap a traceback line to jump to the code
-- 💡 **Smart editor** — completion, live error hints, go to definition, outline, parameter hints, find & replace, line commands, auto-indent and auto-close
-- 🐞 **Debugger** — breakpoints, step over/into/out, variables, watches, call stack
-- 📦 **Pip** — PyPI search, popular packages, `requirements.txt`, updates
-- 🇷🇺 **Russian interface**, 🚨 **"Report a problem"** with device info, 🔗 share files or whole projects (.zip)
+- 🔢 **NumPy on your phone** — Pip installs **NumPy 2.5** prebuilt for Android in one tap, no compiler needed. Packages built by SkyPython carry a **"Prebuilt for Android"** badge
+- 🌑 **IDE dark theme** — near-black editor and terminal like desktop IDEs, neutral greys, the same orange accent and retuned syntax colours
+- 🖼️ **Image viewer** — pictures your script saves show up as chips under the finished run; open them with pinch and double-tap zoom, share or delete. PNG, JPEG, GIF, WebP and BMP files open from Projects too
+- 🎨 New sample **"Draw a picture"** — a Mandelbrot fractal drawn with the standard library only
+- 🛠️ Fixes: the debugger could crash the app when it closed at the wrong moment; Pip re-reads the package list if it changed while you were offline
+
+0.0.3 brought the real terminal, the smart editor, the debugger, PyPI search and the Russian interface.
 
 Full details for every version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -63,14 +64,14 @@ is simply part of SkyPython.
 | 📝 **Editor** | Python highlighting, tabs with ✕ and `+`, line numbers, word wrap, pinch-to-zoom, undo/redo, auto-indent, auto-closing brackets and quotes, a customizable symbol bar, keyboard without autocorrect (no more "Print" instead of `print`). |
 | 💡 **Code intelligence** | Completion while typing, live error and warning underlines, **go to definition** (also into the standard library, read-only), usages, **outline** of classes and functions, **parameter hints** inside calls. Works offline. |
 | 🔎 **Editing tools** | Find & replace (match case, whole word, regex), go to line, comment/uncomment, indent/outdent, duplicate, move or delete lines, recent files, hardware-keyboard shortcuts (Ctrl+S, Ctrl+F, Ctrl+/, F5…). |
-| ▶️ **Run** | One tap on the orange ▶ runs the file in a real terminal: colours, `input()` with line editing, `
-` progress bars. **^C** sends KeyboardInterrupt, **Stop** always works. When it ends: Copy all, Share, Save output, Run again. Tap `File "…", line N` in a traceback to open that line. |
+| ▶️ **Run** | One tap on the orange ▶ runs the file in a real terminal: colours, `input()` with line editing, `` progress bars. **^C** sends KeyboardInterrupt, **Stop** always works. When it ends: Copy all, Share, Save output, Run again. Tap `File "…", line N` in a traceback to open that line. |
 | 🐞 **Debugger** | Tap a line number to set a breakpoint (long-press for a condition), long-press ▶ → Debug. Step over / into / out, continue, variables tree, watches, call stack. |
 | 🐍 **Interpreter** | Interactive Python (`>>>`) with history, colours and Ctrl+C that interrupts without losing your session. |
 | ⌨️ **Terminal** | A real terminal with `python`, `pip`, Esc / Tab / Ctrl / Alt / arrows. |
-| 📦 **Pip** | Search PyPI, popular packages in one tap, install from `requirements.txt`, updates and uninstall. Pure-Python packages today; packages with native code (NumPy, Pillow…) are on the roadmap. |
+| 📦 **Pip** | Search PyPI, popular packages in one tap, install from `requirements.txt`, updates and uninstall. Pure-Python packages from PyPI, plus packages with native code that SkyPython builds for Android — **NumPy** today, more coming. |
+| 🖼️ **Images** | Pictures your program saves appear right under the run output; a built-in viewer with zoom, share, open with and delete. |
 | 📁 **Projects** | Create, rename, delete files and folders; open and save files from other apps; **share** a file as is or a whole folder as `.zip` (Telegram, mail, cloud…). |
-| 🎓 **Samples** | Ready-to-run examples with search: input, loops, functions, classes, files, JSON, a small game. |
+| 🎓 **Samples** | Ready-to-run examples with search: input, loops, functions, classes, files, JSON, a small game, drawing a picture. |
 | ⚙️ **Settings** | Font size and family, word wrap, line numbers, completion, auto-close, keyboard suggestions, symbol bar keys, terminal size and theme, bottom bar on/off, language (English / Русский). |
 | 🚨 **Report a problem** | If something goes wrong, SkyPython offers to send a report (error + device info, no personal data) as a GitHub issue or via any app — nothing is ever sent automatically. |
 
@@ -144,6 +145,7 @@ If Android says *"App not installed"*, you picked the wrong one — take `univer
 - The **editor** is [Sora Editor](https://github.com/Rosemoe/sora-editor) with TextMate grammars (MagicPython).
 - **Code hints** come from a small language server in the same bundled Python: [jedi](https://github.com/davidhalter/jedi) for completions, [pyflakes](https://github.com/PyCQA/pyflakes) and `compile()` for errors. It is packed into the APK (~1 MB) and unpacked next to the stdlib, separate from your pip packages.
 - **Run, Interpreter and Terminal** use a real pseudo-terminal (a tiny native `libskypty.so`) and a terminal view based on the Apache-2.0 Termux terminal emulator, so colours, line editing and Ctrl+C behave like on a computer.
+- **Native packages** such as NumPy are built for Android by our [wheel workflow](.github/workflows/build-wheels.yml) (cibuildwheel) and published with checksums in the [`wheels`](https://github.com/sevorp-dev/SkyPython/tree/wheels) branch; Pip downloads the one for your phone's CPU, verifies it and installs it.
 - The **debugger** is a small driver built on Python's own `bdb` module; it talks to the app over a private socket, so your program keeps its normal input and output.
 
 ## 🛠️ Build from source
@@ -218,9 +220,12 @@ What's new in every version: [CHANGELOG.md](CHANGELOG.md) and the [Releases](htt
 - [x] Debugger with breakpoints and watches
 - [x] Go to definition, outline, find & replace
 - [x] Android 7.0+ and 32-bit devices, English and Russian
-- [ ] Prebuilt packages with native code: NumPy → Pillow → matplotlib → pandas
-- [ ] Plots and images shown right in the app
+- [x] Prebuilt packages with native code: **NumPy** ✅
+- [x] Images your scripts save shown right in the app
+- [ ] More native packages: Pillow → matplotlib → pandas
+- [ ] Plots from matplotlib shown right in the app
 - [ ] GUI apps (Kivy / Tkinter-style windows)
+- [x] IDE dark theme
 - [ ] Light theme, more languages
 - [ ] OpenCV, TensorFlow Lite, PyTorch (long term)
 
