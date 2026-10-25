@@ -122,6 +122,47 @@ class BreakpointStoreTest {
         assertFalse(other in store.state.value)
     }
 
+    @Test fun `deleting a file drops its breakpoints`() {
+        var saved: String? = null
+        val store = BreakpointStore(null) { saved = it }
+        store.toggle(main, 5)
+        store.toggle(other, 2)
+        store.remove(main)
+        assertFalse(main in store.state.value)
+        assertEquals(listOf(Breakpoint(2)), store.state.value[other])
+        assertFalse(main in BreakpointStore(saved) {}.state.value)
+    }
+
+    @Test fun `deleting a folder drops the breakpoints of the files inside only`() {
+        val store = BreakpointStore(null) {}
+        store.toggle(other, 2)
+        store.toggle("/data/files/projects/libra.py", 1)
+        store.remove("/data/files/projects/lib/")
+        assertFalse(other in store.state.value)
+        assertEquals(listOf(Breakpoint(1)), store.state.value["/data/files/projects/libra.py"])
+    }
+
+    @Test fun `saved breakpoints loaded later merge with ones set meanwhile`() {
+        val old = run {
+            var json = ""
+            val store = BreakpointStore(null) { json = it }
+            store.toggle(main, 3)
+            store.toggle(other, 7)
+            store.addWatch("total")
+            json
+        }
+        var saved: String? = null
+        val store = BreakpointStore(null) { saved = it }
+        store.toggle(main, 9) // set before the saved file was read: kept
+        store.addWatch("n")
+        store.restore(old)
+        assertEquals(listOf(Breakpoint(9)), store.state.value[main])
+        assertEquals(listOf(Breakpoint(7)), store.state.value[other])
+        assertEquals(listOf("total", "n"), store.watches.value)
+        val again = BreakpointStore(saved) {}
+        assertEquals(store.state.value, again.state.value)
+    }
+
     @Test fun `corrupt saved data starts empty`() {
         val store = BreakpointStore("{not json") {}
         assertTrue(store.state.value.isEmpty())

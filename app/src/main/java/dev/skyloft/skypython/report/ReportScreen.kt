@@ -46,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -63,6 +64,7 @@ import dev.skyloft.skypython.ui.theme.SkyTopBar
 import dev.skyloft.skypython.ui.theme.brandButtonColors
 import dev.skyloft.skypython.ui.theme.brandSwitchColors
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.DateFormat
 import java.util.Date
@@ -117,6 +119,7 @@ fun ReportScreen(
         }
     }
     val text = remember(report, previewDescription, deviceInfo) { ReportFormatter.format(report, previewDescription, deviceInfo) }
+    val scope = rememberCoroutineScope()
 
     val subject = stringResource(R.string.report_share_subject)
     val chooserTitle = stringResource(R.string.report_share_chooser)
@@ -205,8 +208,12 @@ fun ReportScreen(
                 }
                 OutlinedButton(
                     onClick = {
-                        val intent = Reports.shareIntent(context, currentText(), subject, summary, chooserTitle)
-                        if (!launch(context, intent)) toast(context, R.string.share_no_app)
+                        val shared = currentText()
+                        scope.launch {
+                            // A long report is written to a file first.
+                            val intent = withContext(Dispatchers.IO) { Reports.shareIntent(context, shared, subject, summary, chooserTitle) }
+                            if (!launch(context, intent)) toast(context, R.string.share_no_app)
+                        }
                     },
                     enabled = ready,
                 ) {
@@ -229,10 +236,13 @@ fun ReportScreen(
 
             if (selected?.kind == ReportKind.Crash) {
                 TextButton(onClick = {
-                    store.remove(selected.id)
-                    selectedId = null
-                    version++
-                    toast(context, R.string.report_deleted)
+                    val id = selected.id
+                    scope.launch {
+                        withContext(Dispatchers.IO) { store.remove(id) } // reads every saved report
+                        selectedId = null
+                        version++
+                        toast(context, R.string.report_deleted)
+                    }
                 }) { Text(stringResource(R.string.report_delete)) }
             }
 

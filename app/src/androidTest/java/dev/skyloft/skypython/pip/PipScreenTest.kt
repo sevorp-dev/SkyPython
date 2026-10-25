@@ -2,11 +2,14 @@ package dev.skyloft.skypython.pip
 
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -52,7 +55,7 @@ class PipScreenTest {
     private val pip = FakePip()
 
     private fun show(index: PackageIndex = PackageIndex { LookupResult.Offline("offline") }): PipViewModel {
-        val vm = PipViewModel(pip, index) { emptyList() }
+        val vm = PipViewModel(pip, index, findRequirements = { emptyList() })
         rule.setContent { SkyPythonTheme { PipScreen(vm, onBack = {}) } }
         return vm
     }
@@ -79,6 +82,22 @@ class PipScreenTest {
         rule.onNode(hasText(str(R.string.pip_search_action))).performClick()
         rule.waitUntilAtLeastOneExists(hasText(str(R.string.pip_wheel_pure)), 5_000)
         rule.onNode(hasText(str(R.string.pip_latest_version, "1.17.0"))).assertExists()
+    }
+
+    @Test
+    fun aSearchResultShowsAtTheTopEvenWhenTheListWasScrolled() {
+        show(
+            PackageIndex { name ->
+                LookupResult.Found(PyPiProject(name, "1.17.0", "Py2/3 compatibility", null, "MIT", WheelSupport.Pure))
+            },
+        )
+        // The popular list was scrolled (or the result arrives while the first rows are anchored):
+        // the result card goes in above them and must still be in view.
+        rule.onNode(hasScrollAction()).performScrollToIndex(6)
+        rule.onNode(hasSetTextAction()).performTextInput("six")
+        rule.onNode(hasText(str(R.string.pip_search_action))).performClick()
+        rule.waitUntilAtLeastOneExists(hasText(str(R.string.pip_wheel_pure)), 5_000)
+        rule.onNode(hasText(str(R.string.pip_wheel_pure))).assertIsDisplayed()
     }
 
     @Test

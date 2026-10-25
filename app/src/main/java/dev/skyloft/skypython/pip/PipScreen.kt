@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -77,6 +78,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -269,7 +273,14 @@ private fun SearchTab(state: PipState, viewModel: PipViewModel) {
         }
         if (state.searching) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp))
 
-        LazyColumn(Modifier.fillMaxSize()) {
+        // The result goes in above the popular rows, and a lazy list keeps its first visible row
+        // in place when items are inserted before it: without this the result would land above
+        // the viewport, out of sight (always so on a small screen with the keyboard up).
+        val listState = rememberLazyListState()
+        LaunchedEffect(state.lookup) {
+            if (state.lookup != null) listState.scrollToItem(0)
+        }
+        LazyColumn(Modifier.fillMaxSize(), state = listState) {
             state.lookup?.let { lookup ->
                 item(key = "result") {
                     LookupCard(lookup, state, onInstall = viewModel::installPackage)
@@ -677,7 +688,11 @@ private fun DetailLine(text: String) {
 
 @Composable
 private fun RequirementsTab(state: PipState, viewModel: PipViewModel, currentFile: File?, projectsRoot: File?) {
-    val openFile = remember(currentFile) { currentFile?.takeIf { RequirementsFiles.isCandidate(it) } }
+    // isCandidate reads the disk: not on the main thread.
+    val openFileState = produceState<File?>(null, currentFile) {
+        value = withContext(Dispatchers.IO) { currentFile?.takeIf { RequirementsFiles.isCandidate(it) } }
+    }
+    val openFile = openFileState.value
     Column(Modifier.fillMaxSize()) {
         if (state.scanningFiles) LinearProgressIndicator(Modifier.fillMaxWidth())
         LazyColumn(Modifier.fillMaxSize()) {

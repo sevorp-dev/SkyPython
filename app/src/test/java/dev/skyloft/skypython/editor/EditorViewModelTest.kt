@@ -237,4 +237,36 @@ class EditorViewModelTest {
         val empty = Session(emptyList(), -1)
         assertEquals(empty, SessionCodec.decode(SessionCodec.encode(empty)))
     }
+
+    // A project file shown read-only (Go to definition found it as library code, e.g. through a
+    // path jedi didn't see as the project) and then opened from Files: the user asked to edit it.
+
+    @Test
+    fun aReadOnlyTabOfAProjectFileBecomesEditableWhenOpenedNormally() {
+        val s = DocumentsState()
+        val shown = s.open(OpenDocument.local(File("/p/lib.py"), "x = 1", readOnly = true))
+        s.open(doc("/p/main.py"))
+        assertTrue(reopenAsEditable(shown, readOnly = false, insideProjects = true))
+        s.makeEditable(shown.id)
+        val now = s.find(shown.id)!!
+        assertFalse(now.readOnly)
+        assertEquals("x = 1", now.text)
+        assertFalse(now.dirty)
+        assertEquals(listOf("lib.py", "main.py"), s.docs.map { it.name }) // same tab, same place
+        s.update(shown.id, "x = 2")
+        assertTrue(s.find(shown.id)!!.dirty)
+    }
+
+    @Test
+    fun libraryCodeOutsideTheProjectsStaysReadOnly() {
+        val shown = OpenDocument.local(File("/usr/lib/python3.14/json/__init__.py"), "", readOnly = true)
+        assertFalse(reopenAsEditable(shown, readOnly = false, insideProjects = false))
+    }
+
+    @Test
+    fun goToDefinitionNeverMakesAnEditableTabReadOnly() {
+        val open = doc("/p/main.py")
+        assertFalse(reopenAsEditable(open, readOnly = true, insideProjects = true))
+        assertFalse(reopenAsEditable(open, readOnly = false, insideProjects = true)) // already editable
+    }
 }

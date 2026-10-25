@@ -99,6 +99,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import dev.skyloft.skypython.locale.AppLocale
+import dev.skyloft.skypython.pip.MissingPackage
+import dev.skyloft.skypython.pip.PipOperation
+import dev.skyloft.skypython.pip.PipViewModel
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -159,8 +164,11 @@ fun TerminalScreen(
     onOpenInEditor: (File, Int) -> Unit = { _, _ -> },
     settings: EditorSettings = EditorSettings(),
     onFontSizeChange: (Int) -> Unit = {},
+    /** The app's pip, for "Install x" after a run that stopped on a missing module (Run only). */
+    pip: PipViewModel? = null,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var installing by remember { mutableStateOf<MissingPackage?>(null) }
     val colors = MaterialTheme.colorScheme
     val context = LocalContext.current
     val snackbar = remember { SnackbarHostState() }
@@ -205,6 +213,20 @@ fun TerminalScreen(
     // A finished script reads no input: put the keyboard away so the footer's actions show.
     LaunchedEffect(state.running, view) {
         if (!state.running && kind == TerminalKind.Run) view?.let(::hideKeyboard)
+    }
+
+    val scopeForMessages = rememberCoroutineScope()
+    val sheetFor = installing
+    if (sheetFor != null && pip != null) {
+        InstallMissingSheet(
+            missing = sheetFor,
+            pip = pip,
+            onRunAgain = {
+                installing = null
+                viewModel.restart()
+            },
+            onDismiss = { installing = null },
+        )
     }
 
     Scaffold(
@@ -255,6 +277,16 @@ fun TerminalScreen(
                 }
             }
             if (kind == TerminalKind.Run && !state.running && state.exitCode != null) {
+                val missing = state.missing
+                if (missing != null && pip != null) {
+                    InstallMissingRow(missing, enabled = installing == null) {
+                        if (pip.installNow(missing.pipName) || pip.state.value.running == PipOperation.Install(missing.pipName)) {
+                            installing = missing
+                        } else {
+                            launchMessage(snackbar, scopeForMessages, AppLocale.string(context, R.string.run_install_busy))
+                        }
+                    }
+                }
                 FinishedBar(
                     exitCode = state.exitCode!!,
                     onRunAgain = viewModel::restart,
@@ -348,6 +380,10 @@ private fun TopActions(
             }
         }
     }
+}
+
+private fun launchMessage(snackbar: SnackbarHostState, scope: kotlinx.coroutines.CoroutineScope, text: String) {
+    scope.launch { snackbar.showSnackbar(text) }
 }
 
 /** Under a finished script: how it ended, Run again, Back to editor. */

@@ -1,6 +1,9 @@
 package dev.skyloft.skypython.terminal
 
 import android.app.Application
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.termux.terminal.TerminalSession
@@ -8,10 +11,13 @@ import dev.skyloft.skypython.runtime.PythonInstaller
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * The terminal screen's model end to end: [TerminalViewModel] → emulator → PTY → program, without
@@ -125,6 +131,60 @@ class TerminalSessionDeviceTest {
         waitFor("the command twice") {
             vm.screen().lines().count { it.trim() == "sky2" }.takeIf { it >= 2 }
         }
+    }
+
+    /** How long a Runnable posted to the main thread waits before it runs. */
+    private fun mainThreadLatencyMs(): Long {
+        val ran = CountDownLatch(1)
+        val posted = SystemClock.elapsedRealtime()
+        Handler(Looper.getMainLooper()).post { ran.countDown() }
+        if (!ran.await(10, TimeUnit.SECONDS)) return 10_000
+        return SystemClock.elapsedRealtime() - posted
+    }
+
+    /** A program printing as fast as it can must not take the main thread (UI, Stop) for itself. */
+    @Test
+    fun floodingOutputKeepsTheMainThreadResponsiveAndKillEndsIt() {
+        val vm = open(TerminalKind.Interpreter)
+        vm.awaitScreen(PROMPT)
+        // Output that costs the emulator more than it costs the program (ESC # 8 fills the
+        // screen), as plain text does on a slow device: the reader always has more ready.
+        vm.type("import os; line = b'\\x1b#8' * 20 + b'0123456789' * 7 + b'\\r\\n'; chunk = line * 200\r")
+        vm.type("while True: os.write(1, chunk)\r\r")
+        vm.awaitScreen(Regex("(0123456789){7}"))
+        var worst = 0L
+        val until = SystemClock.elapsedRealtime() + 3_000
+        while (SystemClock.elapsedRealtime() < until) {
+            worst = maxOf(worst, mainThreadLatencyMs())
+            Thread.sleep(50)
+        }
+        // Before the fix the main thread was blocked for minutes; slow CI emulators show ~1.3 s hiccups.
+        assertTrue("main thread blocked for $worst ms", worst < 3_000)
+        val killedAt = SystemClock.elapsedRealtime()
+        onMain { vm.kill() }
+        waitFor("exit", timeoutMs = 5_000) { vm.state.value.takeIf { !it.running } }
+        assertTrue(SystemClock.elapsedRealtime() - killedAt < 5_000)
+        assertEquals(-9, onMain { vm.session.exitStatus })
+    }
+
+    private fun alive(pid: Int): Boolean {
+        val stat = File("/proc/$pid/stat")
+        if (!stat.exists()) return false
+        val text = runCatching { stat.readText() }.getOrNull() ?: return false
+        return text.substringAfterLast(')').trim().firstOrNull() != 'Z'
+    }
+
+    /** Kill ends the whole session: a background job of the shell goes too. */
+    @Test
+    fun killEndsBackgroundJobsToo() {
+        val vm = open(TerminalKind.Shell)
+        vm.awaitScreen(Regex("[$#] *$"))
+        vm.type("sleep 1000 & echo bg=$!\r")
+        val pid = Regex("(?m)^bg=(\\d+)\\s*$").find(vm.awaitScreen(Regex("(?m)^bg=\\d+\\s*$")))!!.groupValues[1].toInt()
+        assertTrue(alive(pid))
+        onMain { vm.kill() }
+        waitFor("exit") { vm.state.value.takeIf { !it.running } }
+        waitFor("the background job to end", timeoutMs = 5_000) { (!alive(pid)).takeIf { it } }
     }
 
     @Test

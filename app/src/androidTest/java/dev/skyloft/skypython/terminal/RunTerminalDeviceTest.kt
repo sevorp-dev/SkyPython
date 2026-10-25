@@ -161,7 +161,8 @@ class RunTerminalDeviceTest {
         // `File ".../boom.py", line 2, in f` opens boom.py at line 2.
         val frameRow = vm.rowOf("line 2, in f")
         assertTrue(onMain { vm.openTracebackAt(frameRow) })
-        val event = onMain { vm.events.value.last() } as TerminalEvent.OpenInEditor
+        // The file is looked up off the main thread; the event follows.
+        val event = waitFor("the open event") { vm.events.value.lastOrNull() as? TerminalEvent.OpenInEditor }
         assertEquals(File(dir, "boom.py").canonicalFile, event.file)
         assertEquals(2, event.line)
         // The "Traceback (most recent call last):" line is not a place in a file.
@@ -182,6 +183,21 @@ class RunTerminalDeviceTest {
         vm.await(footer(0))
         val text = onMain { vm.transcript() }
         assertTrue(text.takeLast(400), text.contains("THE END\n" + footer(0)))
+    }
+
+    @Test
+    fun aRunThatStopsOnAMissingModuleOffersItsPipPackage() {
+        val vm = run("cam.py", "import cv2")
+        vm.await("No module named 'cv2'")
+        vm.await(footer(1))
+        assertEquals(
+            dev.skyloft.skypython.pip.MissingPackage("cv2", "opencv-python"),
+            waitFor("the missing package") { vm.state.value.missing },
+        )
+        // Run again clears it until the run fails the same way again.
+        val ok = run("fine.py", "print('ok')")
+        ok.await(footer(0))
+        assertEquals(null, onMain { ok.state.value.missing })
     }
 
     @Test

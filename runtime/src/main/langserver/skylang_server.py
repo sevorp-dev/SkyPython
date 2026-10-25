@@ -467,12 +467,48 @@ METHODS = {
 }
 
 
+MAX_CANCELLED = 256  # cancels for requests already answered are forgotten after this many
+
+
+def _valid_key(value):
+    """A request id or method name usable as a dict key (JSON scalars only)."""
+    return value is None or isinstance(value, (str, int, float, bool))
+
+
+class _BoundedSet:
+    """A set that forgets its oldest entries beyond [limit] (a cancel can arrive after the answer)."""
+
+    def __init__(self, limit):
+        self.limit = limit
+        self.items = {}
+        self.lock = threading.Lock()  # added to by the reader thread, read by the serve loop
+
+    def add(self, item):
+        with self.lock:
+            self.items.pop(item, None)
+            self.items[item] = None
+            while len(self.items) > self.limit:
+                del self.items[next(iter(self.items))]
+
+    def discard(self, item):
+        with self.lock:
+            self.items.pop(item, None)
+
+    def __contains__(self, item):
+        with self.lock:
+            return item in self.items
+
+    def __len__(self):
+        with self.lock:
+            return len(self.items)
+
+
 class Server:
     def __init__(self, inp, out):
         self.inp = inp
         self.out = out
         self.inbox = queue.Queue()
-        self.cancelled = set()
+        self.cancelled = _BoundedSet(MAX_CANCELLED)
         self.write_lock = threading.Lock()
 
     def send(self, obj):
@@ -483,22 +519,33 @@ class Server:
 
     def read_loop(self):
         for raw in iter(self.inp.readline, b""):
-            raw = raw.strip()
-            if not raw:
-                continue
             try:
-                msg = json.loads(raw.decode("utf-8", "replace"))
-            except ValueError:
+                msg = self._parse(raw)
+            except Exception as e:  # noqa: BLE001 - one bad line must not end the server
+                print("ignored message: %r" % (e,), file=sys.stderr)
                 continue
-            if not isinstance(msg, dict):
-                continue
-            if msg.get("method") == "cancel":
-                target = (msg.get("params") or {}).get("id")
-                if target is not None:
-                    self.cancelled.add(target)
-                continue
-            self.inbox.put(msg)
+            if msg is not None:
+                self.inbox.put(msg)
         self.inbox.put(None)  # EOF: the app closed stdin
+
+    def _parse(self, raw):
+        """A request to queue, or None (blank, malformed, or a cancel handled here)."""
+        raw = raw.strip()
+        if not raw:
+            return None
+        try:
+            msg = json.loads(raw.decode("utf-8", "replace"))
+        except ValueError:
+            return None
+        if not isinstance(msg, dict) or not _valid_key(msg.get("id")) or not _valid_key(msg.get("method")):
+            return None
+        if msg.get("method") == "cancel":
+            params = msg.get("params")
+            target = params.get("id") if isinstance(params, dict) else None
+            if target is not None and _valid_key(target):
+                self.cancelled.add(target)
+            return None
+        return msg
 
     def next_batch(self):
         """Blocks for one message, then drains the queue. None at EOF."""
@@ -529,14 +576,20 @@ class Server:
             for msg in batch:
                 newest[msg.get("method")] = msg.get("id")
             for msg in batch:
-                rid = msg.get("id")
-                method = msg.get("method")
-                if rid in self.cancelled or newest.get(method) != rid:
-                    self.cancelled.discard(rid)
-                    if rid is not None:
-                        self.send({"id": rid, "cancelled": True})
-                    continue
-                self.handle(msg)
+                try:
+                    self._serve_one(msg, newest)
+                except Exception as e:  # noqa: BLE001 - never die on one bad request
+                    print("request failed: %r" % (e,), file=sys.stderr)
+
+    def _serve_one(self, msg, newest):
+        rid = msg.get("id")
+        method = msg.get("method")
+        if rid in self.cancelled or newest.get(method) != rid:
+            self.cancelled.discard(rid)
+            if rid is not None:
+                self.send({"id": rid, "cancelled": True})
+            return
+        self.handle(msg)
 
     def handle(self, msg):
         rid = msg.get("id")
@@ -544,9 +597,13 @@ class Server:
         if fn is None:
             self.send({"id": rid, "error": "unknown method %r" % msg.get("method")})
             return
+        params = msg.get("params")
         try:
-            result = fn(msg.get("params") or {})
+            if params is not None and not isinstance(params, dict):
+                raise TypeError("params must be an object")
+            result = fn(params or {})
         except Exception as e:  # never die on one bad request
+            self.cancelled.discard(rid)
             self.send({"id": rid, "error": "%s: %s" % (type(e).__name__, e)})
             return
         if rid in self.cancelled:

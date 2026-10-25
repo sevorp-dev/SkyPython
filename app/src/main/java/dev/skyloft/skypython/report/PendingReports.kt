@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonParseException
 import java.io.File
 import java.io.IOException
+import java.util.Locale
 import java.util.UUID
 
 /**
@@ -16,11 +17,17 @@ class PendingReports(val dir: File, private val max: Int = MAX) {
     /** Saves [report] synchronously (the crash handler runs right before the process dies). */
     fun add(report: ProblemReport) {
         if (!dir.isDirectory && !dir.mkdirs()) throw IOException("Cannot create $dir")
-        val name = "%015d-%s".format(report.timeMillis, report.id.filter { it.isLetterOrDigit() || it == '-' })
+        // Locale.US: the names sort by their digits, which must be ASCII on every phone.
+        val name = "%015d-%s".format(Locale.US, report.timeMillis, report.id.filter { it.isLetterOrDigit() || it == '-' })
         val tmp = File(dir, "$name.tmp")
         tmp.writeText(gson.toJson(report))
         if (!tmp.renameTo(File(dir, "$name.json"))) throw IOException("Cannot save $name")
         files().drop(max).forEach { it.delete() }
+    }
+
+    /** Deletes `.tmp` files of saves cut short (the process died mid-write). Not on the main thread. */
+    fun removeLeftovers() {
+        dir.listFiles { f -> f.isFile && f.name.endsWith(".tmp") }.orEmpty().forEach { it.delete() }
     }
 
     fun list(): List<ProblemReport> = files().mapNotNull(::read).sortedByDescending { it.timeMillis }

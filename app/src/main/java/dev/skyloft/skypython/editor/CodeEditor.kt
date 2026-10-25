@@ -40,7 +40,13 @@ import androidx.compose.material3.MaterialTheme
 import io.github.rosemoe.sora.event.ScrollEvent
 import io.github.rosemoe.sora.lang.styling.HighlightTextContainer
 import io.github.rosemoe.sora.lang.styling.color.ConstColor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import io.github.rosemoe.sora.event.ContentChangeEvent
@@ -180,6 +186,18 @@ private const val BADGE_BG = 0xFF3D3328.toInt()
 data class LookupPosition(val source: String, val line: Int, val column: Int)
 
 /** Imperative handle for toolbar / symbol-bar actions on the live editor view. */
+/** How a Replace all ended. */
+sealed interface ReplaceAllResult {
+    data class Replaced(val count: Int) : ReplaceAllResult
+    /** The pattern ran too long and was stopped; nothing changed. */
+    data object TimedOut : ReplaceAllResult
+    /** The text was edited while matching; nothing was replaced. */
+    data object TextChanged : ReplaceAllResult
+}
+
+/** A Replace all is given up after this long (a runaway pattern). */
+const val REPLACE_ALL_TIMEOUT_MS = 10_000L
+
 class EditorController {
     internal var view: CodeEditor? = null
     internal var flusher: (() -> Unit)? = null
@@ -319,20 +337,39 @@ class EditorController {
         if (!v.searcher.hasQuery() || !v.isEditable) return
         if (v.searcher.isMatchedPositionSelected) {
             val c = v.cursor
-            val matched = v.text.subContent(c.leftLine, c.leftColumn, c.rightLine, c.rightColumn).toString()
-            v.commitText(q.replacementFor(matched, replacement), false, false)
+            // Against the whole text, so lookbehind, anchors and \b see what Replace all sees.
+            val text = v.text
+            val start = text.getCharIndex(c.leftLine, c.leftColumn)
+            val end = text.getCharIndex(c.rightLine, c.rightColumn)
+            v.commitText(q.replacementFor(text, start, end, replacement), false, false)
         }
         v.searcher.gotoNext()
     }
 
-    /** Replaces every match in one undo step; returns how many were replaced. */
-    fun replaceAll(replacement: String): Int {
-        val v = view ?: return 0
-        val q = query ?: return 0
-        if (!v.isEditable) return 0
+    /**
+     * Replaces every match in one undo step. The regex runs off the main thread (a user pattern on
+     * a 5 MB file can take long, or forever) and is stopped after [REPLACE_ALL_TIMEOUT_MS]; the
+     * edit is applied on the main thread, and only if the text didn't change meanwhile.
+     * Cancelling the caller (the find bar closed) stops the search.
+     */
+    suspend fun replaceAll(replacement: String): ReplaceAllResult {
+        val v = view ?: return ReplaceAllResult.Replaced(0)
+        val q = query ?: return ReplaceAllResult.Replaced(0)
+        if (!v.isEditable) return ReplaceAllResult.Replaced(0)
         val content = v.text
-        val (out, n) = q.replaceAll(content.toString(), replacement)
-        if (n == 0) return 0
+        val before = content.toString()
+        val (out, n) = try {
+            withTimeout(REPLACE_ALL_TIMEOUT_MS) {
+                withContext(Dispatchers.Default) {
+                    val job = coroutineContext.job
+                    q.replaceAll(before, replacement) { job.ensureActive() }
+                }
+            }
+        } catch (e: TimeoutCancellationException) {
+            return ReplaceAllResult.TimedOut
+        }
+        if (n == 0) return ReplaceAllResult.Replaced(0)
+        if (view !== v || v.text !== content || content.toString() != before) return ReplaceAllResult.TextChanged
         val c = v.cursor
         val line = c.leftLine
         val col = c.leftColumn
@@ -341,7 +378,7 @@ class EditorController {
         content.replace(0, 0, last, content.getColumnCount(last), out)
         content.endBatchEdit()
         select(v, TextSelection(line, col))
-        return n
+        return ReplaceAllResult.Replaced(n)
     }
 
     internal fun onSearchResult(v: CodeEditor) {

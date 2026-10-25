@@ -6,10 +6,12 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import java.io.File
-import java.io.IOException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import dev.skyloft.skypython.R
+import dev.skyloft.skypython.report.AppLog
 
 /**
  * Shares [file] with other apps via `ACTION_SEND` (the system chooser: messengers, mail,
@@ -40,14 +42,24 @@ fun shareFile(context: Context, file: File) {
 }
 
 /**
- * Shares a whole project folder: packs it into `cacheDir/share/<name>.zip` (off the main
- * thread) and sends the archive like a file.
+ * Shares a whole project folder: packs it into `cacheDir/share/<unique>/<name>.zip` (off the
+ * main thread) and sends the archive like a file. Cancelling the caller (the screen went away)
+ * stops the packing and leaves no partial archive.
  */
 suspend fun shareFolder(context: Context, folder: File) {
     val zip = try {
-        withContext(Dispatchers.IO) { zipFolder(folder, File(context.cacheDir, "share")) }
-    } catch (e: IOException) {
-        Toast.makeText(context, R.string.share_cannot_share, Toast.LENGTH_SHORT).show()
+        withContext(Dispatchers.IO) {
+            zipFolder(folder, File(context.cacheDir, "share/zip")) { ensureActive() }
+        }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: ZipTooLargeException) {
+        val mb = (e.limitBytes / (1024 * 1024)).toInt()
+        Toast.makeText(context, context.getString(R.string.share_folder_too_large, mb), Toast.LENGTH_LONG).show()
+        return
+    } catch (e: Exception) {
+        AppLog.w("Share", "cannot pack ${folder.name}", e)
+        Toast.makeText(context, context.getString(R.string.share_folder_failed, e.message ?: e.javaClass.simpleName), Toast.LENGTH_LONG).show()
         return
     }
     shareFile(context, zip)

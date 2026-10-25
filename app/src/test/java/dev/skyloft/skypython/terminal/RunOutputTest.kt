@@ -142,6 +142,38 @@ class OutputFilesTest {
     }
 
     @Test
+    fun outputOfAProjectScriptIsSavedNextToIt() {
+        val projects = tmp.newFolder("projects")
+        val script = File(projects, "game/main.py").apply { parentFile!!.mkdirs(); writeText("") }
+        assertEquals(script.parentFile!!.canonicalFile, OutputFiles.saveDir(script, projects).canonicalFile)
+    }
+
+    @Test
+    fun outputOfAScriptRunFromACopyGoesToTheProjects() {
+        // A file opened with the system picker runs as a copy in cacheDir/run: the cache is not a
+        // place to keep output (the user can't see it, Android may clear it).
+        val projects = tmp.newFolder("projects")
+        val copy = File(tmp.newFolder("cache", "run"), "picked.py").apply { writeText("") }
+        assertEquals(projects, OutputFiles.saveDir(copy, projects))
+        // A look-alike sibling folder is outside too.
+        val sibling = File(tmp.newFolder("projects-old"), "x.py").apply { writeText("") }
+        assertEquals(projects, OutputFiles.saveDir(sibling, projects))
+        // The interpreter and the shell have no script.
+        assertEquals(projects, OutputFiles.saveDir(null, projects))
+    }
+
+    @Test
+    fun everyShareGetsItsOwnFileAndOnlyTheLastFewAreKept() {
+        val share = tmp.newFolder("share")
+        val files = (1..5).map { OutputFiles.shareFile(share, "a_output.txt").apply { writeText("run $it") } }
+        assertTrue(files.all { it.name == "a_output.txt" })
+        assertEquals(files.size, files.toSet().size)
+        assertEquals("an earlier share may still be read", "run 5", files.last().readText())
+        assertTrue(files.takeLast(3).all { it.isFile })
+        assertTrue(files.take(2).none { it.exists() })
+    }
+
+    @Test
     fun longOutputIsSharedAsAFile() {
         assertFalse(OutputFiles.shareAsFile("short"))
         assertTrue(OutputFiles.shareAsFile("x".repeat(OutputFiles.MAX_SHARE_TEXT + 1)))

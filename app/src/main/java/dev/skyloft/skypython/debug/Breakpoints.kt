@@ -116,6 +116,30 @@ class BreakpointStore(saved: String?, private val persist: (String) -> Unit) {
         save()
     }
 
+    /** A file or folder was deleted: its breakpoints, and those of every file under it, go too. */
+    @Synchronized
+    fun remove(path: String) {
+        val prefix = path.trimEnd('/') + "/"
+        val kept = _state.value.filterKeys { it != path.trimEnd('/') && !it.startsWith(prefix) }
+        if (kept == _state.value) return
+        _state.value = kept
+        save()
+    }
+
+    /**
+     * Adds what [json] (the persisted state, read off the main thread after this store was made)
+     * holds. Breakpoints set meanwhile win for their file; watches added meanwhile come after.
+     */
+    @Synchronized
+    fun restore(json: String) {
+        val current = _state.value
+        val currentWatches = _watches.value
+        load(json)
+        _state.value = _state.value + current
+        _watches.value = (_watches.value + currentWatches).distinct()
+        if (current.isNotEmpty() || currentWatches.isNotEmpty()) save()
+    }
+
     @Synchronized
     fun addWatch(expression: String) {
         val e = expression.trim()

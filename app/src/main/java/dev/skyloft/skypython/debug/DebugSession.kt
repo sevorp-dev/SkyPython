@@ -5,13 +5,17 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.io.IOException
 import java.util.concurrent.atomic.AtomicLong
 
 enum class DebugPhase {
@@ -67,6 +71,8 @@ class DebugSession(
     val state: StateFlow<DebugState> = _state.asStateFlow()
 
     @Volatile private var client: DebugClient? = null
+    /** Connecting to the driver ([connect]), until it answers or gives up. */
+    @Volatile private var connectJob: Job? = null
     private var eventsJob: Job? = null
     private var loadJob: Job? = null
     /** Bumped on every stop, resume and frame change: a load for an older one is stale. */
@@ -78,6 +84,46 @@ class DebugSession(
         detach()
         val watches = _state.value.watches.map { WatchValue(it.expression) }
         _state.value = DebugState(phase = DebugPhase.Starting, title = title, watches = watches)
+    }
+
+    /**
+     * Connects to the driver with [open] (blocking, run on the IO dispatcher) and then [attach]es
+     * with the [breakpoints] and [watches] of that moment. A failure ends the session with
+     * [failure]'s message, unless the user stopped it meanwhile: a [stop] before the driver
+     * answered ends the session quietly, and a connection that still arrives is closed.
+     */
+    fun connect(
+        open: () -> LineTransport,
+        breakpoints: () -> Map<String, List<Breakpoint>>,
+        watches: () -> List<String>,
+        userRoots: List<String>,
+        failure: (IOException) -> String,
+    ) {
+        connectJob?.cancel()
+        connectJob = scope.launch {
+            // Not cancellable: the blocking connect can't be interrupted, and what it returns
+            // must be closed if nobody wants it any more.
+            var result: Result<LineTransport>? = null
+            try {
+                withContext(NonCancellable + io) {
+                    result = try {
+                        Result.success(open())
+                    } catch (e: IOException) {
+                        Result.failure(e)
+                    }
+                }
+            } finally {
+                // Stopped meanwhile (withContext then throws instead of returning).
+                if (!isActive) result?.getOrNull()?.close()
+            }
+            if (!isActive) return@launch
+            val outcome = result ?: return@launch
+            if (connectJob === coroutineContext[Job]) connectJob = null
+            outcome.fold(
+                onSuccess = { attach(it, breakpoints(), watches(), userRoots) },
+                onFailure = { fail(failure(it as IOException)) },
+            )
+        }
     }
 
     /** The driver couldn't be reached. */
@@ -219,6 +265,16 @@ class DebugSession(
 
     /** Ends the program at once (the driver exits; the caller also stops the process). */
     fun stop() {
+        val pending = connectJob
+        if (pending != null) {
+            // Not connected yet: nothing to tell the driver. The program is killed, so the
+            // pending connect would fail, but that is not an error the user should see.
+            connectJob = null
+            pending.cancel()
+            detach()
+            _state.update { if (it.phase == DebugPhase.Idle) it else it.copy(phase = DebugPhase.Ended, error = null) }
+            return
+        }
         val c = client ?: return
         scope.launch { c.call("stop", timeoutMs = 1_000) }
     }
@@ -288,6 +344,7 @@ class DebugSession(
 
     private fun detach() {
         gen.incrementAndGet()
+        connectJob?.let { connectJob = null; it.cancel() }
         eventsJob?.cancel()
         loadJob?.cancel()
         client?.close()

@@ -17,6 +17,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class LanguageServiceTest {
 
@@ -141,6 +143,38 @@ class LanguageServiceTest {
         // Timeouts, but the server spoke recently (clock unchanged since "ready"): keep it.
         assertFalse(started.single().closed)
         assertEquals(1, started.size)
+    }
+
+    @Test
+    fun switchingOffDuringAColdStartLeavesNoServerRunning() = runBlocking {
+        // The start (unpacking Python, spawning the process) blocks and ignores cancellation.
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val s = service(start = {
+            entered.countDown()
+            release.await()
+            nextTransport().also { started += it }
+        })
+        s.warmUp()
+        assertTrue(entered.await(2, TimeUnit.SECONDS))
+        s.shutdown() // completion switched off meanwhile
+        release.countDown()
+        withTimeout(2_000) { while (started.isEmpty()) delay(5) }
+        withTimeout(2_000) { while (!started.single().closed) delay(5) }
+        delay(100)
+        assertFalse(s.isReady)
+        assertFalse(s.gaveUp) // a deliberate stop is not a crash
+    }
+
+    @Test
+    fun cancelledWhileWaitingForReadyClosesTheServer() = runBlocking {
+        val s = service(start = { FakeTransport(sendReady = false).also { started += it } })
+        s.warmUp()
+        withTimeout(2_000) { while (started.isEmpty()) delay(5) }
+        delay(50)
+        s.shutdown()
+        withTimeout(2_000) { while (!started.single().closed) delay(5) }
+        assertFalse(s.isReady)
     }
 
     @Test

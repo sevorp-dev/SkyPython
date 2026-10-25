@@ -324,6 +324,37 @@ class ServerLoopTest(unittest.TestCase):
         self.assertEqual(got[1], {"id": 1, "cancelled": True})
         self.assertEqual(got[2]["result"], "pong")
 
+    def test_malformed_messages_do_not_stop_the_server(self):
+        messages = [
+            [1, 2],
+            {"method": "cancel", "params": [1]},
+            {"method": "cancel", "params": {"id": [1]}},
+            {"method": "cancel", "params": "x"},
+            {"id": [1], "method": "ping"},
+            {"id": {"a": 1}, "method": ["complete"]},
+            {"id": 3, "method": "diagnose", "params": [1]},
+            {"id": 4, "method": "ping", "params": "x"},
+            {"id": 5, "method": "ping"},
+        ]
+        inp = io.BytesIO(b"".join((json.dumps(m) + "\n").encode() for m in messages))
+        out = io.BytesIO()
+        server = ls.Server(inp, out)
+        server.read_loop()
+        server.serve(start_reader=False)
+        got = {r["id"]: r for r in map(json.loads, out.getvalue().decode().splitlines()) if isinstance(r.get("id"), int)}
+        self.assertIn("error", got[3])
+        self.assertEqual(got[5]["result"], "pong")
+
+    def test_cancelled_ids_do_not_accumulate(self):
+        # Cancels for requests already answered (or never sent) must not pile up for ever.
+        cancels = [{"method": "cancel", "params": {"id": n}} for n in range(10_000)]
+        inp = io.BytesIO(b"".join((json.dumps(m) + "\n").encode() for m in cancels + [{"id": 1, "method": "ping"}]))
+        server = ls.Server(inp, io.BytesIO())
+        server.read_loop()
+        server.serve(start_reader=False)
+        self.assertLessEqual(len(server.cancelled), ls.MAX_CANCELLED)
+        self.assertNotIn(1, server.cancelled)  # answered (cancelled): forgotten
+
 
 class ServerProcessTest(unittest.TestCase):
     """The real process: stdin/stdout JSON lines."""

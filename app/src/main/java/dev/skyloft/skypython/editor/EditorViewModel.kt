@@ -154,7 +154,10 @@ class EditorViewModel(
         viewModelScope.launch {
             val source = withContext(Dispatchers.IO) { DocSource.Local(file) }
             val id = OpenDocument.idOf(source)
-            if (docsState.find(id) != null) {
+            val existing = docsState.find(id)
+            if (existing != null) {
+                // A project file shown read-only (Go to definition) and now opened normally: editable.
+                if (reopenAsEditable(existing, readOnly, isUnder(source.file, projectsRoot))) docsState.makeEditable(id)
                 docsState.select(id); publish(); if (!readOnly) remember(source.file); onOpened(id); return@launch
             }
             val text = withContext(Dispatchers.IO) { runCatching { readLocal(source.file) } }
@@ -343,6 +346,10 @@ class EditorViewModel(
         AppLocale.string(getApplication(), id, *args)
 
     private fun Throwable.reason(): String = message ?: toString()
+
+    /** Both paths are resolved ([DocSource.Local], [projectsRoot]): a plain prefix check. */
+    private fun isUnder(file: File, root: File): Boolean =
+        file.path.startsWith(root.path.trimEnd(File.separatorChar) + File.separator)
 
     // ---- IO helpers (call on Dispatchers.IO) ----
 

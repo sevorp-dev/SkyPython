@@ -89,4 +89,36 @@ class MissingModuleTest {
     fun everyMappedNameIsInstallable() {
         for (pip in MODULE_TO_PIP.values) assertEquals(pip, true, PackageSpec.isName(pip))
     }
+
+    private val traceback = """
+        Traceback (most recent call last):
+          File "/data/user/0/dev.skyloft.skypython/files/projects/cam.py", line 1, in <module>
+            import cv2
+        ModuleNotFoundError: No module named 'cv2'
+    """.trimIndent()
+
+    @Test
+    fun aFailedRunMissingAModuleOffersItsPipPackage() {
+        assertEquals(MissingPackage("cv2", "opencv-python"), MissingPackage.afterRun(exitCode = 1, output = traceback))
+        assertEquals(
+            MissingPackage("requests", "requests"),
+            MissingPackage.afterRun(1, "ModuleNotFoundError: No module named 'requests'"),
+        )
+    }
+
+    @Test
+    fun nothingIsOfferedWhenTheRunSucceededOrFailedOtherwise() {
+        assertNull(MissingPackage.afterRun(exitCode = 0, output = traceback)) // caught and printed
+        assertNull(MissingPackage.afterRun(exitCode = 1, output = "ValueError: boom"))
+        assertNull(MissingPackage.afterRun(exitCode = null, output = traceback)) // still running
+    }
+
+    @Test
+    fun googleIsANamespaceNotAPackage() {
+        // `import google.protobuf` and `import google.cloud.x` miss different packages, and the
+        // PyPI project called "google" is neither: no guess.
+        assertEquals("google", pipNameForModule("google"))
+        assertNull(MissingPackage.afterRun(1, "ModuleNotFoundError: No module named 'google.protobuf'"))
+        assertNull(MissingPackage.afterRun(1, "ModuleNotFoundError: No module named 'google'"))
+    }
 }

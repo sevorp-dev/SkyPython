@@ -27,3 +27,8 @@
 # build: keep the field and enum names stable.
 -keepclassmembers class dev.skyloft.skypython.report.ProblemReport { <fields>; }
 -keep enum dev.skyloft.skypython.report.ReportKind { *; }
+
+# The instrumentation runner (androidx.test) calls androidx.tracing.Trace from the test APK; when
+# instrumented tests run against the minified release build (-Pskypython.testRelease=true) R8 must
+# not strip or rename it. ~1 KB.
+-keep class androidx.tracing.Trace { *; }

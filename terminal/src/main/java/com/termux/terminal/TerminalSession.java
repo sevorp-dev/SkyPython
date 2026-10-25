@@ -4,9 +4,6 @@ import android.annotation.SuppressLint;
 import android.os.Handler;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
-import android.system.ErrnoException;
-import android.system.Os;
-import android.system.OsConstants;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -31,8 +28,9 @@ import java.util.UUID;
  * Modified for SkyPython: a failure to start the process is shown on the screen and reported
  * through {@link #getStartError()} instead of crashing the app; a finished session no longer
  * resizes its (closed, possibly reused) descriptor; the last output before exit is never lost
- * (the exit waits for the reader and drains the whole queue); the line written at exit can be
- * replaced ({@link #setExitMessage}).
+ * (the exit waits for the reader and drains the queue); the line written at exit can be
+ * replaced ({@link #setExitMessage}); output is handled in bounded slices so a flooding program
+ * cannot hold the main thread; Stop kills the whole session and never a reaped pid.
  */
 public final class TerminalSession extends TerminalOutput {
 
@@ -40,6 +38,12 @@ public final class TerminalSession extends TerminalOutput {
     private static final int MSG_PROCESS_EXITED = 4;
     /** SkyPython: how long the exit waits for the last output. */
     private static final long READER_DRAIN_MILLIS = 1000;
+    /**
+     * SkyPython: output handled per main-thread message, at most (bytes, then time): a program
+     * printing without pause must leave the main thread to the UI (and the Stop button).
+     */
+    private static final int MAX_BYTES_PER_MESSAGE = 64 * 1024;
+    private static final long MAX_NANOS_PER_MESSAGE = 16_000_000L;
 
     public final String mHandle = UUID.randomUUID().toString();
 
@@ -66,6 +70,12 @@ public final class TerminalSession extends TerminalOutput {
 
     /** The exit status of the shell process. Only valid if ${@link #mShellPid} is -1. */
     int mShellExitStatus;
+
+    /**
+     * SkyPython: set (under this object's lock) just before the exited process is reaped: from then
+     * on its pid may belong to another process and must not be signalled.
+     */
+    private boolean mShellReaped;
 
     /** SkyPython: set when {@link JNI#createSubprocess} failed. */
     private volatile String mStartError;
@@ -209,7 +219,15 @@ public final class TerminalSession extends TerminalOutput {
         new Thread("TermSessionWaiter[pid=" + mShellPid + "]") {
             @Override
             public void run() {
-                int processExitCode = JNI.waitFor(mShellPid);
+                // SkyPython: wait without reaping, so the pid stays ours until finishIfRunning()
+                // can no longer signal it.
+                final int pid = mShellPid;
+                JNI.awaitExit(pid);
+                int processExitCode;
+                synchronized (TerminalSession.this) {
+                    mShellReaped = true;
+                    processExitCode = JNI.waitFor(pid);
+                }
                 // SkyPython: let the reader pass on the last output first (it ends when the terminal
                 // hangs up; a background child still holding it open must not delay us long).
                 try {
@@ -281,14 +299,16 @@ public final class TerminalSession extends TerminalOutput {
         notifyScreenUpdate();
     }
 
-    /** Finish this terminal session by sending SIGKILL to the shell. */
-    public void finishIfRunning() {
-        if (isRunning()) {
-            try {
-                Os.kill(mShellPid, OsConstants.SIGKILL);
-            } catch (ErrnoException e) {
-                Logger.logWarn(mClient, LOG_TAG, "Failed sending SIGKILL: " + e.getMessage());
-            }
+    /**
+     * Finish this terminal session by sending SIGKILL to the shell.
+     * <p>
+     * SkyPython: to its whole session (background jobs included), and never once the process
+     * has been reaped (its pid may have been reused).
+     */
+    public synchronized void finishIfRunning() {
+        if (mShellPid > 0 && !mShellReaped) {
+            int error = JNI.killSession(mShellPid);
+            if (error != 0) Logger.logWarn(mClient, LOG_TAG, "Failed sending SIGKILL: errno " + error);
         }
     }
 
@@ -407,18 +427,42 @@ public final class TerminalSession extends TerminalOutput {
 
         final byte[] mReceiveBuffer = new byte[4 * 1024];
 
-        @Override
-        public void handleMessage(Message msg) {
-            // SkyPython: drain everything queued, not one buffer's worth: at exit the queue is closed.
+        /**
+         * SkyPython: passes queued output to the emulator, at most one budget's worth.
+         * @return whether the budget ran out (more output may be waiting).
+         */
+        private boolean drain() {
+            final long start = System.nanoTime();
+            int total = 0;
             int bytesRead;
-            boolean appended = false;
+            boolean more = false;
             while ((bytesRead = mProcessToTerminalIOQueue.read(mReceiveBuffer, false)) > 0) {
                 mEmulator.append(mReceiveBuffer, bytesRead);
-                appended = true;
+                total += bytesRead;
+                if (total >= MAX_BYTES_PER_MESSAGE || System.nanoTime() - start >= MAX_NANOS_PER_MESSAGE) {
+                    more = true;
+                    break;
+                }
             }
-            if (appended) notifyScreenUpdate();
+            if (total > 0) notifyScreenUpdate();
+            return more;
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            // SkyPython: a bounded amount per message, then the main thread is free for the UI; the
+            // rest comes with the next message (one is queued if the reader hasn't queued one).
+            if (msg.what == MSG_NEW_INPUT) {
+                if (drain() && !hasMessages(MSG_NEW_INPUT)) sendEmptyMessage(MSG_NEW_INPUT);
+                return;
+            }
 
             if (msg.what == MSG_PROCESS_EXITED) {
+                // The reader has ended (or has been given up on): what it queued is shown before
+                // the exit line; bounded too, in case a background program still floods.
+                for (int round = 0; round < 16 && drain(); round++) {
+                    // drain() returned true: the budget ran out, the queue may hold more.
+                }
                 int exitCode = (Integer) msg.obj;
                 cleanupResources(exitCode);
 
