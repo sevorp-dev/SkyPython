@@ -17,11 +17,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.Feedback
-import androidx.compose.material.icons.filled.Gavel
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.automirrored.outlined.Send
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.Feedback
+import androidx.compose.material.icons.outlined.Gavel
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -44,11 +44,10 @@ import androidx.compose.foundation.clickable
 import dev.skyloft.skypython.R
 import dev.skyloft.skypython.ui.theme.BrandText
 import dev.skyloft.skypython.ui.theme.BrandTextBrush
-import dev.skyloft.skypython.ui.theme.SkyBlue
+import dev.skyloft.skypython.ui.theme.OrangeSoft
 import dev.skyloft.skypython.ui.theme.IconTile
 import dev.skyloft.skypython.ui.theme.SectionLabel
 import dev.skyloft.skypython.ui.theme.Hairline
-import dev.skyloft.skypython.ui.theme.SoftViolet
 import dev.skyloft.skypython.ui.theme.TextBright
 import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.unit.sp
@@ -74,6 +73,8 @@ private val NOTICES = listOf(
     Notice("parso", 0, "MIT"),
     Notice("pyflakes", 0, "MIT"),
     Notice("typeshed", 0, "Apache-2.0"),
+    Notice("Inter", 0, "SIL Open Font License 1.1"),
+    Notice("JetBrains Mono", 0, "SIL Open Font License 1.1"),
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,9 +102,9 @@ fun AboutScreen(onBack: () -> Unit, onReport: () -> Unit = {}) {
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Image(
-                    painterResource(R.drawable.ic_launcher_foreground),
+                    painterResource(R.drawable.ic_skypython_mark),
                     contentDescription = null,
-                    modifier = Modifier.size(112.dp),
+                    modifier = Modifier.size(width = 128.dp, height = 90.dp),
                 )
                 BrandText(stringResource(R.string.app_name), fontSize = 32.sp, fontWeight = FontWeight.Bold, brush = BrandTextBrush)
                 // One Text, so a longer translation wraps instead of being cut off.
@@ -112,7 +113,7 @@ fun AboutScreen(onBack: () -> Unit, onReport: () -> Unit = {}) {
                 Text(
                     buildAnnotatedString {
                         withStyle(SpanStyle(color = TextBright)) { append(start) }
-                        withStyle(SpanStyle(color = SkyBlue, fontWeight = FontWeight.Medium)) { append(end) }
+                        withStyle(SpanStyle(color = OrangeSoft, fontWeight = FontWeight.Medium)) { append(end) }
                     },
                     fontSize = 17.sp,
                     textAlign = TextAlign.Center,
@@ -127,18 +128,18 @@ fun AboutScreen(onBack: () -> Unit, onReport: () -> Unit = {}) {
             }
             Hairline()
             SectionTitle(stringResource(R.string.about_links))
-            LinkRow(Icons.Filled.Code, stringResource(R.string.about_source_code), GITHUB_URL) { openUrl(context, GITHUB_URL) }
-            LinkRow(Icons.AutoMirrored.Filled.Send, stringResource(R.string.about_telegram), TELEGRAM_URL) { openUrl(context, TELEGRAM_URL) }
+            LinkRow(Icons.Outlined.Code, stringResource(R.string.about_source_code), GITHUB_URL) { openUrl(context, GITHUB_URL) }
+            LinkRow(Icons.AutoMirrored.Outlined.Send, stringResource(R.string.about_telegram), TELEGRAM_URL) { openUrl(context, TELEGRAM_URL) }
             ListItem(
                 modifier = Modifier.clickable(onClick = onReport),
-                leadingContent = { IconTile(Icons.Filled.Feedback, size = 40.dp) },
+                leadingContent = { IconTile(Icons.Outlined.Feedback, size = 40.dp) },
                 headlineContent = { Text(stringResource(R.string.report_problem)) },
                 supportingContent = { Text(stringResource(R.string.about_report_summary), color = MaterialTheme.colorScheme.onSurfaceVariant) },
             )
             Hairline()
             SectionTitle(stringResource(R.string.about_license))
             ListItem(
-                leadingContent = { IconTile(Icons.Filled.Gavel, size = 40.dp, tint = SoftViolet) },
+                leadingContent = { IconTile(Icons.Outlined.Gavel, size = 40.dp) },
                 headlineContent = { Text("Apache License 2.0") },
                 supportingContent = { Text(stringResource(R.string.about_license_text)) },
             )
@@ -181,7 +182,7 @@ private fun LinkRow(icon: ImageVector, title: String, url: String, onClick: () -
         leadingContent = { IconTile(icon, size = 40.dp) },
         headlineContent = { Text(title) },
         supportingContent = { Text(url, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-        trailingContent = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },
+        trailingContent = { Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null) },
     )
 }
 

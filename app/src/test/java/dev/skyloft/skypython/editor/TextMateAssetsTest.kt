@@ -54,10 +54,10 @@ class TextMateAssetsTest {
         val registry = Registry()
         registry.setTheme(IThemeSource.fromFile(File(dir, "skypython-dark.json")))
         val colors = registry.colorMap.map { it.uppercase() }
-        assertTrue(colors.toString(), "#82A8F0" in colors) // storage/def calm blue
-        assertTrue(colors.toString(), "#E2B48A" in colors) // string soft peach
+        assertTrue(colors.toString(), "#F28C38" in colors) // control keywords orange
+        assertTrue(colors.toString(), "#A8D48C" in colors) // strings soft green
         val raw = File(dir, "skypython-dark.json").readText()
-        assertTrue(raw.contains("\"editor.background\": \"#0E1424\""))
+        assertTrue(raw.contains("\"editor.background\": \"#1C2530\""))
     }
 
     @Test

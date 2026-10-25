@@ -1,6 +1,7 @@
 package dev.skyloft.skypython.ui.theme
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.draw.clip
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -54,7 +56,7 @@ fun BrandText(
 }
 
 /**
- * Round action button: solid [ElectricBlue], white icon, a normal Material shadow.
+ * Round action button: solid [Orange], dark icon, a soft Material shadow.
  * [onLongClick], if set, is offered on a long press.
  */
 @OptIn(ExperimentalFoundationApi::class)
@@ -72,8 +74,8 @@ fun BrandFab(
     // Surface(onClick) has no long press: clicks are handled by the modifier instead.
     Surface(
         shape = CircleShape,
-        color = ElectricBlue,
-        contentColor = Color.White,
+        color = Orange,
+        contentColor = OnOrange,
         shadowElevation = elevation,
         modifier = modifier
             .size(size)
@@ -86,7 +88,7 @@ fun BrandFab(
     }
 }
 
-/** The Run button: a round [BrandFab] with a white ▶; [onLongClick] opens more ways to run. */
+/** The Run button: a round [BrandFab] with a dark ▶; [onLongClick] opens more ways to run. */
 @Composable
 fun RunButton(
     onClick: () -> Unit,
@@ -99,48 +101,70 @@ fun RunButton(
     BrandFab(onClick, Icons.Filled.PlayArrow, stringResource(R.string.action_run), modifier, size, iconSize, elevation, onLongClick)
 }
 
-/** Filled buttons: solid [ElectricBlue] with white text (5.2:1); disabled stays visible. */
+/** Filled buttons: solid [Orange] with dark text (7.9:1); disabled stays visible. */
 @Composable
 fun brandButtonColors() = ButtonDefaults.buttonColors(
-    containerColor = ElectricBlue,
-    contentColor = Color.White,
-    disabledContainerColor = Color(0xFF222B42),
+    containerColor = Orange,
+    contentColor = OnOrange,
+    disabledContainerColor = SlateRaised,
     disabledContentColor = MutedText,
 )
 
-/** Icon on a flat tonal rounded square (list leading icons, drawer items). */
+/**
+ * Icon on a quiet rounded square with a hairline border (list leading icons, settings rows).
+ * Neutral by default so the orange accent stays rare; [accent] tints it for the selected row.
+ */
 @Composable
-fun IconTile(icon: ImageVector, modifier: Modifier = Modifier, size: Dp = 36.dp, tint: Color = SkyBlue) {
+fun IconTile(icon: ImageVector, modifier: Modifier = Modifier, size: Dp = 36.dp, accent: Boolean = false) {
+    val shape = RoundedCornerShape(10.dp)
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .size(size)
-            .background(tint.copy(alpha = 0.12f), RoundedCornerShape(10.dp)),
+            .background(if (accent) OrangeTint else SlatePanel, shape)
+            .border(1.dp, if (accent) Orange.copy(alpha = 0.35f) else SlateLine, shape),
     ) {
-        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.56f))
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = if (accent) OrangeSoft else TextBright.copy(alpha = 0.86f),
+            modifier = Modifier.size(size * 0.55f),
+        )
     }
 }
 
-/** Section heading of a list: small, medium-weight, in the accent's text blue. */
+/** Section heading of a list: small caps-style, letter-spaced, muted (WORKSPACE, EDITOR …). */
 @Composable
 fun SectionLabel(text: String, modifier: Modifier = Modifier) {
     Text(
-        text = text,
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Medium,
-        letterSpacing = 0.2.sp,
-        color = SkyBlue,
+        text = text.uppercase(),
+        fontSize = 12.sp,
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 1.sp,
+        color = MutedText,
         modifier = modifier,
     )
 }
 
-/** Switches: white thumb on the accent track when on, a visible outlined navy track when off. */
+/** Trailing › of a row that leads somewhere. */
+@Composable
+fun Chevron(modifier: Modifier = Modifier) {
+    Icon(
+        Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+        contentDescription = null,
+        tint = MutedText,
+        modifier = modifier.size(20.dp),
+    )
+}
+
+/** Switches: dark thumb on the orange track when on, a visible outlined slate track when off. */
 @Composable
 fun brandSwitchColors() = SwitchDefaults.colors(
-    checkedThumbColor = Color.White,
-    checkedTrackColor = ElectricBlue,
-    checkedBorderColor = ElectricBlue,
+    checkedThumbColor = OnOrange,
+    checkedTrackColor = Orange,
+    checkedBorderColor = Orange,
+    checkedIconColor = Orange,
     uncheckedThumbColor = MutedText,
-    uncheckedTrackColor = Color(0xFF222B42),
-    uncheckedBorderColor = Color(0xFF5E6985),
+    uncheckedTrackColor = SlatePanel,
+    uncheckedBorderColor = Color(0xFF5C6B7C),
 )

@@ -3,6 +3,7 @@ package dev.skyloft.skypython.settings
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.mutablePreferencesOf
+import androidx.datastore.preferences.core.stringPreferencesKey
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -67,6 +68,48 @@ class SettingsMappingTest {
         assertEquals(": (", SettingsMapping.read(prefs).symbolKeys)
         SettingsMapping.write(prefs, EditorSettings(symbolKeys = "   "))
         assertEquals(DEFAULT_SYMBOL_KEYS, SettingsMapping.read(prefs).symbolKeys)
+    }
+
+    @Test
+    fun appearanceDefaults() {
+        val d = SettingsMapping.read(emptyPreferences())
+        assertEquals(CodeFontChoice.JetBrainsMono, d.codeFont)
+        assertEquals(14, d.terminalFontSizeSp)
+        assertEquals(TerminalTheme.Dark, d.terminalTheme)
+    }
+
+    @Test
+    fun appearanceRoundTrips() {
+        val s = EditorSettings(codeFont = CodeFontChoice.SystemMono, terminalFontSizeSp = 18, terminalTheme = TerminalTheme.Black)
+        val prefs = mutablePreferencesOf()
+        SettingsMapping.write(prefs, s)
+        assertEquals(s, SettingsMapping.read(prefs))
+    }
+
+    @Test
+    fun terminalFontSizeIsClamped() {
+        val prefs = mutablePreferencesOf()
+        SettingsMapping.write(prefs, EditorSettings(terminalFontSizeSp = 99))
+        assertEquals(MAX_TERMINAL_FONT_SP, SettingsMapping.read(prefs).terminalFontSizeSp)
+        prefs[intPreferencesKey("terminal_font_size_sp")] = 1
+        assertEquals(MIN_TERMINAL_FONT_SP, SettingsMapping.read(prefs).terminalFontSizeSp)
+    }
+
+    @Test
+    fun unknownStoredChoicesFallBackToDefaults() {
+        val prefs = mutablePreferencesOf()
+        prefs[stringPreferencesKey("code_font")] = "comic_sans"
+        prefs[stringPreferencesKey("terminal_theme")] = "neon"
+        val s = SettingsMapping.read(prefs)
+        assertEquals(CodeFontChoice.JetBrainsMono, s.codeFont)
+        assertEquals(TerminalTheme.Dark, s.terminalTheme)
+    }
+
+    @Test
+    fun choiceKeysAreStable() {
+        // Stored in DataStore: renaming an enum constant must not lose the user's choice.
+        assertEquals(listOf("jetbrains_mono", "system_mono"), CodeFontChoice.entries.map { it.key })
+        assertEquals(listOf("dark", "black"), TerminalTheme.entries.map { it.key })
     }
 
     @Test

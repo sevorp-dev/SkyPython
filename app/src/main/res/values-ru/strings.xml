@@ -27,7 +27,6 @@
     <string name="title_terminal">Терминал</string>
 
     <!-- Drawer -->
-    <string name="drawer_section_run">Запуск</string>
     <string name="drawer_section_tools">Инструменты</string>
     <string name="drawer_section_settings">Настройки</string>
     <string name="drawer_line">Строка: %1$d/%2$d</string>
@@ -360,6 +359,32 @@
     <string name="settings_keyboard_suggestions">Подсказки клавиатуры</string>
     <string name="settings_keyboard_suggestions_summary">Клавиатура предлагает и исправляет слова. Если выключено, код не будет искажён.</string>
     <string name="settings_pinch_hint">Совет: масштаб в редакторе меняется щипком двумя пальцами.</string>
+    <!-- Orange theme: status line, drawer, settings, terminal, samples -->
+    <string name="editor_status_python">Python %1$s</string>
+    <string name="editor_status_cursor">Стр %1$d, стлб %2$d</string>
+    <string name="editor_keyboard_show">Показать клавиатуру</string>
+    <string name="editor_keyboard_hide">Скрыть клавиатуру</string>
+    <string name="editor_cursor_left">Курсор влево</string>
+    <string name="editor_cursor_right">Курсор вправо</string>
+    <string name="editor_close_tab">Закрыть %1$s</string>
+    <string name="editor_go_to_error">Перейти к ошибке</string>
+    <string name="editor_empty_hint">Создайте файл или откройте его из проектов, чтобы начать.</string>
+    <string name="drawer_section_workspace">Рабочая область</string>
+    <string name="drawer_projects">Проекты</string>
+    <string name="drawer_editor">Редактор</string>
+    <string name="settings_font_family">Шрифт</string>
+    <string name="settings_font_system_mono">Системный моноширинный</string>
+    <string name="settings_code_completion">Автодополнение</string>
+    <string name="settings_code_completion_summary">Подсказки при наборе и подчёркивание ошибок</string>
+    <string name="settings_section_terminal">Терминал</string>
+    <string name="settings_terminal_theme">Тема</string>
+    <string name="settings_terminal_theme_dark">Тёмная</string>
+    <string name="settings_terminal_theme_black">Чёрная</string>
+    <string name="terminal_command_hint">Введите команду…</string>
+    <string name="samples_search">Поиск примеров</string>
+    <string name="samples_search_hint">Поиск…</string>
+    <string name="samples_no_match">Нет примеров по запросу «%1$s»</string>
+    <string name="action_clear_search">Очистить поиск</string>
 
     <!-- Отчёты о проблемах -->
     <string name="report_problem">Сообщить о проблеме</string>

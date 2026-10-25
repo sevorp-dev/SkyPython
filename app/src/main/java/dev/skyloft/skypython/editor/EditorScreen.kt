@@ -1,5 +1,28 @@
 package dev.skyloft.skypython.editor
 
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.layout.onGloballyPositioned
+import dev.skyloft.skypython.ui.theme.brandButtonColors
+import dev.skyloft.skypython.ui.theme.SuccessGreen
+import dev.skyloft.skypython.ui.theme.SectionLabel
+import dev.skyloft.skypython.ui.theme.Orange
+import dev.skyloft.skypython.ui.theme.CodeFont
+import dev.skyloft.skypython.runtime.BuildConfig
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.draw.clip
+import androidx.compose.runtime.State
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Button
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.Image
+import androidx.compose.animation.animateColorAsState
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,23 +48,23 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Redo
-import androidx.compose.material.icons.automirrored.filled.Undo
-import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.automirrored.outlined.Redo
+import androidx.compose.material.icons.automirrored.outlined.Undo
+import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.SaveAs
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.NoteAdd
-import androidx.compose.material.icons.filled.EditNote
-import androidx.compose.material.icons.filled.FileOpen
-import androidx.compose.material.icons.filled.FormatListNumbered
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Save
+import androidx.compose.material.icons.outlined.SaveAs
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.NoteAdd
+import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material.icons.outlined.FileOpen
+import androidx.compose.material.icons.outlined.FormatListNumbered
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.focus.FocusRequester
@@ -90,15 +113,15 @@ import dev.skyloft.skypython.lang.DiagnosticsMapping
 import dev.skyloft.skypython.settings.EditorSettings
 import dev.skyloft.skypython.ui.drawer.DrawerAction
 import dev.skyloft.skypython.ui.drawer.SkyDrawer
-import dev.skyloft.skypython.ui.theme.BarNavy
+import dev.skyloft.skypython.ui.theme.SlateBar
 import dev.skyloft.skypython.ui.theme.BrandText
 import dev.skyloft.skypython.ui.theme.Hairline
-import dev.skyloft.skypython.ui.theme.SkyBlue
+import dev.skyloft.skypython.ui.theme.OrangeSoft
 import dev.skyloft.skypython.ui.theme.TextBright
 import dev.skyloft.skypython.ui.theme.MutedText
 import dev.skyloft.skypython.ui.theme.RunButton
 import dev.skyloft.skypython.ui.theme.skyTopBarColors
-import dev.skyloft.skypython.ui.theme.EditorBackground
+import dev.skyloft.skypython.ui.theme.Slate
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -109,9 +132,9 @@ private const val JUMP_SETTLE_MILLIS = 150L
 private val TabSelected = TextBright
 private val TabIdle = MutedText
 private val SubtitleColor = MutedText
-// Error status line: a flat, muted red band.
-private val ProblemBackground = Color(0xFF2A1A26)
-private val ProblemRed = Color(0xFFFF7A8A)
+// Error line: a flat, muted red band (warm, so it sits well beside the orange).
+private val ProblemBackground = Color(0xFF3A2629)
+private val ProblemRed = Color(0xFFFF7B72)
 private val ProblemText = Color(0xFFFFD9DE)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -260,7 +283,11 @@ fun EditorScreen(
         // Opened by ☰ only: an edge swipe would fight horizontal scrolling in the code view.
         gesturesEnabled = drawerState.isOpen,
         drawerContent = {
-            SkyDrawer(fileName = current?.name, cursor = cursor.value) { action ->
+            SkyDrawer(
+                fileName = current?.name,
+                cursor = cursor.value,
+                onClose = { scope.launch { drawerState.close() } },
+            ) { action ->
                 scope.launch { drawerState.close() }
                 controller.flushPendingText()
                 controller.hideKeyboard()
@@ -269,27 +296,52 @@ fun EditorScreen(
         },
     ) {
         Scaffold(
-            containerColor = EditorBackground,
+            containerColor = Slate,
             topBar = {
-                Column(Modifier.background(BarNavy)) {
+                Column(Modifier.background(Slate)) {
                     TopAppBar(
                         colors = skyTopBarColors(),
                         navigationIcon = {
                             IconButton(onClick = { controller.hideKeyboard(); scope.launch { drawerState.open() } }) {
-                                Icon(Icons.Filled.Menu, contentDescription = stringResource(R.string.editor_menu))
+                                Icon(Icons.Outlined.Menu, contentDescription = stringResource(R.string.editor_menu))
                             }
                         },
                         title = { EditorTitle(current, viewModel.projectsRoot) },
                         actions = {
-                            IconButton(onClick = openFiles) {
-                                Icon(Icons.Outlined.Folder, contentDescription = stringResource(R.string.title_files))
+                            if (current == null) {
+                                IconButton(onClick = openFiles) {
+                                    Icon(Icons.Outlined.Folder, contentDescription = stringResource(R.string.title_files))
+                                }
                             }
-                            IconButton(onClick = controller::undo, enabled = current != null) {
-                                Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = stringResource(R.string.editor_undo))
+                            // Run lives in the bar (always in the same place, never over the code);
+                            // hidden while the debugger panel has its own controls.
+                            if (current != null && debugPanel == null) {
+                                Box(Modifier.padding(horizontal = 4.dp)) {
+                                    // Long press: Run / Debug.
+                                    RunButton(
+                                        onClick = runCurrent,
+                                        onLongClick = { runMenuOpen = true },
+                                        size = 40.dp,
+                                        iconSize = 24.dp,
+                                        elevation = 0.dp,
+                                    )
+                                    DropdownMenu(expanded = runMenuOpen, onDismissRequest = { runMenuOpen = false }) {
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(R.string.debug_run_menu_run)) },
+                                            leadingIcon = { Icon(Icons.Filled.PlayArrow, null) },
+                                            onClick = { runMenuOpen = false; runCurrent() },
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(R.string.debug_run_menu_debug)) },
+                                            leadingIcon = { Icon(Icons.Outlined.BugReport, null) },
+                                            onClick = { runMenuOpen = false; startCurrent(onDebug) },
+                                        )
+                                    }
+                                }
                             }
                             Box {
                                 IconButton(onClick = { menuOpen = true }) {
-                                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.editor_more))
+                                    Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.editor_more))
                                 }
                                 DropdownMenu(
                                     expanded = menuOpen,
@@ -298,7 +350,7 @@ fun EditorScreen(
                                     val has = current != null
                                     fun close() { menuOpen = false; linesMenu = false }
                                     if (linesMenu) {
-                                        MenuItem(R.string.editor_menu_back, Icons.AutoMirrored.Filled.ArrowBack) { linesMenu = false }
+                                        MenuItem(R.string.editor_menu_back, Icons.AutoMirrored.Outlined.ArrowBack) { linesMenu = false }
                                         HorizontalDivider()
                                         listOf(
                                             EditAction.Comment, EditAction.Indent, EditAction.Outdent, EditAction.Duplicate,
@@ -310,27 +362,27 @@ fun EditorScreen(
                                         }
                                         return@DropdownMenu
                                     }
-                                    MenuItem(R.string.editor_redo, Icons.AutoMirrored.Filled.Redo, enabled = has) { close(); controller.redo() }
-                                    MenuItem(R.string.find_and_replace, Icons.Filled.Search, enabled = has) { close(); openFind(false) }
-                                    MenuItem(R.string.go_to_line, Icons.Filled.FormatListNumbered, enabled = has) { close(); goToLineOpen = true }
+                                    MenuItem(R.string.editor_redo, Icons.AutoMirrored.Outlined.Redo, enabled = has) { close(); controller.redo() }
+                                    MenuItem(R.string.find_and_replace, Icons.Outlined.Search, enabled = has) { close(); openFind(false) }
+                                    MenuItem(R.string.go_to_line, Icons.Outlined.FormatListNumbered, enabled = has) { close(); goToLineOpen = true }
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.editor_menu_edit)) },
-                                        leadingIcon = { Icon(Icons.Filled.EditNote, null) },
-                                        trailingIcon = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) },
+                                        leadingIcon = { Icon(Icons.Outlined.EditNote, null) },
+                                        trailingIcon = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null) },
                                         enabled = has,
                                         onClick = { linesMenu = true },
                                     )
                                     HorizontalDivider()
-                                    MenuItem(R.string.new_file, Icons.AutoMirrored.Filled.NoteAdd) { close(); newFileOpen = true }
-                                    MenuItem(R.string.open_file, Icons.Filled.FileOpen) { close(); openFiles() }
-                                    MenuItem(R.string.recent_files, Icons.Filled.History) { close(); recentOpen = true }
+                                    MenuItem(R.string.new_file, Icons.AutoMirrored.Outlined.NoteAdd) { close(); newFileOpen = true }
+                                    MenuItem(R.string.open_file, Icons.Outlined.FileOpen) { close(); openFiles() }
+                                    MenuItem(R.string.recent_files, Icons.Outlined.History) { close(); recentOpen = true }
                                     HorizontalDivider()
-                                    MenuItem(R.string.editor_save, Icons.Filled.Save, enabled = has) {
+                                    MenuItem(R.string.editor_save, Icons.Outlined.Save, enabled = has) {
                                         close()
                                         controller.flushPendingText()
                                         viewModel.saveCurrent()
                                     }
-                                    MenuItem(R.string.editor_save_as, Icons.Filled.SaveAs, enabled = has) {
+                                    MenuItem(R.string.editor_save_as, Icons.Outlined.SaveAs, enabled = has) {
                                         close()
                                         controller.flushPendingText()
                                         current?.let { saveAsLauncher.launch(it.name) }
@@ -340,7 +392,12 @@ fun EditorScreen(
                         },
                     )
                     if (current != null) {
-                        DocTabs(state, viewModel, onClose = { id -> controller.flushPendingText(); viewModel.close(id) })
+                        DocTabs(
+                            state,
+                            viewModel,
+                            onClose = { id -> controller.flushPendingText(); viewModel.close(id) },
+                            onNew = { newFileOpen = true },
+                        )
                     }
                     Hairline()
                     if (findOpen && current != null) {
@@ -363,39 +420,24 @@ fun EditorScreen(
                     }
                 }
             },
-            floatingActionButton = {
-                // With the keyboard up the FAB would sit on the lines being typed; Run moves
-                // into the symbol bar instead.
-                if (current != null && !imeVisible && debugPanel == null) {
-                    Box {
-                        // Long press: Run / Debug.
-                        RunButton(onClick = runCurrent, onLongClick = { runMenuOpen = true })
-                        DropdownMenu(expanded = runMenuOpen, onDismissRequest = { runMenuOpen = false }) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.debug_run_menu_run)) },
-                                leadingIcon = { Icon(Icons.Filled.PlayArrow, null) },
-                                onClick = { runMenuOpen = false; runCurrent() },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.debug_run_menu_debug)) },
-                                leadingIcon = { Icon(Icons.Filled.BugReport, null) },
-                                onClick = { runMenuOpen = false; startCurrent(onDebug) },
-                            )
-                        }
-                    }
-                }
-            },
             bottomBar = {
                 if (current != null) {
-                    Column(Modifier.navigationBarsPadding().imePadding()) {
+                    Column(Modifier.background(SlateBar).navigationBarsPadding().imePadding()) {
+                        Hairline()
                         DiagnosticsMapping.firstError(problems)?.let { error ->
                             ProblemLine(error, onClick = { controller.goTo(error) })
                         }
+                        StatusLine(cursor, onCursorClick = { goToLineOpen = true })
                         SymbolBar(
                             onInsert = controller::insertSymbol,
                             onAction = onEditAction,
                             keys = symbolKeys,
-                            onRun = if (imeVisible) runCurrent else null,
+                            keyboardVisible = imeVisible,
+                            onToggleKeyboard = { if (imeVisible) controller.hideKeyboard() else controller.showKeyboard() },
+                            onCursorLeft = controller::cursorLeft,
+                            onCursorRight = controller::cursorRight,
+                            // With the keyboard up the top bar is far from the thumb: a second ▶ here.
+                            onRun = if (imeVisible && debugPanel == null) runCurrent else null,
                         )
                     }
                 }
@@ -446,8 +488,8 @@ private fun EditorTitle(doc: OpenDocument?, projectsRoot: File) {
     Column {
         Text(
             doc.name,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.SemiBold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -458,7 +500,7 @@ private fun EditorTitle(doc: OpenDocument?, projectsRoot: File) {
                 projectsLabel = stringResource(R.string.projects_label),
                 externalLabel = stringResource(R.string.editor_external_document),
             ),
-            fontSize = 13.sp,
+            fontSize = 12.sp,
             color = SubtitleColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -466,70 +508,145 @@ private fun EditorTitle(doc: OpenDocument?, projectsRoot: File) {
     }
 }
 
-/** Compact text-only tab strip; long-press a tab to close it. */
+/**
+ * Tab strip: one chip per open doc with its own ✕ (long press still offers Close), and a + that
+ * creates a new file. The current tab sits on a raised slate chip with an orange underline.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel, onClose: (String) -> Unit) {
+private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel, onClose: (String) -> Unit, onNew: () -> Unit) {
+    val scroll = rememberScrollState()
+    // Where each tab starts in the strip, so a newly selected tab scrolls into view.
+    val tabX = remember { mutableMapOf<String, Int>() }
+    LaunchedEffect(state.currentId) {
+        tabX[state.currentId]?.let { x -> scroll.animateScrollTo((x - 48).coerceAtLeast(0)) }
+    }
     Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).height(40.dp),
+        Modifier.fillMaxWidth().background(SlateBar).height(44.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        state.docs.forEach { doc ->
-            var menu by remember(doc.id) { mutableStateOf(false) }
-            val selected = doc.id == state.currentId
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .height(40.dp)
-                    .combinedClickable(
-                        onClick = { viewModel.select(doc.id) },
-                        onLongClick = { menu = true },
-                    )
-                    .padding(horizontal = 14.dp),
-            ) {
-                Text(
-                    tabTitle(viewModel.labelFor(doc, state.docs), doc.dirty),
-                    color = if (selected) TabSelected else TabIdle,
-                    fontSize = 14.sp,
-                    fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
-                    maxLines = 1,
-                )
-                // A thin marker, so the current tab is clear even with many similar names.
-                if (selected && state.docs.size > 1) {
-                    // matchParentSize, not fillMaxWidth: the strip scrolls, so max width is unbounded.
-                    Box(Modifier.matchParentSize(), contentAlignment = Alignment.BottomCenter) {
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(2.dp)
-                                .background(SkyBlue, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)),
+        Row(
+            Modifier.weight(1f, fill = false).horizontalScroll(scroll).padding(start = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            state.docs.forEach { doc ->
+                var menu by remember(doc.id) { mutableStateOf(false) }
+                val selected = doc.id == state.currentId
+                val label = viewModel.labelFor(doc, state.docs)
+                val chip by animateColorAsState(if (selected) Slate else Color.Transparent, label = "tab")
+                Box(
+                    Modifier
+                        .onGloballyPositioned { tabX[doc.id] = it.positionInParent().x.toInt() }
+                        .padding(top = 6.dp)
+                        .height(38.dp)
+                        .clip(RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp))
+                        .background(chip)
+                        .combinedClickable(
+                            onClick = { viewModel.select(doc.id) },
+                            onLongClick = { menu = true },
+                        ),
+                ) {
+                    Row(
+                        Modifier.fillMaxHeight().padding(start = 14.dp, end = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            tabTitle(label, doc.dirty),
+                            color = if (selected) TabSelected else TabIdle,
+                            fontSize = 14.sp,
+                            fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
+                            maxLines = 1,
                         )
+                        val closeLabel = stringResource(R.string.editor_close_tab, label)
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .padding(start = 2.dp)
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .clickable(role = Role.Button, onClickLabel = closeLabel) { onClose(doc.id) }
+                                .semantics { contentDescription = closeLabel },
+                        ) {
+                            Icon(
+                                Icons.Outlined.Close,
+                                contentDescription = null,
+                                tint = if (selected) MutedText else MutedText.copy(alpha = 0.7f),
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                    }
+                    if (selected) {
+                        // matchParentSize, not fillMaxWidth: the strip scrolls, so max width is unbounded.
+                        Box(Modifier.matchParentSize(), contentAlignment = Alignment.BottomCenter) {
+                            Box(
+                                Modifier
+                                    .padding(horizontal = 10.dp)
+                                    .fillMaxWidth()
+                                    .height(2.dp)
+                                    .background(Orange, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)),
+                            )
+                        }
+                    }
+                    DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                        DropdownMenuItem(text = { Text(stringResource(R.string.action_close)) }, onClick = {
+                            menu = false
+                            onClose(doc.id)
+                        })
                     }
                 }
-                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                    DropdownMenuItem(text = { Text(stringResource(R.string.action_close)) }, onClick = {
-                        menu = false
-                        onClose(doc.id)
-                    })
-                }
             }
+        }
+        IconButton(onClick = onNew) {
+            Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.new_file), tint = MutedText)
         }
     }
 }
 
-/** One thin line above the symbol bar: the first error. Tap: jump there and show it. */
+/**
+ * The quiet line between code and keys: interpreter version on the left, the cursor on the
+ * right (tap it: Go to line). Reads [cursor] itself, so moving the cursor recomposes only this.
+ */
+@Composable
+private fun StatusLine(cursor: State<CursorPosition>, onCursorClick: () -> Unit) {
+    val format = stringResource(R.string.editor_status_cursor)
+    Row(
+        Modifier.fillMaxWidth().height(28.dp).padding(start = 14.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(6.dp).background(SuccessGreen, CircleShape))
+        Text(
+            stringResource(R.string.editor_status_python, BuildConfig.PYTHON_SHORT_VERSION),
+            color = MutedText,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(start = 8.dp).weight(1f),
+        )
+        Text(
+            cursorLabel(cursor.value, format),
+            color = MutedText,
+            fontSize = 12.sp,
+            fontFamily = CodeFont,
+            maxLines = 1,
+            modifier = Modifier
+                .clip(RoundedCornerShape(6.dp))
+                .clickable(onClick = onCursorClick)
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+        )
+    }
+}
+
+/** One thin line above the status line: the first error. Tap: jump there and show it. */
 @Composable
 private fun ProblemLine(error: Diagnostic, onClick: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
             .background(ProblemBackground)
-            .clickable(onClickLabel = "Go to error", onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 5.dp),
+            .clickable(onClickLabel = stringResource(R.string.editor_go_to_error), onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            Icons.Filled.ErrorOutline,
+            Icons.Outlined.ErrorOutline,
             contentDescription = null,
             tint = ProblemRed,
             modifier = Modifier.size(16.dp),
@@ -545,6 +662,7 @@ private fun ProblemLine(error: Diagnostic, onClick: () -> Unit) {
     }
 }
 
+/** Nothing open: a calm welcome with the two ways in, and the recent files under them. */
 @Composable
 private fun EmptyEditor(
     onOpenFiles: () -> Unit,
@@ -554,21 +672,41 @@ private fun EmptyEditor(
     onOpenRecent: (String) -> Unit,
 ) {
     Column(
-        Modifier.fillMaxSize().padding(24.dp),
+        Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 32.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringResource(R.string.editor_no_open_files), style = MaterialTheme.typography.titleMedium)
-        Row {
-            TextButton(onClick = onNewFile) { Text(stringResource(R.string.new_file)) }
-            TextButton(onClick = onOpenFiles) { Text(stringResource(R.string.editor_open_files)) }
+        Image(
+            painterResource(R.drawable.ic_skypython_mark),
+            contentDescription = null,
+            modifier = Modifier.size(width = 96.dp, height = 67.dp),
+        )
+        Text(
+            stringResource(R.string.editor_no_open_files),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+        Text(
+            stringResource(R.string.editor_empty_hint),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MutedText,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 6.dp, bottom = 20.dp),
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Button(onClick = onNewFile, colors = brandButtonColors()) {
+                Icon(Icons.AutoMirrored.Outlined.NoteAdd, null, Modifier.size(18.dp))
+                Text(stringResource(R.string.files_new_file), Modifier.padding(start = 8.dp))
+            }
+            OutlinedButton(onClick = onOpenFiles) {
+                Icon(Icons.Outlined.Folder, null, Modifier.size(18.dp))
+                Text(stringResource(R.string.editor_open_files), Modifier.padding(start = 8.dp))
+            }
         }
         if (recent.isNotEmpty()) {
-            Text(
+            SectionLabel(
                 stringResource(R.string.recent_files),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 24.dp, bottom = 4.dp),
+                Modifier.fillMaxWidth().padding(top = 32.dp, bottom = 4.dp),
             )
             RecentFilesList(recent, projectsRoot, onOpenRecent, Modifier.fillMaxWidth())
         }
@@ -586,4 +724,4 @@ private fun MenuItem(label: Int, icon: ImageVector, enabled: Boolean = true, onC
 }
 
 /** Menu icon for a line command (the bar shows `#` as text for Comment). */
-private fun EditAction.menuIcon(): ImageVector = icon ?: Icons.Filled.EditNote
+private fun EditAction.menuIcon(): ImageVector = icon ?: Icons.Outlined.EditNote

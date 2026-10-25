@@ -60,9 +60,9 @@ Full details for every version: [CHANGELOG.md](CHANGELOG.md).
 | 📦 **Pip** | Install, list and remove pure-Python packages from PyPI (`requests`, `rich`, `six`, …). |
 | 📁 **Files** | Projects folder with create / rename / delete; open and save files from other apps. |
 | 🎓 **Samples** | Ready-to-run examples: input, loops, functions, classes, files, JSON, a small game. |
-| ⚙️ **Settings** | Font size, word wrap, line numbers, keep screen on, code completion. |
+| ⚙️ **Settings** | Font size and font, word wrap, line numbers, keep screen on, code completion; terminal size and theme. |
 | 🔗 **Share** | Send the current script to any app. |
-| 🌙 **Calm dark theme** | Flat deep navy with one blue accent, no glare — easy on the eyes, day and night. |
+| 🌙 **Modern dark theme** | Slate surfaces with one warm orange accent, Inter for the interface and JetBrains Mono for code. |
 
 Everything works **offline** except installing packages with pip.
 
@@ -219,7 +219,8 @@ Developed by **[Sevorp](https://github.com/sevorp-dev)** · **SkyLoft Studio �
 SkyPython is licensed under the [Apache License 2.0](LICENSE).
 
 It bundles: **CPython** (PSF License), **Sora Editor** (LGPL-2.1), **MagicPython grammar** and
-**VS Code theme data** (MIT) — see [`NOTICE.md`](app/src/main/assets/textmate/NOTICE.md).
+**VS Code theme data** (MIT) — see [`NOTICE.md`](app/src/main/assets/textmate/NOTICE.md) — and the
+**Inter** and **JetBrains Mono** fonts (SIL Open Font License 1.1, see [`NOTICE`](NOTICE)).
 SkyPython is an independent project and is not affiliated with the Python Software Foundation.
 
 ---

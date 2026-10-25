@@ -2,6 +2,7 @@ package dev.skyloft.skypython.editor
 
 import dev.skyloft.skypython.lang.Diagnostic
 import dev.skyloft.skypython.lang.Severity
+import dev.skyloft.skypython.settings.CodeFontChoice
 import dev.skyloft.skypython.settings.EditorSettings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -78,5 +79,18 @@ class EditorChromeTest {
         val keys = SYMBOL_KEYS.associate { it.label to it.text }
         assertEquals("    ", keys["Tab"])
         SYMBOL_KEYS.drop(1).forEach { assertEquals(it.label, it.text) }
+    }
+
+    @Test
+    fun statusLineShowsOneBasedCursor() {
+        assertEquals("Ln 1, Col 1", cursorLabel(CursorPosition()))
+        assertEquals("Ln 3, Col 26", cursorLabel(CursorPosition(line = 2, column = 25, lineCount = 9)))
+        assertEquals("Стр 3, стлб 26", cursorLabel(CursorPosition(line = 2, column = 25), "Стр %1\$d, стлб %2\$d"))
+    }
+
+    @Test
+    fun codeFontComesFromSettings() {
+        assertEquals(CodeFontChoice.JetBrainsMono, EditorViewConfig.from(EditorSettings()).codeFont)
+        assertEquals(CodeFontChoice.SystemMono, EditorViewConfig.from(EditorSettings(codeFont = CodeFontChoice.SystemMono)).codeFont)
     }
 }

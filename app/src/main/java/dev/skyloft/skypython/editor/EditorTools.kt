@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.editor
 
+import dev.skyloft.skypython.ui.theme.CodeFont
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,11 +19,11 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.FindReplace
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.FindReplace
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -65,7 +66,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.skyloft.skypython.R
-import dev.skyloft.skypython.ui.theme.BarNavy
+import dev.skyloft.skypython.ui.theme.SlateBar
 import kotlinx.coroutines.delay
 import java.io.File
 
@@ -127,7 +128,7 @@ fun FindBar(
     }
 
     val colors = MaterialTheme.colorScheme
-    Column(modifier.fillMaxWidth().background(BarNavy).padding(horizontal = 8.dp, vertical = 4.dp)) {
+    Column(modifier.fillMaxWidth().background(SlateBar).padding(horizontal = 8.dp, vertical = 4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             CompactField(
                 value = text,
@@ -150,20 +151,20 @@ fun FindBar(
                 modifier = Modifier.widthIn(min = 44.dp).padding(horizontal = 6.dp),
             )
             IconButton(onClick = controller::findPrevious, enabled = count > 0) {
-                Icon(Icons.Filled.KeyboardArrowUp, stringResource(R.string.find_previous))
+                Icon(Icons.Outlined.KeyboardArrowUp, stringResource(R.string.find_previous))
             }
             IconButton(onClick = controller::findNext, enabled = count > 0) {
-                Icon(Icons.Filled.KeyboardArrowDown, stringResource(R.string.find_next))
+                Icon(Icons.Outlined.KeyboardArrowDown, stringResource(R.string.find_next))
             }
             IconToggleButton(checked = showReplace, onCheckedChange = { onToggleReplace() }) {
                 Icon(
-                    Icons.Filled.FindReplace,
+                    Icons.Outlined.FindReplace,
                     stringResource(R.string.find_toggle_replace),
                     tint = if (showReplace) colors.primary else colors.onSurfaceVariant,
                 )
             }
             IconButton(onClick = onClose) {
-                Icon(Icons.Filled.Close, stringResource(R.string.find_close))
+                Icon(Icons.Outlined.Close, stringResource(R.string.find_close))
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -218,7 +219,7 @@ private fun CompactField(
         value = value,
         onValueChange = onValueChange,
         singleLine = true,
-        textStyle = TextStyle(color = colors.onSurface, fontFamily = FontFamily.Monospace, fontSize = 15.sp),
+        textStyle = TextStyle(color = colors.onSurface, fontFamily = CodeFont, fontSize = 15.sp),
         cursorBrush = SolidColor(colors.primary),
         keyboardOptions = CodeKeyboard.copy(imeAction = imeAction),
         keyboardActions = KeyboardActions(onAny = { onIme() }),
@@ -258,7 +259,7 @@ private fun OptionToggle(label: String, description: String, checked: Boolean, o
     ) {
         Text(
             label,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = CodeFont,
             fontSize = 14.sp,
             color = if (checked) colors.primary else colors.onSurfaceVariant,
         )
@@ -355,7 +356,7 @@ fun RecentFilesList(paths: List<String>, projectsRoot: File, onOpen: (String) ->
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    Icons.Filled.Description,
+                    Icons.Outlined.Description,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp),

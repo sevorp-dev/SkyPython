@@ -191,6 +191,14 @@ class TerminalViewModel(
         write(TerminalKeys.CTRL_C)
     }
 
+    /** True for the Python interpreter (it gets a command line under the terminal). */
+    val isInterpreter: Boolean get() = kind == TerminalKind.Interpreter
+
+    /** A line typed in the command field: sent as if typed, then Enter. */
+    fun sendLine(text: String) {
+        write(text + "\r")
+    }
+
     /** A key from the key row. */
     fun onExtraKey(key: ExtraKey) {
         if (key.isModifier) {
@@ -330,7 +338,7 @@ class TerminalViewModel(
         view?.onScreenUpdated()
         _state.update { it.copy(hasOutput = false) }
         postScreenText()
-        if (kind != TerminalKind.Run && session.isRunning) write("\u000c")
+        if (kind != TerminalKind.Run && session.isRunning) write(TerminalKeys.CTRL_L)
     }
 
     fun scrollToTop() {
@@ -341,6 +349,15 @@ class TerminalViewModel(
         view?.scrollToBottom()
     }
 
+    /** Text size from Settings → Terminal (sp, kept in the terminal's range). */
+    fun setFontSize(sp: Int) {
+        val v = sp.toFloat().coerceIn(TerminalState.MIN_FONT_SP, TerminalState.MAX_FONT_SP)
+        _state.update { if (it.fontSp == v) it else it.copy(fontSp = v) }
+    }
+
+    /** Told the new size (sp) when the user zooms, so it can be kept in Settings. */
+    var onUserZoom: ((Int) -> Unit)? = null
+
     /** Text size one step bigger or smaller (the overflow menu, pinch). */
     fun zoom(bigger: Boolean) {
         _state.update {
@@ -348,6 +365,7 @@ class TerminalViewModel(
                 .coerceIn(TerminalState.MIN_FONT_SP, TerminalState.MAX_FONT_SP)
             it.copy(fontSp = sp)
         }
+        onUserZoom?.invoke(_state.value.fontSp.toInt())
     }
 
     /**

@@ -1,5 +1,7 @@
 package dev.skyloft.skypython.debug
 
+import dev.skyloft.skypython.ui.theme.CodeFont
+import dev.skyloft.skypython.ui.theme.SlateBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,19 +23,19 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Redo
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.automirrored.outlined.Redo
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.ArrowDownward
+import androidx.compose.material.icons.outlined.ArrowUpward
+import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -109,7 +111,7 @@ fun DebugPanel(
     var tab by rememberSaveable { mutableIntStateOf(DebugTab.Variables.ordinal) }
     val colors = MaterialTheme.colorScheme
     Surface(
-        color = colors.surfaceContainer,
+        color = SlateBar,
         contentColor = colors.onSurface,
         modifier = modifier.fillMaxWidth().testTag(DebugTags.PANEL),
     ) {
@@ -125,7 +127,7 @@ fun DebugPanel(
                 PrimaryScrollableTabRow(
                     selectedTabIndex = tab,
                     edgePadding = 0.dp,
-                    containerColor = colors.surfaceContainer,
+                    containerColor = SlateBar,
                     contentColor = colors.primary,
                 ) {
                     DebugTab.entries.forEach { t ->
@@ -165,28 +167,28 @@ private fun Controls(
     val colors = MaterialTheme.colorScheme
     Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
         if (state.phase == DebugPhase.Running) {
-            ControlButton(Icons.Filled.Pause, R.string.debug_pause, enabled = true, onClick = onPause)
+            ControlButton(Icons.Outlined.Pause, R.string.debug_pause, enabled = true, onClick = onPause)
         } else {
             ControlButton(Icons.Filled.PlayArrow, R.string.debug_continue, enabled = paused) { onStep(Step.Continue) }
         }
-        ControlButton(Icons.AutoMirrored.Filled.Redo, R.string.debug_step_over, enabled = paused) { onStep(Step.Over) }
-        ControlButton(Icons.Filled.ArrowDownward, R.string.debug_step_into, enabled = paused) { onStep(Step.Into) }
-        ControlButton(Icons.Filled.ArrowUpward, R.string.debug_step_out, enabled = paused) { onStep(Step.Out) }
+        ControlButton(Icons.AutoMirrored.Outlined.Redo, R.string.debug_step_over, enabled = paused) { onStep(Step.Over) }
+        ControlButton(Icons.Outlined.ArrowDownward, R.string.debug_step_into, enabled = paused) { onStep(Step.Into) }
+        ControlButton(Icons.Outlined.ArrowUpward, R.string.debug_step_out, enabled = paused) { onStep(Step.Out) }
         if (state.isLive) {
             IconButton(onClick = onStop) {
-                Icon(Icons.Filled.Stop, contentDescription = stringResource(R.string.action_stop), tint = colors.error)
+                Icon(Icons.Outlined.Stop, contentDescription = stringResource(R.string.action_stop), tint = colors.error)
             }
         }
         Spacer(Modifier.weight(1f))
         IconButton(onClick = onToggleExpanded) {
             Icon(
-                if (expanded) Icons.Filled.ExpandMore else Icons.Filled.ExpandLess,
+                if (expanded) Icons.Outlined.ExpandMore else Icons.Outlined.ExpandLess,
                 contentDescription = stringResource(if (expanded) R.string.debug_collapse else R.string.debug_expand),
             )
         }
         if (!state.isLive) {
             IconButton(onClick = onClose) {
-                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.debug_close))
+                Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.debug_close))
             }
         }
     }
@@ -227,9 +229,9 @@ private fun StatusLine(state: DebugState) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            Icons.Filled.BugReport,
+            Icons.Outlined.BugReport,
             contentDescription = null,
-            tint = if (isError) colors.error else colors.secondary,
+            tint = if (isError) colors.error else colors.primary,
             modifier = Modifier.size(16.dp),
         )
         Text(
@@ -293,7 +295,7 @@ private fun SectionHeader(title: String) {
     Text(
         title.uppercase(),
         style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.secondary,
+        color = MaterialTheme.colorScheme.primary,
         letterSpacing = 1.2.sp,
         modifier = Modifier.fillMaxWidth().padding(start = 12.dp, top = 10.dp, bottom = 4.dp),
     )
@@ -335,7 +337,7 @@ private fun VariableRow(v: Variable, depth: Int, expanded: Boolean, onToggle: (I
         Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
             if (v.ref > 0) {
                 Icon(
-                    if (expanded) Icons.Filled.KeyboardArrowDown else Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    if (expanded) Icons.Outlined.KeyboardArrowDown else Icons.AutoMirrored.Outlined.KeyboardArrowRight,
                     contentDescription = null,
                     tint = colors.onSurfaceVariant,
                     modifier = Modifier.size(18.dp),
@@ -343,7 +345,7 @@ private fun VariableRow(v: Variable, depth: Int, expanded: Boolean, onToggle: (I
             }
         }
         Spacer(Modifier.width(4.dp))
-        val code = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace)
+        val code = MaterialTheme.typography.bodyMedium.copy(fontFamily = CodeFont)
         if (v.name.isNotEmpty()) {
             Text(v.name, style = code, color = colors.primary, fontWeight = FontWeight.Medium, maxLines = 1)
             Text(" = ", style = code, color = colors.onSurfaceVariant)
@@ -403,7 +405,7 @@ private fun WatchRow(expression: String, result: EvalResult?, state: DebugState,
                 VariableRow(shown, 0, expanded = shown.ref in state.expanded, onToggle, error = result is EvalResult.Error)
             }
             IconButton(onClick = onRemove) {
-                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.debug_watch_remove), tint = colors.onSurfaceVariant)
+                Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.debug_watch_remove), tint = colors.onSurfaceVariant)
             }
         }
         val ref = (result as? EvalResult.Value)?.variable?.ref ?: 0
@@ -447,7 +449,7 @@ private fun AddWatchRow(onAdd: (String) -> Unit) {
             onValueChange = { text = it },
             placeholder = { Text(stringResource(R.string.debug_watch_hint), maxLines = 1) },
             singleLine = true,
-            textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+            textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = CodeFont),
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.None,
                 autoCorrectEnabled = false,
@@ -458,7 +460,7 @@ private fun AddWatchRow(onAdd: (String) -> Unit) {
             modifier = Modifier.weight(1f),
         )
         IconButton(onClick = add, enabled = text.isNotBlank()) {
-            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.debug_watch_add))
+            Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.debug_watch_add))
         }
     }
 }
@@ -477,13 +479,13 @@ private fun StackTab(state: DebugState, onSelect: (Int) -> Unit) {
             Column(
                 Modifier
                     .fillMaxWidth()
-                    .background(if (selected) colors.secondaryContainer else colors.surfaceContainer)
+                    .background(if (selected) colors.primaryContainer else colors.surfaceContainer)
                     .clickable(role = Role.Button) { onSelect(frame.id) }
                     .padding(horizontal = 12.dp, vertical = 8.dp),
             ) {
                 Text(
                     frame.name,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontFamily = CodeFont),
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                     color = if (frame.user) colors.onSurface else colors.onSurfaceVariant,
                     maxLines = 1,

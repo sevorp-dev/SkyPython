@@ -32,7 +32,6 @@
     <string name="title_terminal">Terminal</string>
 
     <!-- Drawer -->
-    <string name="drawer_section_run">Run</string>
     <string name="drawer_section_tools">Tools</string>
     <string name="drawer_section_settings">Settings</string>
     <string name="drawer_line">Line: %1$d/%2$d</string>
@@ -370,6 +369,33 @@
     <string name="settings_keyboard_suggestions">Keyboard suggestions</string>
     <string name="settings_keyboard_suggestions_summary">Let the keyboard suggest and autocorrect words. Off keeps code from being changed.</string>
     <string name="settings_pinch_hint">Tip: pinch the editor with two fingers to zoom.</string>
+    <!-- Orange theme: status line, drawer, settings, terminal, samples -->
+    <string name="editor_status_python">Python %1$s</string>
+    <string name="editor_status_cursor">Ln %1$d, Col %2$d</string>
+    <string name="editor_keyboard_show">Show keyboard</string>
+    <string name="editor_keyboard_hide">Hide keyboard</string>
+    <string name="editor_cursor_left">Cursor left</string>
+    <string name="editor_cursor_right">Cursor right</string>
+    <string name="editor_close_tab">Close %1$s</string>
+    <string name="editor_go_to_error">Go to error</string>
+    <string name="editor_empty_hint">Create a file or open one from your projects to start coding.</string>
+    <string name="drawer_section_workspace">Workspace</string>
+    <string name="drawer_projects">Projects</string>
+    <string name="drawer_editor">Editor</string>
+    <string name="settings_font_family">Font family</string>
+    <string name="settings_font_jetbrains_mono" translatable="false">JetBrains Mono</string>
+    <string name="settings_font_system_mono">System monospace</string>
+    <string name="settings_code_completion">Code completion</string>
+    <string name="settings_code_completion_summary">Suggestions while typing and error underlines</string>
+    <string name="settings_section_terminal">Terminal</string>
+    <string name="settings_terminal_theme">Theme</string>
+    <string name="settings_terminal_theme_dark">Dark</string>
+    <string name="settings_terminal_theme_black">Black</string>
+    <string name="terminal_command_hint">Type a command…</string>
+    <string name="samples_search">Search samples</string>
+    <string name="samples_search_hint">Search…</string>
+    <string name="samples_no_match">No samples match “%1$s”</string>
+    <string name="action_clear_search">Clear search</string>
 
     <!-- Problem reports -->
     <string name="report_problem">Report a problem</string>
