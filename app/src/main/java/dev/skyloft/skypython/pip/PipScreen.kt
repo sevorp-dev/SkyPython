@@ -78,6 +78,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -685,7 +688,11 @@ private fun DetailLine(text: String) {
 
 @Composable
 private fun RequirementsTab(state: PipState, viewModel: PipViewModel, currentFile: File?, projectsRoot: File?) {
-    val openFile = remember(currentFile) { currentFile?.takeIf { RequirementsFiles.isCandidate(it) } }
+    // isCandidate reads the disk: not on the main thread.
+    val openFileState = produceState<File?>(null, currentFile) {
+        value = withContext(Dispatchers.IO) { currentFile?.takeIf { RequirementsFiles.isCandidate(it) } }
+    }
+    val openFile = openFileState.value
     Column(Modifier.fillMaxSize()) {
         if (state.scanningFiles) LinearProgressIndicator(Modifier.fillMaxWidth())
         LazyColumn(Modifier.fillMaxSize()) {

@@ -161,7 +161,8 @@ class RunTerminalDeviceTest {
         // `File ".../boom.py", line 2, in f` opens boom.py at line 2.
         val frameRow = vm.rowOf("line 2, in f")
         assertTrue(onMain { vm.openTracebackAt(frameRow) })
-        val event = onMain { vm.events.value.last() } as TerminalEvent.OpenInEditor
+        // The file is looked up off the main thread; the event follows.
+        val event = waitFor("the open event") { vm.events.value.lastOrNull() as? TerminalEvent.OpenInEditor }
         assertEquals(File(dir, "boom.py").canonicalFile, event.file)
         assertEquals(2, event.line)
         // The "Traceback (most recent call last):" line is not a place in a file.

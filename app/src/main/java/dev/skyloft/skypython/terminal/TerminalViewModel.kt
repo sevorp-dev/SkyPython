@@ -373,15 +373,20 @@ class TerminalViewModel(
 
     /**
      * A tap on screen row [row] (scrollback rows are negative): if it is a traceback's
-     * `File "…", line N` for a file in the projects, asks to open it there. @return true if so.
+     * `File "…", line N`, the file is looked up off the main thread and, when it is in the
+     * projects, opened there ([TerminalEvent.OpenInEditor]). @return true if the row is such a
+     * line (the tap is taken), whether or not the file turns out to be openable.
      */
     fun openTracebackAt(row: Int): Boolean {
         val screen = _state.value.session?.emulator?.screen ?: return false
         if (row < -screen.activeTranscriptRows || row >= screen.activeRows - screen.activeTranscriptRows) return false
         val location = Tracebacks.parse(Transcript.logicalLine(screen, row)) ?: return false
         val cwd = _state.value.script?.absoluteFile?.parentFile ?: projectsRoot
-        val file = Tracebacks.resolve(location, cwd, projectsRoot) ?: return false
-        emit(TerminalEvent.OpenInEditor(file, location.line))
+        viewModelScope.launch {
+            // Canonical paths and isFile read the disk.
+            val file = withContext(Dispatchers.IO) { Tracebacks.resolve(location, cwd, projectsRoot) } ?: return@launch
+            emit(TerminalEvent.OpenInEditor(file, location.line))
+        }
         return true
     }
 
