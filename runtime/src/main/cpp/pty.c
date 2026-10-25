@@ -3,7 +3,6 @@
 // terminal-emulator library (see NOTICE): open a PTY master, fork, make the slave the
 // child's controlling terminal and stdio, exec.
 #define _GNU_SOURCE
-#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <jni.h>
@@ -12,7 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#include <sys/syscall.h>
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
@@ -70,24 +68,25 @@ static void set_size(int fd, jint rows, jint cols, jint cell_w, jint cell_h) {
     ioctl(fd, TIOCSWINSZ, &sz);
 }
 
-/** Closes every descriptor above 2 (the app's binder, sockets, files: not for the child). */
-static void close_other_fds(void) {
-#ifdef __NR_close_range
-    if (syscall(__NR_close_range, 3, ~0U, 0) == 0) return; // Linux 5.9+
-#endif
-    DIR *dir = opendir("/proc/self/fd");
-    if (dir == NULL) return;
-    int dir_fd = dirfd(dir);
-    struct dirent *e;
-    while ((e = readdir(dir)) != NULL) {
-        int fd = atoi(e->d_name);
-        if (fd > 2 && fd != dir_fd) close(fd);
-    }
-    closedir(dir);
+/**
+ * Closes every descriptor from 3 to [max_fd] (the app's binder, sockets, files: not for the
+ * child). A plain close() loop: close_range(2) is outside the app seccomp allow-list of
+ * Android 8–13, which kills the process with SIGSYS, and opendir/readdir allocate, which is not
+ * async-signal-safe after fork() in a multi-threaded process.
+ */
+static void close_other_fds(int max_fd) {
+    for (int fd = 3; fd < max_fd; ++fd) close(fd);
+}
+
+/** write(2) of a constant message (no allocation after fork). */
+static void say(const char *s) {
+    ssize_t ignored = write(2, s, strlen(s));
+    (void) ignored;
 }
 
 /** In the child: never returns. Errors before exec go to the terminal, then exit 127. */
-static void exec_child(const char *pts_name, const char *cmd, const char *cwd, char **argv, char **envp) {
+static void exec_child(const char *pts_name, const char *cmd, const char *cwd, char **argv, char **envp,
+                       int max_fd) {
     // The app process blocks and ignores signals (ART ignores SIGPIPE, for one); a terminal
     // program expects the defaults. Handlers are reset by exec, ignored signals are not.
     sigset_t none;
@@ -105,13 +104,17 @@ static void exec_child(const char *pts_name, const char *cmd, const char *cwd, c
     dup2(pts, 1);
     dup2(pts, 2);
     if (pts > 2) close(pts);
-    close_other_fds();
+    close_other_fds(max_fd);
 
     if (chdir(cwd) != 0) {
-        dprintf(2, "cd %s: %s\r\n", cwd, strerror(errno));
+        say("Cannot change to the directory ");
+        say(cwd);
+        say("\r\n");
     }
     execve(cmd, argv, envp);
-    dprintf(2, "Cannot run %s: %s\r\n", cmd, strerror(errno));
+    say("Cannot run ");
+    say(cmd);
+    say("\r\n");
     _exit(127);
 }
 
@@ -131,12 +134,26 @@ JNIEXPORT jint JNICALL Java_dev_skyloft_skypython_runtime_Pty_createSubprocess(
         free_strings(argv);
         return -1;
     }
+    char *cmd = NULL;
+    char *cwd = NULL;
     const char *cmd_utf = (*env)->GetStringUTFChars(env, jcmd, NULL);
-    const char *cwd_utf = (*env)->GetStringUTFChars(env, jcwd, NULL);
-    char *cmd = cmd_utf ? strdup(cmd_utf) : NULL;
-    char *cwd = cwd_utf ? strdup(cwd_utf) : NULL;
-    if (cmd_utf) (*env)->ReleaseStringUTFChars(env, jcmd, cmd_utf);
-    if (cwd_utf) (*env)->ReleaseStringUTFChars(env, jcwd, cwd_utf);
+    if (cmd_utf != NULL) {
+        cmd = strdup(cmd_utf);
+        (*env)->ReleaseStringUTFChars(env, jcmd, cmd_utf);
+        const char *cwd_utf = (*env)->GetStringUTFChars(env, jcwd, NULL);
+        if (cwd_utf != NULL) {
+            cwd = strdup(cwd_utf);
+            (*env)->ReleaseStringUTFChars(env, jcwd, cwd_utf);
+        }
+    }
+    if ((*env)->ExceptionCheck(env)) {
+        // GetStringUTFChars failed and threw (OutOfMemoryError): no other JNI call now.
+        free(cmd);
+        free(cwd);
+        free_strings(argv);
+        free_strings(envp);
+        return -1;
+    }
     if (argv[0] == NULL && cmd != NULL) {
         // execve needs argv[0]; default to the command itself.
         free(argv);
@@ -178,13 +195,17 @@ JNIEXPORT jint JNICALL Java_dev_skyloft_skypython_runtime_Pty_createSubprocess(
     }
     set_size(ptm, rows, cols, cell_w, cell_h);
 
+    // The descriptor limit is read before fork(): sysconf is not async-signal-safe.
+    long open_max = sysconf(_SC_OPEN_MAX);
+    int max_fd = open_max > 3 && open_max < 65536 ? (int) open_max : 65536;
+
     pid = fork();
     if (pid < 0) {
         err = errno;
         what = "fork";
         goto done;
     }
-    if (pid == 0) exec_child(pts_name, cmd, cwd, argv, envp);
+    if (pid == 0) exec_child(pts_name, cmd, cwd, argv, envp, max_fd);
 
     jint out = (jint) pid;
     (*env)->SetIntArrayRegion(env, jpid, 0, 1, &out);
@@ -216,6 +237,14 @@ JNIEXPORT jint JNICALL Java_dev_skyloft_skypython_runtime_Pty_waitFor(
     if (WIFEXITED(status)) return WEXITSTATUS(status);
     if (WIFSIGNALED(status)) return -WTERMSIG(status);
     return 0;
+}
+
+JNIEXPORT void JNICALL Java_dev_skyloft_skypython_runtime_Pty_awaitExit(
+        JNIEnv UNUSED *env, jclass UNUSED clazz, jint pid) {
+    siginfo_t info;
+    while (waitid(P_PID, (id_t) pid, &info, WEXITED | WNOWAIT) < 0) {
+        if (errno != EINTR) return;
+    }
 }
 
 JNIEXPORT jint JNICALL Java_dev_skyloft_skypython_runtime_Pty_sendSignal(

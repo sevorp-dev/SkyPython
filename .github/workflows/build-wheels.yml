@@ -222,7 +222,9 @@ jobs:
 
   publish:
     needs: numpy
-    if: ${{ !cancelled() && inputs.publish != false }}
+    # 32-bit legs may fail (continue-on-error keeps the matrix result "success"); a failed
+    # 64-bit leg makes it "failure", and then nothing is published.
+    if: ${{ !cancelled() && needs.numpy.result == 'success' && inputs.publish != false }}
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -246,6 +248,9 @@ jobs:
           shopt -s nullglob
           wheels=(dist/*.whl)
           [ ${#wheels[@]} -gt 0 ] || { echo "::error::no wheels were built"; exit 1; }
+          for abi in arm64_v8a x86_64; do  # the 64-bit wheels are required, 32-bit ones optional
+            ls dist/*"_$abi.whl" > /dev/null 2>&1 || { echo "::error::no $abi wheel"; exit 1; }
+          done
           if ! gh release view "$TAG" > /dev/null 2>&1; then
             gh release create "$TAG" --target "$GITHUB_SHA" --prerelease --latest=false \
               --title "Android wheels (experimental)" \

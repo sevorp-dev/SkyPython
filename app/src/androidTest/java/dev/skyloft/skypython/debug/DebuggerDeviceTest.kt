@@ -144,7 +144,57 @@ class DebuggerDeviceTest {
         assertTrue(stderr, "ZeroDivisionError" in stderr && "skydbg" !in stderr)
     }
 
+    /** Starts `busy.py` (an endless loop) under the debugger and waits until it runs. */
+    private suspend fun CoroutineScope.debugBusyLoop(): Pair<DebugSession, PythonProcess> {
+        val script = File(dir, "busy.py").apply { writeText("i = 0\nwhile True:\n    i += 1\n") }
+        val paths = PythonInstaller(context).ensureInstalled().getOrThrow()
+        val installer = DebuggerInstaller(context)
+        val driver = installer.ensureInstalled().getOrThrow()
+        val channel = installer.newChannel()
+        val process = PythonProcess(paths)
+        val events = async(Dispatchers.IO) { process.start(RunCommand.Debug(script, driver, channel)).toList() }
+        val socket = withContext(Dispatchers.IO) { DebugSocket.connect(channel, TIMEOUT_MS) { !events.isCompleted } }
+        val session = DebugSession(scope)
+        session.begin(script.name)
+        session.attach(socket, emptyMap(), emptyList(), listOf(dir.path))
+        session.await("running") { it.phase == DebugPhase.Running }
+        Thread.sleep(300) // well inside the loop
+        return session to process
+    }
+
+    /** Pause reaches a busy program (SIGUSR1: blocked in the app, so the launcher unblocks it). */
+    @Test
+    fun pauseStopsABusyLoop(): Unit = runBlocking {
+        val (session, process) = debugBusyLoop()
+        try {
+            session.pause()
+            val st = withTimeout(PAUSE_MS) { session.state.first { it.phase == DebugPhase.Paused } }
+            assertEquals(StopReason.PAUSE, st.reason)
+            assertEquals("busy.py", File(st.frames[0].file).name)
+        } finally {
+            session.stop()
+            process.stop()
+        }
+    }
+
+    /** A breakpoint set while the program runs is applied at once (the same signal). */
+    @Test
+    fun breakpointSetWhileRunningIsHit(): Unit = runBlocking {
+        val (session, process) = debugBusyLoop()
+        try {
+            session.updateBreakpoints(File(dir, "busy.py").path, listOf(Breakpoint(3)))
+            val st = withTimeout(PAUSE_MS) { session.state.first { it.phase == DebugPhase.Paused } }
+            assertEquals(StopReason.BREAKPOINT, st.reason)
+            assertEquals(3, st.frames[0].line)
+        } finally {
+            session.stop()
+            process.stop()
+        }
+    }
+
     private companion object {
+        const val PAUSE_MS = 2_000L
+
         /** The first run unpacks Python. */
         const val TIMEOUT_MS = 120_000L
     }

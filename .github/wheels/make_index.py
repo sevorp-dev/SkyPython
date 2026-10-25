@@ -22,6 +22,7 @@ import os
 import re
 import sys
 from collections import defaultdict
+from urllib.parse import quote
 
 
 def normalize(name: str) -> str:  # PEP 503
@@ -80,7 +81,7 @@ def main() -> int:
 
     simple = os.path.join(args.site, "simple")
     os.makedirs(simple, exist_ok=True)
-    links = "".join(f"<a href=\"{p}/\">{p}</a><br>\n" for p in sorted(projects))
+    links = "".join(f"<a href=\"{html.escape(quote(p))}/\">{html.escape(p)}</a><br>\n" for p in sorted(projects))
     with open(os.path.join(simple, "index.html"), "w", encoding="utf-8", newline="\n") as f:
         f.write(page("SkyPython Android wheels", links))
     base = args.url_base.rstrip("/")
@@ -88,7 +89,7 @@ def main() -> int:
         d = os.path.join(simple, proj)
         os.makedirs(d, exist_ok=True)
         body = "".join(
-            f"<a href=\"{html.escape(base)}/{html.escape(fn)}#sha256={sums[fn]}\">"
+            f"<a href=\"{html.escape(base)}/{html.escape(quote(fn))}#sha256={sums[fn]}\">"
             f"{html.escape(fn)}</a><br>\n"
             for fn in sorted(files)
         )
