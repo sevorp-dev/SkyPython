@@ -11,7 +11,7 @@
   </p>
 
   <p>
-    <a href="https://github.com/sevorp-dev/SkyPython/releases/latest"><img src="https://img.shields.io/github/v/release/sevorp-dev/SkyPython?include_prereleases&style=for-the-badge&label=Download&color=FFD54F" alt="Download"></a>
+    <a href="https://github.com/sevorp-dev/SkyPython/releases/latest"><img src="https://img.shields.io/github/v/release/sevorp-dev/SkyPython?include_prereleases&style=for-the-badge&label=Download&color=F28C38" alt="Download"></a>
     <img src="https://img.shields.io/badge/Android-7.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android 7.0+">
     <img src="https://img.shields.io/badge/Python-3.14-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.14">
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge" alt="Apache 2.0"></a>
@@ -39,30 +39,40 @@ Everything a mobile Python developer needs, in the open: a comfortable editor wi
 drawer, an interactive console, a terminal and a package manager — free of ads and premium
 walls, and built to work on as many phones as possible, including old and low-end ones.
 
-## 🆕 What's new in 0.0.2
+## 🆕 What's new in 0.0.3
 
-- 🌌 **Night-sky look** in the SkyPython colours, new app icon, round ▶ Run button
-- ☰ **Tool drawer** with Interpreter, Terminal, Pip, Samples, Settings and more
-- 📱 **Android 7.0+ and 32-bit phones**, ~14 MB download
+- 🎨 **New look** — modern dark theme with an orange accent, new logo, Inter + JetBrains Mono, bottom navigation bar (can be turned off)
+- ▶️ **Run output in a real terminal** — colours, `input()`, Ctrl+C; long-press to select, **Copy all**, Share, Save; tap a traceback line to jump to the code
+- 💡 **Smart editor** — completion, live error hints, go to definition, outline, parameter hints, find & replace, line commands, auto-indent and auto-close
+- 🐞 **Debugger** — breakpoints, step over/into/out, variables, watches, call stack
+- 📦 **Pip** — PyPI search, popular packages, `requirements.txt`, updates
+- 🇷🇺 **Russian interface**, 🚨 **"Report a problem"** with device info, 🔗 share files or whole projects (.zip)
 
 Full details for every version: [CHANGELOG.md](CHANGELOG.md).
+
+## 💸 Free. Really.
+
+No ads, no premium tier, no account, no tracking. Code completion, live error checking, the
+debugger, the full keyboard bar and everything else that other mobile IDEs sell as "premium"
+is simply part of SkyPython.
 
 ## 🚀 Features
 
 | | |
 |---|---|
-| 📝 **Code editor** | Python syntax highlighting, line numbers, word wrap, tabs for several files (`*` marks unsaved ones), undo/redo and a symbol bar with `Tab : ; ' " # ( ) [ ] { } = …` above the keyboard. |
-| 💡 **Code hints** | Completion while typing (modules, methods, your own names, installed packages) and red/yellow underlines for syntax errors, undefined names and unused imports — tap one to read it. Works offline. |
-| ▶️ **Run** | One tap on the blue ▶ runs the current file. Each run is a separate process, so **Stop** always works and a crashing script can't take the app down. |
-| 💻 **Console** | `print()` and `input()` just work; errors are shown in red with the exit code. **^C** sends Ctrl+C (`KeyboardInterrupt`) so a script can clean up; **Stop** ends it for sure. |
-| 🐍 **Interpreter** | The interactive Python shell (`>>>`) on a real terminal: line editing, history, colours, Ctrl+C interrupts without losing your session. |
-| ⌨️ **Terminal** | A real terminal (colours, full-screen programs, Ctrl+C) with `python` and `pip` commands and a key row with Esc, Tab, Ctrl, Alt and arrows. |
-| 📦 **Pip** | Install, list and remove pure-Python packages from PyPI (`requests`, `rich`, `six`, …). |
-| 📁 **Files** | Projects folder with create / rename / delete; open and save files from other apps. |
-| 🎓 **Samples** | Ready-to-run examples: input, loops, functions, classes, files, JSON, a small game. |
-| ⚙️ **Settings** | Font size and font, word wrap, line numbers, keep screen on, code completion; terminal size and theme. |
-| 🔗 **Share** | Send the current script to any app. |
-| 🌙 **Modern dark theme** | Slate surfaces with one warm orange accent, Inter for the interface and JetBrains Mono for code. |
+| 📝 **Editor** | Python highlighting, tabs with ✕ and `+`, line numbers, word wrap, pinch-to-zoom, undo/redo, auto-indent, auto-closing brackets and quotes, a customizable symbol bar, keyboard without autocorrect (no more "Print" instead of `print`). |
+| 💡 **Code intelligence** | Completion while typing, live error and warning underlines, **go to definition** (also into the standard library, read-only), usages, **outline** of classes and functions, **parameter hints** inside calls. Works offline. |
+| 🔎 **Editing tools** | Find & replace (match case, whole word, regex), go to line, comment/uncomment, indent/outdent, duplicate, move or delete lines, recent files, hardware-keyboard shortcuts (Ctrl+S, Ctrl+F, Ctrl+/, F5…). |
+| ▶️ **Run** | One tap on the orange ▶ runs the file in a real terminal: colours, `input()` with line editing, `
+` progress bars. **^C** sends KeyboardInterrupt, **Stop** always works. When it ends: Copy all, Share, Save output, Run again. Tap `File "…", line N` in a traceback to open that line. |
+| 🐞 **Debugger** | Tap a line number to set a breakpoint (long-press for a condition), long-press ▶ → Debug. Step over / into / out, continue, variables tree, watches, call stack. |
+| 🐍 **Interpreter** | Interactive Python (`>>>`) with history, colours and Ctrl+C that interrupts without losing your session. |
+| ⌨️ **Terminal** | A real terminal with `python`, `pip`, Esc / Tab / Ctrl / Alt / arrows. |
+| 📦 **Pip** | Search PyPI, popular packages in one tap, install from `requirements.txt`, updates and uninstall. Pure-Python packages today; packages with native code (NumPy, Pillow…) are on the roadmap. |
+| 📁 **Projects** | Create, rename, delete files and folders; open and save files from other apps; **share** a file as is or a whole folder as `.zip` (Telegram, mail, cloud…). |
+| 🎓 **Samples** | Ready-to-run examples with search: input, loops, functions, classes, files, JSON, a small game. |
+| ⚙️ **Settings** | Font size and family, word wrap, line numbers, completion, auto-close, keyboard suggestions, symbol bar keys, terminal size and theme, bottom bar on/off, language (English / Русский). |
+| 🚨 **Report a problem** | If something goes wrong, SkyPython offers to send a report (error + device info, no personal data) as a GitHub issue or via any app — nothing is ever sent automatically. |
 
 Everything works **offline** except installing packages with pip.
 
@@ -70,15 +80,27 @@ Everything works **offline** except installing packages with pip.
 
 <p align="center">
   <img src="docs/screenshots/editor.png" width="24%" alt="Editor">
-  <img src="docs/screenshots/drawer.png" width="24%" alt="Tool drawer">
-  <img src="docs/screenshots/console.png" width="24%" alt="Running a script">
-  <img src="docs/screenshots/interpreter.png" width="24%" alt="Interpreter">
+  <img src="docs/screenshots/completion.png" width="24%" alt="Code completion">
+  <img src="docs/screenshots/run.png" width="24%" alt="Run output">
+  <img src="docs/screenshots/run_select.png" width="24%" alt="Selecting output">
 </p>
 <p align="center">
+  <img src="docs/screenshots/debugger.png" width="24%" alt="Debugger">
+  <img src="docs/screenshots/find.png" width="24%" alt="Find and replace">
+  <img src="docs/screenshots/outline.png" width="24%" alt="Outline">
+  <img src="docs/screenshots/drawer.png" width="24%" alt="Tool drawer">
+</p>
+<p align="center">
+  <img src="docs/screenshots/interpreter.png" width="24%" alt="Interpreter">
   <img src="docs/screenshots/terminal.png" width="24%" alt="Terminal">
   <img src="docs/screenshots/pip.png" width="24%" alt="Pip">
   <img src="docs/screenshots/samples.png" width="24%" alt="Samples">
+</p>
+<p align="center">
   <img src="docs/screenshots/settings.png" width="24%" alt="Settings">
+  <img src="docs/screenshots/report.png" width="24%" alt="Report a problem">
+  <img src="docs/screenshots/about.png" width="24%" alt="About">
+  <img src="docs/screenshots/editor_ru.png" width="24%" alt="Russian interface">
 </p>
 
 ## 📥 Install
@@ -98,7 +120,7 @@ If Android says *"App not installed"*, you picked the wrong one — take `univer
 
 ### Supported devices
 
-- **Android 7.0 (API 24) and newer** — every version is tested automatically on emulators (Android 7, 9, 11, 14, 16).
+- **Android 7.0 (API 24) and newer** — every build is tested automatically on emulators with Android 7, 9, 11, 14 and 16, including a 32-bit device.
 - **64-bit ARM** (almost all phones since 2017), **32-bit ARM** (older and budget phones) and **x86 / x86_64** (emulators, Chromebooks).
 - Needs about **60 MB** of free storage (the app plus Python unpacked on first run). The first Run takes a few seconds while Python is prepared; after that it starts instantly.
 
@@ -121,6 +143,8 @@ If Android says *"App not installed"*, you picked the wrong one — take `univer
 - Each program runs as a **separate process**, exactly like on a desktop computer.
 - The **editor** is [Sora Editor](https://github.com/Rosemoe/sora-editor) with TextMate grammars (MagicPython).
 - **Code hints** come from a small language server in the same bundled Python: [jedi](https://github.com/davidhalter/jedi) for completions, [pyflakes](https://github.com/PyCQA/pyflakes) and `compile()` for errors. It is packed into the APK (~1 MB) and unpacked next to the stdlib, separate from your pip packages.
+- **Run, Interpreter and Terminal** use a real pseudo-terminal (a tiny native `libskypty.so`) and a terminal view based on the Apache-2.0 Termux terminal emulator, so colours, line editing and Ctrl+C behave like on a computer.
+- The **debugger** is a small driver built on Python's own `bdb` module; it talks to the app over a private socket, so your program keeps its normal input and output.
 
 ## 🛠️ Build from source
 
@@ -187,17 +211,18 @@ What's new in every version: [CHANGELOG.md](CHANGELOG.md) and the [Releases](htt
 
 ## 🗺️ Roadmap
 
-- [x] Code editor with syntax highlighting
-- [x] Run scripts offline with CPython 3.14
-- [x] Interactive console, interpreter and terminal
-- [x] Pip for pure-Python packages
-- [x] Tool drawer, samples, settings
-- [x] Android 7.0+ and 32-bit devices
-- [ ] Full terminal emulator (colors, `Ctrl+C`, curses)
-- [ ] Code completion and error hints
-- [ ] Prebuilt packages with native code (NumPy, Pillow, …)
-- [ ] GUI apps (Kivy / Tkinter-style)
-- [ ] Light theme and more languages
+- [x] Code editor with highlighting, completion and live error hints
+- [x] Run scripts offline with CPython 3.14 in a real terminal
+- [x] Interpreter and terminal (colours, Ctrl+C)
+- [x] Pip for pure-Python packages, PyPI search
+- [x] Debugger with breakpoints and watches
+- [x] Go to definition, outline, find & replace
+- [x] Android 7.0+ and 32-bit devices, English and Russian
+- [ ] Prebuilt packages with native code: NumPy → Pillow → matplotlib → pandas
+- [ ] Plots and images shown right in the app
+- [ ] GUI apps (Kivy / Tkinter-style windows)
+- [ ] Light theme, more languages
+- [ ] OpenCV, TensorFlow Lite, PyTorch (long term)
 
 ## 🤝 Contributing
 
@@ -220,7 +245,9 @@ SkyPython is licensed under the [Apache License 2.0](LICENSE).
 
 It bundles: **CPython** (PSF License), **Sora Editor** (LGPL-2.1), **MagicPython grammar** and
 **VS Code theme data** (MIT) — see [`NOTICE.md`](app/src/main/assets/textmate/NOTICE.md) — and the
-**Inter** and **JetBrains Mono** fonts (SIL Open Font License 1.1, see [`NOTICE`](NOTICE)).
+**Inter** and **JetBrains Mono** fonts (SIL Open Font License 1.1), the **Termux terminal emulator**
+(Apache-2.0, see [`terminal/NOTICE`](terminal/NOTICE)) and **jedi**, **parso**, **pyflakes** (MIT) with
+**typeshed** stubs (Apache-2.0) — see [`NOTICE`](NOTICE).
 SkyPython is an independent project and is not affiliated with the Python Software Foundation.
 
 ---

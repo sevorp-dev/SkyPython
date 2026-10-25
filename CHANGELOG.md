@@ -2,6 +2,87 @@
 
 All notable changes to SkyPython. Downloads are on the [Releases](https://github.com/sevorp-dev/SkyPython/releases) page.
 
+## SkyPython 0.0.3 — a real IDE in your pocket
+
+The biggest update so far: a new look, a real terminal for your programs, a smart editor, a debugger, a Russian interface — and all of it free, with no ads and no premium tier.
+
+### 🎨 New look
+- Modern dark theme with a warm **orange accent**, translucent menus and sheets
+- New **SkyPython logo** and app icon (adaptive and themed icons on Android 13+)
+- **Inter** for the interface, **JetBrains Mono** for code and the terminal
+- **Bottom navigation bar**: Editor · Terminal · Packages · Projects · Settings — can be turned off in Settings
+- Orange **▶ Run** in the top bar, tabs with ✕ and `+`, status line "Python 3.14 · Ln 3, Col 26"
+- Tool drawer with **Workspace / Tools / Settings** sections and links to the SkyLoft Studio Telegram channel, GitHub and the author
+
+### ▶️ Running programs
+- **▶ Run opens a real terminal**: colours (`rich`, `colorama`), `input()` with line editing, `\r` progress bars
+- **^C** sends KeyboardInterrupt, **Stop** always ends the program
+- **Long-press to select text** — Copy, **Copy all**, Select all, Share
+- Menu: **Copy all, Share output, Save output** (`script_output.txt`), Save as…, Clear, scroll to top/bottom, text size (or pinch)
+- **Tap a traceback line** `File "…", line N` to jump to that line in the editor
+- When the program ends: "Exit code N" with **Run again** and **Back to editor**
+
+### 💡 Smart editor
+- **Code completion** while typing — modules, methods, your own names, installed packages
+- **Live error checking**: syntax errors, undefined names, unused imports; tap an underline to read it, tap the error line to jump there
+- **Go to definition** (long-press a name, Ctrl+B/F12) — also into the standard library, opened read-only
+- **Usages** highlight, **Outline** of classes and functions (Ctrl+Shift+O), **parameter hints** inside calls
+- **Find & replace** with match case, whole word and regex; **Go to line**
+- **Line commands**: comment/uncomment, indent/outdent, duplicate, delete, move up/down — from the actions row or the selection toolbar
+- **Auto-indent** after `:`, **auto-closing** brackets and quotes, Backspace removes a whole indent
+- **Keyboard without autocorrect** — no more "Print" instead of `print` (switchable)
+- **Pinch to zoom**, **recent files**, **custom symbol bar keys**, hardware-keyboard shortcuts (Ctrl+S, Ctrl+F, Ctrl+H, Ctrl+G, Ctrl+/, Ctrl+R / F5)
+
+### 🐞 Debugger
+- Tap a line number to set a **breakpoint**, long-press it for a **condition**
+- Long-press ▶ → **Debug**: step over / into / out, continue, pause, stop
+- **Variables** (expandable), **Watches**, **Call stack**, console with input
+
+### ⌨️ Interpreter & Terminal
+- Both now run in a **real terminal**: history, arrows, colours
+- **Ctrl+C interrupts** without closing the interpreter; Ctrl+D exits
+- Key row: Esc, Tab, Ctrl, Alt, arrows, `-` `/` `|`
+- `pip` in the terminal sets itself up on first use, offline
+
+### 📦 Pip
+- **Search PyPI** with version, description and whether the package can be installed on the phone
+- **Popular packages** in one tap: requests, rich, beautifulsoup4, httpx, tqdm, sympy, faker…
+- Install from **requirements.txt**, **updates** for installed packages, package details
+
+### 🔗 Share
+- Share **any file** to Telegram, WhatsApp, mail, cloud drives…
+- Share a **whole project folder as a .zip**
+
+### 🚨 Report a problem
+- If SkyPython crashes, the next start offers to **send a report to the developers**
+- Errors the app survives show a **Report** button
+- **Report a problem** in the drawer and in About
+- The report contains the error and device details (model, Android version, memory, storage, screen, network, mobile operator…) — **no personal data**: no phone number, IMEI, contacts or location
+- You see the whole report first; send it as a **GitHub issue** or through any app. Nothing is ever sent automatically
+
+### 🌍 Language
+- **Russian interface** — follows the phone's language, or choose in Settings (System / English / Русский)
+
+### 🛠️ Under the hood
+- Faster, more reliable process handling; output printed right before exit is never lost
+- Checked automatically before release on Android 7, 9, 11, 14 and 16 and on a 32-bit device
+
+### ⚠️ Known limitations
+- Pip installs pure-Python packages only — NumPy, Pillow and other packages with native code are coming next
+- No GUI windows yet (Tkinter / Kivy)
+
+### 📥 Which file do I download?
+| Your phone | File |
+|---|---|
+| Most phones (2017 and newer) | `SkyPython-0.0.3-arm64-v8a.apk` |
+| Old 32-bit phones | `SkyPython-0.0.3-armeabi-v7a.apk` |
+| Not sure | `SkyPython-0.0.3-universal.apk` — works everywhere |
+| Emulators, Chromebooks | `SkyPython-0.0.3-x86_64.apk` (or `-x86.apk`) |
+
+If Android says *"App not installed"*, take the `universal` one. Installs over 0.0.2 — your files and settings are kept.
+
+---
+
 ## SkyPython 0.0.2 — new look, new tools, many more phones
 
 A big update: a brand-new interface in the colours of SkyPython, an interactive interpreter, a terminal and a package manager — and SkyPython now runs on old and low-end phones too.
