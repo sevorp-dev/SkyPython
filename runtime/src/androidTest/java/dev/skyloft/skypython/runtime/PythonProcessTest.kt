@@ -132,6 +132,52 @@ class PythonProcessTest {
     }
 
     @Test
+    fun interruptRaisesKeyboardInterruptInTheScript(): Unit = runBlocking {
+        withTimeout(TIMEOUT_MS) {
+            val process = PythonProcess(paths)
+            val c = Collector(
+                process.start(script("import time\nprint('ready', flush=True)\nwhile True: time.sleep(0.05)")),
+                this,
+            )
+            c.awaitStdout("ready")
+            assertTrue(process.interrupt())
+            c.job.await()
+            val stderr = c.events.stderr()
+            assertTrue(stderr, stderr.contains("Traceback"))
+            assertTrue(stderr, stderr.contains("KeyboardInterrupt"))
+            // An uncaught KeyboardInterrupt ends Python with SIGINT (128 + 2), older versions with 1.
+            val exit = c.events.last() as ConsoleEvent.Exited
+            assertTrue("exit ${exit.code}", exit.code == 130 || exit.code == 1)
+        }
+    }
+
+    @Test
+    fun interruptLetsTheScriptCleanUp(): Unit = runBlocking {
+        withTimeout(TIMEOUT_MS) {
+            val process = PythonProcess(paths)
+            val source = """
+                import time
+                try:
+                    print('ready', flush=True)
+                    while True: time.sleep(0.05)
+                except KeyboardInterrupt:
+                    print('cleaned up')
+            """.trimIndent()
+            val c = Collector(process.start(script(source)), this)
+            c.awaitStdout("ready")
+            assertTrue(process.interrupt())
+            c.job.await()
+            assertTrue(c.stdout(), c.stdout().contains("cleaned up"))
+            assertEquals(ConsoleEvent.Exited(0), c.events.last())
+        }
+    }
+
+    @Test
+    fun interruptWithNothingRunningDoesNothing() {
+        assertTrue(!PythonProcess(paths).interrupt())
+    }
+
+    @Test
     fun nativeModulesLoad() {
         val events = run("import json, sqlite3, ssl, hashlib; print(\"ok\")")
         assertTrue(events.stdout() + events.stderr(), events.stdout().contains("ok"))

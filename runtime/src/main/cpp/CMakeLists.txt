@@ -40,3 +40,7 @@ set_target_properties(pylauncher PROPERTIES
     PREFIX ""
     SUFFIX "")
 target_link_libraries(pylauncher PRIVATE python)
+
+# Pseudo-terminals for the Terminal and Interpreter screens (Kotlin: runtime/Pty.kt).
+add_library(skypty SHARED pty.c)
+target_compile_options(skypty PRIVATE -Wall -Wextra -Werror)
