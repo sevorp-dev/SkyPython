@@ -1,0 +1,304 @@
+# EXPERIMENTAL / DRAFT — not run yet. See docs/native-packages.md.
+#
+# Builds NumPy wheels for Android (cp314, API level 24) for SkyPython's four ABIs and
+# publishes them as a PEP 503 index that `pip` on the device can use:
+#   * wheels  -> assets of the prerelease `wheels` of this repo (keeps git small);
+#   * index   -> branch `wheels` (simple/<project>/index.html + SHA256SUMS), served by
+#                GitHub Pages at https://<owner>.github.io/<repo>/simple/ (enable Pages for
+#                the `wheels` branch once; raw.githubusercontent.com does not work because
+#                pip requires Content-Type text/html).
+#
+# 64-bit (arm64-v8a, x86_64): stock cibuildwheel (Android platform), OpenBLAS from the
+#   Chaquopy upstream index, libc++/OpenBLAS vendored by auditwheel; x86_64 is smoke-tested
+#   on an emulator.
+# 32-bit (armeabi-v7a, x86): cibuildwheel does not support them, so it is patched
+#   (.github/wheels/patch_cibw_32bit.py) to use our own CPython builds from build-python.yml;
+#   no BLAS (like NumPy's own 32-bit wheels), libc++ linked statically, no auditwheel.
+#   Allowed to fail.
+name: Build Android wheels (experimental)
+
+on:
+  workflow_dispatch:
+    inputs:
+      numpy_version:
+        description: NumPy version (PyPI sdist)
+        required: true
+        default: 2.5.4
+      publish:
+        description: Upload wheels to the `wheels` release and update the index branch
+        type: boolean
+        default: true
+      replace:
+        description: Replace wheels with the same file name already in the release
+        type: boolean
+        default: false
+  # Pushing the branch `build-wheels` runs it with the defaults.
+  push:
+    branches: [ build-wheels ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-wheels
+
+env:
+  NUMPY_VERSION: ${{ inputs.numpy_version || '2.5.4' }}
+  CIBW_VERSION: 4.3.4
+  OPENBLAS_VERSION: 0.3.33
+  # CPython for the 32-bit ABIs: our own release (build-python.yml), hashes pinned in
+  # runtime/python.properties.
+  PYVER: 3.14.9
+
+jobs:
+  numpy:
+    name: numpy ${{ matrix.abi }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    continue-on-error: ${{ matrix.bits == 32 }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - abi: arm64_v8a
+            triplet: aarch64-linux-android
+            bits: 64
+            test: false   # ARM emulator cannot run on an x86_64 runner
+          - abi: x86_64
+            triplet: x86_64-linux-android
+            bits: 64
+            test: true
+          - abi: armeabi_v7a
+            triplet: arm-linux-androideabi
+            bits: 32
+            test: false
+          - abi: x86
+            triplet: i686-linux-android
+            bits: 32
+            test: false
+    env:
+      ABI: ${{ matrix.abi }}
+      TRIPLET: ${{ matrix.triplet }}
+      BITS: ${{ matrix.bits }}
+      RUN_TEST: ${{ matrix.test }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      # cibuildwheel uses the runner's Android SDK (ANDROID_HOME) and installs the NDK
+      # through sdkmanager, which needs Java.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Enable KVM (emulator test)
+        if: matrix.test
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install cibuildwheel ${{ env.CIBW_VERSION }}
+        run: |
+          set -euo pipefail
+          python -m venv "$RUNNER_TEMP/cibw"
+          "$RUNNER_TEMP/cibw/bin/pip" install "cibuildwheel==$CIBW_VERSION"
+          echo "$RUNNER_TEMP/cibw/bin" >> "$GITHUB_PATH"
+
+      - name: Patch cibuildwheel for ${{ matrix.abi }} (32-bit)
+        if: matrix.bits == 32
+        run: |
+          set -euo pipefail
+          sha="$(grep -E "^sha256\.$TRIPLET=" runtime/python.properties | cut -d= -f2)"
+          test -n "$sha" || { echo "::error::no sha256.$TRIPLET in runtime/python.properties"; exit 1; }
+          pkg="$("$RUNNER_TEMP/cibw/bin/python" -c 'import cibuildwheel, os; print(os.path.dirname(cibuildwheel.__file__))')"
+          python .github/wheels/patch_cibw_32bit.py "$pkg" --version "$PYVER" --abi "$ABI" \
+            --url "https://github.com/${{ github.repository }}/releases/download/python-android-$PYVER/python-$PYVER-$TRIPLET.tar.gz" \
+            --sha256 "$sha"
+
+      - name: Download the NumPy ${{ env.NUMPY_VERSION }} sdist
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os, urllib.request
+          v = os.environ["NUMPY_VERSION"]
+          meta = json.load(urllib.request.urlopen(f"https://pypi.org/pypi/numpy/{v}/json"))
+          sdist = next(u for u in meta["urls"] if u["packagetype"] == "sdist")
+          data = urllib.request.urlopen(sdist["url"]).read()
+          assert hashlib.sha256(data).hexdigest() == sdist["digests"]["sha256"], "sdist hash mismatch"
+          open("numpy.tar.gz", "wb").write(data)
+          print(sdist["filename"], len(data))
+          PY
+          mkdir src
+          tar -xzf numpy.tar.gz -C src --strip-components=1
+
+      # NumPy's build runs a test program to find the long double format, which is impossible
+      # when cross-compiling. Android: 128-bit quad on 64-bit ABIs (also x86_64), plain double
+      # on 32-bit. NumPy main (2.6.0) hardcodes the same for Android (numpy/numpy#30412).
+      - name: Set the long double format
+        run: |
+          set -euo pipefail
+          if [ "$BITS" = 64 ]; then fmt=IEEE_QUAD_LE; else fmt=IEEE_DOUBLE_LE; fi
+          f=src/numpy/_core/meson.build
+          sed -i "s/meson.get_external_property('longdouble_format', 'UNKNOWN')/'$fmt'/" "$f"
+          grep -n "longdouble_format = '$fmt'" "$f"
+
+      - name: Fetch OpenBLAS ${{ env.OPENBLAS_VERSION }} for Android (64-bit)
+        if: matrix.bits == 64
+        run: |
+          set -euo pipefail
+          pip download "chaquopy-openblas==$OPENBLAS_VERSION" --no-deps --only-binary=:all: \
+            --index-url https://chaquo.com/pypi-upstream/ --platform "android_24_$ABI" -d openblas-dl
+          mkdir -p "$RUNNER_TEMP/openblas"
+          unzip -q openblas-dl/*.whl -d "$RUNNER_TEMP/openblas"
+          ls -R "$RUNNER_TEMP/openblas/chaquopy/lib" | head -20
+          test -f "$RUNNER_TEMP/openblas/chaquopy/lib/pkgconfig/openblas.pc"
+
+      # Our own cibuildwheel config (replaces the one in NumPy's pyproject.toml).
+      - name: Write the cibuildwheel config
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          tmp, bits, test = os.environ["RUNNER_TEMP"], os.environ["BITS"], os.environ["RUN_TEST"]
+          q = json.dumps  # TOML basic strings are compatible with JSON strings
+          if bits == "64":
+              setup_args = ["-Duse-ilp64=false", "-Dallow-noblas=false",
+                            "-Dblas=openblas", "-Dlapack=openblas"]
+              lib = f"{tmp}/openblas/chaquopy/lib"
+              env = {"PKG_CONFIG_PATH": f"{lib}/pkgconfig", "AUDITWHEEL_LD_LIBRARY_PATH": lib}
+              repair = None  # cibuildwheel's default: auditwheel repair (vendors libc++, OpenBLAS)
+          else:
+              # No BLAS (lapack_lite), static libc++: auditwheel does not know 32-bit Android.
+              setup_args = ["-Dallow-noblas=true", "-Dcpp_link_args=-static-libstdc++"]
+              env = {}
+              repair = ""
+          smoke = ("import numpy as np; np.show_config(); "
+                   "a = np.random.default_rng(0).random((200, 200)); "
+                   "assert np.allclose(a @ np.linalg.inv(a), np.eye(200), atol=1e-6); "
+                   "print('numpy', np.__version__, 'OK')")
+          lines = [
+              "[tool.cibuildwheel]",
+              'build-frontend = "build"',
+              'before-build = ""',
+              "test-requires = []",
+              f"test-command = {q('python -c ' + chr(34) + smoke + chr(34))}",
+              f"test-skip = {q('' if test == 'true' else '*')}",
+              "",
+              "[tool.cibuildwheel.android]",
+              "config-settings = { setup-args = %s, build-dir = \"build\" }" % json.dumps(setup_args),
+              "environment = { %s }" % ", ".join(f"{k} = {q(v)}" for k, v in env.items()),
+          ]
+          if repair is not None:
+              lines.append(f"repair-wheel-command = {q(repair)}")
+          path = f"{tmp}/cibw.toml"
+          open(path, "w").write("\n".join(lines) + "\n")
+          print(open(path).read())
+          import tomllib; tomllib.load(open(path, "rb"))  # fail early on a TOML mistake
+          PY
+
+      - name: Build
+        run: |
+          cibuildwheel src \
+            --platform android \
+            --only "cp314-android_$ABI" \
+            --config-file "$RUNNER_TEMP/cibw.toml" \
+            --output-dir wheelhouse
+
+      - name: Verify the wheel (tag, ELF machine, 16 KB alignment, dependencies)
+        run: python .github/wheels/verify_wheels.py --max-api 24 wheelhouse/*.whl
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: wheels-numpy-${{ matrix.abi }}
+          path: wheelhouse/*.whl
+          if-no-files-found: error
+
+  publish:
+    needs: numpy
+    if: ${{ !cancelled() && inputs.publish != false }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      REPLACE: ${{ inputs.replace || false }}
+      TAG: wheels
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+
+      - name: Upload wheels to the `wheels` release
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          wheels=(dist/*.whl)
+          [ ${#wheels[@]} -gt 0 ] || { echo "::error::no wheels were built"; exit 1; }
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            gh release create "$TAG" --target "$GITHUB_SHA" --prerelease --latest=false \
+              --title "Android wheels (experimental)" \
+              --notes "Wheels with native code for SkyPython (CPython 3.14, Android API 24+). Index: https://${GH_REPO%%/*}.github.io/${GH_REPO#*/}/simple/ — built by .github/workflows/build-wheels.yml. Licenses are inside each wheel's .dist-info."
+          fi
+          existing="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
+          : > uploaded.txt
+          for w in "${wheels[@]}"; do
+            name="$(basename "$w")"
+            if grep -qxF "$name" <<< "$existing" && [ "$REPLACE" != "true" ]; then
+              echo "::notice::$name is already in the release; kept (run with 'replace' to overwrite)"
+              continue
+            fi
+            gh release upload "$TAG" "$w" --clobber
+            echo "$PWD/$w" >> uploaded.txt
+          done
+          cat uploaded.txt
+
+      - name: Update the PEP 503 index on branch `wheels`
+        run: |
+          set -euo pipefail
+          [ -s uploaded.txt ] || { echo "Nothing new to index."; exit 0; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin wheels > /dev/null; then
+            git fetch --depth=1 origin wheels
+            git worktree add -B wheels site FETCH_HEAD
+          else
+            git worktree add --detach site
+            git -C site switch --orphan wheels
+          fi
+          mapfile -t new < uploaded.txt
+          python .github/wheels/make_index.py --site site \
+            --url-base "https://github.com/$GH_REPO/releases/download/$TAG" "${new[@]}"
+          cat > site/README.md <<EOF
+          # Android wheels for SkyPython (experimental)
+
+          PEP 503 index, generated by \`.github/workflows/build-wheels.yml\` on \`main\`. The wheel
+          files are assets of the \`$TAG\` release; this branch holds only the index (served by
+          GitHub Pages) and SHA256SUMS. Do not edit by hand.
+
+              pip install --extra-index-url https://${GH_REPO%%/*}.github.io/${GH_REPO#*/}/simple/ numpy
+          EOF
+          git -C site add -A
+          if git -C site diff --cached --quiet; then
+            echo "Index unchanged."
+          else
+            git -C site commit -m "Index: $(cd dist && ls *.whl | tr '\n' ' ')"
+            git -C site push origin HEAD:wheels
+          fi
+          {
+            echo "### Android wheels"
+            echo '```'
+            cat site/SHA256SUMS
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
