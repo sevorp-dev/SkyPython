@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.terminal
 
+import dev.skyloft.skypython.ui.rememberMainScope
 import dev.skyloft.skypython.ui.keepsSnackbarsAbove
 import dev.skyloft.skypython.ui.theme.TextBright
 import dev.skyloft.skypython.ui.theme.SlateRaised
@@ -215,7 +216,7 @@ fun TerminalScreen(
         if (!state.running && kind == TerminalKind.Run) view?.let(::hideKeyboard)
     }
 
-    val scopeForMessages = rememberCoroutineScope()
+    val scopeForMessages = rememberMainScope()
     val sheetFor = installing
     if (sheetFor != null && pip != null) {
         InstallMissingSheet(

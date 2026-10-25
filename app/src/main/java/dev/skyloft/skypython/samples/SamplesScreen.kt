@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.samples
 
+import dev.skyloft.skypython.ui.rememberMainScope
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -91,7 +92,7 @@ import java.io.File
 @Composable
 fun SamplesScreen(projectsRoot: File, onOpen: (File) -> Unit, onBack: () -> Unit) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+    val scope = rememberMainScope()
     var samples by remember { mutableStateOf<List<Sample>?>(null) }
     var searching by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }

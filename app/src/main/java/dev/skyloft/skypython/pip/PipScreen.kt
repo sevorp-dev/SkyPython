@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.pip
 
+import dev.skyloft.skypython.ui.rememberMainScope
 import dev.skyloft.skypython.ui.theme.TextBright
 import dev.skyloft.skypython.ui.theme.SlatePanel
 import androidx.compose.foundation.BorderStroke
@@ -125,7 +126,7 @@ fun PipScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    val scope = rememberMainScope()
 
     val notice = state.notice
     val noticeText = notice?.let { noticeText(it) }

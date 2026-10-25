@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.files
 
+import dev.skyloft.skypython.ui.rememberMainScope
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -144,7 +145,7 @@ fun FilesScreen(
     val onOpResult: (String?) -> Unit = { error -> if (error == null) closeDialog() else dialogError = error }
 
     val shareContext = LocalContext.current
-    val shareScope = rememberCoroutineScope()
+    val shareScope = rememberMainScope()
     FilesContent(
         state = state,
         onBack = onBack,

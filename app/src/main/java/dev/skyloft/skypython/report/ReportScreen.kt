@@ -46,7 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import dev.skyloft.skypython.ui.rememberMainScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -119,7 +119,8 @@ fun ReportScreen(
         }
     }
     val text = remember(report, previewDescription, deviceInfo) { ReportFormatter.format(report, previewDescription, deviceInfo) }
-    val scope = rememberCoroutineScope()
+    // Main-confined: resumes after the IO work even when no frame is drawn (see ui/MainThread.kt).
+    val scope = rememberMainScope()
 
     val subject = stringResource(R.string.report_share_subject)
     val chooserTitle = stringResource(R.string.report_share_chooser)

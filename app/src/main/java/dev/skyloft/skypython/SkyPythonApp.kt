@@ -1,5 +1,6 @@
 package dev.skyloft.skypython
 
+import dev.skyloft.skypython.ui.rememberMainScope
 import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.platform.LocalDensity
@@ -157,7 +158,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
     val pipVm: PipViewModel = viewModel(factory = PipViewModel.factory(app, workspace.root))
 
     val nav = rememberNavController()
-    val scope = rememberCoroutineScope()
+    val scope = rememberMainScope()
     val openConsole = { nav.go(Routes.CONSOLE) }
     val openRun = { nav.go(Routes.RUN) }
     val openInEditor = { file: File, line: Int ->

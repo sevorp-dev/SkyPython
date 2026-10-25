@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.report
 
+import dev.skyloft.skypython.ui.rememberMainScope
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -29,7 +30,7 @@ import kotlinx.coroutines.withContext
 fun CrashPrompt(onSend: (ProblemReport) -> Unit) {
     val context = LocalContext.current
     val store = remember { Reports.store(context) }
-    val scope = rememberCoroutineScope()
+    val scope = rememberMainScope()
     var crash by remember { mutableStateOf<ProblemReport?>(null) }
     LaunchedEffect(Unit) { crash = withContext(Dispatchers.IO) { store.unprompted() } }
     val shown = crash ?: return
