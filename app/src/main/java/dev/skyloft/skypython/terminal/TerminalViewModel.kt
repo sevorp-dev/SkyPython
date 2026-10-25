@@ -268,8 +268,9 @@ class TerminalViewModel(
             val file = if (OutputFiles.shareAsFile(text)) {
                 runCatching {
                     withContext(Dispatchers.IO) {
-                        val dir = File(app.cacheDir, "run").apply { mkdirs() }
-                        File(dir, OutputFiles.name(title)).apply { writeText(text) }
+                        // Its own file each time: never over a saved output or an earlier share.
+                        OutputFiles.shareFile(File(app.cacheDir, "share/output"), OutputFiles.name(title))
+                            .apply { writeText(text) }
                     }
                 }.getOrNull()
             } else {
@@ -280,8 +281,9 @@ class TerminalViewModel(
     }
 
     /**
-     * Save output: `<script>_output.txt` next to the script (the interpreter's and the shell's go
-     * to the projects folder), never over an earlier one.
+     * Save output: `<script>_output.txt` next to the script (the interpreter's and the shell's, and
+     * a picked file's that ran as a copy in the cache, go to the projects folder), never over an
+     * earlier one.
      */
     fun saveOutput(onSaved: (File) -> Unit = {}) {
         val text = transcript()
@@ -289,10 +291,11 @@ class TerminalViewModel(
             message(R.string.output_nothing)
             return
         }
-        val dir = _state.value.script?.absoluteFile?.parentFile ?: projectsRoot
+        val script = _state.value.script
         viewModelScope.launch {
             val result = runCatching {
                 withContext(Dispatchers.IO) {
+                    val dir = OutputFiles.saveDir(script, projectsRoot)
                     dir.mkdirs()
                     OutputFiles.unique(dir, OutputFiles.name(title)).apply { writeText(text + "\n") }
                 }

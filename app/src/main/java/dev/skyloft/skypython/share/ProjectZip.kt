@@ -19,8 +19,6 @@ const val MAX_ZIP_BYTES = 200L * 1024 * 1024
 /** The folder holds more than [limitBytes] of files. */
 class ZipTooLargeException(val limitBytes: Long) : IOException("The folder is larger than $limitBytes bytes")
 
-private val zipSeq = AtomicLong()
-
 /**
  * Packs [folder] into `<outDir>/<unique>/<folder name>.zip`, with the folder itself as the
  * top-level directory (so unpacking gives back "my game/…"). Python bytecode caches are left
@@ -87,21 +85,35 @@ private fun pack(folder: File, out: ZipOutputStream, maxBytes: Long, checkCancel
     }
 }
 
-/** A new, empty folder for one archive; the names sort by creation. */
-private fun newArchiveDir(outDir: File): File {
-    while (true) {
-        val name = String.format(Locale.US, "%013d-%06d", System.currentTimeMillis(), zipSeq.incrementAndGet() % 1_000_000)
-        val dir = File(outDir, name)
-        if (dir.mkdir()) return dir
-        if (!outDir.isDirectory) throw IOException("Cannot create $dir")
-    }
-}
+private fun newArchiveDir(outDir: File): File = ShareDirs.newDir(outDir)
 
-/** Deletes everything in [outDir] but [keep] and the newest archive folders, [ZIPS_KEPT] in all. */
-private fun pruneArchives(outDir: File, keep: File) {
-    val all = outDir.listFiles().orEmpty().sortedByDescending { it.name }
-    val kept = (listOf(keep) + all.filter { it.isDirectory && it != keep }).take(ZIPS_KEPT).toSet()
-    all.filter { it !in kept }.forEach { it.deleteRecursively() }
+private fun pruneArchives(outDir: File, keep: File) = ShareDirs.prune(outDir, keep, ZIPS_KEPT)
+
+/**
+ * Files handed to other apps live in folders of their own (`<root>/<unique>/<name>`): the file
+ * keeps its plain name for the receiving app, and a new share never overwrites one an app may
+ * still be reading. Only the newest few folders are kept.
+ */
+object ShareDirs {
+    private val seq = AtomicLong()
+
+    /** A new, empty folder in [root]; the names sort by creation. */
+    fun newDir(root: File): File {
+        if (!root.isDirectory && !root.mkdirs()) throw IOException("Cannot create $root")
+        while (true) {
+            val name = String.format(Locale.US, "%013d-%06d", System.currentTimeMillis(), seq.incrementAndGet() % 1_000_000)
+            val dir = File(root, name)
+            if (dir.mkdir()) return dir
+            if (!root.isDirectory) throw IOException("Cannot create $dir")
+        }
+    }
+
+    /** Deletes everything in [root] but [keep] and the newest folders, [count] in all. */
+    fun prune(root: File, keep: File, count: Int) {
+        val all = root.listFiles().orEmpty().sortedByDescending { it.name }
+        val kept = (listOf(keep) + all.filter { it.isDirectory && it != keep }).take(count).toSet()
+        all.filter { it !in kept }.forEach { it.deleteRecursively() }
+    }
 }
 
 /** MIME type for sharing [file], so receiving apps (messengers, mail, drives) treat it right. */

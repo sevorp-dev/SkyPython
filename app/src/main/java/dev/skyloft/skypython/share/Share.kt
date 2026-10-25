@@ -49,7 +49,7 @@ fun shareFile(context: Context, file: File) {
 suspend fun shareFolder(context: Context, folder: File) {
     val zip = try {
         withContext(Dispatchers.IO) {
-            zipFolder(folder, File(context.cacheDir, "share")) { ensureActive() }
+            zipFolder(folder, File(context.cacheDir, "share/zip")) { ensureActive() }
         }
     } catch (e: CancellationException) {
         throw e
