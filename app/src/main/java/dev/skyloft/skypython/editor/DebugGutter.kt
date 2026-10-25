@@ -89,6 +89,19 @@ internal class DebugAwareCodeEditor(context: Context) : CodeEditor(context) {
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        // Sora scrolls the View itself (scrollY = offsetY), so the canvas arrives translated by
+        // the scroll; getCharOffsetY is in visible coordinates. Undo the translation (as Sora's
+        // renderer does), or the marks land offsetY px above their lines.
+        val saved = canvas.save()
+        canvas.translate(scrollX.toFloat(), scrollY.toFloat())
+        try {
+            drawMarks(canvas)
+        } finally {
+            canvas.restoreToCount(saved)
+        }
+    }
+
+    private fun drawMarks(canvas: Canvas) {
         val m = marks
         if (m.breakpoints.isEmpty() && m.executionLine == null) return
         val content = text
