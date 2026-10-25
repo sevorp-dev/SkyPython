@@ -12,22 +12,29 @@ data class CursorPosition(val line: Int = 0, val column: Int = 0, val lineCount:
 fun tabTitle(label: String, dirty: Boolean): String = if (dirty) "$label*" else label
 
 /** Top-bar subtitle: the folder a local doc lives in, or a hint for documents opened from other apps. */
-fun docSubtitle(doc: OpenDocument, projectsRoot: File? = null): String = when (val src = doc.source) {
+fun docSubtitle(
+    doc: OpenDocument,
+    projectsRoot: File? = null,
+    projectsLabel: String = PROJECTS_LABEL,
+    externalLabel: String = EXTERNAL_LABEL,
+): String = when (val src = doc.source) {
     is DocSource.Local -> {
         val folder = src.file.parentFile ?: src.file
         val root = projectsRoot?.let(::resolvedFile)
         val relative = root?.let { folder.relativeToOrNull(it) }
         when {
             relative == null || relative.path.startsWith("..") -> folder.path
-            relative.path.isEmpty() -> PROJECTS_LABEL
-            else -> PROJECTS_LABEL + "/" + relative.invariantSeparatorsPath
+            relative.path.isEmpty() -> projectsLabel
+            else -> projectsLabel + "/" + relative.invariantSeparatorsPath
         }
     }
-    is DocSource.External -> "External document"
+    is DocSource.External -> externalLabel
 }
 
-/** How the projects root is named in the UI instead of its internal path. */
+/** How the projects root is named instead of its internal path (English; the UI uses `R.string.projects_label`). */
 const val PROJECTS_LABEL = "Projects"
+
+private const val EXTERNAL_LABEL = "External document"
 
 /** What the Sora view needs from [EditorSettings], with the font size kept in the Settings range. */
 data class EditorViewConfig(

@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import dev.skyloft.skypython.R
 
 /** The app name. Solid by default; [brush] paints it (the About screen's soft gradient). */
 @Composable
@@ -81,7 +83,7 @@ fun RunButton(
     iconSize: Dp = 32.dp,
     elevation: Dp = 3.dp,
 ) {
-    BrandFab(onClick, Icons.Filled.PlayArrow, "Run", modifier, size, iconSize, elevation)
+    BrandFab(onClick, Icons.Filled.PlayArrow, stringResource(R.string.action_run), modifier, size, iconSize, elevation)
 }
 
 /** Filled buttons: solid [ElectricBlue] with white text (5.2:1); disabled stays visible. */

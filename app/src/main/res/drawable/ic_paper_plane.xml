@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A plain paper plane (the drawer footer's Telegram row). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M2.6,11.1 L20.4,4.2 C21.3,3.9 22.1,4.6 21.9,5.5 L18.9,19.2 C18.7,20.2 17.6,20.5 16.9,20 L12.5,16.8 L10.4,18.8 C10.1,19.1 9.6,18.9 9.6,18.5 L9.8,15 L17.1,8.4 C17.4,8.1 17,7.7 16.7,7.9 L7.6,13.6 L3,12.2 C2.2,12 2.1,11.4 2.6,11.1 Z" />
+</vector>

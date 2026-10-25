@@ -60,6 +60,8 @@ import dev.skyloft.skypython.console.InterruptButton
 import dev.skyloft.skypython.ui.theme.SkyTopBar
 import dev.skyloft.skypython.ui.theme.brandButtonColors
 import kotlin.math.roundToInt
+import androidx.compose.ui.res.stringResource
+import dev.skyloft.skypython.R
 
 private const val DEFAULT_FONT_SP = 14f
 private const val MIN_FONT_SP = 8f
@@ -85,17 +87,17 @@ fun TerminalScreen(
         contentColor = colors.onBackground,
         topBar = {
             SkyTopBar(
-                title = viewModel.title,
+                title = stringResource(viewModel.titleRes),
                 onBack = onBack,
                 actions = {
                     if (state.running) {
                         InterruptButton(onClick = viewModel::interrupt)
                         IconButton(onClick = viewModel::kill) {
-                            Icon(Icons.Filled.Stop, contentDescription = "Stop", tint = colors.error)
+                            Icon(Icons.Filled.Stop, contentDescription = stringResource(R.string.action_stop), tint = colors.error)
                         }
                     } else if (state.session != null || state.startError != null) {
                         IconButton(onClick = viewModel::restart) {
-                            Icon(Icons.Filled.Refresh, contentDescription = "Restart")
+                            Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.action_restart))
                         }
                     }
                 },
@@ -300,6 +302,7 @@ private fun KeyRow(modifiers: Modifiers, enabled: Boolean, onKey: (ExtraKey) -> 
         verticalAlignment = Alignment.CenterVertically,
     ) {
         for (key in ExtraKey.ROW) {
+            val description = stringResource(key.descriptionRes)
             val armed = (key == ExtraKey.Ctrl && modifiers.ctrl) || (key == ExtraKey.Alt && modifiers.alt)
             TextButton(
                 onClick = { onKey(key) },
@@ -311,7 +314,7 @@ private fun KeyRow(modifiers: Modifiers, enabled: Boolean, onKey: (ExtraKey) -> 
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .widthIn(min = 44.dp)
-                    .semantics { contentDescription = key.description },
+                    .semantics { contentDescription = description },
                 contentPadding = PaddingValues(horizontal = 6.dp),
             ) {
                 Text(
@@ -337,8 +340,8 @@ private fun StartError(message: String, onUseSimpleConsole: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Could not open a terminal", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.terminal_open_failed), style = MaterialTheme.typography.titleMedium)
         Text(message, Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.error)
-        Button(onClick = onUseSimpleConsole, colors = brandButtonColors()) { Text("Use the simple console") }
+        Button(onClick = onUseSimpleConsole, colors = brandButtonColors()) { Text(stringResource(R.string.terminal_use_simple_console)) }
     }
 }

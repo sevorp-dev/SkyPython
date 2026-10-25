@@ -22,14 +22,44 @@ fun isValidName(name: String): Boolean =
         '/' !in name && '\\' !in name && '\u0000' !in name &&
         name.toByteArray(Charsets.UTF_8).size <= MAX_NAME_BYTES
 
-/** Human-readable reason why [name] is invalid, or null if it is valid. */
-fun nameError(name: String): String? = when {
-    name.isBlank() -> "Name must not be empty"
-    name == "." || name == ".." -> "Name must not be \".\" or \"..\""
-    '/' in name || '\\' in name -> "Name must not contain / or \\"
-    '\u0000' in name -> "Name contains an invalid character"
-    name.toByteArray(Charsets.UTF_8).size > MAX_NAME_BYTES -> "Name is too long"
+/** Why a name is invalid; [english] is the message for logs and tests, the UI localizes it. */
+enum class NameProblem(val english: String) {
+    Empty("Name must not be empty"),
+    Dots("Name must not be \".\" or \"..\""),
+    Separator("Name must not contain / or \\"),
+    InvalidChar("Name contains an invalid character"),
+    TooLong("Name is too long"),
+}
+
+/** Why [name] is invalid, or null if it is valid. */
+fun nameProblem(name: String): NameProblem? = when {
+    name.isBlank() -> NameProblem.Empty
+    name == "." || name == ".." -> NameProblem.Dots
+    '/' in name || '\\' in name -> NameProblem.Separator
+    '\u0000' in name -> NameProblem.InvalidChar
+    name.toByteArray(Charsets.UTF_8).size > MAX_NAME_BYTES -> NameProblem.TooLong
     else -> null
+}
+
+/** Human-readable (English) reason why [name] is invalid, or null if it is valid. */
+fun nameError(name: String): String? = nameProblem(name)?.english
+
+/** An invalid name was given to a [Workspace] operation. */
+class InvalidNameException(val problem: NameProblem) : IllegalArgumentException(problem.english)
+
+/** A [Workspace] operation failed for a known [reason] about the entry called [name]. */
+class WorkspaceException(val reason: Reason, val name: String) : IOException(reason.english(name)) {
+    enum class Reason(private val english: String) {
+        AlreadyExists("\"%s\" already exists"),
+        CannotCreateFolder("Could not create folder \"%s\""),
+        FolderMissing("Folder does not exist"),
+        DoesNotExist("\"%s\" does not exist"),
+        CannotRename("Could not rename \"%s\""),
+        CannotDelete("Could not delete \"%s\""),
+        ;
+
+        fun english(name: String): String = english.replace("%s", name)
+    }
 }
 
 /**
@@ -37,6 +67,11 @@ fun nameError(name: String): String? = when {
  * canonicalises its paths and refuses anything that resolves outside [root].
  */
 class Workspace(val root: File) {
+
+    companion object {
+        /** Message of the IllegalArgumentException thrown for operations on [root] itself. */
+        const val ROOT_ERROR = "Cannot modify the workspace root"
+    }
 
     private val rootFile: File get() = root.canonicalFile
 
@@ -68,20 +103,20 @@ class Workspace(val root: File) {
 
     fun createFile(dir: File, name: String): Result<File> =
         create(dir, name) { target ->
-            if (!target.createNewFile()) throw IOException("\"$name\" already exists")
+            if (!target.createNewFile()) throw WorkspaceException(WorkspaceException.Reason.AlreadyExists, name)
         }
 
     fun createDir(dir: File, name: String): Result<File> =
         create(dir, name) { target ->
-            if (target.exists()) throw IOException("\"$name\" already exists")
-            if (!target.mkdir()) throw IOException("Could not create folder \"$name\"")
+            if (target.exists()) throw WorkspaceException(WorkspaceException.Reason.AlreadyExists, name)
+            if (!target.mkdir()) throw WorkspaceException(WorkspaceException.Reason.CannotCreateFolder, name)
         }
 
     private inline fun create(dir: File, name: String, make: (File) -> Unit): Result<File> = runCatching {
-        nameError(name)?.let { throw IllegalArgumentException(it) }
+        nameProblem(name)?.let { throw InvalidNameException(it) }
         requireInside(dir)
         if (isRoot(dir)) root.mkdirs()
-        if (!dir.isDirectory) throw IOException("Folder does not exist")
+        if (!dir.isDirectory) throw WorkspaceException(WorkspaceException.Reason.FolderMissing, dir.name)
         val target = File(dir.canonicalFile, name)
         requireInside(target)
         make(target)
@@ -90,17 +125,17 @@ class Workspace(val root: File) {
 
     /** Renames [file] in place (same parent). Fails if the target name already exists. */
     fun rename(file: File, newName: String): Result<File> = runCatching {
-        nameError(newName)?.let { throw IllegalArgumentException(it) }
+        nameProblem(newName)?.let { throw InvalidNameException(it) }
         val source = entryOf(file)
         if (entryTypeNoFollow(source) == EntryType.MISSING) {
-            throw IOException("\"${source.name}\" does not exist")
+            throw WorkspaceException(WorkspaceException.Reason.DoesNotExist, source.name)
         }
         val target = File(source.parentFile, newName)
         // On case-insensitive filesystems "a.py" -> "A.py" resolves to the same file; allow it.
         if (target.exists() && target.canonicalPath != source.canonicalPath) {
-            throw IOException("\"$newName\" already exists")
+            throw WorkspaceException(WorkspaceException.Reason.AlreadyExists, newName)
         }
-        if (!source.renameTo(target)) throw IOException("Could not rename \"${source.name}\"")
+        if (!source.renameTo(target)) throw WorkspaceException(WorkspaceException.Reason.CannotRename, source.name)
         target
     }
 
@@ -109,7 +144,7 @@ class Workspace(val root: File) {
         val entry = entryOf(file)
         val type = entryTypeNoFollow(entry)
         if (type == EntryType.MISSING) {
-            throw IOException("\"${file.name}\" does not exist")
+            throw WorkspaceException(WorkspaceException.Reason.DoesNotExist, file.name)
         }
         deleteRecursively(entry, type)
     }
@@ -119,7 +154,7 @@ class Workspace(val root: File) {
             entry.listFiles()?.forEach { deleteRecursively(it) }
         }
         if (!entry.delete() && entryTypeNoFollow(entry) != EntryType.MISSING) {
-            throw IOException("Could not delete \"${entry.name}\"")
+            throw WorkspaceException(WorkspaceException.Reason.CannotDelete, entry.name)
         }
     }
 
@@ -147,7 +182,7 @@ class Workspace(val root: File) {
             throw SecurityException("Path is outside the workspace")
         }
         val entry = File(parent, name)
-        if (isRoot(entry)) throw IllegalArgumentException("Cannot modify the workspace root")
+        if (isRoot(entry)) throw IllegalArgumentException(ROOT_ERROR)
         return entry
     }
 

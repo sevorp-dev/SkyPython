@@ -64,6 +64,9 @@ import dev.skyloft.skypython.ui.theme.brandButtonColors
 import dev.skyloft.skypython.ui.theme.MutedText
 import dev.skyloft.skypython.ui.theme.NightNavy
 import dev.skyloft.skypython.ui.theme.SuccessGreen
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
+import dev.skyloft.skypython.R
 
 private val LogBackground = NightNavy
 private val LogText = Color(0xFFD8DEEA)
@@ -76,13 +79,13 @@ fun PipScreen(viewModel: PipViewModel, onBack: () -> Unit) {
     Scaffold(
         topBar = {
             SkyTopBar(
-                title = "Pip",
+                title = stringResource(R.string.title_pip),
                 onBack = onBack,
                 divider = false,
                 actions = {
                     if (state.tab == PipTab.Installed) {
                         IconButton(onClick = viewModel::refresh, enabled = !state.loading) {
-                            Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
+                            Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.action_refresh))
                         }
                     }
                 },
@@ -106,7 +109,7 @@ fun PipScreen(viewModel: PipViewModel, onBack: () -> Unit) {
                     Tab(
                         selected = state.tab == tab,
                         onClick = { viewModel.selectTab(tab) },
-                        text = { Text(tab.name, fontWeight = FontWeight.Medium) },
+                        text = { Text(stringResource(tab.labelRes()), fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         selectedContentColor = TextBright,
                         unselectedContentColor = MutedText,
                     )
@@ -123,13 +126,13 @@ fun PipScreen(viewModel: PipViewModel, onBack: () -> Unit) {
     state.confirmUninstall?.let { pkg ->
         AlertDialog(
             onDismissRequest = viewModel::dismissUninstall,
-            title = { Text("Uninstall ${pkg.name}?") },
-            text = { Text("Version ${pkg.version} will be removed.") },
+            title = { Text(stringResource(R.string.pip_uninstall_title, pkg.name)) },
+            text = { Text(stringResource(R.string.pip_uninstall_text, pkg.version)) },
             confirmButton = {
-                TextButton(onClick = viewModel::confirmUninstall) { Text("Uninstall", color = ErrorRed) }
+                TextButton(onClick = viewModel::confirmUninstall) { Text(stringResource(R.string.pip_uninstall), color = ErrorRed) }
             },
             dismissButton = {
-                TextButton(onClick = viewModel::dismissUninstall) { Text("Cancel") }
+                TextButton(onClick = viewModel::dismissUninstall) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
@@ -145,10 +148,10 @@ private fun InstallTab(state: PipState, viewModel: PipViewModel) {
                 modifier = Modifier.weight(1f),
                 enabled = !state.installing,
                 singleLine = true,
-                label = { Text("Package") },
-                placeholder = { Text("e.g. requests or six==1.16.0") },
+                label = { Text(stringResource(R.string.pip_package)) },
+                placeholder = { Text(stringResource(R.string.pip_package_hint), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 isError = state.specError != null,
-                supportingText = state.specError?.let { { Text(it) } },
+                supportingText = state.specError?.let { { Text(stringResource(it.messageRes())) } },
                 textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace),
                 shape = RoundedCornerShape(12.dp),
                 keyboardOptions = KeyboardOptions(
@@ -166,7 +169,7 @@ private fun InstallTab(state: PipState, viewModel: PipViewModel) {
                 colors = brandButtonColors(),
                 // The outlined field reserves 8dp above its box for the floating label.
                 modifier = Modifier.padding(top = 8.dp).height(56.dp),
-            ) { Text("Install") }
+            ) { Text(stringResource(R.string.pip_install)) }
         }
         if (state.installing) {
             LinearProgressIndicator(Modifier.fillMaxWidth().padding(vertical = 8.dp))
@@ -174,14 +177,14 @@ private fun InstallTab(state: PipState, viewModel: PipViewModel) {
             Spacer(Modifier.height(8.dp))
         }
         when (val outcome = state.outcome) {
-            is InstallOutcome.Succeeded -> StatusText("Installed ${outcome.spec}", SuccessGreen)
+            is InstallOutcome.Succeeded -> StatusText(stringResource(R.string.pip_installed_spec, outcome.spec), SuccessGreen)
             is InstallOutcome.Failed -> {
-                StatusText("Installation failed", ErrorRed)
-                if (outcome.buildFailure) StatusText(PipViewModel.PURE_PYTHON_HINT, MaterialTheme.colorScheme.secondary)
+                StatusText(stringResource(R.string.pip_install_failed), ErrorRed)
+                if (outcome.buildFailure) StatusText(stringResource(R.string.pip_pure_python_hint), MaterialTheme.colorScheme.secondary)
             }
             null -> if (!state.installing && state.log.isEmpty()) {
                 StatusText(
-                    "Packages are installed from PyPI for your scripts. " + PipViewModel.PURE_PYTHON_HINT,
+                    stringResource(R.string.pip_intro) + " " + stringResource(R.string.pip_pure_python_hint),
                     MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -238,7 +241,7 @@ private fun InstalledTab(state: PipState, viewModel: PipViewModel) {
         if (state.packages.isEmpty() && !state.loading && state.listError == null) {
             Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
                 Text(
-                    "No packages installed yet",
+                    stringResource(R.string.pip_no_packages),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -278,8 +281,22 @@ private fun PackageRow(pkg: PipPackage, busy: Boolean, enabled: Boolean, onUnins
             if (busy) {
                 CircularProgressIndicator(Modifier.padding(12.dp).size(20.dp), strokeWidth = 2.dp)
             } else {
-                TextButton(onClick = onUninstall, enabled = enabled) { Text("Uninstall", color = ErrorRed) }
+                TextButton(onClick = onUninstall, enabled = enabled) { Text(stringResource(R.string.pip_uninstall), color = ErrorRed) }
             }
         }
     }
+}
+
+@StringRes
+private fun PipTab.labelRes(): Int = when (this) {
+    PipTab.Install -> R.string.pip_tab_install
+    PipTab.Installed -> R.string.pip_tab_installed
+}
+
+@StringRes
+private fun SpecProblem.messageRes(): Int = when (this) {
+    SpecProblem.Empty -> R.string.pip_spec_empty
+    SpecProblem.Spaces -> R.string.pip_spec_spaces
+    SpecProblem.Options -> R.string.pip_spec_options
+    SpecProblem.Invalid -> R.string.pip_spec_invalid
 }

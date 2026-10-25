@@ -51,22 +51,28 @@ import dev.skyloft.skypython.ui.theme.SoftViolet
 import dev.skyloft.skypython.ui.theme.TextBright
 import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
 
 private const val GITHUB_URL = "https://github.com/sevorp-dev/SkyPython"
 private const val TELEGRAM_URL = "https://t.me/SkyLoft_Studio"
 
-private data class Notice(val name: String, val license: String)
+/** A third-party component: a plain [name] (a product name) or a [nameRes] that needs translating. */
+private data class Notice(val name: String?, @StringRes val nameRes: Int, val license: String)
 
 private val NOTICES = listOf(
-    Notice("CPython", "Python Software Foundation License"),
-    Notice("Sora Editor", "LGPL-2.1"),
-    Notice("MagicPython grammar", "MIT"),
-    Notice("VS Code Dark+ theme", "MIT"),
-    Notice("Termux terminal-emulator and terminal-view", "Apache-2.0"),
-    Notice("jedi", "MIT"),
-    Notice("parso", "MIT"),
-    Notice("pyflakes", "MIT"),
-    Notice("typeshed", "Apache-2.0"),
+    Notice("CPython", 0, "Python Software Foundation License"),
+    Notice("Sora Editor", 0, "LGPL-2.1"),
+    Notice(null, R.string.about_notice_grammar, "MIT"),
+    Notice(null, R.string.about_notice_theme, "MIT"),
+    Notice(null, R.string.about_notice_terminal, "Apache-2.0"),
+    Notice("jedi", 0, "MIT"),
+    Notice("parso", 0, "MIT"),
+    Notice("pyflakes", 0, "MIT"),
+    Notice("typeshed", 0, "Apache-2.0"),
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -77,7 +83,7 @@ fun AboutScreen(onBack: () -> Unit) {
 
     Scaffold(
         topBar = {
-            SkyTopBar(title = "About", onBack = onBack)
+            SkyTopBar(title = stringResource(R.string.title_about), onBack = onBack)
         },
     ) { padding ->
         Column(
@@ -98,36 +104,42 @@ fun AboutScreen(onBack: () -> Unit) {
                     contentDescription = null,
                     modifier = Modifier.size(112.dp),
                 )
-                BrandText("SkyPython", fontSize = 32.sp, fontWeight = FontWeight.Bold, brush = BrandTextBrush)
-                Row {
-                    Text("Python development, ", fontSize = 17.sp, color = TextBright)
-                    BrandText("anywhere.", fontSize = 17.sp, fontWeight = FontWeight.Medium, color = SkyBlue)
-                }
-                Text("Version $version", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                BrandText(stringResource(R.string.app_name), fontSize = 32.sp, fontWeight = FontWeight.Bold, brush = BrandTextBrush)
+                // One Text, so a longer translation wraps instead of being cut off.
+                val start = stringResource(R.string.about_tagline_start)
+                val end = stringResource(R.string.about_tagline_end)
+                Text(
+                    buildAnnotatedString {
+                        withStyle(SpanStyle(color = TextBright)) { append(start) }
+                        withStyle(SpanStyle(color = SkyBlue, fontWeight = FontWeight.Medium)) { append(end) }
+                    },
+                    fontSize = 17.sp,
+                    textAlign = TextAlign.Center,
+                )
+                Text(stringResource(R.string.about_version, version), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "A free, open-source Python 3 IDE for Android. " +
-                        "Write and run Python scripts on your phone, completely offline.",
+                    stringResource(R.string.about_description),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
             Hairline()
-            SectionTitle("Links")
-            LinkRow(Icons.Filled.Code, "Source code on GitHub", GITHUB_URL) { openUrl(context, GITHUB_URL) }
-            LinkRow(Icons.AutoMirrored.Filled.Send, "Telegram channel", TELEGRAM_URL) { openUrl(context, TELEGRAM_URL) }
+            SectionTitle(stringResource(R.string.about_links))
+            LinkRow(Icons.Filled.Code, stringResource(R.string.about_source_code), GITHUB_URL) { openUrl(context, GITHUB_URL) }
+            LinkRow(Icons.AutoMirrored.Filled.Send, stringResource(R.string.about_telegram), TELEGRAM_URL) { openUrl(context, TELEGRAM_URL) }
             Hairline()
-            SectionTitle("License")
+            SectionTitle(stringResource(R.string.about_license))
             ListItem(
                 leadingContent = { IconTile(Icons.Filled.Gavel, size = 40.dp, tint = SoftViolet) },
                 headlineContent = { Text("Apache License 2.0") },
-                supportingContent = { Text("SkyPython is free software; see LICENSE in the source code.") },
+                supportingContent = { Text(stringResource(R.string.about_license_text)) },
             )
             Hairline()
-            SectionTitle("Third-party software")
+            SectionTitle(stringResource(R.string.about_third_party))
             for (n in NOTICES) {
                 ListItem(
-                    headlineContent = { Text(n.name) },
+                    headlineContent = { Text(n.name ?: stringResource(n.nameRes)) },
                     supportingContent = { Text(n.license, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 )
             }
@@ -139,7 +151,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     BrandText("SkyLoft Studio", fontSize = 15.sp, fontWeight = FontWeight.Medium)
                     Text(
-                        " · Ideas. Code. Future.",
+                        stringResource(R.string.about_slogan),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         letterSpacing = 0.6.sp,
@@ -183,6 +195,6 @@ private fun openUrl(context: Context, url: String) {
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     } catch (e: ActivityNotFoundException) {
-        Toast.makeText(context, "No app can open $url", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.about_no_app_for_link, url), Toast.LENGTH_SHORT).show()
     }
 }

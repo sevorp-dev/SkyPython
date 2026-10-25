@@ -94,6 +94,12 @@ android {
     buildFeatures {
         compose = true
     }
+    // The language is chosen in the app (Settings), so every language must ship with it.
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
 }
 
 androidComponents {
