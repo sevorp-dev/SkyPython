@@ -1,5 +1,7 @@
 package dev.skyloft.skypython.editor
 
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.layout.onGloballyPositioned
 import dev.skyloft.skypython.ui.theme.brandButtonColors
 import dev.skyloft.skypython.ui.theme.SuccessGreen
 import dev.skyloft.skypython.ui.theme.SectionLabel
@@ -500,6 +502,11 @@ private fun EditorTitle(doc: OpenDocument?, projectsRoot: File) {
 @Composable
 private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel, onClose: (String) -> Unit, onNew: () -> Unit) {
     val scroll = rememberScrollState()
+    // Where each tab starts in the strip, so a newly selected tab scrolls into view.
+    val tabX = remember { mutableMapOf<String, Int>() }
+    LaunchedEffect(state.currentId) {
+        tabX[state.currentId]?.let { x -> scroll.animateScrollTo((x - 48).coerceAtLeast(0)) }
+    }
     Row(
         Modifier.fillMaxWidth().background(SlateBar).height(44.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -515,6 +522,7 @@ private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel, onClose: (
                 val chip by animateColorAsState(if (selected) Slate else Color.Transparent, label = "tab")
                 Box(
                     Modifier
+                        .onGloballyPositioned { tabX[doc.id] = it.positionInParent().x.toInt() }
                         .padding(top = 6.dp)
                         .height(38.dp)
                         .clip(RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp))
@@ -655,9 +663,9 @@ private fun EmptyEditor(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Image(
-            painterResource(R.drawable.ic_launcher_foreground),
+            painterResource(R.drawable.ic_skypython_mark),
             contentDescription = null,
-            modifier = Modifier.size(96.dp),
+            modifier = Modifier.size(width = 96.dp, height = 67.dp),
         )
         Text(
             stringResource(R.string.editor_no_open_files),

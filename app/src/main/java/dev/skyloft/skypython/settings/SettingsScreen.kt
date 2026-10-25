@@ -137,6 +137,12 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 onSelect = { v -> update { it.copy(codeFont = v) } },
             )
             CodePreview(s.fontSizeSp, s.codeFont)
+            Text(
+                stringResource(R.string.settings_pinch_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 20.dp, end = 16.dp, top = 2.dp, bottom = 4.dp),
+            )
             SwitchRow(
                 icon = Icons.AutoMirrored.Outlined.WrapText,
                 title = stringResource(R.string.settings_word_wrap),

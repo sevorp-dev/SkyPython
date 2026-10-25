@@ -172,7 +172,7 @@ fun SymbolBar(
 
 private val KeyText = TextBright.copy(alpha = 0.9f)
 
-/** One key: at least 44dp wide and the bar's full 48dp tall, a rounded press highlight. */
+/** One key: at least 40dp wide (+2dp gap) and the bar's full 48dp tall, a rounded press highlight. */
 @Composable
 private fun BarKey(
     onClick: () -> Unit,
@@ -184,12 +184,12 @@ private fun BarKey(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxHeight()
-            .widthIn(min = 44.dp)
+            .widthIn(min = 40.dp)
             .padding(vertical = 4.dp, horizontal = 1.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(if (selected) OrangeTint else Color.Transparent)
             .clickable(onClickLabel = description, role = Role.Button, onClick = onClick)
             .then(if (description != null) Modifier.semantics { contentDescription = description } else Modifier)
-            .padding(horizontal = 10.dp),
+            .padding(horizontal = 8.dp),
     ) { content() }
 }

@@ -55,7 +55,7 @@ val SuccessGreen = Color(0xFF7FD18B)
 val BrandTextBrush: Brush = Brush.linearGradient(listOf(Orange, Color(0xFFFFC27A)))
 
 /** Floating layers (menus, sheets, snackbars) let the content shimmer through a little. */
-const val GLASS_ALPHA = 0.94f
+const val GLASS_ALPHA = 0.96f
 
 /** UI text: Inter (SIL OFL 1.1), static Latin + Cyrillic subsets in res/font. */
 val InterFamily = FontFamily(

@@ -102,6 +102,8 @@ private class SkyColorScheme(registry: ThemeRegistry) :
         // Selection toolbar (cut / copy / paste …): the same dark popup as the suggestions.
         TEXT_ACTION_WINDOW_BACKGROUND -> POPUP_BG
         TEXT_ACTION_WINDOW_ICON_COLOR -> POPUP_TEXT
+        // Selection handles: the accent, like the cursor (Sora's default is a stock blue).
+        SELECTION_HANDLE -> ACCENT
         PROBLEM_ERROR -> SQUIGGLE_ERROR
         PROBLEM_WARNING -> SQUIGGLE_WARNING
         else -> super.getColor(type)
@@ -117,6 +119,7 @@ private const val POPUP_TEXT = 0xFFE8ECF1.toInt()
 private const val POPUP_TEXT_SECONDARY = 0xFF8C99A8.toInt()
 private const val POPUP_MATCHED = 0xFFF5A962.toInt()
 private const val SQUIGGLE_ERROR = 0xFFFF7B72.toInt()
+private const val ACCENT = 0xFFF28C38.toInt()
 private const val SQUIGGLE_WARNING = 0xFFE3B95C.toInt()
 
 /**

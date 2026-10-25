@@ -32,7 +32,6 @@
     <string name="title_terminal">Terminal</string>
 
     <!-- Drawer -->
-    <string name="drawer_section_run">Run</string>
     <string name="drawer_section_tools">Tools</string>
     <string name="drawer_section_settings">Settings</string>
     <string name="drawer_line">Line: %1$d/%2$d</string>

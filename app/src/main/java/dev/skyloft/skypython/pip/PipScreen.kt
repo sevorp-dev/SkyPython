@@ -1,5 +1,8 @@
 package dev.skyloft.skypython.pip
 
+import dev.skyloft.skypython.ui.theme.TextBright
+import dev.skyloft.skypython.ui.theme.SlatePanel
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import dev.skyloft.skypython.ui.theme.SlateLine
 import dev.skyloft.skypython.ui.theme.Ink
@@ -314,7 +317,8 @@ private fun SearchTab(state: PipState, viewModel: PipViewModel) {
 private fun LookupCard(lookup: LookupResult, state: PipState, onInstall: (String) -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        colors = CardDefaults.cardColors(containerColor = SlatePanel, contentColor = TextBright),
+        border = BorderStroke(1.dp, SlateLine),
     ) {
         Column(Modifier.padding(16.dp)) {
             when (lookup) {
@@ -379,8 +383,8 @@ private fun ColumnScope.FoundProject(project: PyPiProject, state: PipState, onIn
     }
     Spacer(Modifier.height(8.dp))
     val (icon, text, color) = when (project.wheel) {
-        WheelSupport.Pure -> Triple(Icons.Outlined.CheckCircle, R.string.pip_wheel_pure, MaterialTheme.colorScheme.primary)
-        WheelSupport.PrebuiltAndroid -> Triple(Icons.Outlined.CheckCircle, R.string.pip_wheel_android, MaterialTheme.colorScheme.primary)
+        WheelSupport.Pure -> Triple(Icons.Outlined.CheckCircle, R.string.pip_wheel_pure, SuccessGreen)
+        WheelSupport.PrebuiltAndroid -> Triple(Icons.Outlined.CheckCircle, R.string.pip_wheel_android, SuccessGreen)
         WheelSupport.SourceOnly -> Triple(Icons.Outlined.Info, R.string.pip_wheel_source, MaterialTheme.colorScheme.tertiary)
         WheelSupport.NativeOnly -> Triple(Icons.Outlined.Warning, R.string.pip_wheel_native, MaterialTheme.colorScheme.error)
         WheelSupport.NoFiles -> Triple(Icons.Outlined.Warning, R.string.pip_wheel_none, MaterialTheme.colorScheme.error)
@@ -459,14 +463,14 @@ private fun InstalledBadge() {
         Icon(
             Icons.Outlined.CheckCircle,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = SuccessGreen,
             modifier = Modifier.size(16.dp),
         )
         Spacer(Modifier.width(4.dp))
         Text(
             stringResource(R.string.pip_installed_badge),
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary,
+            color = SuccessGreen,
         )
     }
 }

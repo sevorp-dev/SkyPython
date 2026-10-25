@@ -196,13 +196,12 @@ fun SkyDrawer(
                 .padding(start = 16.dp, end = 4.dp, top = 12.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // TODO: switch to R.drawable.ic_skypython_mark once the new mark lands.
             Image(
-                painterResource(R.drawable.ic_launcher_foreground),
+                painterResource(R.drawable.ic_skypython_mark),
                 contentDescription = null,
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(width = 44.dp, height = 31.dp),
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 BrandText(stringResource(R.string.app_name), fontSize = 19.sp)
                 Text("v$version", color = MutedText, fontSize = 12.sp)

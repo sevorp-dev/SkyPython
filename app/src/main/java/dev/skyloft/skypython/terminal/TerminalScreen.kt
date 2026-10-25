@@ -348,8 +348,9 @@ private fun TerminalPane(
                 setTerminalViewClient(ViewClient(this, viewModel) { zoom(it) })
                 isFocusable = true
                 isFocusableInTouchMode = true
-                setTypeface(typeface)
+                // The renderer is created by setTextSize; setTypeface needs it.
                 setTextSize(fontPx)
+                setTypeface(typeface)
                 tag = fontPx to typeface
                 attachSession(session)
                 viewModel.attachView(this)
@@ -387,11 +388,12 @@ private fun showKeyboard(view: TerminalView) {
 /**
  * The 16 ANSI colours, tuned to the slate background and the orange accent (the stock xterm
  * ones are pure, saturated primaries — e.g. the Python REPL's prompt came out bright magenta).
- * Order: black, red, green, yellow, blue, magenta, cyan, white, then the bright eight.
+ * Order: black, red, green, yellow, blue, magenta, cyan, white, then the bright eight. Magenta
+ * is the accent orange: it is what Python 3.13+ paints its `>>>` prompt with.
  */
 private val ANSI_COLORS = longArrayOf(
-    0xFF2A3442, 0xFFFF7B72, 0xFFA8D48C, 0xFFF5C26B, 0xFF7AB8F5, 0xFFC9A2F0, 0xFF6CCFC0, 0xFFC8CEDD,
-    0xFF5C6B7C, 0xFFFF9B94, 0xFFBFE3A8, 0xFFFFD48F, 0xFF9CCBF8, 0xFFDABDF5, 0xFF8EDCD0, 0xFFF2F4F8,
+    0xFF2A3442, 0xFFFF7B72, 0xFFA8D48C, 0xFFF5C26B, 0xFF7AB8F5, 0xFFF5A962, 0xFF6CCFC0, 0xFFC8CEDD,
+    0xFF5C6B7C, 0xFFFF9B94, 0xFFBFE3A8, 0xFFFFD48F, 0xFF9CCBF8, 0xFFF7B474, 0xFF8EDCD0, 0xFFF2F4F8,
 ).let { argb -> IntArray(argb.size) { argb[it].toInt() } }
 
 /** The app theme's colours as the terminal's default foreground, background and cursor. */

@@ -27,7 +27,6 @@
     <string name="title_terminal">Терминал</string>
 
     <!-- Drawer -->
-    <string name="drawer_section_run">Запуск</string>
     <string name="drawer_section_tools">Инструменты</string>
     <string name="drawer_section_settings">Настройки</string>
     <string name="drawer_line">Строка: %1$d/%2$d</string>

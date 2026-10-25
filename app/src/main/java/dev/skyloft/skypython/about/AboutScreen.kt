@@ -101,9 +101,9 @@ fun AboutScreen(onBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Image(
-                    painterResource(R.drawable.ic_launcher_foreground),
+                    painterResource(R.drawable.ic_skypython_mark),
                     contentDescription = null,
-                    modifier = Modifier.size(112.dp),
+                    modifier = Modifier.size(width = 128.dp, height = 90.dp),
                 )
                 BrandText(stringResource(R.string.app_name), fontSize = 32.sp, fontWeight = FontWeight.Bold, brush = BrandTextBrush)
                 // One Text, so a longer translation wraps instead of being cut off.

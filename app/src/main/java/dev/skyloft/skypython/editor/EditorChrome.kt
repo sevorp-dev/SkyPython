@@ -71,7 +71,7 @@ data class EditorViewConfig(
 
 /** Status-line cursor text: 1-based "Ln 3, Col 26" from the 0-based [CursorPosition]. */
 fun cursorLabel(cursor: CursorPosition, format: String = CURSOR_FORMAT): String =
-    String.format(format, cursor.line + 1, cursor.column + 1)
+    String.format(java.util.Locale.ROOT, format, cursor.line + 1, cursor.column + 1)
 
 /** English status-line cursor format (the UI uses `R.string.editor_status_cursor`). */
 const val CURSOR_FORMAT = "Ln %1\$d, Col %2\$d"
