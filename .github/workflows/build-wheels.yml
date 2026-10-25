@@ -179,7 +179,9 @@ jobs:
               # No BLAS (lapack_lite), static libc++: auditwheel does not know 32-bit Android.
               setup_args = ["-Dallow-noblas=true", "-Dblas=none", "-Dlapack=none",
                             "-Dcpp_link_args=-static-libstdc++"]
-              env = {}
+              # Clear setup-python's PKG_CONFIG_PATH, or meson finds the runner's python3.pc
+              # instead of the target's.
+              env = {"PKG_CONFIG_PATH": ""}
               repair = ""
           smoke = ("import numpy; print(numpy.__version__, numpy.arange(10).sum(), "
                    "numpy.linalg.inv([[1,2],[3,4]])); numpy.show_config()")
@@ -268,7 +270,8 @@ jobs:
     # 32-bit legs may fail (continue-on-error), and then `needs.numpy.result` is still
     # "failure", so it is not checked here: the step below refuses to publish unless both
     # 64-bit wheels were built.
-    if: ${{ !cancelled() && inputs.publish != false }}
+    # (`inputs.publish != false` would be false on push: null == false in expressions.)
+    if: ${{ !cancelled() && (github.event_name == 'push' || inputs.publish) }}
     runs-on: ubuntu-24.04
     permissions:
       contents: write
