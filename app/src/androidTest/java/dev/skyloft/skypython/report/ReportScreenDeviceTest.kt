@@ -4,6 +4,7 @@ import android.content.ClipboardManager
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ComposeTimeoutException
@@ -17,6 +18,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -94,7 +96,13 @@ class ReportScreenDeviceTest {
         store.add(crash)
         show(crash.id)
         rule.onNode(hasTestTag(REPORT_DESCRIPTION_TAG)).performTextInput("Tapped Run twice")
-        rule.onNode(hasText(context.getString(R.string.report_share))).performScrollTo().assertIsEnabled().performClick()
+        // The button's own click action, not a synthetic tap: what is checked here is the intent.
+        // On CI's Android 16 emulator a tap now and then reached nothing (no file written, no
+        // intent) while the same tap worked everywhere else. The likely cause: a tap that lands
+        // while the scroll container is still moving (it keeps the focused field in view when
+        // its size changes) only stops the scroll, it does not click.
+        rule.onNode(hasText(context.getString(R.string.report_share))).performScrollTo().assertIsEnabled()
+            .performSemanticsAction(SemanticsActions.OnClick)
         // The report file is written off the main thread, then the chooser starts: slow emulators
         // need a moment. If nothing starts, the failure says what the screen looked like.
         try {
