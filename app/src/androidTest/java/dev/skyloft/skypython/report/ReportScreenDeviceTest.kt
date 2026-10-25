@@ -95,8 +95,8 @@ class ReportScreenDeviceTest {
         show(crash.id)
         rule.onNode(hasTestTag(REPORT_DESCRIPTION_TAG)).performTextInput("Tapped Run twice")
         rule.onNode(hasText(context.getString(R.string.report_share))).performScrollTo().assertIsEnabled().performClick()
-        // The report file is written off the main thread, then the chooser starts.
-        // The share file is written off the main thread; slow emulators need a moment.
+        // The report file is written off the main thread, then the chooser starts: slow emulators
+        // need a moment. If nothing starts, the failure says what the screen looked like.
         try {
             rule.waitUntil(20_000) { launched.isNotEmpty() }
         } catch (e: ComposeTimeoutException) {
