@@ -45,7 +45,8 @@ jobs:
         api-level: [24, 28, 30, 34, 36]
         arch: [x86_64]
         include:
-          # 32-bit Python (our own CPython build) on a 32-bit x86 emulator.
+          # 32-bit Python (our own CPython build) on a 32-bit x86 emulator. `arch` is also the
+          # only ABI the job builds (-Pskypython.abis), so it must be a real Android ABI name.
           - api-level: 28
             arch: x86
     steps:
