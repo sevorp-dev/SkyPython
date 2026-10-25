@@ -1,6 +1,9 @@
 package dev.skyloft.skypython.editor
 
 import dev.skyloft.skypython.ui.theme.OrangeTint
+import dev.skyloft.skypython.ui.theme.Orange
+import dev.skyloft.skypython.ui.theme.SlatePanel
+import androidx.compose.foundation.border
 import dev.skyloft.skypython.ui.theme.OrangeSoft
 import androidx.compose.material.icons.outlined.KeyboardHide
 import androidx.compose.material.icons.outlined.Keyboard
@@ -172,7 +175,14 @@ fun SymbolBar(
 
 private val KeyText = TextBright.copy(alpha = 0.9f)
 
-/** One key: at least 40dp wide (+2dp gap) and the bar's full 48dp tall, a rounded press highlight. */
+/** Keycaps: one step above the bar ([SlateBar]), with a hairline edge. */
+private val KeyCap = SlatePanel
+private val KeyEdge = SlateLine
+
+/**
+ * One key: at least 40dp wide (+4dp gap), a soft raised keycap on the bar so keys read as keys,
+ * orange-washed when [selected].
+ */
 @Composable
 private fun BarKey(
     onClick: () -> Unit,
@@ -180,14 +190,16 @@ private fun BarKey(
     selected: Boolean = false,
     content: @Composable () -> Unit,
 ) {
+    val shape = RoundedCornerShape(8.dp)
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxHeight()
             .widthIn(min = 40.dp)
-            .padding(vertical = 4.dp, horizontal = 1.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(if (selected) OrangeTint else Color.Transparent)
+            .padding(vertical = 6.dp, horizontal = 2.dp)
+            .clip(shape)
+            .background(if (selected) OrangeTint else KeyCap)
+            .border(1.dp, if (selected) Orange.copy(alpha = 0.45f) else KeyEdge, shape)
             .clickable(onClickLabel = description, role = Role.Button, onClick = onClick)
             .then(if (description != null) Modifier.semantics { contentDescription = description } else Modifier)
             .padding(horizontal = 8.dp),

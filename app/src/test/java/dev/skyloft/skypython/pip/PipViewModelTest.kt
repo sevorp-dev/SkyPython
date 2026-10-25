@@ -396,7 +396,7 @@ class PipViewModelTest {
     }
 
     @Test
-    fun successfulInstallMakesTheListReloadNextTime() = runTest(dispatcher) {
+    fun successfulInstallReloadsTheListRightAway() = runTest(dispatcher) {
         manager.listResult.complete(Result.success(emptyList()))
         vm.selectTab(PipTab.Installed)
         runCurrent()
@@ -405,10 +405,82 @@ class PipViewModelTest {
         vm.install()
         manager.output.close()
         runCurrent()
-        assertEquals(1, manager.listCalls)
+        assertEquals(2, manager.listCalls)
+        // Already fresh: opening the tab doesn't run pip list again.
         vm.selectTab(PipTab.Installed)
         runCurrent()
         assertEquals(2, manager.listCalls)
+    }
+
+    @Test
+    fun theScreenLoadsTheInstalledListWhenShownSoPopularRowsKnowWhatIsInstalled() = runTest(dispatcher) {
+        manager.listResult.complete(Result.success(listOf(PipPackage("rich", "14.0.0"))))
+        vm.onShown()
+        runCurrent()
+        assertTrue(state.isInstalled("rich"))
+        vm.onShown()
+        runCurrent()
+        assertEquals(1, manager.listCalls)
+    }
+
+    @Test
+    fun installFromTheSearchTabShowsInstalledAtOnceWithoutVisitingInstalled() = runTest(dispatcher) {
+        // The bug: Install stayed "Install" until the user switched sections and back.
+        manager.listResult.complete(Result.success(emptyList()))
+        vm.onShown()
+        runCurrent()
+        manager.listResult = CompletableDeferred() // the reload hangs: pip's own output must be enough
+        vm.installPackage("python-dateutil")
+        runCurrent()
+        assertFalse(state.isInstalled("python-dateutil"))
+        finishRun("Collecting python-dateutil\n", "Successfully installed python_dateutil-2.9.0 six-1.17.0\n")
+        runCurrent()
+        assertTrue(state.isInstalled("python-dateutil"))
+        assertTrue(state.isInstalled("six"))
+        assertEquals(2, manager.listCalls)
+        // Then the real list replaces the guess.
+        val real = listOf(PipPackage("python-dateutil", "2.9.0.post0"), PipPackage("six", "1.17.0"))
+        manager.listResult.complete(Result.success(real))
+        runCurrent()
+        assertEquals(real, state.packages)
+    }
+
+    @Test
+    fun aReloadStartedBeforeTheInstallFinishedIsStartedAgain() = runTest(dispatcher) {
+        vm.onShown() // pip list is still running...
+        runCurrent()
+        vm.installPackage("rich")
+        runCurrent()
+        finishRun("Successfully installed rich-14.0.0\n")
+        runCurrent()
+        // ...and could miss rich, so it runs again.
+        assertEquals(2, manager.listCalls)
+        manager.listResult.complete(Result.success(listOf(PipPackage("rich", "14.0.0"))))
+        runCurrent()
+        assertTrue(state.isInstalled("rich"))
+        assertFalse(state.loading)
+    }
+
+    @Test
+    fun uninstallDropsThePackageEverywhereAtOnce() = runTest(dispatcher) {
+        manager.listResult.complete(Result.success(listOf(PipPackage("six", "1.16.0"), PipPackage("rich", "14"))))
+        vm.onShown()
+        runCurrent()
+        manager.listResult = CompletableDeferred()
+        vm.requestUninstall(PipPackage("six", "1.16.0"))
+        vm.confirmUninstall()
+        runCurrent()
+        assertFalse(state.isInstalled("six"))
+        assertEquals(listOf(PipPackage("rich", "14")), state.packages)
+    }
+
+    @Test
+    fun installedNamesAreReadFromPipsSuccessLine() {
+        assertEquals(
+            listOf(PipPackage("python_dateutil", "2.9.0.post0"), PipPackage("six", "1.17.0"), PipPackage("zope.interface", "7.2")),
+            PipLog.installed("Collecting x\nSuccessfully installed python_dateutil-2.9.0.post0 six-1.17.0 zope.interface-7.2\n"),
+        )
+        assertEquals(emptyList<PipPackage>(), PipLog.installed("Requirement already satisfied: six\n"))
     }
 
     @Test
@@ -516,7 +588,7 @@ class PipViewModelTest {
     }
 
     @Test
-    fun installRequirementsRunsAndMarksTheListStale() = runTest(dispatcher) {
+    fun installRequirementsRunsAndReloadsTheList() = runTest(dispatcher) {
         manager.listResult.complete(Result.success(emptyList()))
         vm.selectTab(PipTab.Installed)
         runCurrent()
@@ -529,6 +601,7 @@ class PipViewModelTest {
         runCurrent()
         assertEquals(InstallOutcome.Succeeded(PipOperation.Requirements(req)), state.outcome)
         assertEquals(listOf("requirements ${req.path}"), manager.runs)
+        assertEquals(2, manager.listCalls)
         vm.selectTab(PipTab.Installed)
         runCurrent()
         assertEquals(2, manager.listCalls)

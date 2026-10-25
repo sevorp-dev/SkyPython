@@ -25,9 +25,20 @@ enum class PopularAction {
     NotThisDevice,
 }
 
+/** The headed groups of the popular list, in display order. */
+enum class PopularSection(@param:StringRes val label: Int) {
+    /** Whatever SkyPython's wheel index has for this device (filled in at runtime). */
+    Prebuilt(R.string.pip_section_prebuilt),
+    Popular(R.string.pip_section_popular),
+    Data(R.string.pip_section_data),
+    Web(R.string.pip_section_web),
+    Text(R.string.pip_section_text),
+}
+
 data class PopularPackage(
     val name: String,
     @param:StringRes val summary: Int,
+    val section: PopularSection,
     val availability: Availability = Availability.Ready,
 )
 
@@ -40,29 +51,29 @@ data class PopularPackage(
 object PopularPackages {
 
     val all: List<PopularPackage> = listOf(
-        PopularPackage("requests", R.string.pip_pkg_requests),
-        PopularPackage("rich", R.string.pip_pkg_rich),
-        PopularPackage("colorama", R.string.pip_pkg_colorama),
-        PopularPackage("beautifulsoup4", R.string.pip_pkg_beautifulsoup4),
-        PopularPackage("python-dateutil", R.string.pip_pkg_dateutil),
-        PopularPackage("tabulate", R.string.pip_pkg_tabulate),
-        PopularPackage("tqdm", R.string.pip_pkg_tqdm),
-        PopularPackage("httpx", R.string.pip_pkg_httpx),
-        PopularPackage("click", R.string.pip_pkg_click),
-        PopularPackage("art", R.string.pip_pkg_art),
-        PopularPackage("pyfiglet", R.string.pip_pkg_pyfiglet),
-        PopularPackage("termcolor", R.string.pip_pkg_termcolor),
-        PopularPackage("emoji", R.string.pip_pkg_emoji),
-        PopularPackage("faker", R.string.pip_pkg_faker),
-        PopularPackage("sympy", R.string.pip_pkg_sympy),
-        PopularPackage("mpmath", R.string.pip_pkg_mpmath),
-        PopularPackage("networkx", R.string.pip_pkg_networkx),
-        PopularPackage("prompt-toolkit", R.string.pip_pkg_prompt_toolkit),
-        // markupsafe ships cp314 Android wheels for arm64-v8a and x86_64 only.
-        PopularPackage("jinja2", R.string.pip_pkg_jinja2, Availability.Needs64Bit),
-        PopularPackage("pillow", R.string.pip_pkg_pillow, Availability.ComingLater),
+        PopularPackage("requests", R.string.pip_pkg_requests, PopularSection.Popular),
+        PopularPackage("rich", R.string.pip_pkg_rich, PopularSection.Popular),
+        PopularPackage("tqdm", R.string.pip_pkg_tqdm, PopularSection.Popular),
+        PopularPackage("click", R.string.pip_pkg_click, PopularSection.Popular),
+        PopularPackage("colorama", R.string.pip_pkg_colorama, PopularSection.Popular),
+        PopularPackage("python-dateutil", R.string.pip_pkg_dateutil, PopularSection.Popular),
+        PopularPackage("sympy", R.string.pip_pkg_sympy, PopularSection.Data),
+        PopularPackage("mpmath", R.string.pip_pkg_mpmath, PopularSection.Data),
+        PopularPackage("networkx", R.string.pip_pkg_networkx, PopularSection.Data),
+        PopularPackage("faker", R.string.pip_pkg_faker, PopularSection.Data),
+        PopularPackage("pillow", R.string.pip_pkg_pillow, PopularSection.Data, Availability.ComingLater),
         // Installable from SkyPython's wheel index once it has a build for the device.
-        PopularPackage("numpy", R.string.pip_pkg_numpy, Availability.ComingLater),
+        PopularPackage("numpy", R.string.pip_pkg_numpy, PopularSection.Data, Availability.ComingLater),
+        PopularPackage("httpx", R.string.pip_pkg_httpx, PopularSection.Web),
+        PopularPackage("beautifulsoup4", R.string.pip_pkg_beautifulsoup4, PopularSection.Web),
+        // markupsafe ships cp314 Android wheels for arm64-v8a and x86_64 only.
+        PopularPackage("jinja2", R.string.pip_pkg_jinja2, PopularSection.Web, Availability.Needs64Bit),
+        PopularPackage("tabulate", R.string.pip_pkg_tabulate, PopularSection.Text),
+        PopularPackage("termcolor", R.string.pip_pkg_termcolor, PopularSection.Text),
+        PopularPackage("prompt-toolkit", R.string.pip_pkg_prompt_toolkit, PopularSection.Text),
+        PopularPackage("art", R.string.pip_pkg_art, PopularSection.Text),
+        PopularPackage("pyfiglet", R.string.pip_pkg_pyfiglet, PopularSection.Text),
+        PopularPackage("emoji", R.string.pip_pkg_emoji, PopularSection.Text),
     )
 
     /**
@@ -82,5 +93,17 @@ object PopularPackages {
         val q = PyPiJson.normalize(PackageSpec.nameOf(query.trim()))
         if (q.isEmpty()) return all
         return all.filter { q in PyPiJson.normalize(it.name) }
+    }
+
+    /**
+     * [packages] under their headings, in [PopularSection] order, empty sections left out.
+     * Those [prebuilt] for this device move up into [PopularSection.Prebuilt].
+     */
+    fun sections(
+        packages: List<PopularPackage>,
+        prebuilt: (PopularPackage) -> Boolean,
+    ): List<Pair<PopularSection, List<PopularPackage>>> {
+        val bySection = packages.groupBy { if (prebuilt(it)) PopularSection.Prebuilt else it.section }
+        return PopularSection.entries.mapNotNull { section -> bySection[section]?.let { section to it } }
     }
 }

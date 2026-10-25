@@ -1,5 +1,7 @@
 package dev.skyloft.skypython.editor
 
+import dev.skyloft.skypython.ui.theme.SheetShape
+import dev.skyloft.skypython.ui.theme.floatingOutline
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -55,8 +57,9 @@ fun OutlineSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false),
+        shape = SheetShape,
         containerColor = colors.surfaceContainer,
-        modifier = Modifier.testTag("outline_sheet"),
+        modifier = Modifier.testTag("outline_sheet").floatingOutline(SheetShape),
     ) {
         SectionLabel(stringResource(R.string.editor_outline), Modifier.padding(start = 20.dp, bottom = 8.dp))
         Hairline()

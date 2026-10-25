@@ -1,5 +1,7 @@
 package dev.skyloft.skypython.terminal
 
+import dev.skyloft.skypython.ui.theme.SheetShape
+import dev.skyloft.skypython.ui.theme.floatingOutline
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -112,7 +114,12 @@ fun InstallMissingSheet(
     val operation = PipOperation.Install(missing.pipName)
     val mine = state.running == operation || state.outcome?.operation == operation
     val outcome = state.outcome?.takeIf { it.operation == operation && state.running == null }
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        shape = SheetShape,
+        modifier = Modifier.floatingOutline(SheetShape),
+    ) {
         Column(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp).navigationBarsPadding(),
             verticalArrangement = Arrangement.spacedBy(10.dp),

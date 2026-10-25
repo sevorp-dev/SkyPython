@@ -3,6 +3,7 @@ package dev.skyloft.skypython.pip
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
@@ -74,6 +75,22 @@ class PipScreenTest {
     }
 
     @Test
+    fun anInstalledPopularPackageSaysSoWithoutLeavingTheTab() {
+        show()
+        val install = hasTestTag(popularInstallTag("rich"))
+        rule.onNode(hasScrollAction()).performScrollToNode(install)
+        pip.installed = listOf(PipPackage("rich", "14.0.0"), PipPackage("six", "1.16.0"))
+        rule.onNode(install).performClick()
+        rule.waitUntilAtLeastOneExists(hasTestTag(popularInstalledTag("rich")), 5_000)
+        rule.onNode(install).assertDoesNotExist()
+        rule.onNode(hasTestTag(popularInstalledTag("rich"))).assertIsDisplayed()
+        // The Installed tab lists it straight away as well (the chip says "Installed" too).
+        rule.onNode(hasText(str(R.string.pip_tab_installed)) and hasClickAction()).performClick()
+        rule.waitUntilAtLeastOneExists(hasText("rich"), 5_000)
+        rule.onNode(hasText("14.0.0", substring = true)).assertExists()
+    }
+
+    @Test
     fun searchShowsTheProjectAndItsWheelSupport() {
         show(
             PackageIndex { name ->
@@ -137,7 +154,10 @@ class PipScreenTest {
         }
         rule.onNode(hasTestTag(PREBUILT_BADGE_TAG)).assertIsDisplayed()
         rule.onNode(hasText(str(R.string.pip_prebuilt_badge))).assertExists()
-        // Only pillow is still "coming later".
+        // numpy leads the list under its own "Prebuilt for Android" heading...
+        rule.onNode(hasText(str(R.string.pip_section_prebuilt).uppercase())).assertExists()
+        // ...and only pillow is still "coming later" (further down, in Data & science).
+        rule.onNode(hasScrollAction()).performScrollToNode(hasText("pillow"))
         assertEquals(1, rule.onAllNodes(hasText(str(R.string.pip_coming_later))).fetchSemanticsNodes().size)
         val install = hasTestTag(popularInstallTag("numpy"))
         rule.onNode(hasScrollAction()).performScrollToNode(install)

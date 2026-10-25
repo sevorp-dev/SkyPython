@@ -19,7 +19,7 @@ import dev.skyloft.skypython.ui.LocalSnackbarClearance
 import dev.skyloft.skypython.ui.SnackbarClearance
 import android.app.Application
 import android.widget.Toast
-import androidx.compose.material3.AlertDialog
+import dev.skyloft.skypython.ui.theme.SkyAlertDialog
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -535,7 +535,7 @@ private fun NavHostController.goTab(route: String) = navigate(route) {
 private fun RestartDialog(consoleVm: ConsoleViewModel, onConfirmed: (RunTarget) -> Unit) {
     val state by consoleVm.state.collectAsStateWithLifecycle()
     val pending = state.pending ?: return
-    AlertDialog(
+    SkyAlertDialog(
         onDismissRequest = consoleVm::dismissPendingRun,
         title = { Text(stringResource(R.string.restart_title)) },
         text = { Text(stringResource(R.string.restart_text, runTargetTitle(pending))) },
@@ -556,7 +556,7 @@ private fun RestartDialog(consoleVm: ConsoleViewModel, onConfirmed: (RunTarget) 
 private fun RunBusyDialog(runVm: TerminalViewModel, onConfirmed: () -> Unit) {
     val state by runVm.state.collectAsStateWithLifecycle()
     val pending = state.pending ?: return
-    AlertDialog(
+    SkyAlertDialog(
         onDismissRequest = runVm::dismissPendingRun,
         title = { Text(stringResource(R.string.restart_title)) },
         text = { Text(stringResource(R.string.restart_text, pending.name)) },

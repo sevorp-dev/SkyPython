@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.terminal
 
+import androidx.compose.foundation.BorderStroke
 import dev.skyloft.skypython.ui.theme.InkBlack
 import dev.skyloft.skypython.ui.rememberMainScope
 import dev.skyloft.skypython.ui.keepsSnackbarsAbove
@@ -736,11 +737,16 @@ private fun KeyRow(modifiers: Modifiers, enabled: Boolean, onKey: (ExtraKey) -> 
                 onClick = { onKey(key) },
                 enabled = enabled,
                 // An armed Ctrl / Alt sits on a tonal pill, so it reads as "on" at a glance.
+                // Every key sits on a soft keycap one step above the bar.
                 colors = ButtonDefaults.textButtonColors(
-                    containerColor = if (armed) OrangeTint else Color.Transparent,
+                    containerColor = if (armed) OrangeTint else SlatePanel,
+                    disabledContainerColor = SlatePanel.copy(alpha = 0.5f),
                 ),
+                border = BorderStroke(1.dp, if (armed) Orange.copy(alpha = 0.45f) else SlateLine),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
+                    .padding(horizontal = 2.dp)
+                    .height(34.dp)
                     .widthIn(min = 44.dp)
                     .semantics { contentDescription = description },
                 contentPadding = PaddingValues(horizontal = 6.dp),

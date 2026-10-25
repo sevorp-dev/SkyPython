@@ -24,7 +24,7 @@ import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.FindReplace
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
-import androidx.compose.material3.AlertDialog
+import dev.skyloft.skypython.ui.theme.SkyAlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconToggleButton
@@ -295,7 +295,7 @@ fun GoToLineDialog(lineCount: Int, onGo: (line: Int) -> Unit, onDismiss: () -> U
     val target = parseGoToLine(input, lineCount)
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
-    AlertDialog(
+    SkyAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.go_to_line_title)) },
         text = {
@@ -328,7 +328,7 @@ fun NewFileDialog(onCreate: (name: String, onResult: (String?) -> Unit) -> Unit,
     val create = {
         onCreate(value.text) { e -> if (e == null) onDismiss() else error = e }
     }
-    AlertDialog(
+    SkyAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.new_file_title)) },
         text = {
@@ -354,7 +354,7 @@ fun NewFileDialog(onCreate: (name: String, onResult: (String?) -> Unit) -> Unit,
 /** The last opened files; tap one to open it. */
 @Composable
 fun RecentFilesDialog(paths: List<String>, projectsRoot: File, onOpen: (String) -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
+    SkyAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.recent_files)) },
         text = { RecentFilesList(paths, projectsRoot, onOpen) },

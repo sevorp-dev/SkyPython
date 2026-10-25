@@ -71,12 +71,16 @@ import androidx.compose.ui.unit.sp
 import dev.skyloft.skypython.R
 import dev.skyloft.skypython.ui.theme.Chevron
 import dev.skyloft.skypython.ui.theme.Hairline
-import dev.skyloft.skypython.ui.theme.IconTile
+import dev.skyloft.skypython.ui.theme.SkyCard
+import dev.skyloft.skypython.ui.theme.TintedIcon
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Arrangement
 import dev.skyloft.skypython.ui.theme.MutedText
 import dev.skyloft.skypython.ui.theme.Orange
 import dev.skyloft.skypython.ui.theme.SkyTopBar
 import dev.skyloft.skypython.ui.theme.SlateLine
-import dev.skyloft.skypython.ui.theme.SlatePanel
+import dev.skyloft.skypython.ui.theme.SlateBar
+import dev.skyloft.skypython.ui.theme.SlateOutline
 import dev.skyloft.skypython.ui.theme.TextBright
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -139,7 +143,11 @@ fun SamplesScreen(projectsRoot: File, onOpen: (File) -> Unit, onBack: () -> Unit
             }
             return@Scaffold
         }
-        LazyColumn(Modifier.fillMaxSize().padding(padding).padding(vertical = 4.dp)) {
+        LazyColumn(
+            Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             items(list, key = { it.name }) { sample ->
                 SampleRow(sample) {
                     scope.launch {
@@ -161,16 +169,13 @@ fun SamplesScreen(projectsRoot: File, onOpen: (File) -> Unit, onBack: () -> Unit
 private fun SampleRow(sample: Sample, onClick: () -> Unit) {
     val head = sample.title.substringBefore(": ", sample.title)
     val detail = sample.title.substringAfter(": ", "").replaceFirstChar { it.uppercaseChar() }
+    SkyCard(Modifier.fillMaxWidth(), onClick = onClick, contentPadding = 14.dp) {
     Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = 64.dp)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+        Modifier.heightIn(min = 44.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconTile(sampleIcon(sample.name), size = 40.dp)
-        Spacer(Modifier.width(16.dp))
+        TintedIcon(sampleIcon(sample.name), key = sample.name, size = 44.dp)
+        Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(head, fontWeight = FontWeight.Medium, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
@@ -182,6 +187,7 @@ private fun SampleRow(sample: Sample, onClick: () -> Unit) {
             )
         }
         Chevron(Modifier.padding(start = 8.dp))
+    }
     }
 }
 
@@ -219,8 +225,8 @@ private fun SearchField(query: String, onChange: (String) -> Unit) {
         decorationBox = { inner ->
             Row(
                 Modifier
-                    .background(SlatePanel, shape)
-                    .border(1.dp, SlateLine, shape)
+                    .background(SlateBar, shape)
+                    .border(1.dp, SlateOutline, shape)
                     .heightIn(min = 44.dp)
                     .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
