@@ -20,6 +20,7 @@ import com.termux.terminal.TerminalEmulator
 import com.termux.terminal.TerminalSession
 import com.termux.terminal.TerminalSessionClient
 import com.termux.view.TerminalView
+import dev.skyloft.skypython.files.describeIoError
 import dev.skyloft.skypython.pip.MissingPackage
 import dev.skyloft.skypython.report.AppLog
 import dev.skyloft.skypython.report.ErrorReporter
@@ -307,7 +308,7 @@ class TerminalViewModel(
                 message(AppLocale.string(app, R.string.output_saved, file.relativeToOrSelf(projectsRoot.parentFile ?: projectsRoot).path))
                 onSaved(file)
             }.onFailure { e ->
-                message(AppLocale.string(app, R.string.output_save_failed, e.message ?: e.toString()))
+                message(AppLocale.string(app, R.string.output_save_failed, describeIoError(e) { AppLocale.string(app, it) }))
             }
         }
     }
@@ -326,7 +327,7 @@ class TerminalViewModel(
                 }
             }
             result.onSuccess { message(AppLocale.string(app, R.string.output_saved, uri.lastPathSegment ?: "")) }
-                .onFailure { e -> message(AppLocale.string(app, R.string.output_save_failed, e.message ?: e.toString())) }
+                .onFailure { e -> message(AppLocale.string(app, R.string.output_save_failed, describeIoError(e) { AppLocale.string(app, it) })) }
         }
     }
 

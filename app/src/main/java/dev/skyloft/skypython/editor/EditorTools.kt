@@ -179,7 +179,7 @@ fun FindBar(
             OptionToggle(".*", stringResource(R.string.find_regex), regex) { regex = it }
             when {
                 error != null -> Text(
-                    stringResource(R.string.find_invalid_regex) + ": " + error,
+                    findErrorText(stringResource(R.string.find_invalid_regex), error),
                     color = colors.error, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 )
                 text.isNotEmpty() && count == 0 -> Text(

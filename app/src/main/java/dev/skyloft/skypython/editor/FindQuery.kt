@@ -22,13 +22,17 @@ data class FindQuery(
             return if (wholeWord) "\\b(?:$core)\\b" else core
         }
 
-    /** Null when the query is usable; otherwise the regex syntax error to show. */
+    /**
+     * Null when the query is usable; otherwise the regex engine's own (technical, English)
+     * description of the syntax error, possibly empty. Shown after a localized label: see
+     * [findErrorText].
+     */
     val error: String?
         get() = try {
             compile()
             null
         } catch (e: PatternSyntaxException) {
-            e.description ?: "Invalid pattern"
+            e.description.orEmpty()
         }
 
     /** Null for an empty or invalid query. Same flags as Sora's searcher (MULTILINE). */
@@ -120,6 +124,9 @@ private class CancellableText(private val text: String, private val check: () ->
     override fun subSequence(startIndex: Int, endIndex: Int): CharSequence = text.subSequence(startIndex, endIndex)
     override fun toString(): String = text
 }
+
+/** The find bar's error line: the localized [label], then the regex engine's [detail] if any. */
+fun findErrorText(label: String, detail: String): String = if (detail.isBlank()) label else "$label: $detail"
 
 /** Find-bar counter: "3/12" when a match is selected, "–/12" when not, "0" with no matches. */
 fun matchCounter(index: Int, count: Int): String = when {

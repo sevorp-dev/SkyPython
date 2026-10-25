@@ -151,6 +151,14 @@ class FindQueryTest {
     }
 
     @Test
+    fun anInvalidPatternIsShownAfterALocalizedLabel() {
+        val q = FindQuery("(unclosed", regex = true)
+        val detail = q.error!!
+        assertEquals("Ошибка в выражении: $detail", findErrorText("Ошибка в выражении", detail))
+        assertEquals("Ошибка в выражении", findErrorText("Ошибка в выражении", ""))
+    }
+
+    @Test
     fun counterLabel() {
         assertEquals("0", matchCounter(-1, 0))
         assertEquals("3/12", matchCounter(2, 12))

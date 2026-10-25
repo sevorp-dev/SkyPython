@@ -148,7 +148,7 @@ class PipViewModelTest {
 
         manager.output = Channel(Channel.UNLIMITED)
         vm.install()
-        manager.output.close(PipFailedException(1, "pip exited with code 1"))
+        manager.output.close(PipFailedException(1, what = "pip"))
         runCurrent()
         assertEquals(PipNotice.Failed(PipOperation.Install("six")), state.notice)
     }
@@ -184,7 +184,7 @@ class PipViewModelTest {
         vm.onSpecChange("numpy")
         vm.install()
         manager.output.send("ERROR: Failed building wheel for numpy\n")
-        manager.output.close(PipFailedException(1, "pip exited with code 1"))
+        manager.output.close(PipFailedException(1, what = "pip"))
         runCurrent()
         val outcome = state.outcome as InstallOutcome.Failed
         assertTrue(outcome.buildFailure)
@@ -197,7 +197,7 @@ class PipViewModelTest {
         vm.onSpecChange("nosuchpkg")
         vm.install()
         manager.output.send("ERROR: No matching distribution found for nosuchpkg\n")
-        manager.output.close(PipFailedException(1, "pip exited with code 1"))
+        manager.output.close(PipFailedException(1, what = "pip"))
         runCurrent()
         assertFalse((state.outcome as InstallOutcome.Failed).buildFailure)
     }
@@ -346,7 +346,7 @@ class PipViewModelTest {
     @Test
     fun updateCheckFailureIsQuiet() = runTest(dispatcher) {
         manager.listResult.complete(Result.success(listOf(PipPackage("six", "1"))))
-        manager.outdatedResult.complete(Result.failure(PipFailedException(1, "offline")))
+        manager.outdatedResult.complete(Result.failure(PipFailedException(1, startFailure = "offline")))
         vm.selectTab(PipTab.Installed)
         runCurrent()
         assertTrue(state.updatesFailed)
@@ -468,7 +468,7 @@ class PipViewModelTest {
     @Test
     fun detailsFailureIsShownInTheSheet() = runTest(dispatcher) {
         vm.openDetails(PipPackage("six", "1"))
-        manager.showResult.complete(Result.failure(PipFailedException(1, "not found")))
+        manager.showResult.complete(Result.failure(PipFailedException(1, startFailure = "not found")))
         runCurrent()
         assertEquals("not found", state.details!!.error)
         assertFalse(state.details!!.loading)

@@ -15,4 +15,14 @@
     <string name="run_install_missing_as">Install %1$s (%2$s)</string>
     <string name="run_install_busy">pip is busy with another package; try again when it is done</string>
     <string name="run_install_retry">Try again</string>
+    <!-- pip errors: the sentence, then pip's own last lines -->
+    <string name="pip_error_exit">%1$s stopped with an error (exit code %2$d)</string>
+    <string name="pip_error_unfinished">%1$s did not finish</string>
+    <string name="pip_error_start">Python couldn\'t start for pip (%1$s)</string>
+    <string name="pip_error_other">pip failed (%1$s)</string>
+    <!-- Saving output -->
+    <string name="io_reason_no_space">not enough free space</string>
+    <string name="io_reason_denied">no permission to write there</string>
+    <string name="io_reason_read_only">the storage is read-only</string>
+    <string name="io_reason_other">a storage error</string>
 </resources>
