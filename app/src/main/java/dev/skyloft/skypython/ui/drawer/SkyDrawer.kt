@@ -43,7 +43,7 @@ import dev.skyloft.skypython.ui.theme.BrandText
 import dev.skyloft.skypython.ui.theme.DividerNavy
 import dev.skyloft.skypython.ui.theme.GlowLine
 import dev.skyloft.skypython.ui.theme.NightSkyBrush
-import dev.skyloft.skypython.ui.theme.OutlinedIconTile
+import dev.skyloft.skypython.ui.theme.IconTile
 import dev.skyloft.skypython.ui.theme.SkyBlue
 import dev.skyloft.skypython.ui.theme.SectionLabel
 import dev.skyloft.skypython.ui.theme.SoftViolet
@@ -164,7 +164,7 @@ private fun DrawerItem(action: DrawerAction, index: Int, onClick: () -> Unit) {
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp),
     ) {
-        OutlinedIconTile(action.icon(), size = 36.dp, tint = if (index % 2 == 0) SkyBlue else SoftViolet)
+        IconTile(action.icon(), size = 36.dp, tint = if (index % 2 == 0) SkyBlue else SoftViolet)
         Spacer(Modifier.width(20.dp))
         Text(action.name, color = ItemText, fontSize = 15.sp, fontWeight = FontWeight.Medium)
     }

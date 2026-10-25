@@ -15,11 +15,11 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.skyloft.skypython.ui.theme.BarNavy
+import dev.skyloft.skypython.ui.theme.DividerNavy
 import dev.skyloft.skypython.ui.theme.RunButton
 import dev.skyloft.skypython.ui.theme.TextBright
 
@@ -29,11 +29,11 @@ val SYMBOL_KEYS: List<Pair<String, String>> =
         listOf(":", ";", "'", "\"", "#", "(", ")", "[", "]", "{", "}", "=", ".", ",", "_", "+", "-", "*", "/", "<", ">", "\\", "|")
             .map { it to it }
 
-private val KeyDivider = Color(0xFF34417A)
+private val KeyDivider = DividerNavy
 
 /**
  * Strip of quick-insert keys, separated by thin dividers, above the keyboard. With [onRun] set
- * (while the keyboard is up and the Run FAB is hidden) a round blue Run key is pinned at the end.
+ * (while the keyboard is up and the Run FAB is hidden) a round solid-blue Run key is pinned at the end.
  */
 @Composable
 fun SymbolBar(onInsert: (String) -> Unit, modifier: Modifier = Modifier, onRun: (() -> Unit)? = null) {
@@ -52,7 +52,7 @@ fun SymbolBar(onInsert: (String) -> Unit, modifier: Modifier = Modifier, onRun: 
                         .clickable { onInsert(text) }
                         .padding(horizontal = 12.dp),
                 ) {
-                    Text(label, fontFamily = FontFamily.Monospace, fontSize = 17.sp, color = TextBright)
+                    Text(label, fontFamily = FontFamily.Monospace, fontSize = 16.sp, color = TextBright)
                 }
             }
         }
@@ -60,7 +60,8 @@ fun SymbolBar(onInsert: (String) -> Unit, modifier: Modifier = Modifier, onRun: 
             RunButton(
                 onClick = onRun,
                 size = 36.dp,
-                iconSize = 24.dp,
+                iconSize = 22.dp,
+                elevation = 0.dp,
                 modifier = Modifier.padding(horizontal = 10.dp),
             )
         }

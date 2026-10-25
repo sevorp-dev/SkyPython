@@ -19,10 +19,12 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +38,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
@@ -55,6 +58,7 @@ import dev.skyloft.skypython.console.InstallError
 import dev.skyloft.skypython.console.Installing
 import dev.skyloft.skypython.console.InterruptButton
 import dev.skyloft.skypython.ui.theme.SkyTopBar
+import dev.skyloft.skypython.ui.theme.brandButtonColors
 import kotlin.math.roundToInt
 
 private const val DEFAULT_FONT_SP = 14f
@@ -290,7 +294,7 @@ private fun KeyRow(modifiers: Modifiers, enabled: Boolean, onKey: (ExtraKey) -> 
         Modifier
             .fillMaxWidth()
             .height(44.dp)
-            .background(colors.surfaceContainerHigh)
+            .background(colors.surfaceContainer)
             .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
@@ -300,6 +304,11 @@ private fun KeyRow(modifiers: Modifiers, enabled: Boolean, onKey: (ExtraKey) -> 
             TextButton(
                 onClick = { onKey(key) },
                 enabled = enabled,
+                // An armed Ctrl / Alt sits on a tonal pill, so it reads as "on" at a glance.
+                colors = ButtonDefaults.textButtonColors(
+                    containerColor = if (armed) colors.primaryContainer else Color.Transparent,
+                ),
+                shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .widthIn(min = 44.dp)
                     .semantics { contentDescription = key.description },
@@ -312,7 +321,7 @@ private fun KeyRow(modifiers: Modifiers, enabled: Boolean, onKey: (ExtraKey) -> 
                     fontSize = 15.sp,
                     color = when {
                         !enabled -> colors.onSurface.copy(alpha = 0.38f)
-                        armed -> colors.primary
+                        armed -> colors.onPrimaryContainer
                         else -> colors.onSurface
                     },
                 )
@@ -330,6 +339,6 @@ private fun StartError(message: String, onUseSimpleConsole: () -> Unit) {
     ) {
         Text("Could not open a terminal", style = MaterialTheme.typography.titleMedium)
         Text(message, Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.error)
-        Button(onClick = onUseSimpleConsole) { Text("Use the simple console") }
+        Button(onClick = onUseSimpleConsole, colors = brandButtonColors()) { Text("Use the simple console") }
     }
 }

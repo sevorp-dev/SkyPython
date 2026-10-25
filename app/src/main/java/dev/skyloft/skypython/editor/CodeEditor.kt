@@ -35,8 +35,8 @@ import io.github.rosemoe.sora.widget.CodeEditor
 import io.github.rosemoe.sora.widget.schemes.EditorColorScheme
 import org.eclipse.tm4e.core.registry.IThemeSource
 
-private const val EDITOR_BG = 0xFF0B1230.toInt()
-private const val GUTTER_DIVIDER = 0xFF1E2A55.toInt()
+private const val EDITOR_BG = 0xFF0E1424.toInt()
+private const val GUTTER_DIVIDER = 0xFF1E2638.toInt()
 private const val THEME_PATH = "textmate/skypython-dark.json"
 private const val THEME_NAME = "skypython-dark"
 private const val PYTHON_SCOPE = "source.python"
@@ -73,7 +73,8 @@ private class SkyColorScheme(registry: ThemeRegistry) :
         WHOLE_BACKGROUND, LINE_NUMBER_BACKGROUND -> EDITOR_BG
         LINE_DIVIDER -> GUTTER_DIVIDER
         // The theme has no suggest-widget / tooltip colors; Sora's defaults are light-on-light.
-        COMPLETION_WND_BACKGROUND, COMPLETION_WND_CORNER, DIAGNOSTIC_TOOLTIP_BACKGROUND -> POPUP_BG
+        COMPLETION_WND_BACKGROUND, DIAGNOSTIC_TOOLTIP_BACKGROUND -> POPUP_BG
+        COMPLETION_WND_CORNER -> POPUP_BORDER
         COMPLETION_WND_ITEM_CURRENT -> POPUP_SELECTED
         COMPLETION_WND_TEXT_PRIMARY, DIAGNOSTIC_TOOLTIP_BRIEF_MSG -> POPUP_TEXT
         COMPLETION_WND_TEXT_SECONDARY, DIAGNOSTIC_TOOLTIP_DETAILED_MSG -> POPUP_TEXT_SECONDARY
@@ -84,13 +85,15 @@ private class SkyColorScheme(registry: ThemeRegistry) :
     }
 }
 
-private const val POPUP_BG = 0xFF16212C.toInt()
-private const val POPUP_SELECTED = 0xFF264F78.toInt()
-private const val POPUP_TEXT = 0xFFD4D4D4.toInt()
-private const val POPUP_TEXT_SECONDARY = 0xFF93A4B3.toInt()
-private const val POPUP_MATCHED = 0xFF4DAAFC.toInt()
-private const val SQUIGGLE_ERROR = 0xFFF14C4C.toInt()
-private const val SQUIGGLE_WARNING = 0xFFCCA700.toInt()
+// Completion popup and problem tooltip: the app's raised panel (PanelNavy) and text colours.
+private const val POPUP_BG = 0xFF1B2338.toInt()
+private const val POPUP_BORDER = 0xFF273149.toInt()
+private const val POPUP_SELECTED = 0xFF263457.toInt()
+private const val POPUP_TEXT = 0xFFE4E8F2.toInt()
+private const val POPUP_TEXT_SECONDARY = 0xFF9AA5BF.toInt()
+private const val POPUP_MATCHED = 0xFF86AEFF.toInt()
+private const val SQUIGGLE_ERROR = 0xFFFF7A8A.toInt()
+private const val SQUIGGLE_WARNING = 0xFFE3B95C.toInt()
 
 /** Imperative handle for toolbar / symbol-bar actions on the live editor view. */
 class EditorController {

@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
@@ -72,8 +73,9 @@ import dev.skyloft.skypython.ui.drawer.DrawerAction
 import dev.skyloft.skypython.ui.drawer.SkyDrawer
 import dev.skyloft.skypython.ui.theme.BarNavy
 import dev.skyloft.skypython.ui.theme.BrandText
-import dev.skyloft.skypython.ui.theme.GlowLine
-import dev.skyloft.skypython.ui.theme.GlowLineBrush
+import dev.skyloft.skypython.ui.theme.Hairline
+import dev.skyloft.skypython.ui.theme.SkyBlue
+import dev.skyloft.skypython.ui.theme.TextBright
 import dev.skyloft.skypython.ui.theme.MutedText
 import dev.skyloft.skypython.ui.theme.RunButton
 import dev.skyloft.skypython.ui.theme.skyTopBarColors
@@ -81,13 +83,13 @@ import dev.skyloft.skypython.ui.theme.EditorBackground
 import kotlinx.coroutines.launch
 import java.io.File
 
-private val TabSelected = Color.White
-private val TabIdle = Color(0xFF8E9CC6)
+private val TabSelected = TextBright
+private val TabIdle = MutedText
 private val SubtitleColor = MutedText
-// Error status line, in the night-sky palette.
-private val ProblemBackground = Color(0xFF2A1636)
-private val ProblemRed = Color(0xFFFF6B81)
-private val ProblemText = Color(0xFFFFD6DD)
+// Error status line: a flat, muted red band.
+private val ProblemBackground = Color(0xFF2A1A26)
+private val ProblemRed = Color(0xFFFF7A8A)
+private val ProblemText = Color(0xFFFFD9DE)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -214,7 +216,7 @@ fun EditorScreen(
                     if (current != null) {
                         DocTabs(state, viewModel, onClose = { id -> controller.flushPendingText(); viewModel.close(id) })
                     }
-                    GlowLine()
+                    Hairline()
                 }
             },
             floatingActionButton = {
@@ -267,20 +269,20 @@ fun EditorScreen(
 @Composable
 private fun EditorTitle(doc: OpenDocument?, projectsRoot: File) {
     if (doc == null) {
-        BrandText("SkyPython", fontSize = 21.sp)
+        BrandText("SkyPython", fontSize = 20.sp)
         return
     }
     Column {
         Text(
             doc.name,
-            fontSize = 19.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Medium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
         Text(
             docSubtitle(doc, projectsRoot),
-            fontSize = 14.sp,
+            fontSize = 13.sp,
             color = SubtitleColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -320,7 +322,12 @@ private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel, onClose: (
                 if (selected && state.docs.size > 1) {
                     // matchParentSize, not fillMaxWidth: the strip scrolls, so max width is unbounded.
                     Box(Modifier.matchParentSize(), contentAlignment = Alignment.BottomCenter) {
-                        Box(Modifier.fillMaxWidth().height(2.dp).background(GlowLineBrush))
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(2.dp)
+                                .background(SkyBlue, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)),
+                        )
                     }
                 }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {

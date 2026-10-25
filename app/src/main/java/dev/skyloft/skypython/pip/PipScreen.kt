@@ -1,6 +1,7 @@
 package dev.skyloft.skypython.pip
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -57,14 +58,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.skyloft.skypython.ui.theme.BarNavy
 import dev.skyloft.skypython.ui.theme.DividerNavy
 import dev.skyloft.skypython.ui.theme.ErrorRed
-import dev.skyloft.skypython.ui.theme.GlowLine
+import dev.skyloft.skypython.ui.theme.Hairline
+import dev.skyloft.skypython.ui.theme.TextBright
 import dev.skyloft.skypython.ui.theme.brandButtonColors
 import dev.skyloft.skypython.ui.theme.MutedText
 import dev.skyloft.skypython.ui.theme.NightNavy
 import dev.skyloft.skypython.ui.theme.SuccessGreen
 
 private val LogBackground = NightNavy
-private val LogText = Color(0xFFDCE3F5)
+private val LogText = Color(0xFFD8DEEA)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,7 +78,7 @@ fun PipScreen(viewModel: PipViewModel, onBack: () -> Unit) {
             SkyTopBar(
                 title = "Pip",
                 onBack = onBack,
-                glow = false,
+                divider = false,
                 actions = {
                     if (state.tab == PipTab.Installed) {
                         IconButton(onClick = viewModel::refresh, enabled = !state.loading) {
@@ -97,7 +99,7 @@ fun PipScreen(viewModel: PipViewModel, onBack: () -> Unit) {
             PrimaryTabRow(
                 selectedTabIndex = state.tab.ordinal,
                 containerColor = BarNavy,
-                contentColor = Color.White,
+                contentColor = TextBright,
                 divider = {},
             ) {
                 PipTab.entries.forEach { tab ->
@@ -105,12 +107,12 @@ fun PipScreen(viewModel: PipViewModel, onBack: () -> Unit) {
                         selected = state.tab == tab,
                         onClick = { viewModel.selectTab(tab) },
                         text = { Text(tab.name, fontWeight = FontWeight.Medium) },
-                        selectedContentColor = Color.White,
+                        selectedContentColor = TextBright,
                         unselectedContentColor = MutedText,
                     )
                 }
             }
-            GlowLine()
+            Hairline()
             when (state.tab) {
                 PipTab.Install -> InstallTab(state, viewModel)
                 PipTab.Installed -> InstalledTab(state, viewModel)
@@ -148,7 +150,7 @@ private fun InstallTab(state: PipState, viewModel: PipViewModel) {
                 isError = state.specError != null,
                 supportingText = state.specError?.let { { Text(it) } },
                 textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace),
-                shape = RoundedCornerShape(6.dp),
+                shape = RoundedCornerShape(12.dp),
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.None,
                     autoCorrectEnabled = false,
@@ -160,7 +162,7 @@ private fun InstallTab(state: PipState, viewModel: PipViewModel) {
             Button(
                 onClick = viewModel::install,
                 enabled = !state.installing,
-                shape = RoundedCornerShape(6.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = brandButtonColors(),
                 // The outlined field reserves 8dp above its box for the floating label.
                 modifier = Modifier.padding(top = 8.dp).height(56.dp),
@@ -203,8 +205,9 @@ private fun InstallLog(log: String, modifier: Modifier) {
     LaunchedEffect(log) { scroll.scrollTo(scroll.maxValue) }
     Box(
         modifier
-            .background(LogBackground, RoundedCornerShape(6.dp))
-            .padding(8.dp)
+            .background(LogBackground, RoundedCornerShape(12.dp))
+            .border(1.dp, DividerNavy, RoundedCornerShape(12.dp))
+            .padding(12.dp)
             .verticalScroll(scroll),
     ) {
         SelectionContainer {
