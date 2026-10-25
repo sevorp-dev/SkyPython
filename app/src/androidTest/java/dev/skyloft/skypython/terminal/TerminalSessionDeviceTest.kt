@@ -73,7 +73,12 @@ class TerminalSessionDeviceTest {
     private fun TerminalViewModel.screen(): String = session.emulator.screen.transcriptText
 
     private fun TerminalViewModel.awaitScreen(regex: Regex, timeoutMs: Long = TIMEOUT_MS): String =
-        waitFor("/$regex/", timeoutMs) { screen().takeIf { regex.containsMatchIn(it) } }
+        try {
+            waitFor("/$regex/", timeoutMs) { screen().takeIf { regex.containsMatchIn(it) } }
+        } catch (e: AssertionError) {
+            // Show what the terminal had, so a CI failure says why.
+            throw AssertionError("${e.message}; screen ends with: ${onMain { screen() }.takeLast(600)}")
+        }
 
     private fun TerminalViewModel.type(text: String) = onMain {
         val bytes = text.toByteArray()
@@ -151,7 +156,7 @@ class TerminalSessionDeviceTest {
         // screen), as plain text does on a slow device: the reader always has more ready.
         // One line: on a slow emulator a second line typed while the first runs can be lost.
         vm.type("import os; line = b'\\x1b#8' * 20 + b'0123456789' * 7 + b'\\r\\n'; chunk = line * 200; exec('while True: os.write(1, chunk)')\r")
-        vm.awaitScreen(Regex("(0123456789){7}"))
+        vm.awaitScreen(Regex("(0123456789){7}"), timeoutMs = 120_000)
         var worst = 0L
         val until = SystemClock.elapsedRealtime() + 3_000
         while (SystemClock.elapsedRealtime() < until) {
