@@ -1,13 +1,13 @@
 package dev.skyloft.skypython.editor
 
 import android.os.SystemClock
-import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -87,11 +87,12 @@ class EditorNavigationDeviceTest {
         e.setSelection(line, column)
     }
 
-    /** A hardware-keyboard key, straight to the editor view (as when it has focus). */
-    private fun key(code: Int, meta: Int = 0) = onMain {
-        val now = SystemClock.uptimeMillis()
-        editor().dispatchKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, code, 0, meta))
-        editor().dispatchKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_UP, code, 0, meta))
+    /** Picks [item] from the editor's overflow menu, as a user would. */
+    private fun menu(item: String) {
+        rule.onNodeWithContentDescription("More").performClick()
+        rule.waitUntilAtLeastOneExists(hasText(item), 5_000)
+        rule.onNodeWithText(item).performClick()
+        rule.waitForIdle()
     }
 
     private fun selected(): String = onMain {
@@ -99,11 +100,11 @@ class EditorNavigationDeviceTest {
         if (!c.isSelected) "" else editor().text.subContent(c.leftLine, c.leftColumn, c.rightLine, c.rightColumn).toString()
     }
 
-    /** F12 until the server (cold on the first test) answers and the selection lands on [name]. */
+    /** "Go to definition" until the server (cold on the first test) answers and the selection lands on [name]. */
     private fun goToDefinition(name: String, landed: () -> Boolean) {
         val deadline = SystemClock.uptimeMillis() + SERVER_TIMEOUT_MS
         while (SystemClock.uptimeMillis() < deadline) {
-            key(KeyEvent.KEYCODE_F12)
+            menu("Go to definition")
             val until = SystemClock.uptimeMillis() + 15_000
             while (SystemClock.uptimeMillis() < until) {
                 if (selected() == name && landed()) return
@@ -132,7 +133,7 @@ class EditorNavigationDeviceTest {
         goToDefinition("shout") { onMain { editor().text.toString() } == HELPER }
         assertEquals(2, onMain { editor().cursor.leftLine })
         assertTrue("project files stay editable", onMain { editor().isEditable })
-        rule.onNodeWithText("helper.py", substring = true).assertExists()
+        assertTrue("helper.py is the current tab", hasRow("helper.py"))
     }
 
     @Test
@@ -150,7 +151,7 @@ class EditorNavigationDeviceTest {
         val deadline = SystemClock.uptimeMillis() + SERVER_TIMEOUT_MS
         while (rule.onAllNodesWithTagCount("outline_sheet") == 0 || !hasRow("size")) {
             check(SystemClock.uptimeMillis() < deadline) { "outline never showed" }
-            if (rule.onAllNodesWithTagCount("outline_sheet") == 0) key(KeyEvent.KEYCODE_O, KeyEvent.META_CTRL_ON or KeyEvent.META_SHIFT_ON)
+            if (rule.onAllNodesWithTagCount("outline_sheet") == 0) menu("Outline")
             Thread.sleep(1_000)
         }
         rule.onNodeWithText("greet").assertExists()
@@ -169,20 +170,23 @@ class EditorNavigationDeviceTest {
             e.setSelection(last, e.text.getColumnCount(last))
             e.insertText("\nprint(", 7)
         }
+        // The server may still be starting (the hint never waits for it): ask again now and then
+        // by moving the cursor out of the call and back. Not on every poll: each move restarts
+        // the hint's typing pause.
+        var lastNudge = SystemClock.uptimeMillis()
         rule.waitUntil(SERVER_TIMEOUT_MS) {
-            rule.onAllNodesWithTagCount("signature_hint") > 0 ||
-                run {
-                    // The server may still be starting: nudge the cursor to ask again.
-                    onMain {
-                        val e = editor()
-                        val l = e.cursor.leftLine
-                        val c = e.cursor.leftColumn
-                        e.setSelection(l, c - 1)
-                        e.setSelection(l, c)
-                    }
-                    Thread.sleep(1_000)
-                    false
+            if (rule.onAllNodesWithTagCount("signature_hint") > 0) return@waitUntil true
+            if (SystemClock.uptimeMillis() - lastNudge > 10_000) {
+                lastNudge = SystemClock.uptimeMillis()
+                onMain {
+                    val e = editor()
+                    val l = e.cursor.leftLine
+                    val c = e.cursor.leftColumn
+                    e.setSelection(l, c - 1)
+                    e.setSelection(l, c)
                 }
+            }
+            false
         }
         rule.onNodeWithTag("signature_hint").assertTextContains("print(*values", substring = true)
         // `)` closes the call: the hint goes away.
