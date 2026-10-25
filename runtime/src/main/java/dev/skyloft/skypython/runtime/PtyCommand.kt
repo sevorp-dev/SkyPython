@@ -33,14 +33,15 @@ data class PtyCommand(
             appEnv: Map<String, String> = System.getenv(),
         ): PtyCommand {
             require(command !is RunCommand.Script) { "Scripts run on pipes, not in a terminal" }
+            // argv[0] stays the full path, as with ProcessBuilder: Python derives sys.executable
+            // from it (subprocess, venv and pip rely on that).
             val line = PythonEnvironment.command(paths, command)
-            val argv0 = if (command is RunCommand.Interpreter) "python3" else File(line[0]).name
             val env = LinkedHashMap(appEnv)
             env.putAll(PythonEnvironment.environment(paths, command))
             env.putAll(TERMINAL_ENV)
             return PtyCommand(
                 executable = line[0],
-                argv = listOf(argv0) + line.drop(1),
+                argv = line,
                 cwd = command.workingDir,
                 env = env.map { (k, v) -> "$k=$v" },
             )

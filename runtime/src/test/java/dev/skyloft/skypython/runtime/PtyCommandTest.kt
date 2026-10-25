@@ -31,8 +31,8 @@ class PtyCommandTest {
     fun interpreterRunsTheLauncherInteractiveQuiet() {
         val cmd = PtyCommand.of(paths, RunCommand.Interpreter(projects), appEnv)
         assertEquals(launcher.path, cmd.executable)
-        // argv[0] is the program name the process sees.
-        assertEquals(listOf("python3", "-i", "-q"), cmd.argv)
+        // argv[0] is the full path: Python computes sys.executable from it.
+        assertEquals(listOf(launcher.path, "-i", "-q"), cmd.argv)
         assertEquals(projects, cmd.cwd)
     }
 
@@ -40,7 +40,7 @@ class PtyCommandTest {
     fun shellRunsInteractiveSystemSh() {
         val cmd = PtyCommand.of(paths, RunCommand.Shell(projects), appEnv)
         assertEquals("/system/bin/sh", cmd.executable)
-        assertEquals(listOf("sh", "-i"), cmd.argv)
+        assertEquals(listOf("/system/bin/sh", "-i"), cmd.argv)
         assertEquals(projects, cmd.cwd)
     }
 

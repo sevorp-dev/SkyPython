@@ -196,6 +196,14 @@ class PtyDeviceTest {
         s.await(Regex("(?m)^/.*${Regex.escape(cwd.name)}$"), mark)
     }
 
+    @Test
+    fun interpreterKnowsItsExecutable() {
+        val s = interpreter()
+        val mark = s.text().length
+        s.type("import sys; print(sys.executable)\r")
+        s.await(Regex("(?m)^/.*libpylauncher\\.so$"), mark)
+    }
+
     @Test(expected = IOException::class)
     fun invalidArgumentsFailWithAnIOException() {
         Pty.createSubprocess("/system/bin/sh", "/", arrayOf(), arrayOf(), IntArray(0), 24, 80, 0, 0)
