@@ -1,0 +1,44 @@
+# The app's "Report a problem" screen opens this form with the fields below prefilled
+# (query parameters named after the field ids: description, report, device). Keep the ids.
+name: Bug report
+description: Something crashed or does not work as it should
+title: "Bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! In SkyPython, **☰ → Report a problem** fills this form in for you.
+        Nothing is sent automatically: check the text below before you submit.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: What were you doing, and what went wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open …
+        2. Tap …
+        3. See …
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+  - type: textarea
+    id: report
+    attributes:
+      label: Report
+      description: |
+        The error from the app. If the link cut it short, the full report is on your clipboard: paste it here.
+      render: text
+  - type: textarea
+    id: device
+    attributes:
+      label: Device
+      description: Phone model, Android version, SkyPython version (filled in by the app).
+      render: text
