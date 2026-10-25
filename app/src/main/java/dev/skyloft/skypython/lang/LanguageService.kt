@@ -14,6 +14,8 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 
 /**
  * The editor's language server for the whole app session: started lazily (first [warmUp] or
@@ -175,11 +177,30 @@ class LanguageService(
             synchronized(lock) { startedAt = now(); countDeath() }
             return null
         }
-        synchronized(lock) {
-            startedAt = now()
-            client = c
+        val context = currentCoroutineContext()
+        val registered = synchronized(lock) {
+            // Switched off ([shutdown]) while the server was starting: the start can't be
+            // interrupted, so the new process is stopped here instead of left running.
+            if (!context.isActive) {
+                false
+            } else {
+                startedAt = now()
+                client = c
+                true
+            }
         }
-        if (!c.awaitReady(config.readyTimeoutMs)) {
+        if (!registered) {
+            c.close()
+            throw CancellationException("language server switched off while starting")
+        }
+        val ready = try {
+            c.awaitReady(config.readyTimeoutMs)
+        } catch (e: CancellationException) {
+            c.close()
+            synchronized(lock) { if (client === c) client = null }
+            throw e
+        }
+        if (!ready) {
             log("language server not ready; stopping it")
             c.close()
             died(c)
