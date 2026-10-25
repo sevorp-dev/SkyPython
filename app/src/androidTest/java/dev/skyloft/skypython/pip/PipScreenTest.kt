@@ -154,7 +154,10 @@ class PipScreenTest {
         }
         rule.onNode(hasTestTag(PREBUILT_BADGE_TAG)).assertIsDisplayed()
         rule.onNode(hasText(str(R.string.pip_prebuilt_badge))).assertExists()
-        // Only pillow is still "coming later".
+        // numpy leads the list under its own "Prebuilt for Android" heading...
+        rule.onNode(hasText(str(R.string.pip_section_prebuilt).uppercase())).assertExists()
+        // ...and only pillow is still "coming later" (further down, in Data & science).
+        rule.onNode(hasScrollAction()).performScrollToNode(hasText("pillow"))
         assertEquals(1, rule.onAllNodes(hasText(str(R.string.pip_coming_later))).fetchSemanticsNodes().size)
         val install = hasTestTag(popularInstallTag("numpy"))
         rule.onNode(hasScrollAction()).performScrollToNode(install)
