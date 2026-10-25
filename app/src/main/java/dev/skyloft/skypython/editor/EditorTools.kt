@@ -290,7 +290,7 @@ fun GoToLineDialog(lineCount: Int, onGo: (line: Int) -> Unit, onDismiss: () -> U
                 Text(stringResource(R.string.go_to_line_go))
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
@@ -323,7 +323,7 @@ fun NewFileDialog(onCreate: (name: String, onResult: (String?) -> Unit) -> Unit,
         confirmButton = {
             TextButton(onClick = create, enabled = value.text.isNotBlank()) { Text(stringResource(R.string.new_file_create)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
@@ -335,7 +335,7 @@ fun RecentFilesDialog(paths: List<String>, projectsRoot: File, onOpen: (String) 
         title = { Text(stringResource(R.string.recent_files)) },
         text = { RecentFilesList(paths, projectsRoot, onOpen) },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
@@ -362,7 +362,7 @@ fun RecentFilesList(paths: List<String>, projectsRoot: File, onOpen: (String) ->
                 Column(Modifier.padding(start = 12.dp)) {
                     Text(file.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
-                        recentFolderLabel(file, projectsRoot),
+                        recentFolderLabel(file, projectsRoot, stringResource(R.string.projects_label)),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 13.sp,
                         maxLines = 1,
@@ -375,12 +375,12 @@ fun RecentFilesList(paths: List<String>, projectsRoot: File, onOpen: (String) ->
 }
 
 /** "Projects/demo" for files under the projects root, else the folder path. */
-fun recentFolderLabel(file: File, projectsRoot: File): String {
+fun recentFolderLabel(file: File, projectsRoot: File, projectsLabel: String = PROJECTS_LABEL): String {
     val folder = file.parentFile ?: return file.path
     val relative = folder.relativeToOrNull(projectsRoot) ?: return folder.path
     return when {
         relative.path.startsWith("..") -> folder.path
-        relative.path.isEmpty() -> PROJECTS_LABEL
-        else -> PROJECTS_LABEL + "/" + relative.invariantSeparatorsPath
+        relative.path.isEmpty() -> projectsLabel
+        else -> projectsLabel + "/" + relative.invariantSeparatorsPath
     }
 }

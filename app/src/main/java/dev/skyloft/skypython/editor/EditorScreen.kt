@@ -31,6 +31,21 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.SaveAs
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.NoteAdd
+import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.FileOpen
+import androidx.compose.material.icons.filled.FormatListNumbered
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.vector.ImageVector
+import dev.skyloft.skypython.locale.AppLocale
+import dev.skyloft.skypython.settings.parseSymbolKeys
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
@@ -62,6 +77,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import dev.skyloft.skypython.R
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -97,6 +114,8 @@ fun EditorScreen(
     onRun: (File) -> Unit,
     onOpenFiles: () -> Unit,
     onDrawerAction: (DrawerAction) -> Unit,
+    /** The user pinch-zoomed the editor to this font size (sp); persist it. */
+    onFontSizeChange: (Int) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val controller = remember { EditorController() }
@@ -110,6 +129,17 @@ fun EditorScreen(
     // Problems the language server found in the shown doc (squiggles; the first error is listed).
     var problems by remember { mutableStateOf(emptyList<Diagnostic>()) }
     val config = remember(settings) { EditorViewConfig.from(settings) }
+    val symbolKeys = remember(settings.symbolKeys) { parseSymbolKeys(settings.symbolKeys) }
+    val recentFiles by viewModel.recentFiles.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    // Overflow menu page: the main list or the "Edit lines" sub-list.
+    var linesMenu by remember { mutableStateOf(false) }
+    var findOpen by remember { mutableStateOf(false) }
+    var showReplace by remember { mutableStateOf(false) }
+    val findFocus = remember { FocusRequester() }
+    var goToLineOpen by remember { mutableStateOf(false) }
+    var newFileOpen by remember { mutableStateOf(false) }
+    var recentOpen by remember { mutableStateOf(false) }
 
     val saveAsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("text/x-python"),
@@ -142,7 +172,63 @@ fun EditorScreen(
         }
     }
 
+    val openFind = { replace: Boolean ->
+        if (findOpen) runCatching { findFocus.requestFocus() }
+        findOpen = true
+        if (replace) showReplace = true
+    }
+    val onEditAction: (EditAction) -> Unit = { action ->
+        when (action) {
+            EditAction.Undo -> controller.undo()
+            EditAction.Redo -> controller.redo()
+            EditAction.Comment -> controller.toggleComment()
+            EditAction.Indent -> controller.indent()
+            EditAction.Outdent -> controller.outdent()
+            EditAction.MoveUp -> controller.moveLineUp()
+            EditAction.MoveDown -> controller.moveLineDown()
+            EditAction.Duplicate -> controller.duplicateLine()
+            EditAction.DeleteLine -> controller.deleteLine()
+            EditAction.Find -> openFind(false)
+            EditAction.GoToLine -> goToLineOpen = true
+        }
+    }
+    // Hardware keyboard shortcuts and pinch-zoom come from the editor view.
+    SideEffect {
+        controller.onShortcut = { shortcut ->
+            when (shortcut) {
+                EditorShortcut.Save -> { controller.flushPendingText(); viewModel.saveCurrent() }
+                EditorShortcut.Find -> openFind(false)
+                EditorShortcut.Replace -> openFind(true)
+                EditorShortcut.GoToLine -> goToLineOpen = true
+                EditorShortcut.ToggleComment -> controller.toggleComment()
+                EditorShortcut.Run -> runCurrent()
+                EditorShortcut.Redo -> controller.redo()
+            }
+        }
+        controller.onPinchFontSize = onFontSizeChange
+    }
+
     BackHandler(enabled = drawerState.isOpen) { scope.launch { drawerState.close() } }
+    BackHandler(enabled = findOpen && !drawerState.isOpen) { findOpen = false }
+
+    if (goToLineOpen) {
+        GoToLineDialog(
+            lineCount = controller.lineCount(),
+            onGo = { line -> goToLineOpen = false; controller.goToLine(line) },
+            onDismiss = { goToLineOpen = false },
+        )
+    }
+    if (newFileOpen) {
+        NewFileDialog(onCreate = viewModel::newFile, onDismiss = { newFileOpen = false })
+    }
+    if (recentOpen) {
+        RecentFilesDialog(
+            paths = recentFiles,
+            projectsRoot = viewModel.projectsRoot,
+            onOpen = { path -> recentOpen = false; viewModel.openRecent(path) },
+            onDismiss = { recentOpen = false },
+        )
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -165,48 +251,65 @@ fun EditorScreen(
                         colors = skyTopBarColors(),
                         navigationIcon = {
                             IconButton(onClick = { controller.hideKeyboard(); scope.launch { drawerState.open() } }) {
-                                Icon(Icons.Filled.Menu, contentDescription = "Menu")
+                                Icon(Icons.Filled.Menu, contentDescription = stringResource(R.string.editor_menu))
                             }
                         },
                         title = { EditorTitle(current, viewModel.projectsRoot) },
                         actions = {
                             IconButton(onClick = openFiles) {
-                                Icon(Icons.Outlined.Folder, contentDescription = "Files")
+                                Icon(Icons.Outlined.Folder, contentDescription = stringResource(R.string.title_files))
                             }
                             IconButton(onClick = controller::undo, enabled = current != null) {
-                                Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo")
+                                Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = stringResource(R.string.editor_undo))
                             }
                             Box {
                                 IconButton(onClick = { menuOpen = true }) {
-                                    Icon(Icons.Filled.MoreVert, contentDescription = "More")
+                                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.editor_more))
                                 }
-                                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                                DropdownMenu(
+                                    expanded = menuOpen,
+                                    onDismissRequest = { menuOpen = false; linesMenu = false },
+                                ) {
+                                    val has = current != null
+                                    fun close() { menuOpen = false; linesMenu = false }
+                                    if (linesMenu) {
+                                        MenuItem(R.string.editor_menu_back, Icons.AutoMirrored.Filled.ArrowBack) { linesMenu = false }
+                                        HorizontalDivider()
+                                        listOf(
+                                            EditAction.Comment, EditAction.Indent, EditAction.Outdent, EditAction.Duplicate,
+                                            EditAction.DeleteLine, EditAction.MoveUp, EditAction.MoveDown,
+                                        ).forEach { action ->
+                                            MenuItem(action.description, action.menuIcon(), enabled = has) {
+                                                close(); onEditAction(action)
+                                            }
+                                        }
+                                        return@DropdownMenu
+                                    }
+                                    MenuItem(R.string.editor_redo, Icons.AutoMirrored.Filled.Redo, enabled = has) { close(); controller.redo() }
+                                    MenuItem(R.string.find_and_replace, Icons.Filled.Search, enabled = has) { close(); openFind(false) }
+                                    MenuItem(R.string.go_to_line, Icons.Filled.FormatListNumbered, enabled = has) { close(); goToLineOpen = true }
                                     DropdownMenuItem(
-                                        text = { Text("Redo") },
-                                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.Redo, null) },
-                                        enabled = current != null,
-                                        onClick = { menuOpen = false; controller.redo() },
+                                        text = { Text(stringResource(R.string.editor_menu_edit)) },
+                                        leadingIcon = { Icon(Icons.Filled.EditNote, null) },
+                                        trailingIcon = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) },
+                                        enabled = has,
+                                        onClick = { linesMenu = true },
                                     )
-                                    DropdownMenuItem(
-                                        text = { Text("Save") },
-                                        leadingIcon = { Icon(Icons.Filled.Save, null) },
-                                        enabled = current != null,
-                                        onClick = {
-                                            menuOpen = false
-                                            controller.flushPendingText()
-                                            viewModel.saveCurrent()
-                                        },
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text("Save as…") },
-                                        leadingIcon = { Icon(Icons.Filled.SaveAs, null) },
-                                        enabled = current != null,
-                                        onClick = {
-                                            menuOpen = false
-                                            controller.flushPendingText()
-                                            current?.let { saveAsLauncher.launch(it.name) }
-                                        },
-                                    )
+                                    HorizontalDivider()
+                                    MenuItem(R.string.new_file, Icons.AutoMirrored.Filled.NoteAdd) { close(); newFileOpen = true }
+                                    MenuItem(R.string.open_file, Icons.Filled.FileOpen) { close(); openFiles() }
+                                    MenuItem(R.string.recent_files, Icons.Filled.History) { close(); recentOpen = true }
+                                    HorizontalDivider()
+                                    MenuItem(R.string.editor_save, Icons.Filled.Save, enabled = has) {
+                                        close()
+                                        controller.flushPendingText()
+                                        viewModel.saveCurrent()
+                                    }
+                                    MenuItem(R.string.editor_save_as, Icons.Filled.SaveAs, enabled = has) {
+                                        close()
+                                        controller.flushPendingText()
+                                        current?.let { saveAsLauncher.launch(it.name) }
+                                    }
                                 }
                             }
                         },
@@ -215,6 +318,23 @@ fun EditorScreen(
                         DocTabs(state, viewModel, onClose = { id -> controller.flushPendingText(); viewModel.close(id) })
                     }
                     GlowLine()
+                    if (findOpen && current != null) {
+                        FindBar(
+                            controller = controller,
+                            showReplace = showReplace,
+                            onToggleReplace = { showReplace = !showReplace },
+                            onClose = { findOpen = false },
+                            onReplacedAll = { n ->
+                                scope.launch {
+                                    snackbar.showSnackbar(
+                                        if (n > 0) AppLocale.string(context, R.string.find_replaced_count, n)
+                                        else AppLocale.string(context, R.string.find_no_matches),
+                                    )
+                                }
+                            },
+                            focusRequester = findFocus,
+                        )
+                    }
                 }
             },
             floatingActionButton = {
@@ -231,7 +351,9 @@ fun EditorScreen(
                             ProblemLine(error, onClick = { controller.goTo(error) })
                         }
                         SymbolBar(
-                            onInsert = controller::insert,
+                            onInsert = controller::insertSymbol,
+                            onAction = onEditAction,
+                            keys = symbolKeys,
                             onRun = if (imeVisible) runCurrent else null,
                         )
                     }
@@ -244,7 +366,13 @@ fun EditorScreen(
                     state.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
-                    current == null -> EmptyEditor(openFiles)
+                    current == null -> EmptyEditor(
+                        onOpenFiles = openFiles,
+                        onNewFile = { newFileOpen = true },
+                        recent = recentFiles,
+                        projectsRoot = viewModel.projectsRoot,
+                        onOpenRecent = viewModel::openRecent,
+                    )
                     else -> CodeEditor(
                         docId = current.id,
                         docPath = (current.source as? DocSource.Local)?.file?.path,
@@ -267,7 +395,7 @@ fun EditorScreen(
 @Composable
 private fun EditorTitle(doc: OpenDocument?, projectsRoot: File) {
     if (doc == null) {
-        BrandText("SkyPython", fontSize = 21.sp)
+        BrandText(stringResource(R.string.app_name), fontSize = 21.sp)
         return
     }
     Column {
@@ -279,7 +407,12 @@ private fun EditorTitle(doc: OpenDocument?, projectsRoot: File) {
             overflow = TextOverflow.Ellipsis,
         )
         Text(
-            docSubtitle(doc, projectsRoot),
+            docSubtitle(
+                doc,
+                projectsRoot,
+                projectsLabel = stringResource(R.string.projects_label),
+                externalLabel = stringResource(R.string.editor_external_document),
+            ),
             fontSize = 14.sp,
             color = SubtitleColor,
             maxLines = 1,
@@ -324,7 +457,7 @@ private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel, onClose: (
                     }
                 }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                    DropdownMenuItem(text = { Text("Close") }, onClick = {
+                    DropdownMenuItem(text = { Text(stringResource(R.string.action_close)) }, onClick = {
                         menu = false
                         onClose(doc.id)
                     })
@@ -363,13 +496,44 @@ private fun ProblemLine(error: Diagnostic, onClick: () -> Unit) {
 }
 
 @Composable
-private fun EmptyEditor(onOpenFiles: () -> Unit) {
+private fun EmptyEditor(
+    onOpenFiles: () -> Unit,
+    onNewFile: () -> Unit,
+    recent: List<String>,
+    projectsRoot: File,
+    onOpenRecent: (String) -> Unit,
+) {
     Column(
         Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("No open files", style = MaterialTheme.typography.titleMedium)
-        TextButton(onClick = onOpenFiles) { Text("Open Files") }
+        Text(stringResource(R.string.editor_no_open_files), style = MaterialTheme.typography.titleMedium)
+        Row {
+            TextButton(onClick = onNewFile) { Text(stringResource(R.string.new_file)) }
+            TextButton(onClick = onOpenFiles) { Text(stringResource(R.string.editor_open_files)) }
+        }
+        if (recent.isNotEmpty()) {
+            Text(
+                stringResource(R.string.recent_files),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 24.dp, bottom = 4.dp),
+            )
+            RecentFilesList(recent, projectsRoot, onOpenRecent, Modifier.fillMaxWidth())
+        }
     }
 }
+
+@Composable
+private fun MenuItem(label: Int, icon: ImageVector, enabled: Boolean = true, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = { Text(stringResource(label)) },
+        leadingIcon = { Icon(icon, null) },
+        enabled = enabled,
+        onClick = onClick,
+    )
+}
+
+/** Menu icon for a line command (the bar shows `#` as text for Comment). */
+private fun EditAction.menuIcon(): ImageVector = icon ?: Icons.Filled.EditNote

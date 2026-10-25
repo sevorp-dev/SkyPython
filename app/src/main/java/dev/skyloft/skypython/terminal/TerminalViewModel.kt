@@ -1,6 +1,8 @@
 package dev.skyloft.skypython.terminal
 
 import android.app.Application
+import androidx.annotation.StringRes
+import dev.skyloft.skypython.R
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -31,12 +33,12 @@ import java.io.IOException
 import java.lang.ref.WeakReference
 
 /** The two programs that run on a real terminal. */
-enum class TerminalKind(val title: String) {
+enum class TerminalKind(val title: String, @StringRes val titleRes: Int) {
     /** `python -i -q`: Python's own line editing, colours, Ctrl+C → KeyboardInterrupt. */
-    Interpreter("Interpreter"),
+    Interpreter("Interpreter", R.string.title_interpreter),
 
     /** `/system/bin/sh -i` with `python` / `pip` defined (see ShellShims). */
-    Shell("Terminal"),
+    Shell("Terminal", R.string.title_terminal),
     ;
 
     fun command(projectsRoot: File): RunCommand = when (this) {
@@ -81,6 +83,9 @@ class TerminalViewModel(
     private val client = SessionClient()
 
     val title: String get() = kind.title
+
+    /** The localized [title]. */
+    @get:StringRes val titleRes: Int get() = kind.titleRes
 
     /** Shows the running session, or starts a new one if there is none or it has ended. */
     fun open() {

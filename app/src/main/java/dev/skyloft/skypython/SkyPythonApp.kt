@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -20,12 +21,15 @@ import androidx.navigation.compose.rememberNavController
 import dev.skyloft.skypython.about.AboutScreen
 import dev.skyloft.skypython.console.ConsoleScreen
 import dev.skyloft.skypython.console.ConsoleViewModel
+import dev.skyloft.skypython.console.RunTarget
 import dev.skyloft.skypython.editor.DocSource
 import dev.skyloft.skypython.editor.EditorScreen
 import dev.skyloft.skypython.editor.EditorViewModel
 import dev.skyloft.skypython.files.FilesScreen
 import dev.skyloft.skypython.files.FilesViewModel
 import dev.skyloft.skypython.files.Workspace
+import dev.skyloft.skypython.files.describeFileError
+import dev.skyloft.skypython.locale.AppLocale
 import dev.skyloft.skypython.pip.PipScreen
 import dev.skyloft.skypython.pip.PipViewModel
 import dev.skyloft.skypython.samples.SamplesScreen
@@ -70,7 +74,7 @@ fun SkyPythonApp() {
         factory = EditorViewModel.factory(app, workspace.root, workspace::ensureHello),
     )
     val consoleVm: ConsoleViewModel = viewModel(factory = ConsoleViewModel.factory(app, workspace.root))
-    val filesVm: FilesViewModel = viewModel(factory = FilesViewModel.Factory(workspace))
+    val filesVm: FilesViewModel = viewModel(factory = FilesViewModel.Factory(workspace) { describeFileError(AppLocale.localized(app), it) })
     // Both live as long as the activity: leaving the screen keeps the program running.
     val interpreterVm: TerminalViewModel = viewModel(
         key = "terminal-interpreter",
@@ -102,6 +106,7 @@ fun SkyPythonApp() {
                         nav.go(Routes.FILES)
                     }
                 },
+                onFontSizeChange = { sp -> scope.launch { settingsStore.update { it.copy(fontSizeSp = sp) } } },
                 onDrawerAction = { action ->
                     when (action) {
                         DrawerAction.Interpreter -> {
@@ -121,8 +126,8 @@ fun SkyPythonApp() {
                             when (val src = editorVm.state.value.current?.source) {
                                 is DocSource.Local -> shareFile(context, src.file)
                                 is DocSource.External ->
-                                    Toast.makeText(context, "Save the file to Projects to share it", Toast.LENGTH_SHORT).show()
-                                null -> Toast.makeText(context, "No file open", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, R.string.share_save_to_projects_first, Toast.LENGTH_SHORT).show()
+                                null -> Toast.makeText(context, R.string.no_file_open, Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
@@ -137,7 +142,7 @@ fun SkyPythonApp() {
         val simpleConsole = { start: () -> Boolean ->
             nav.popBackStack()
             if (start()) openConsole()
-            else Toast.makeText(context, "A script is still running", Toast.LENGTH_SHORT).show()
+            else Toast.makeText(context, R.string.script_still_running, Toast.LENGTH_SHORT).show()
         }
         composable(Routes.INTERPRETER) {
             TerminalScreen(
@@ -200,16 +205,24 @@ private fun RestartDialog(consoleVm: ConsoleViewModel, onConfirmed: () -> Unit) 
     val pending = state.pending ?: return
     AlertDialog(
         onDismissRequest = consoleVm::dismissPendingRun,
-        title = { Text("Still running") },
-        text = { Text("Something is still running. Stop it and start ${pending.title}?") },
+        title = { Text(stringResource(R.string.restart_title)) },
+        text = { Text(stringResource(R.string.restart_text, runTargetTitle(pending))) },
         confirmButton = {
             TextButton(onClick = {
                 consoleVm.confirmPendingRun()
                 onConfirmed()
-            }) { Text("Stop & start") }
+            }) { Text(stringResource(R.string.restart_confirm)) }
         },
         dismissButton = {
-            TextButton(onClick = consoleVm::dismissPendingRun) { Text("Cancel") }
+            TextButton(onClick = consoleVm::dismissPendingRun) { Text(stringResource(R.string.action_cancel)) }
         },
     )
+}
+
+/** What the user sees for [target]: the script's file name, or the localized program name. */
+@Composable
+fun runTargetTitle(target: RunTarget): String = when (target) {
+    is RunTarget.Script -> target.file.name
+    RunTarget.Interpreter -> stringResource(R.string.title_interpreter)
+    RunTarget.Terminal -> stringResource(R.string.title_terminal)
 }

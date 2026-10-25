@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import dev.skyloft.skypython.R
+import dev.skyloft.skypython.locale.AppLocale
 import dev.skyloft.skypython.runtime.ConsoleEvent
 import dev.skyloft.skypython.runtime.PythonInstaller
 import dev.skyloft.skypython.runtime.PythonPaths
@@ -42,6 +44,20 @@ data class ConsoleState(
     val pendingRun: File? get() = (pending as? RunTarget.Script)?.file
 }
 
+/** The console's own status lines; English by default (tests), localized in the app. */
+interface ConsoleStrings {
+    /** The footer after a program ends, without a newline. */
+    fun exitFooter(code: Int): String
+
+    /** Shown when a run is cancelled before the program started, without a newline. */
+    val cancelled: String
+
+    object English : ConsoleStrings {
+        override fun exitFooter(code: Int) = "[Program finished, exit code $code]"
+        override val cancelled = "[Cancelled]"
+    }
+}
+
 /** The part of [PythonProcess] the console needs; lets tests drive the view model. */
 interface ScriptProcess {
     val isRunning: Boolean
@@ -75,6 +91,7 @@ class ConsoleViewModel(
     private val newProcess: (PythonPaths) -> ScriptProcess,
     private val work: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(1),
     private val tickMillis: Long = 50,
+    private val strings: ConsoleStrings = ConsoleStrings.English,
 ) : ViewModel() {
 
     private val buffer = ConsoleBuffer() // confined to [work]
@@ -137,7 +154,7 @@ class ConsoleViewModel(
                         is ConsoleEvent.Exited -> {
                             releasePrompt()
                             buffer.append(
-                                exitLine(event.code, afterNewline = buffer.endsWithNewline),
+                                exitLine(event.code, afterNewline = buffer.endsWithNewline, strings),
                                 isError = false,
                             )
                         }
@@ -211,7 +228,8 @@ class ConsoleViewModel(
         if (!job.isActive) return
         job.cancel() // cancelling the collector also kills a process that is just starting
         viewModelScope.launch(work) {
-            buffer.append(if (buffer.endsWithNewline) CANCELLED else "\n" + CANCELLED, false)
+            val cancelled = strings.cancelled + "\n"
+            buffer.append(if (buffer.endsWithNewline) cancelled else "\n" + cancelled, false)
             _state.update { it.copy(installing = false) }
             publish(running = false, acceptsInput = false)
         }
@@ -307,14 +325,12 @@ class ConsoleViewModel(
     }
 
     companion object {
-        private const val CANCELLED = "[Cancelled]\n"
-
         /** How long a prompt may wait for output that raced behind it on the other pipe. */
         private const val PROMPT_HOLD_MILLIS = 30L
 
         /** The footer; starts with '\n' only if output didn't already end with one. */
-        fun exitLine(code: Int, afterNewline: Boolean): String {
-            val footer = "[Program finished, exit code $code]\n"
+        fun exitLine(code: Int, afterNewline: Boolean, strings: ConsoleStrings = ConsoleStrings.English): String {
+            val footer = strings.exitFooter(code) + "\n"
             return if (afterNewline) footer else "\n" + footer
         }
 
@@ -326,6 +342,11 @@ class ConsoleViewModel(
                     projectsRoot = projectsRoot,
                     install = installer::ensureInstalled,
                     newProcess = { PythonScriptProcess(PythonProcess(it)) },
+                    strings = object : ConsoleStrings {
+                        // Resolved per use: the language may change while the console lives.
+                        override fun exitFooter(code: Int) = AppLocale.string(app, R.string.console_exit_footer, code)
+                        override val cancelled get() = AppLocale.string(app, R.string.console_cancelled)
+                    },
                 )
             }
         }

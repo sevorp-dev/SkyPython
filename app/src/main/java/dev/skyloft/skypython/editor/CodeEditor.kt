@@ -82,7 +82,8 @@ private class SkyColorScheme(registry: ThemeRegistry) :
         LINE_DIVIDER -> GUTTER_DIVIDER
         // The theme has no suggest-widget / tooltip colors; Sora's defaults are light-on-light.
         COMPLETION_WND_BACKGROUND, COMPLETION_WND_CORNER, DIAGNOSTIC_TOOLTIP_BACKGROUND -> POPUP_BG
-        COMPLETION_WND_ITEM_CURRENT -> POPUP_SELECTED
+        // Find matches: the selection blue, so highlighted (often yellow string) text stays readable.
+        COMPLETION_WND_ITEM_CURRENT, MATCHED_TEXT_BACKGROUND -> POPUP_SELECTED
         COMPLETION_WND_TEXT_PRIMARY, DIAGNOSTIC_TOOLTIP_BRIEF_MSG -> POPUP_TEXT
         COMPLETION_WND_TEXT_SECONDARY, DIAGNOSTIC_TOOLTIP_DETAILED_MSG -> POPUP_TEXT_SECONDARY
         COMPLETION_WND_TEXT_MATCHED -> POPUP_MATCHED
@@ -313,7 +314,7 @@ private fun CodeEditor.cursorPosition(): CursorPosition {
 private var applyingTextSize = false
 
 /** Applies user settings; each setter is skipped when unchanged so a re-apply doesn't relayout. */
-private fun CodeEditor.applyConfig(config: EditorViewConfig) {
+internal fun CodeEditor.applyConfig(config: EditorViewConfig) {
     // Sora's setTextSize takes sp and scales by the display's font metrics itself.
     val px = android.util.TypedValue.applyDimension(
         android.util.TypedValue.COMPLEX_UNIT_SP, config.textSizeSp, resources.displayMetrics,

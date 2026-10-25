@@ -25,7 +25,7 @@ sealed interface InstallOutcome {
 data class PipState(
     val tab: PipTab = PipTab.Install,
     val spec: String = "",
-    val specError: String? = null,
+    val specError: SpecProblem? = null,
     val log: String = "",
     val installing: Boolean = false,
     val outcome: InstallOutcome? = null,
@@ -62,7 +62,7 @@ class PipViewModel(private val pip: PipManager) : ViewModel() {
         val spec = when (val check = PackageSpec.check(current.spec)) {
             is SpecCheck.Valid -> check.spec
             is SpecCheck.Invalid -> {
-                _state.update { it.copy(specError = check.reason) }
+                _state.update { it.copy(specError = check.problem) }
                 return
             }
         }
@@ -127,7 +127,6 @@ class PipViewModel(private val pip: PipManager) : ViewModel() {
     }
 
     companion object {
-        const val PURE_PYTHON_HINT = "Only pure-Python packages are supported for now."
         /** The log keeps its last this many characters. */
         const val MAX_LOG_CHARS = 200_000
 

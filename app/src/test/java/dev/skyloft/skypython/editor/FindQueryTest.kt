@@ -44,7 +44,7 @@ class FindQueryTest {
 
     @Test
     fun regexModeUsesThePattern() {
-        assertEquals(listOf("total", "total"), FindQuery("t\\w+l\\b", matchCase = true, regex = true).matches())
+        assertEquals(listOf("total", "total"), FindQuery("\\bt\\w+l\\b", matchCase = true, regex = true).matches())
         assertEquals(listOf("print"), FindQuery("^p\\w+", regex = true).matches())
     }
 

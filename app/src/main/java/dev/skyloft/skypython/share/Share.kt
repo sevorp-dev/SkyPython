@@ -6,6 +6,7 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import java.io.File
+import dev.skyloft.skypython.R
 
 /**
  * Shares [file] with other apps via `ACTION_SEND` (`text/x-python`) through the app's
@@ -16,7 +17,7 @@ fun shareFile(context: Context, file: File) {
     val uri = try {
         FileProvider.getUriForFile(context, "${context.packageName}.files", file)
     } catch (e: IllegalArgumentException) {
-        Toast.makeText(context, "This file can't be shared", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, R.string.share_cannot_share, Toast.LENGTH_SHORT).show()
         return
     }
     val send = Intent(Intent.ACTION_SEND).apply {
@@ -25,12 +26,12 @@ fun shareFile(context: Context, file: File) {
         putExtra(Intent.EXTRA_SUBJECT, file.name)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
-    val chooser = Intent.createChooser(send, "Share ${file.name}").apply {
+    val chooser = Intent.createChooser(send, context.getString(R.string.share_chooser_title, file.name)).apply {
         if (context !is android.app.Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
     try {
         context.startActivity(chooser)
     } catch (e: ActivityNotFoundException) {
-        Toast.makeText(context, "No app can share this file", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, R.string.share_no_app, Toast.LENGTH_SHORT).show()
     }
 }
