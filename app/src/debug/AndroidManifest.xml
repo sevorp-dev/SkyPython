@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: test hooks for the crash reporter (never in a release APK). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Its own process, so a test can crash it while the app and the test runner live on. -->
+        <activity
+            android:name="dev.skyloft.skypython.debugtools.CrashTestActivity"
+            android:exported="false"
+            android:process=":crashtest"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+    </application>
+</manifest>
