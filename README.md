@@ -236,7 +236,8 @@ Bug reports, ideas and pull requests are welcome!
 
 Developed by **[Sevorp](https://github.com/sevorp-dev)** · **SkyLoft Studio 🌥**
 
-- Telegram: [@SkyLoft_Studio](https://t.me/SkyLoft_Studio)
+- Telegram (author): [@Sevorp](https://t.me/Sevorp)
+- Telegram channel: [@SkyLoft_Studio](https://t.me/SkyLoft_Studio)
 - GitHub: [sevorp-dev](https://github.com/sevorp-dev)
 
 ## 📄 License
