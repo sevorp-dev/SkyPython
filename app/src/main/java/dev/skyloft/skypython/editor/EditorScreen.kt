@@ -95,7 +95,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import dev.skyloft.skypython.ui.rememberMainScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -173,7 +173,7 @@ fun EditorScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    val scope = rememberMainScope() // touches the editor view after suspending
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     var menuOpen by remember { mutableStateOf(false) }
     var running by remember { mutableStateOf(false) }
