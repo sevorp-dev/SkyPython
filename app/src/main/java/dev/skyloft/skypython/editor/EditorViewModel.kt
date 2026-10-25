@@ -17,6 +17,7 @@ import dev.skyloft.skypython.data.Session
 import dev.skyloft.skypython.data.SessionStore
 import dev.skyloft.skypython.files.Workspace
 import dev.skyloft.skypython.files.describeFileError
+import io.github.rosemoe.sora.text.Content
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.Dispatchers
@@ -85,6 +86,12 @@ class EditorViewModel(
     val projectsRoot: File = resolvedFile(projectsRoot)
     private val _state = MutableStateFlow(EditorUiState())
     val state: StateFlow<EditorUiState> = _state.asStateFlow()
+
+    /**
+     * The editor view's live buffer per open doc (cursor, undo history, scroll), kept here so it
+     * outlives the view: other screens, tab switches, rotation. Dropped when the tab closes.
+     */
+    val buffers = DocBuffers<Content>()
 
     // A buffered Channel, not a SharedFlow: messages emitted before the screen starts collecting
     // (e.g. during session restore in init) must be kept, not dropped for lack of subscribers.
@@ -321,6 +328,7 @@ class EditorViewModel(
 
     private fun publish(persistSession: Boolean = true) {
         _state.value = EditorUiState(docsState.docs, docsState.currentId, loading = !restored)
+        buffers.retain(docsState.docs.mapTo(HashSet()) { it.id })
         if (persistSession) sessionToSave.value = sessionOf(docsState.docs, docsState.currentId)
     }
 

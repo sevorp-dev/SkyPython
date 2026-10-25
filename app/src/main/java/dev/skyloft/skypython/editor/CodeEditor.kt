@@ -558,9 +558,11 @@ fun CodeEditor(
     modifier: Modifier = Modifier,
     readOnly: Boolean = false,
     debugMarks: EditorDebugMarks = EditorDebugMarks.None,
+    buffers: DocBuffers<Content> = remember { DocBuffers() },
 ) {
     val context = LocalContext.current
-    val contents = remember { HashMap<String, Content>() }
+    // Outlive this composable (owned by the view model): leaving the editor keeps them.
+    val contents = buffers
     val currentId by rememberUpdatedState(docId)
     val currentPath by rememberUpdatedState(docPath)
     val currentReadOnly by rememberUpdatedState(readOnly)
@@ -720,6 +722,7 @@ fun CodeEditor(
             }
         },
         onRelease = { view ->
+            if (view.text === contents[currentId]) contents.saveScroll(currentId, view.offsetX, view.offsetY)
             if (controller.view === view) controller.view = null
             diagnostics.cancel()
             hideHint()
@@ -735,9 +738,15 @@ fun CodeEditor(
         debouncer.flush() // the previous doc's pending edit, before the view switches docs
         hideHint()
         controller.clearUsages()
+        controller.shownDocId?.let { shown ->
+            if (shown != docId && view.text === contents[shown]) contents.saveScroll(shown, view.offsetX, view.offsetY)
+        }
         val content = contents.getOrPut(docId) { Content(initialText) }
-        // reuseContentObject = true keeps this doc's Content (and its undo stack) instead of copying it.
-        if (view.text !== content) view.setText(content, true, null)
+        // reuseContentObject = true keeps this doc's Content (its cursor and undo stack) instead of copying it.
+        if (view.text !== content) {
+            view.setText(content, true, null)
+            contents.scrollOf(docId)?.let { view.restoreScroll(it) }
+        }
         view.isEditable = !readOnly
         if (readOnly) view.hideSoftInput()
         controller.shownDocId = docId
@@ -789,7 +798,7 @@ fun CodeEditor(
 
     // Forget contents of closed tabs.
     LaunchedEffect(openIds) {
-        contents.keys.retainAll(openIds)
+        contents.retain(openIds)
         problems.keys.retainAll(openIds)
     }
 
@@ -799,8 +808,30 @@ fun CodeEditor(
             diagnostics.cancel()
             hintJob[0]?.cancel()
             controller.shownDocId = null
-            contents.clear()
+            // The contents stay (cursor, undo history, scroll): see [DocBuffers].
             problems.clear()
         }
     }
+}
+
+/**
+ * Scrolls to [s] (clamped) once the view is laid out, and again while word wrap is still laying
+ * the rows out in the background, unless the user scrolled meanwhile.
+ */
+private fun CodeEditor.restoreScroll(s: DocBuffers.Scroll) {
+    val last = intArrayOf(-1, -1)
+    val apply = {
+        val x = s.x.coerceIn(0, scrollMaxX.coerceAtLeast(0))
+        val y = s.y.coerceIn(0, scrollMaxY.coerceAtLeast(0))
+        scroller.forceFinished(true)
+        scroller.startScroll(x, y, 0, 0, 0)
+        scroller.abortAnimation()
+        last[0] = x
+        last[1] = y
+        invalidate()
+    }
+    post { apply() }
+    for (delayMs in JUMP_RESCROLL_MS) postDelayed({
+        if (offsetX == last[0] && offsetY == last[1] && (last[0] != s.x || last[1] != s.y)) apply()
+    }, delayMs)
 }

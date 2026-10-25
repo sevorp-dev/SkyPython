@@ -591,6 +591,7 @@ fun EditorScreen(
                             modifier = Modifier.fillMaxSize(),
                             debugMarks = debugMarks,
                             readOnly = current.readOnly,
+                            buffers = viewModel.buffers,
                         )
                     }
                 }
