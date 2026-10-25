@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Editor: find & replace -->
+    <string name="find_hint">Find</string>
+    <string name="replace_hint">Replace with</string>
+    <string name="find_match_case">Match case</string>
+    <string name="find_whole_word">Whole word</string>
+    <string name="find_regex">Regular expression</string>
+    <string name="find_previous">Previous match</string>
+    <string name="find_next">Next match</string>
+    <string name="find_toggle_replace">Show replace</string>
+    <string name="find_close">Close search</string>
+    <string name="find_replace_one">Replace</string>
+    <string name="find_replace_all">All</string>
+    <string name="find_replaced_count">Replaced %1$d</string>
+    <string name="find_no_matches">No matches</string>
+    <string name="find_invalid_regex">Invalid pattern</string>
+
+    <!-- Editor: go to line -->
+    <string name="go_to_line">Go to line…</string>
+    <string name="go_to_line_title">Go to line</string>
+    <string name="go_to_line_label">Line (1–%1$d)</string>
+    <string name="go_to_line_go">Go</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Editor: line commands -->
+    <string name="editor_action_comment">Comment / uncomment</string>
+    <string name="editor_action_indent">Indent</string>
+    <string name="editor_action_outdent">Outdent</string>
+    <string name="editor_action_duplicate">Duplicate line</string>
+    <string name="editor_action_delete_line">Delete line</string>
+    <string name="editor_action_move_up">Move line up</string>
+    <string name="editor_action_move_down">Move line down</string>
+    <string name="editor_actions_show">Edit actions</string>
+    <string name="editor_actions_hide">Symbols</string>
+    <string name="editor_menu_edit">Edit lines</string>
+    <string name="editor_menu_back">Back</string>
+    <string name="editor_undo">Undo</string>
+    <string name="editor_redo">Redo</string>
+
+    <!-- Editor: files -->
+    <string name="find_and_replace">Find &amp; replace</string>
+    <string name="new_file">New file…</string>
+    <string name="new_file_title">New file</string>
+    <string name="new_file_name">File name</string>
+    <string name="new_file_create">Create</string>
+    <string name="open_file">Open…</string>
+    <string name="recent_files">Recent files</string>
+    <string name="recent_files_empty">No recent files yet</string>
+    <string name="file_missing">%1$s no longer exists</string>
+
+    <!-- Settings -->
+    <string name="settings_auto_close">Auto-close brackets</string>
+    <string name="settings_auto_close_summary">Typing ( [ { \" or \' also inserts the closing one</string>
+    <string name="settings_symbol_keys">Symbol bar keys</string>
+    <string name="settings_symbol_keys_summary">Keys separated by spaces. \"Tab\" inserts 4 spaces.</string>
+    <string name="settings_symbol_keys_reset">Reset to default</string>
+    <string name="settings_keyboard_suggestions">Keyboard suggestions</string>
+    <string name="settings_keyboard_suggestions_summary">Let the keyboard suggest and autocorrect words. Off keeps code from being changed.</string>
+    <string name="settings_pinch_hint">Tip: pinch the editor with two fingers to zoom.</string>
+</resources>

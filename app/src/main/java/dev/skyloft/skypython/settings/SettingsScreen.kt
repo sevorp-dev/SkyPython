@@ -23,6 +23,21 @@ import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.filled.DataArray
+import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.SpaceBar
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import dev.skyloft.skypython.R
+import kotlinx.coroutines.delay
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -106,6 +121,24 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 onChange = { v -> update { it.copy(codeCompletion = v) } },
             )
             SwitchRow(
+                icon = Icons.Filled.DataArray,
+                title = stringResource(R.string.settings_auto_close),
+                summary = stringResource(R.string.settings_auto_close_summary),
+                checked = s.autoClosePairs,
+                onChange = { v -> update { it.copy(autoClosePairs = v) } },
+            )
+            SwitchRow(
+                icon = Icons.Filled.Keyboard,
+                title = stringResource(R.string.settings_keyboard_suggestions),
+                summary = stringResource(R.string.settings_keyboard_suggestions_summary),
+                checked = s.keyboardSuggestions,
+                onChange = { v -> update { it.copy(keyboardSuggestions = v) } },
+            )
+            SymbolKeysRow(
+                saved = s.symbolKeys,
+                onSave = { spec -> update { it.copy(symbolKeys = spec) } },
+            )
+            SwitchRow(
                 icon = Icons.Filled.LightMode,
                 title = "Keep screen on",
                 summary = "Don't let the screen turn off while editing",
@@ -113,6 +146,52 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 onChange = { v -> update { it.copy(keepScreenOn = v) } },
             )
         }
+    }
+}
+
+/**
+ * Free-text list of symbol-bar keys. The field keeps its own text (spaces the user is still
+ * typing must not be normalized away) and saves after a short pause.
+ */
+@Composable
+private fun SymbolKeysRow(saved: String, onSave: (String) -> Unit) {
+    var text by remember { mutableStateOf(saved) }
+    LaunchedEffect(text) {
+        if (normalizeSymbolKeys(text) == saved) return@LaunchedEffect
+        delay(600)
+        onSave(text)
+    }
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            OutlinedIconTile(Icons.Filled.SpaceBar, size = 40.dp)
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.settings_symbol_keys), style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    stringResource(R.string.settings_symbol_keys_summary),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        OutlinedTextField(
+            value = text,
+            onValueChange = { text = it },
+            textStyle = TextStyle(fontFamily = FontFamily.Monospace),
+            keyboardOptions = KeyboardOptions(
+                autoCorrectEnabled = false,
+                capitalization = KeyboardCapitalization.None,
+                keyboardType = KeyboardType.Ascii,
+            ),
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        )
+        TextButton(
+            onClick = {
+                text = DEFAULT_SYMBOL_KEYS
+                onSave(DEFAULT_SYMBOL_KEYS)
+            },
+            enabled = normalizeSymbolKeys(text) != DEFAULT_SYMBOL_KEYS,
+            modifier = Modifier.align(Alignment.End),
+        ) { Text(stringResource(R.string.settings_symbol_keys_reset)) }
     }
 }
 

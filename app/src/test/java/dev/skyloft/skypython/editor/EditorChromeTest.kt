@@ -67,7 +67,7 @@ class EditorChromeTest {
     }
 
     @Test fun `symbol bar has the full symbol list`() {
-        val labels = SYMBOL_KEYS.map { it.first }
+        val labels = SYMBOL_KEYS.map { it.label }
         assertEquals(
             listOf("Tab", ":", ";", "'", "\"", "#", "(", ")", "[", "]", "{", "}", "=", ".", ",", "_", "+", "-", "*", "/", "<", ">", "\\", "|"),
             labels,
@@ -75,8 +75,8 @@ class EditorChromeTest {
     }
 
     @Test fun `Tab inserts four spaces and symbols insert themselves`() {
-        val keys = SYMBOL_KEYS.toMap()
+        val keys = SYMBOL_KEYS.associate { it.label to it.text }
         assertEquals("    ", keys["Tab"])
-        SYMBOL_KEYS.drop(1).forEach { (label, text) -> assertEquals(label, text) }
+        SYMBOL_KEYS.drop(1).forEach { assertEquals(it.label, it.text) }
     }
 }

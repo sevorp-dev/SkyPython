@@ -12,6 +12,10 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.skyloft.skypython.data.SavedTab
 import dev.skyloft.skypython.data.Session
 import dev.skyloft.skypython.data.SessionStore
+import dev.skyloft.skypython.R
+import dev.skyloft.skypython.files.Workspace
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -48,6 +52,7 @@ class EditorViewModel(
     projectsRoot: File,
     private val firstRunFile: () -> File,
     private val sessionStore: SessionStore = SessionStore(app),
+    private val recentStore: RecentFilesStore = RecentFilesStore(app),
 ) : AndroidViewModel(app) {
 
     private val docsState = DocumentsState()
@@ -89,6 +94,10 @@ class EditorViewModel(
         }
     }
 
+    /** Local files opened recently, newest first (absolute paths; may include deleted files). */
+    val recentFiles: StateFlow<List<String>> =
+        recentStore.paths.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
     // ---- tabs ----
 
     fun open(file: File) {
@@ -96,12 +105,41 @@ class EditorViewModel(
             val source = withContext(Dispatchers.IO) { DocSource.Local(file) }
             val id = OpenDocument.idOf(source)
             if (docsState.find(id) != null) {
-                docsState.select(id); publish(); return@launch
+                docsState.select(id); publish(); remember(source.file); return@launch
             }
             val text = withContext(Dispatchers.IO) { runCatching { readLocal(source.file) } }
-            text.onSuccess { docsState.open(OpenDocument.of(source, it)); publish() }
+            text.onSuccess { docsState.open(OpenDocument.of(source, it)); publish(); remember(source.file) }
                 .onFailure { message("Can't open ${file.name}: ${it.message}") }
         }
+    }
+
+    /** Opens a recent file; one that no longer exists is dropped from the list. */
+    fun openRecent(path: String) {
+        viewModelScope.launch {
+            val file = File(path)
+            if (withContext(Dispatchers.IO) { file.isFile }) {
+                open(file)
+            } else {
+                recentStore.update { forgetRecent(it, path) }
+                message(getApplication<Application>().getString(R.string.file_missing, file.name))
+            }
+        }
+    }
+
+    /**
+     * Creates [name] in the projects root and opens it. [onResult] gets null on success or the
+     * reason it failed (shown in the dialog).
+     */
+    fun newFile(name: String, onResult: (String?) -> Unit) {
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) { Workspace(projectsRoot).createFile(projectsRoot, name.trim()) }
+            result.onSuccess { open(it); onResult(null) }
+                .onFailure { onResult(it.message ?: it.toString()) }
+        }
+    }
+
+    private fun remember(file: File) {
+        viewModelScope.launch { runCatching { recentStore.update { pushRecent(it, file.path) } } }
     }
 
     fun openExternal(uri: Uri) {

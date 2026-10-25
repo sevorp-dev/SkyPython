@@ -1,9 +1,12 @@
 package dev.skyloft.skypython.editor
 
+import android.text.InputType
 import java.io.File
 
 import dev.skyloft.skypython.lang.Diagnostic
 import dev.skyloft.skypython.settings.EditorSettings
+import dev.skyloft.skypython.settings.clampFontSize
+import kotlin.math.roundToInt
 
 /** Cursor of the live editor: 0-based [line] and [column], plus the document's [lineCount]. */
 data class CursorPosition(val line: Int = 0, val column: Int = 0, val lineCount: Int = 1)
@@ -36,6 +39,8 @@ data class EditorViewConfig(
     val lineNumbers: Boolean,
     val keepScreenOn: Boolean,
     val codeCompletion: Boolean = true,
+    val autoClosePairs: Boolean = true,
+    val keyboardSuggestions: Boolean = false,
 ) {
     companion object {
         const val MIN_FONT_SP = 12
@@ -47,9 +52,25 @@ data class EditorViewConfig(
             lineNumbers = settings.lineNumbers,
             keepScreenOn = settings.keepScreenOn,
             codeCompletion = settings.codeCompletion,
+            autoClosePairs = settings.autoClosePairs,
+            keyboardSuggestions = settings.keyboardSuggestions,
         )
     }
 }
 
 /** Status-line text for a problem: "Line 3: SyntaxError: '(' was never closed". */
 fun problemLabel(d: Diagnostic): String = "Line ${d.line}: ${d.message.lineSequence().first()}"
+
+/** Font size (whole sp, Settings range) to keep after a pinch left the editor at [textSizePx]. */
+fun pinchFontSp(textSizePx: Float, spScale: Float): Int = clampFontSize((textSizePx / spScale).roundToInt())
+
+/**
+ * Soft-keyboard input type for the editor. Never auto-capitalizes. With suggestions off it asks
+ * for no suggestions and uses the visible-password variation: keyboards that ignore
+ * NO_SUGGESTIONS (Gboard, Samsung) still never autocorrect or auto-capitalize such a field.
+ */
+fun editorInputType(keyboardSuggestions: Boolean): Int {
+    val base = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+    return if (keyboardSuggestions) base
+    else base or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+}

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Редактор: поиск и замена -->
+    <string name="find_hint">Найти</string>
+    <string name="replace_hint">Заменить на</string>
+    <string name="find_match_case">Учитывать регистр</string>
+    <string name="find_whole_word">Слово целиком</string>
+    <string name="find_regex">Регулярное выражение</string>
+    <string name="find_previous">Предыдущее совпадение</string>
+    <string name="find_next">Следующее совпадение</string>
+    <string name="find_toggle_replace">Показать замену</string>
+    <string name="find_close">Закрыть поиск</string>
+    <string name="find_replace_one">Заменить</string>
+    <string name="find_replace_all">Все</string>
+    <string name="find_replaced_count">Заменено: %1$d</string>
+    <string name="find_no_matches">Ничего не найдено</string>
+    <string name="find_invalid_regex">Ошибка в выражении</string>
+
+    <!-- Редактор: переход к строке -->
+    <string name="go_to_line">Перейти к строке…</string>
+    <string name="go_to_line_title">Перейти к строке</string>
+    <string name="go_to_line_label">Строка (1–%1$d)</string>
+    <string name="go_to_line_go">Перейти</string>
+    <string name="cancel">Отмена</string>
+
+    <!-- Редактор: команды для строк -->
+    <string name="editor_action_comment">Закомментировать / раскомментировать</string>
+    <string name="editor_action_indent">Добавить отступ</string>
+    <string name="editor_action_outdent">Убрать отступ</string>
+    <string name="editor_action_duplicate">Дублировать строку</string>
+    <string name="editor_action_delete_line">Удалить строку</string>
+    <string name="editor_action_move_up">Переместить строку вверх</string>
+    <string name="editor_action_move_down">Переместить строку вниз</string>
+    <string name="editor_actions_show">Действия</string>
+    <string name="editor_actions_hide">Символы</string>
+    <string name="editor_menu_edit">Строки</string>
+    <string name="editor_menu_back">Назад</string>
+    <string name="editor_undo">Отменить</string>
+    <string name="editor_redo">Повторить</string>
+
+    <!-- Редактор: файлы -->
+    <string name="find_and_replace">Найти и заменить</string>
+    <string name="new_file">Новый файл…</string>
+    <string name="new_file_title">Новый файл</string>
+    <string name="new_file_name">Имя файла</string>
+    <string name="new_file_create">Создать</string>
+    <string name="open_file">Открыть…</string>
+    <string name="recent_files">Недавние файлы</string>
+    <string name="recent_files_empty">Недавних файлов пока нет</string>
+    <string name="file_missing">Файла %1$s больше нет</string>
+
+    <!-- Настройки -->
+    <string name="settings_auto_close">Закрывать скобки</string>
+    <string name="settings_auto_close_summary">При вводе ( [ { \" или \' сразу добавляется закрывающая</string>
+    <string name="settings_symbol_keys">Клавиши панели символов</string>
+    <string name="settings_symbol_keys_summary">Клавиши через пробел. «Tab» вставляет 4 пробела.</string>
+    <string name="settings_symbol_keys_reset">Сбросить</string>
+    <string name="settings_keyboard_suggestions">Подсказки клавиатуры</string>
+    <string name="settings_keyboard_suggestions_summary">Клавиатура предлагает и исправляет слова. Если выключено, код не будет искажён.</string>
+    <string name="settings_pinch_hint">Совет: масштаб в редакторе меняется щипком двумя пальцами.</string>
+</resources>
