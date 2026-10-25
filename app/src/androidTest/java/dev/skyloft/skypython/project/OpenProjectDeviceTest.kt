@@ -41,8 +41,9 @@ class OpenProjectDeviceTest {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             shell("appops set $pkg MANAGE_EXTERNAL_STORAGE allow")
         } else {
-            instrumentation.uiAutomation.grantRuntimePermission(pkg, Manifest.permission.READ_EXTERNAL_STORAGE)
-            instrumentation.uiAutomation.grantRuntimePermission(pkg, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            // UiAutomation.grantRuntimePermission needs Android 9; `pm grant` works on 7 too.
+            shell("pm grant $pkg ${Manifest.permission.READ_EXTERNAL_STORAGE}")
+            shell("pm grant $pkg ${Manifest.permission.WRITE_EXTERNAL_STORAGE}")
         }
         waitFor("storage access") { StoragePermission.granted(app).takeIf { it } }
         project.deleteRecursively()
