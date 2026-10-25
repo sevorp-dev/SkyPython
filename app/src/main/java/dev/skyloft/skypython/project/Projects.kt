@@ -101,6 +101,13 @@ object StorageRoots {
         roots.filter { isAtOrUnder(dir, it.dir) }.maxByOrNull { it.dir.path.length }
 }
 
+/** [dir] for people: "Internal storage/Documents/MyBot" rather than "/storage/emulated/0/Documents/MyBot". */
+fun friendlyPath(dir: File, roots: List<StorageRoot>, rootLabel: (StorageRoot) -> String): String {
+    val root = StorageRoots.rootFor(dir, roots) ?: return dir.path
+    val rel = dir.path.removePrefix(root.dir.path).trim(File.separatorChar)
+    return if (rel.isEmpty()) rootLabel(root) else rootLabel(root) + "/" + rel.replace(File.separatorChar, '/')
+}
+
 /** One breadcrumb of the folder browser; the root's [label] is empty (the UI names the root). */
 data class BrowseCrumb(val label: String, val dir: File)
 

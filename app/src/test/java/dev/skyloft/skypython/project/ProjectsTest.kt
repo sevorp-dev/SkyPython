@@ -110,6 +110,18 @@ class StorageRootsTest {
         assertEquals(card, StorageRoots.rootFor(File("/storage/1A2B-3C4D"), roots))
         assertNull(StorageRoots.rootFor(File("/storage/emulated/01"), roots))
     }
+
+    @Test
+    fun friendlyPathNamesTheVolumeInsteadOfItsMountPoint() {
+        val roots = listOf(
+            StorageRoot(File("/storage/emulated/0"), StorageRoot.Kind.Internal),
+            StorageRoot(File("/storage/1A2B-3C4D"), StorageRoot.Kind.SdCard),
+        )
+        val label: (StorageRoot) -> String = { if (it.kind == StorageRoot.Kind.Internal) "Internal storage" else "SD card" }
+        assertEquals("Internal storage/Documents/MyBot", friendlyPath(File("/storage/emulated/0/Documents/MyBot"), roots, label))
+        assertEquals("SD card", friendlyPath(File("/storage/1A2B-3C4D"), roots, label))
+        assertEquals(File("/data/x").path, friendlyPath(File("/data/x"), roots, label))
+    }
 }
 
 class FolderListingTest {

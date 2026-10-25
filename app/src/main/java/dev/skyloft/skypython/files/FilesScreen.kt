@@ -94,6 +94,15 @@ import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material3.Button
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextAlign
+import dev.skyloft.skypython.ui.theme.Orange
+import dev.skyloft.skypython.ui.theme.OrangeTint
+import dev.skyloft.skypython.ui.theme.brandButtonColors
 import java.io.File
 import androidx.compose.ui.res.stringResource
 import dev.skyloft.skypython.R
@@ -111,7 +120,8 @@ private sealed interface FilesDialog {
 }
 
 /**
- * File manager for the workspace (`filesDir/projects`).
+ * File manager for the open project: the app's own `filesDir/projects`, or a folder in the
+ * phone's storage opened with "Open project".
  *
  * @param onOpenFile a workspace text file was tapped; the caller opens it and navigates back to the editor.
  * @param onOpenImage a picture was tapped; the caller shows it in the image viewer.
@@ -119,6 +129,8 @@ private sealed interface FilesDialog {
  * @param onDeleted a file or folder was deleted (folders recursively) so the editor can close affected tabs.
  * @param onBack leave the Files screen.
  * @param onRenamed a file or folder was renamed so the editor can re-point affected tabs.
+ * @param projectName the open project's name (first breadcrumb); [projectPath] where it is, null for the app's own.
+ * @param onOpenProject show "Open project"; [onOpenAppProjects] go back to the app's own projects.
  */
 @Composable
 fun FilesScreen(
@@ -129,6 +141,10 @@ fun FilesScreen(
     onBack: () -> Unit,
     onRenamed: (old: File, new: File) -> Unit = { _, _ -> },
     onOpenImage: (File) -> Unit = {},
+    projectName: String = "",
+    projectPath: String? = null,
+    onOpenProject: () -> Unit = {},
+    onOpenAppProjects: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -186,6 +202,10 @@ fun FilesScreen(
             else shareFile(shareContext, entry.file)
         },
         onOpenWith = { entry -> openWith(shareContext, entry.file) },
+        projectName = projectName,
+        projectPath = projectPath,
+        onOpenProject = onOpenProject,
+        onOpenAppProjects = onOpenAppProjects,
     )
 
     when (val d = dialog) {
@@ -279,6 +299,10 @@ private fun FilesContent(
     onErrorShown: () -> Unit,
     onShare: (FileEntry) -> Unit = {},
     onOpenWith: (FileEntry) -> Unit = {},
+    projectName: String = "",
+    projectPath: String? = null,
+    onOpenProject: () -> Unit = {},
+    onOpenAppProjects: () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(state.error) {
@@ -295,13 +319,16 @@ private fun FilesContent(
                 onBack = onBack,
                 divider = false,
                 actions = {
+                    IconButton(onClick = onOpenProject) {
+                        Icon(Icons.Outlined.FolderOpen, contentDescription = stringResource(R.string.projects_open_project))
+                    }
                     IconButton(onClick = onOpenExternal) {
                         Icon(Icons.Outlined.FileOpen, contentDescription = stringResource(R.string.files_open_external))
                     }
                 },
             )
         },
-        floatingActionButton = { NewItemFab(onNewFile = onNewFile, onNewFolder = onNewFolder) },
+        floatingActionButton = { if (state.rootAvailable) NewItemFab(onNewFile = onNewFile, onNewFolder = onNewFolder) },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(
@@ -309,16 +336,21 @@ private fun FilesContent(
                 .fillMaxSize()
                 .padding(padding),
         ) {
-            Breadcrumbs(state = state, onUp = onUp, onNavigate = onNavigate)
+            ProjectBar(name = projectName, path = projectPath, onOpenProject = onOpenProject)
+            Breadcrumbs(state = state, rootLabel = projectName, onUp = onUp, onNavigate = onNavigate)
             Hairline()
-            if (state.entries.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        stringResource(R.string.files_empty_folder),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+            if (!state.rootAvailable) {
+                EmptyState(
+                    text = stringResource(R.string.projects_unavailable),
+                    onOpenProject = onOpenProject,
+                    onOpenAppProjects = onOpenAppProjects,
+                )
+            } else if (state.entries.isEmpty()) {
+                EmptyState(
+                    text = stringResource(R.string.files_empty_folder),
+                    // At the project's top: offer another project; inside a subfolder the + button is enough.
+                    onOpenProject = if (state.canGoUp) null else onOpenProject,
+                )
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -341,8 +373,74 @@ private fun FilesContent(
     }
 }
 
+/** The open project: name, where it is, and the way to open another one. */
 @Composable
-private fun Breadcrumbs(state: FilesState, onUp: () -> Unit, onNavigate: (File) -> Unit) {
+private fun ProjectBar(name: String, path: String?, onOpenProject: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(SlateBar)
+            .padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier.size(32.dp).clip(CircleShape).background(OrangeTint),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Icons.Outlined.Folder, contentDescription = null, tint = OrangeSoft, modifier = Modifier.size(18.dp))
+        }
+        Column(Modifier.weight(1f).padding(start = 12.dp)) {
+            Text(
+                name.ifEmpty { stringResource(R.string.projects_label) },
+                color = TextBright,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                path ?: stringResource(R.string.projects_app_desc),
+                color = MutedText,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1,
+                overflow = TextOverflow.StartEllipsis,
+            )
+        }
+        TextButton(onClick = onOpenProject) {
+            Text(stringResource(R.string.projects_open_project), color = Orange, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+/** An empty or unavailable folder, with "Open project" (orange) and, when given, the app's own projects. */
+@Composable
+private fun EmptyState(text: String, onOpenProject: (() -> Unit)?, onOpenAppProjects: (() -> Unit)? = null) {
+    Column(
+        Modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        if (onOpenProject != null) {
+            Button(onClick = onOpenProject, colors = brandButtonColors(), modifier = Modifier.padding(top = 16.dp)) {
+                Icon(Icons.Outlined.FolderOpen, contentDescription = null, modifier = Modifier.size(18.dp))
+                Text(stringResource(R.string.projects_open_project), modifier = Modifier.padding(start = 8.dp))
+            }
+        }
+        if (onOpenAppProjects != null) {
+            TextButton(onClick = onOpenAppProjects, modifier = Modifier.padding(top = 4.dp)) {
+                Text(stringResource(R.string.projects_back_to_app), color = MutedText)
+            }
+        }
+    }
+}
+
+@Composable
+private fun Breadcrumbs(state: FilesState, rootLabel: String, onUp: () -> Unit, onNavigate: (File) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -375,8 +473,8 @@ private fun Breadcrumbs(state: FilesState, onUp: () -> Unit, onNavigate: (File) 
                 val isLast = index == state.breadcrumbs.lastIndex
                 TextButton(onClick = { onNavigate(crumb.dir) }, enabled = !isLast) {
                     Text(
-                        // The root is called "Projects" everywhere else (editor subtitle).
-                        if (index == 0) stringResource(R.string.projects_label) else crumb.label,
+                        // The project's name; the app's own folder is called "Projects" everywhere else.
+                        if (index == 0) rootLabel.ifEmpty { stringResource(R.string.projects_label) } else crumb.label,
                         maxLines = 1,
                         color = if (isLast) TextBright else MutedText,
                         fontWeight = if (isLast) FontWeight.Medium else FontWeight.Normal,
@@ -490,7 +588,7 @@ private fun NewItemFab(onNewFile: () -> Unit, onNewFolder: () -> Unit) {
  * (e.g. "already exists") after a failed confirm until the text changes.
  */
 @Composable
-private fun NameDialog(
+internal fun NameDialog(
     title: String,
     confirmLabel: String,
     initial: String,

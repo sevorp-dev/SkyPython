@@ -28,7 +28,7 @@ import java.io.File
 class DebugViewModel(
     private val app: Application,
     /** Code under these directories is the user's: stepping stops only there. */
-    private val projectsRoot: File,
+    private val projectsRoot: () -> File,
 ) : ViewModel() {
 
     private val installer = DebuggerInstaller(app)
@@ -80,7 +80,7 @@ class DebugViewModel(
      */
     fun attach(target: RunTarget.Debug, isActive: () -> Boolean) {
         session.begin(target.file.name)
-        val roots = listOfNotNull(projectsRoot.path, target.file.absoluteFile.parentFile?.path).distinct()
+        val roots = listOfNotNull(projectsRoot().path, target.file.absoluteFile.parentFile?.path).distinct()
         // Tracked by the session: Stop before the driver answered ends quietly, not as a failure.
         session.connect(
             open = {
@@ -156,7 +156,7 @@ class DebugViewModel(
         /** Long enough for the first run, which unpacks Python before anything starts. */
         private const val CONNECT_TIMEOUT_MS = 180_000L
 
-        fun factory(app: Application, projectsRoot: File): ViewModelProvider.Factory = viewModelFactory {
+        fun factory(app: Application, projectsRoot: () -> File): ViewModelProvider.Factory = viewModelFactory {
             initializer { DebugViewModel(app, projectsRoot) }
         }
     }

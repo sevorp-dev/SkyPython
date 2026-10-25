@@ -174,6 +174,8 @@ fun SkyDrawer(
     current: DrawerAction = DrawerAction.Editor,
     /** `Class.method` around the cursor, from the outline; null when unknown or at top level. */
     symbol: String? = null,
+    /** The open project's name, under the file card; null hides the line. */
+    projectName: String? = null,
     onAction: (DrawerAction) -> Unit,
 ) {
     val context = LocalContext.current
@@ -218,6 +220,22 @@ fun SkyDrawer(
             }
         }
         FileCard(header, symbol)
+        if (projectName != null) {
+            Row(
+                Modifier.padding(start = 20.dp, end = 16.dp, top = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.Outlined.Folder, contentDescription = null, tint = OrangeSoft, modifier = Modifier.size(16.dp))
+                Text(
+                    stringResource(R.string.drawer_project, projectName),
+                    color = MutedText,
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+        }
         Hairline(Modifier.padding(top = 12.dp))
         BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
             val minHeight = maxHeight

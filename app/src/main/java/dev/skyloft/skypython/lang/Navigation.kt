@@ -17,14 +17,17 @@ sealed interface NavTarget {
 
 object Navigation {
 
-    /** Where [d] opens; null when it has no file to show. [projectsRoot] holds the user's projects. */
-    fun target(d: Definition, projectsRoot: File): NavTarget? {
+    /**
+     * Where [d] opens; null when it has no file to show. [projectsRoot] (and [moreRoots], e.g. a
+     * project opened from the phone's storage) hold the user's code, which opens editable.
+     */
+    fun target(d: Definition, projectsRoot: File, vararg moreRoots: File): NavTarget? {
         val line = (d.line - 1).coerceAtLeast(0)
         val range = EditorRange(line, d.column.coerceAtLeast(0), line, d.endColumn.coerceAtLeast(d.column).coerceAtLeast(0))
         if (d.inFile) return NavTarget.InFile(range)
         val path = d.path ?: return null
         val file = File(path)
-        val editable = d.origin == Origin.PROJECT && isUnder(file, projectsRoot)
+        val editable = d.origin == Origin.PROJECT && (isUnder(file, projectsRoot) || moreRoots.any { isUnder(file, it) })
         return NavTarget.OtherFile(file, range, readOnly = !editable)
     }
 

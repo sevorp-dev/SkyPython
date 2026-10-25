@@ -6,6 +6,21 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Problem reports: the connection type (Wi-Fi / cellular / none). A normal permission. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- "Open project": projects anywhere in the phone's shared storage, run in place (the Python
+         process needs real paths, so SAF is not enough). Android 11+ uses "All files access",
+         asked for on its Settings page after an explanation; SkyPython ships as GitHub APKs, not
+         through Play, whose review of this permission therefore does not apply. Android 7-10 use
+         the runtime storage permission. Without either the app works with its private projects. -->
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29"
+        tools:ignore="ScopedStorage" />
 
     <!-- Problem reports name the browser components' versions (package visibility, API 30+). -->
     <queries>
@@ -24,6 +39,7 @@
         android:localeConfig="@xml/locales_config"
         android:supportsRtl="true"
         android:theme="@style/Theme.SkyPython"
+        android:requestLegacyExternalStorage="true"
         tools:targetApi="tiramisu">
         <activity
             android:name=".MainActivity"

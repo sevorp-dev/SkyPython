@@ -81,7 +81,7 @@ class InstallMissingDeviceTest {
         val installer = PythonInstaller(app)
         lateinit var run: TerminalViewModel
         instrumentation.runOnMainSync {
-            run = TerminalViewModel(TerminalKind.Run, File(app.filesDir, "projects"), app, installer::ensureInstalled)
+            run = TerminalViewModel(TerminalKind.Run, { File(app.filesDir, "projects") }, app, installer::ensureInstalled)
             vm = run
             run.run(script)
         }

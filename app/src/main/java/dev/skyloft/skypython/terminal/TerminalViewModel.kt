@@ -106,10 +106,13 @@ sealed interface TerminalEvent {
  */
 class TerminalViewModel(
     val kind: TerminalKind,
-    private val projectsRoot: File,
+    /** The open project: where the interpreter and shell start, and whose files tracebacks open. */
+    private val project: () -> File,
     private val app: Application,
     private val install: suspend () -> Result<PythonPaths>,
 ) : ViewModel() {
+
+    private val projectsRoot: File get() = project()
 
     private val _state = MutableStateFlow(TerminalState())
     val state: StateFlow<TerminalState> = _state.asStateFlow()
@@ -605,7 +608,7 @@ class TerminalViewModel(
         /** How often [screenText] may change. */
         private const val SCREEN_TEXT_MILLIS = 100L
 
-        fun factory(app: Application, projectsRoot: File, kind: TerminalKind): ViewModelProvider.Factory =
+        fun factory(app: Application, projectsRoot: () -> File, kind: TerminalKind): ViewModelProvider.Factory =
             viewModelFactory {
                 initializer {
                     val installer = PythonInstaller(app)
