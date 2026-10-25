@@ -6,6 +6,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import dev.skyloft.skypython.runtime.LineTransport
+import java.io.IOException
+import java.util.concurrent.CountDownLatch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -231,6 +235,62 @@ class DebugSessionTest {
         s.setWatches(listOf("w * 2"))
         val st = s.await("watch") { it.watches.singleOrNull()?.result != null }
         assertEquals("6", (st.watches.single().result as EvalResult.Value).variable.value)
+    }
+
+    private fun DebugSession.connectWith(open: () -> LineTransport) = connect(
+        open = open,
+        breakpoints = { emptyMap() },
+        watches = { emptyList() },
+        userRoots = emptyList(),
+        failure = { "could not start: ${it.message}" },
+    )
+
+    @Test fun `connects, then configures and starts the program`() = runBlocking {
+        val t = driver()
+        val s = session()
+        s.begin("main.py")
+        s.connectWith { t }
+        s.await("running") { it.phase == DebugPhase.Running }
+        assertTrue("start" in t.methods())
+    }
+
+    @Test fun `a connection that fails while wanted shows the error`() = runBlocking {
+        val s = session()
+        s.begin("main.py")
+        s.connectWith { throw IOException("The debugger did not start") }
+        val st = s.await("ended") { it.phase == DebugPhase.Ended }
+        assertEquals("could not start: The debugger did not start", st.error)
+    }
+
+    @Test fun `stop before the debugger connected ends quietly`() = runBlocking {
+        val connecting = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val s = session()
+        s.begin("main.py")
+        // The program is killed: the pending connect gives up a moment later.
+        s.connectWith { connecting.countDown(); release.await(); throw IOException("The debugger did not start") }
+        assertTrue(connecting.await(5, java.util.concurrent.TimeUnit.SECONDS))
+        s.stop()
+        release.countDown()
+        delay(300)
+        assertEquals(DebugPhase.Ended, s.state.value.phase)
+        assertNull("no false \"could not start\"", s.state.value.error)
+    }
+
+    @Test fun `a connection that arrives after stop is closed, not attached`() = runBlocking {
+        val connecting = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val t = driver()
+        val s = session()
+        s.begin("main.py")
+        s.connectWith { connecting.countDown(); release.await(); t }
+        assertTrue(connecting.await(5, java.util.concurrent.TimeUnit.SECONDS))
+        s.stop()
+        release.countDown()
+        withTimeout(5_000) { while (!t.closed) delay(10) }
+        assertTrue(t.requests().isEmpty())
+        assertEquals(DebugPhase.Ended, s.state.value.phase)
+        assertNull(s.state.value.error)
     }
 
     @Test fun `stop asks the driver to end the program`() = runBlocking {

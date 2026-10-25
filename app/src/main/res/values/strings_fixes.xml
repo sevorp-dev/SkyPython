@@ -4,4 +4,6 @@
     <!-- Sharing a project folder -->
     <string name="share_folder_too_large">This folder is over %1$d MB, too big to share as one archive</string>
     <string name="share_folder_failed">Couldn\'t pack the folder for sharing (%1$s)</string>
+    <!-- Debugger -->
+    <string name="debug_error_connect">The debugger couldn\'t connect to the program (%1$s)</string>
 </resources>

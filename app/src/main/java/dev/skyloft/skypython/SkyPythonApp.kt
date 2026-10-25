@@ -356,7 +356,10 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                             editorVm.openExternal(uri)
                             nav.popBackStack()
                         },
-                        onDeleted = editorVm::closeFile,
+                        onDeleted = { file ->
+                            editorVm.closeFile(file)
+                            debugVm.onDeleted(file)
+                        },
                         onRenamed = { old, new ->
                             editorVm.onRenamed(old, new)
                             debugVm.store.rename(old.path, new.path)
