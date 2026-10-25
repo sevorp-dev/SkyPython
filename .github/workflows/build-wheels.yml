@@ -162,11 +162,13 @@ jobs:
       - name: Start an x86_64 emulator that runs 32-bit x86 apps
         if: matrix.abi == 'x86'
         run: |
-          set -euo pipefail
+          set -eu
+          trap 'echo "::error title=x86 emulator::failed at line $LINENO%0A$(tail -30 "$RUNNER_TEMP/emu-setup.log" "$RUNNER_TEMP/emulator.log" 2>/dev/null | sed ":a;N;\$!ba;s/\n/%0A/g")"' ERR
           img="system-images;android-30;google_apis;x86_64"
           bin="$ANDROID_HOME/cmdline-tools/latest/bin"
-          yes | "$bin/sdkmanager" --install emulator platform-tools "$img" > /dev/null
-          echo no | "$bin/avdmanager" create avd -n x86test -k "$img" -d pixel_5 > /dev/null
+          # (no pipefail: `yes` dies of SIGPIPE when sdkmanager is done)
+          yes | "$bin/sdkmanager" --install emulator platform-tools "$img" > "$RUNNER_TEMP/emu-setup.log" 2>&1
+          echo no | "$bin/avdmanager" create avd -n x86test -k "$img" -d pixel_5 >> "$RUNNER_TEMP/emu-setup.log" 2>&1
           adb="$ANDROID_HOME/platform-tools/adb"
           nohup "$ANDROID_HOME/emulator/emulator" -avd x86test -no-window -no-audio -no-boot-anim \
             -no-snapshot -gpu swiftshader_indirect > "$RUNNER_TEMP/emulator.log" 2>&1 &
