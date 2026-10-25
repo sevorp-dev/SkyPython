@@ -53,9 +53,9 @@ Full details for every version: [CHANGELOG.md](CHANGELOG.md).
 |---|---|
 | 📝 **Code editor** | Python syntax highlighting, line numbers, word wrap, tabs for several files (`*` marks unsaved ones), undo/redo and a symbol bar with `Tab : ; ' " # ( ) [ ] { } = …` above the keyboard. |
 | ▶️ **Run** | One tap on the yellow ▶ runs the current file. Each run is a separate process, so **Stop** always works and a crashing script can't take the app down. |
-| 💻 **Console** | `print()` and `input()` just work; errors are shown in red with the exit code. |
-| 🐍 **Interpreter** | An interactive Python shell (`>>>`) for quick experiments. |
-| ⌨️ **Terminal** | A basic shell with `python` and `pip` commands. |
+| 💻 **Console** | `print()` and `input()` just work; errors are shown in red with the exit code. **^C** sends Ctrl+C (`KeyboardInterrupt`) so a script can clean up; **Stop** ends it for sure. |
+| 🐍 **Interpreter** | The interactive Python shell (`>>>`) on a real terminal: line editing, history, colours, Ctrl+C interrupts without losing your session. |
+| ⌨️ **Terminal** | A real terminal (colours, full-screen programs, Ctrl+C) with `python` and `pip` commands and a key row with Esc, Tab, Ctrl, Alt and arrows. |
 | 📦 **Pip** | Install, list and remove pure-Python packages from PyPI (`requests`, `rich`, `six`, …). |
 | 📁 **Files** | Projects folder with create / rename / delete; open and save files from other apps. |
 | 🎓 **Samples** | Ready-to-run examples: input, loops, functions, classes, files, JSON, a small game. |

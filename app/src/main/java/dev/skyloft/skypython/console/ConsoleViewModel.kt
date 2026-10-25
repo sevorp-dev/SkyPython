@@ -48,6 +48,9 @@ interface ScriptProcess {
     fun start(command: RunCommand): Flow<ConsoleEvent>
     fun write(text: String)
     fun stop()
+
+    /** Ctrl+C: SIGINT, so Python raises KeyboardInterrupt. */
+    fun interrupt()
 }
 
 private class PythonScriptProcess(private val p: PythonProcess) : ScriptProcess {
@@ -55,6 +58,9 @@ private class PythonScriptProcess(private val p: PythonProcess) : ScriptProcess 
     override fun start(command: RunCommand) = p.start(command)
     override fun write(text: String) = p.write(text)
     override fun stop() = p.stop()
+    override fun interrupt() {
+        p.interrupt()
+    }
 }
 
 /**
@@ -209,6 +215,15 @@ class ConsoleViewModel(
             _state.update { it.copy(installing = false) }
             publish(running = false, acceptsInput = false)
         }
+    }
+
+    /**
+     * Ctrl+C for what is running: KeyboardInterrupt in Python, which the script may catch (so it
+     * gets to clean up); [stop] is the forceful way. Nothing happens when nothing runs.
+     */
+    fun interrupt() {
+        val proc = process ?: return
+        if (proc.isRunning) proc.interrupt()
     }
 
     /** Re-runs the last script, interpreter or terminal. */

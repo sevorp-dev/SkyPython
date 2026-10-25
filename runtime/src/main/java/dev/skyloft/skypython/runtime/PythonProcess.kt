@@ -119,6 +119,15 @@ class PythonProcess(private val paths: PythonPaths) {
         }
     }
 
+    /**
+     * Ctrl+C for the running script: SIGINT, so Python raises KeyboardInterrupt (a traceback, exit
+     * code 1 or 130) and `try/except`/`finally` blocks run. False if nothing was signalled.
+     */
+    fun interrupt(): Boolean {
+        val p = process ?: return false
+        return ProcessCompat.isAlive(p) && ProcessCompat.interrupt(p)
+    }
+
     /** `destroy()`, then `destroyForcibly()` if still alive after 1 s. */
     fun stop() {
         val p = process ?: return

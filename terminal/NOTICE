@@ -1,0 +1,21 @@
+SkyPython terminal module
+
+This module contains code from the terminal-emulator and terminal-view libraries of
+the Termux project (https://github.com/termux/termux-app, tag v0.118.3), which are
+licensed under the Apache License, Version 2.0 (see ../LICENSE). That code in turn
+is based on Android-Terminal-Emulator by Jack Palevich
+(https://github.com/jackpal/Android-Terminal-Emulator), also Apache License 2.0.
+
+  src/main/java/com/termux/terminal/   terminal-emulator (screen model, VT/xterm parser)
+  src/main/java/com/termux/view/       terminal-view (Android view, text selection)
+  src/main/res/                        terminal-view resources
+  src/test/java/com/termux/terminal/   terminal-emulator unit tests
+
+Changes made for SkyPython:
+  - JNI.java: no native code of its own; delegates to SkyPython's PTY library
+    (dev.skyloft.skypython.runtime.Pty, runtime/src/main/cpp/pty.c, libskypty.so).
+    The original jni/termux.c is not included.
+  - TerminalSession.java: a failure to start the process is shown on the screen and
+    reported through getStartError() instead of crashing; a finished session no longer
+    resizes its closed (possibly reused) file descriptor.
+All other files are unchanged.

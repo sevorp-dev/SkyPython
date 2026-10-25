@@ -71,6 +71,14 @@ class ProcessCompatTest {
     }
 
     @Test
+    fun interruptWithoutPidReportsFailureAndLeavesTheProcessRunning() {
+        val p = FakeProcess()
+        assertFalse(ProcessCompat.interrupt(p))
+        assertTrue(ProcessCompat.isAlive(p))
+        assertEquals(0, p.destroyCalls)
+    }
+
+    @Test
     fun destroyForciblyWithoutPidFallsBackToDestroy() {
         val p = FakeProcess()
         ProcessCompat.destroyForcibly(p)

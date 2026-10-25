@@ -33,6 +33,9 @@ import dev.skyloft.skypython.settings.EditorSettings
 import dev.skyloft.skypython.settings.SettingsScreen
 import dev.skyloft.skypython.settings.SettingsStore
 import dev.skyloft.skypython.share.shareFile
+import dev.skyloft.skypython.terminal.TerminalKind
+import dev.skyloft.skypython.terminal.TerminalScreen
+import dev.skyloft.skypython.terminal.TerminalViewModel
 import dev.skyloft.skypython.ui.drawer.DrawerAction
 import kotlinx.coroutines.launch
 import java.io.File
@@ -40,6 +43,8 @@ import java.io.File
 private object Routes {
     const val EDITOR = "editor"
     const val CONSOLE = "console"
+    const val INTERPRETER = "interpreter"
+    const val TERMINAL = "terminal"
     const val FILES = "files"
     const val PIP = "pip"
     const val SETTINGS = "settings"
@@ -66,6 +71,15 @@ fun SkyPythonApp() {
     )
     val consoleVm: ConsoleViewModel = viewModel(factory = ConsoleViewModel.factory(app, workspace.root))
     val filesVm: FilesViewModel = viewModel(factory = FilesViewModel.Factory(workspace))
+    // Both live as long as the activity: leaving the screen keeps the program running.
+    val interpreterVm: TerminalViewModel = viewModel(
+        key = "terminal-interpreter",
+        factory = TerminalViewModel.factory(app, workspace.root, TerminalKind.Interpreter),
+    )
+    val shellVm: TerminalViewModel = viewModel(
+        key = "terminal-shell",
+        factory = TerminalViewModel.factory(app, workspace.root, TerminalKind.Shell),
+    )
 
     val nav = rememberNavController()
     val scope = rememberCoroutineScope()
@@ -90,8 +104,14 @@ fun SkyPythonApp() {
                 },
                 onDrawerAction = { action ->
                     when (action) {
-                        DrawerAction.Interpreter -> if (consoleVm.startInterpreter()) openConsole()
-                        DrawerAction.Terminal -> if (consoleVm.startTerminal()) openConsole()
+                        DrawerAction.Interpreter -> {
+                            interpreterVm.open()
+                            nav.go(Routes.INTERPRETER)
+                        }
+                        DrawerAction.Terminal -> {
+                            shellVm.open()
+                            nav.go(Routes.TERMINAL)
+                        }
                         DrawerAction.Pip -> nav.go(Routes.PIP)
                         DrawerAction.Samples -> nav.go(Routes.SAMPLES)
                         DrawerAction.Settings -> nav.go(Routes.SETTINGS)
@@ -112,6 +132,26 @@ fun SkyPythonApp() {
         }
         composable(Routes.CONSOLE) {
             ConsoleScreen(viewModel = consoleVm, onBack = { nav.popBackStack() })
+        }
+        // Fallback if the pseudo-terminal can't be opened: the line-mode console over pipes.
+        val simpleConsole = { start: () -> Boolean ->
+            nav.popBackStack()
+            if (start()) openConsole()
+            else Toast.makeText(context, "A script is still running", Toast.LENGTH_SHORT).show()
+        }
+        composable(Routes.INTERPRETER) {
+            TerminalScreen(
+                viewModel = interpreterVm,
+                onBack = { nav.popBackStack() },
+                onUseSimpleConsole = { simpleConsole(consoleVm::startInterpreter) },
+            )
+        }
+        composable(Routes.TERMINAL) {
+            TerminalScreen(
+                viewModel = shellVm,
+                onBack = { nav.popBackStack() },
+                onUseSimpleConsole = { simpleConsole(consoleVm::startTerminal) },
+            )
         }
         composable(Routes.FILES) {
             FilesScreen(

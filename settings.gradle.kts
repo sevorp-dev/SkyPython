@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 rootProject.name = "SkyPython"
 include(":app")
 include(":runtime")
+include(":terminal")

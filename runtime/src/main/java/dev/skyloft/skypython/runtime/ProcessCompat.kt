@@ -6,6 +6,7 @@ import android.os.Build
  * [Process.isAlive], [Process.waitFor] with a timeout and [Process.destroyForcibly] for every
  * supported Android version: those three only exist from API 26 (Android 8.0). Below that the
  * same behaviour is built from `exitValue()`, polling and a SIGKILL to the process id.
+ * Also signals ([interrupt]) that java.lang.Process has no API for.
  */
 internal object ProcessCompat {
 
@@ -48,6 +49,22 @@ internal object ProcessCompat {
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) p.destroyForcibly() else p.destroy()
     }
+
+    /**
+     * Sends SIGINT to [p], as Ctrl+C would in a terminal: Python raises KeyboardInterrupt, which a
+     * script may catch. False if the signal could not be sent (process id unreadable).
+     */
+    fun interrupt(p: Process): Boolean = signal(p, SIGINT)
+
+    /** Sends [signal] to [p]'s process id. False if the id is unreadable. */
+    fun signal(p: Process, signal: Int): Boolean {
+        val pid = pidOf(p) ?: return false
+        android.os.Process.sendSignal(pid, signal)
+        return true
+    }
+
+    /** POSIX signal number of Ctrl+C (the same on every Android ABI). */
+    const val SIGINT = 2
 
     /** The child's process id: java.lang.UNIXProcess keeps it in a private "pid" field. */
     private fun pidOf(p: Process): Int? = try {

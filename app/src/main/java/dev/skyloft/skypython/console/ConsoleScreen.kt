@@ -49,6 +49,9 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -96,6 +99,8 @@ fun ConsoleScreen(viewModel: ConsoleViewModel, onBack: () -> Unit) {
                 onBack = onBack,
                 actions = {
                     if (state.running) {
+                        // Gentle first: KeyboardInterrupt lets the script clean up; Stop kills it.
+                        if (state.acceptsInput) InterruptButton(onClick = viewModel::interrupt)
                         IconButton(onClick = viewModel::stop) {
                             Icon(Icons.Filled.Stop, contentDescription = "Stop", tint = ErrorRed)
                         }
@@ -250,7 +255,7 @@ private fun InputRow(enabled: Boolean, autoFocus: Boolean, onSend: (String) -> U
 }
 
 @Composable
-private fun Installing() {
+internal fun Installing() {
     Column(
         Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -262,7 +267,7 @@ private fun Installing() {
 }
 
 @Composable
-private fun InstallError(message: String, onRetry: () -> Unit) {
+internal fun InstallError(message: String, onRetry: () -> Unit) {
     Column(
         Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.Center,
@@ -271,5 +276,16 @@ private fun InstallError(message: String, onRetry: () -> Unit) {
         Text("Could not set up Python", style = MaterialTheme.typography.titleMedium)
         Text(message, Modifier.padding(vertical = 12.dp), color = ErrorRed)
         Button(onClick = onRetry, colors = brandButtonColors()) { Text("Retry") }
+    }
+}
+
+/** "^C" in a top bar: sends Ctrl+C (SIGINT, KeyboardInterrupt in Python) to what is running. */
+@Composable
+internal fun InterruptButton(onClick: () -> Unit) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.semantics { contentDescription = "Interrupt" },
+    ) {
+        Text("^C", fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 16.sp)
     }
 }
