@@ -1,28 +1,41 @@
-# Builds Android wheels with native code (currently NumPy) for SkyPython (CPython 3.14,
+# Builds Android wheels with native code (NumPy, Pillow) for SkyPython (CPython 3.14,
 # Android API level 24+) and publishes them on the orphan branch `wheels` of this repo:
 #
 #   https://raw.githubusercontent.com/<owner>/<repo>/wheels/index.json   (catalogue for the app)
 #   https://raw.githubusercontent.com/<owner>/<repo>/wheels/<wheel file>
 #
 # The branch holds one wheel per project x ABI and is replaced by a single new commit on every
-# publish (force push), so its history stays small. See docs/native-packages.md.
+# publish (force push), so its history stays small. Wheels already published under the same
+# file name are kept byte for byte (make_index.py). See docs/native-packages.md.
 #
-# 64-bit (arm64-v8a, x86_64): stock cibuildwheel (Android platform), OpenBLAS from Chaquopy's
-#   `chaquopy-openblas` wheel, vendored into the numpy wheel by auditwheel together with
-#   libc++_shared; the x86_64 wheel is smoke-tested on an emulator.
+# 64-bit (arm64-v8a, x86_64): stock cibuildwheel (Android platform); the x86_64 wheels are
+#   smoke-tested on an emulator.
 # 32-bit (armeabi-v7a, x86): cibuildwheel does not support them, so it is patched
 #   (.github/wheels/patch_cibw_32bit.py) to use our own CPython builds (branch cpython-builds,
-#   from build-python.yml); no BLAS (like NumPy's own 32-bit wheels), libc++ linked
-#   statically, no auditwheel. Allowed to fail: the 64-bit wheels are published regardless.
+#   from build-python.yml); no auditwheel. Allowed to fail: the 64-bit wheels are published
+#   regardless. The x86 wheels are tested on an x86_64 emulator.
+#
+# NumPy: OpenBLAS from Chaquopy's `chaquopy-openblas` wheel on 64-bit, vendored into the wheel
+#   by auditwheel together with libc++_shared; no BLAS and static libc++ on 32-bit.
+# Pillow: libjpeg-turbo, libpng, FreeType, libwebp, libtiff and Little CMS built from source
+#   (.github/wheels/build_pillow_deps.sh) and linked statically; zlib is Android's libz.so.
 name: Build Android wheels
 
 on:
   workflow_dispatch:
     inputs:
+      packages:
+        description: Packages to build (space-separated; numpy, pillow)
+        required: true
+        default: numpy pillow
       numpy_version:
         description: NumPy version (PyPI sdist)
         required: true
         default: 2.5.4
+      pillow_version:
+        description: Pillow version (PyPI sdist)
+        required: true
+        default: 13.0.0
       publish:
         description: Publish the wheels to the `wheels` branch
         type: boolean
@@ -31,7 +44,8 @@ on:
         description: Overwrite already published wheels with the same file name (clients may see a stale index.json for a few minutes)
         type: boolean
         default: false
-  # Pushing the branch `build-wheels` runs it with the defaults.
+  # Pushing the branch `build-wheels` runs it with the defaults; "[skip publish]" in the
+  # commit message builds and tests without publishing.
   push:
     branches: [ build-wheels ]
     paths:
@@ -45,7 +59,9 @@ concurrency:
   group: build-wheels
 
 env:
+  PACKAGES: ${{ inputs.packages || 'numpy pillow' }}
   NUMPY_VERSION: ${{ inputs.numpy_version || '2.5.4' }}
+  PILLOW_VERSION: ${{ inputs.pillow_version || '13.0.0' }}
   CIBW_VERSION: 4.3.4
   OPENBLAS_VERSION: 0.3.33
   # CPython for the 32-bit ABIs: our own build (build-python.yml), hashes pinned in
@@ -53,32 +69,46 @@ env:
   PYVER: 3.14.9
 
 jobs:
-  numpy:
-    name: numpy ${{ matrix.abi }}
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      packages: ${{ steps.plan.outputs.packages }}
+    steps:
+      - id: plan
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          known = ["numpy", "pillow"]
+          wanted = [p.lower() for p in re.split(r"[\s,]+", os.environ["PACKAGES"]) if p]
+          bad = [p for p in wanted if p not in known]
+          if bad or not wanted:
+              raise SystemExit(f"::error::unknown packages {bad}; choose from {known}")
+          abis = [
+              # an ARM emulator cannot run on an x86_64 runner, so only x86 ABIs are tested
+              {"abi": "arm64_v8a", "triplet": "aarch64-linux-android", "bits": 64, "test": False},
+              {"abi": "x86_64", "triplet": "x86_64-linux-android", "bits": 64, "test": True},
+              {"abi": "armeabi_v7a", "triplet": "arm-linux-androideabi", "bits": 32, "test": False},
+              {"abi": "x86", "triplet": "i686-linux-android", "bits": 32, "test": True},
+          ]
+          include = [{"package": p, **a} for p in known if p in wanted for a in abis]
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"matrix={json.dumps({'include': include})}\n")
+              f.write(f"packages={' '.join(p for p in known if p in wanted)}\n")
+          print(json.dumps(include, indent=1))
+          PY
+
+  build:
+    needs: plan
+    name: ${{ matrix.package }} ${{ matrix.abi }}
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     continue-on-error: ${{ matrix.bits == 32 }}
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - abi: arm64_v8a
-            triplet: aarch64-linux-android
-            bits: 64
-            test: false   # an ARM emulator cannot run on an x86_64 runner
-          - abi: x86_64
-            triplet: x86_64-linux-android
-            bits: 64
-            test: true
-          - abi: armeabi_v7a
-            triplet: arm-linux-androideabi
-            bits: 32
-            test: false
-          - abi: x86
-            triplet: i686-linux-android
-            bits: 32
-            test: true    # on the x86_64 emulator (see patch_cibw_32bit.py)
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     env:
+      PACKAGE: ${{ matrix.package }}
       ABI: ${{ matrix.abi }}
       TRIPLET: ${{ matrix.triplet }}
       BITS: ${{ matrix.bits }}
@@ -124,26 +154,28 @@ jobs:
             --url "https://raw.githubusercontent.com/${{ github.repository }}/cpython-builds/python-$PYVER-$TRIPLET.tar.gz" \
             --sha256 "$sha"
 
-      - name: Download the NumPy ${{ env.NUMPY_VERSION }} sdist
+      - name: Download the ${{ matrix.package }} sdist
         run: |
           set -euo pipefail
           python - <<'PY'
           import hashlib, json, os, urllib.request
-          v = os.environ["NUMPY_VERSION"]
-          meta = json.load(urllib.request.urlopen(f"https://pypi.org/pypi/numpy/{v}/json"))
+          p = os.environ["PACKAGE"]
+          v = os.environ[p.upper() + "_VERSION"]
+          meta = json.load(urllib.request.urlopen(f"https://pypi.org/pypi/{p}/{v}/json"))
           sdist = next(u for u in meta["urls"] if u["packagetype"] == "sdist")
           data = urllib.request.urlopen(sdist["url"]).read()
           assert hashlib.sha256(data).hexdigest() == sdist["digests"]["sha256"], "sdist hash mismatch"
-          open("numpy.tar.gz", "wb").write(data)
+          open("sdist.tar.gz", "wb").write(data)
           print(sdist["filename"], len(data), sdist["digests"]["sha256"])
           PY
           mkdir src
-          tar -xzf numpy.tar.gz -C src --strip-components=1
+          tar -xzf sdist.tar.gz -C src --strip-components=1
 
       # NumPy's build runs a test program to find the long double format, which is impossible
       # when cross-compiling. Android: 128-bit quad on 64-bit ABIs (also x86_64), plain double
       # on 32-bit. NumPy main (2.6.0) hardcodes the same for Android (numpy/numpy#30412).
-      - name: Set the long double format
+      - name: Set the long double format (numpy)
+        if: matrix.package == 'numpy'
         run: |
           set -euo pipefail
           if [ "$BITS" = 64 ]; then fmt=IEEE_QUAD_LE; else fmt=IEEE_DOUBLE_LE; fi
@@ -151,8 +183,8 @@ jobs:
           sed -i "s/meson.get_external_property('longdouble_format', 'UNKNOWN')/'$fmt'/" "$f"
           grep -n "longdouble_format = '$fmt'" "$f"
 
-      - name: Fetch OpenBLAS ${{ env.OPENBLAS_VERSION }} for Android (64-bit)
-        if: matrix.bits == 64
+      - name: Fetch OpenBLAS ${{ env.OPENBLAS_VERSION }} for Android (numpy, 64-bit)
+        if: matrix.package == 'numpy' && matrix.bits == 64
         run: |
           set -euo pipefail
           pip download "chaquopy-openblas==$OPENBLAS_VERSION" --no-deps --only-binary=:all: \
@@ -163,40 +195,83 @@ jobs:
           cp "$RUNNER_TEMP"/openblas/chaquopy_openblas-*.dist-info/LICENSE "$RUNNER_TEMP/OpenBLAS-LICENSE.txt"
           echo "::notice title=OpenBLAS $ABI::$(ls openblas-dl) sha256 $(sha256sum openblas-dl/*.whl | cut -d' ' -f1)"
 
-      # Our own cibuildwheel config (replaces the one in NumPy's pyproject.toml).
+      # libjpeg-turbo's x86 SIMD code is assembled with NASM. The libraries themselves are
+      # built by build_pillow_deps.sh as cibuildwheel's before-build (it needs the NDK
+      # environment cibuildwheel sets up).
+      - name: Prepare the Pillow dependency build (pillow)
+        if: matrix.package == 'pillow'
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -q nasm > /dev/null
+          nasm -v
+          mkdir -p "$RUNNER_TEMP/pillow-deps"
+
+      # Our own cibuildwheel config (replaces the one in the package's pyproject.toml).
       - name: Write the cibuildwheel config
         run: |
           set -euo pipefail
           python - <<'PY'
           import json, os
           tmp, bits, test = os.environ["RUNNER_TEMP"], os.environ["BITS"], os.environ["RUN_TEST"]
+          package = os.environ["PACKAGE"]
           q = json.dumps  # TOML basic strings are compatible with JSON strings
-          if bits == "64":
-              lib = f"{tmp}/openblas/chaquopy/lib"
-              setup_args = ["-Duse-ilp64=false", "-Dallow-noblas=false",
-                            "-Dblas=openblas", "-Dlapack=openblas"]
-              env = {"PKG_CONFIG_PATH": f"{lib}/pkgconfig", "AUDITWHEEL_LD_LIBRARY_PATH": lib}
-              # cibuildwheel's default plus the OpenBLAS directory: vendors libc++_shared and
-              # libopenblas into the wheel.
-              repair = "auditwheel repair --ldpaths {ldpaths}:%s -w {dest_dir} {wheel}" % lib
-          else:
-              # No BLAS (lapack_lite), static libc++: auditwheel does not know 32-bit Android.
-              # Setting cpp_link_args makes meson ignore $LDFLAGS for C++ targets, so repeat
-              # the flags from CPython's android-env.sh (16 KB pages above all).
-              cpp_link = ["-static-libstdc++", "-Wl,--build-id=sha1", "-Wl,--no-rosegment",
-                          "-Wl,-z,max-page-size=16384", "-Wl,--no-undefined", "-lm"]
-              setup_args = ["-Dallow-noblas=true", "-Dblas=none", "-Dlapack=none",
-                            "-Dcpp_link_args=" + repr(cpp_link)]
-              # Clear setup-python's PKG_CONFIG_PATH, or meson finds the runner's python3.pc
-              # instead of the target's.
-              env = {"PKG_CONFIG_PATH": ""}
+          before_build = ""
+          if package == "numpy":
+              if bits == "64":
+                  lib = f"{tmp}/openblas/chaquopy/lib"
+                  setup_args = ["-Duse-ilp64=false", "-Dallow-noblas=false",
+                                "-Dblas=openblas", "-Dlapack=openblas"]
+                  env = {"PKG_CONFIG_PATH": f"{lib}/pkgconfig", "AUDITWHEEL_LD_LIBRARY_PATH": lib}
+                  # cibuildwheel's default plus the OpenBLAS directory: vendors libc++_shared
+                  # and libopenblas into the wheel.
+                  repair = "auditwheel repair --ldpaths {ldpaths}:%s -w {dest_dir} {wheel}" % lib
+              else:
+                  # No BLAS (lapack_lite), static libc++: auditwheel does not know 32-bit
+                  # Android. Setting cpp_link_args makes meson ignore $LDFLAGS for C++
+                  # targets, so repeat the flags from CPython's android-env.sh (16 KB pages
+                  # above all).
+                  cpp_link = ["-static-libstdc++", "-Wl,--build-id=sha1", "-Wl,--no-rosegment",
+                              "-Wl,-z,max-page-size=16384", "-Wl,--no-undefined", "-lm"]
+                  setup_args = ["-Dallow-noblas=true", "-Dblas=none", "-Dlapack=none",
+                                "-Dcpp_link_args=" + repr(cpp_link)]
+                  # Clear setup-python's PKG_CONFIG_PATH, or meson finds the runner's
+                  # python3.pc instead of the target's.
+                  env = {"PKG_CONFIG_PATH": ""}
+                  repair = ""
+              config_settings = "{ setup-args = %s, build-dir = \"build\" }" % json.dumps(setup_args)
+              smoke = ("import numpy; print('SMOKE', numpy.__version__, numpy.arange(10).sum(), "
+                       "numpy.linalg.inv([[1,2],[3,4]])); numpy.show_config()")
+          else:  # pillow
+              deps = f"{tmp}/pillow-deps"
+              before_build = f"bash {os.environ['GITHUB_WORKSPACE']}/.github/wheels/build_pillow_deps.sh"
+              env = {"PILLOW_DEPS": deps, "PKG_CONFIG_PATH": ""}
+              # setup.py looks for every library in <ROOT>/lib and <ROOT>/include.
+              for root in ("ZLIB", "JPEG", "FREETYPE", "WEBP", "TIFF", "LCMS"):
+                  env[f"{root}_ROOT"] = deps
+              # Everything is linked statically (libz is a system library): nothing to vendor.
               repair = ""
-          smoke = ("import numpy; print(numpy.__version__, numpy.arange(10).sum(), "
-                   "numpy.linalg.inv([[1,2],[3,4]])); numpy.show_config()")
+              settings = {"platform-guessing": "disable", "zlib": "enable", "jpeg": "enable",
+                          "freetype": "enable", "webp": "enable", "tiff": "enable",
+                          "lcms": "enable", "raqm": "disable", "imagequant": "disable",
+                          "jpeg2000": "disable", "avif": "disable", "xcb": "disable"}
+              config_settings = "{ %s }" % ", ".join(f"{q(k)} = {q(v)}" for k, v in settings.items())
+              checks = ["jpg", "zlib", "freetype2", "webp", "libtiff", "littlecms2"]
+              smoke = (
+                  "from PIL import Image, ImageDraw, ImageFont, ImageCms, features; "
+                  "im=Image.new('RGB',(64,64),'orange'); d=ImageDraw.Draw(im); "
+                  "d.text((4,4),'Sky',fill='black'); d.text((4,24),'Sky',fill='black',font=ImageFont.load_default(20)); "
+                  "[im.save('t.'+e) for e in ('png','jpg','webp','tif')]; "
+                  "print('SMOKE', Image.__version__, " + ", ".join(f"features.check('{c}')" for c in checks) + "); "
+                  "print('SMOKE', [Image.open('t.'+e).size for e in ('png','jpg','webp','tif')], "
+                  "ImageCms.createProfile('sRGB') is not None, features.version('jpg'), "
+                  "features.version('freetype2'), features.version('webp'), features.version('libtiff'), "
+                  "features.version('littlecms2')); "
+                  "assert all(features.check(c) for c in " + repr(checks) + ")"
+              )
           lines = [
               "[tool.cibuildwheel]",
               'build-frontend = "build"',
-              'before-build = ""',
+              f"before-build = {q(before_build)}",
               'before-test = ""',
               "test-requires = []",
               f"test-command = {q('python -c ' + chr(34) + smoke + chr(34))}",
@@ -204,7 +279,7 @@ jobs:
               "build-verbosity = 1",
               "",
               "[tool.cibuildwheel.android]",
-              "config-settings = { setup-args = %s, build-dir = \"build\" }" % json.dumps(setup_args),
+              f"config-settings = {config_settings}",
               "environment = { %s }" % ", ".join(f"{k} = {q(v)}" for k, v in env.items()),
               f"repair-wheel-command = {q(repair)}",
           ]
@@ -254,14 +329,23 @@ jobs:
           def emit(title, chunk):
               msg = "%0A".join(l[:300].replace("%", "%25").replace("\r", "") for l in chunk)
               print(f"::{kind} title={title}::{msg}")
-          # The smoke test's output (version, sum, inverse) and the BLAS used.
+          # The smoke test's output.
           for i, l in enumerate(lines):
-              if re.search(r"\b\d+\.\d+\.\d+ 45\b", l):
+              if "SMOKE" in l and "print(" not in l:
                   emit("smoke test", lines[i:i + 4])
                   break
-          blas = [l for l in lines if re.search(r"openblas|lapack|blas", l, re.I)][-12:]
-          if blas:
-              emit("BLAS lines", blas)
+          if os.environ["PACKAGE"] == "numpy":
+              blas = [l for l in lines if re.search(r"openblas|lapack|blas", l, re.I)][-12:]
+              if blas:
+                  emit("BLAS lines", blas)
+          else:
+              for i, l in enumerate(lines):
+                  if "PIL SETUP SUMMARY" in l:
+                      emit("Pillow setup summary", lines[i:i + 20])
+                      break
+              simd = [l for l in lines if re.search(r"SIMD|NEON", l)][:8]
+              if simd:
+                  emit("libjpeg-turbo SIMD", simd)
           if kind == "error":
               errs = [l for l in lines if re.search(r"error|failed|FAILED|Traceback", l)][:40]
               if errs:
@@ -278,12 +362,20 @@ jobs:
           set -euo pipefail
           pip install -q patchelf
           libcxx=.github/wheels/licenses/libc++-LICENSE.txt
-          if [ "$BITS" = 64 ]; then
+          lic=()
+          if [ "$PACKAGE" = numpy ] && [ "$BITS" = 64 ]; then
             # libc++_shared and libopenblas are vendored by auditwheel.
             lic=(--license "libc++-LICENSE.txt=$libcxx@libc++_shared"
                  --license "OpenBLAS-LICENSE.txt=$RUNNER_TEMP/OpenBLAS-LICENSE.txt@libopenblas")
-          else
+          elif [ "$PACKAGE" = numpy ]; then
             lic=(--license "libc++-LICENSE.txt=$libcxx")  # linked statically
+          else
+            # Pillow: every library built by build_pillow_deps.sh is linked statically.
+            files=("$RUNNER_TEMP"/pillow-deps/licenses/*)
+            [ ${#files[@]} -eq 9 ] || { echo "::error::expected 9 Pillow dependency licenses, got: ${files[*]}"; exit 1; }
+            for f in "${files[@]}"; do
+              lic+=(--license "$(basename "$f")=$f")
+            done
           fi
           python .github/wheels/finish_wheels.py wheelhouse/*.whl "${lic[@]}" 2>&1 | tee finish.log ||
             { echo "::error title=finish_wheels::$(tail -20 finish.log | sed ':a;N;$!ba;s/\n/%0A/g')"; exit 1; }
@@ -293,17 +385,19 @@ jobs:
 
       - uses: actions/upload-artifact@v5
         with:
-          name: wheels-numpy-${{ matrix.abi }}
+          name: wheels-${{ matrix.package }}-${{ matrix.abi }}
           path: wheelhouse/*.whl
           if-no-files-found: error
 
   publish:
-    needs: numpy
-    # 32-bit legs may fail (continue-on-error), and then `needs.numpy.result` is still
-    # "failure", so it is not checked here: the step below refuses to publish unless both
-    # 64-bit wheels were built.
+    needs: [ plan, build ]
+    # 32-bit legs may fail (continue-on-error), and then `needs.build.result` is still
+    # "failure", so it is not checked here: the step below publishes a package only if both
+    # of its 64-bit wheels were built.
     # (`inputs.publish != false` would be false on push: null == false in expressions.)
-    if: ${{ !cancelled() && (github.event_name == 'push' || inputs.publish) }}
+    if: >-
+      ${{ !cancelled() && needs.plan.result == 'success' && (inputs.publish ||
+      (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip publish]'))) }}
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -320,11 +414,18 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          wheels=(dist/*.whl)
-          [ ${#wheels[@]} -gt 0 ] || { echo "::error::no wheels were built"; exit 1; }
-          for abi in arm64_v8a x86_64; do  # the 64-bit wheels are required, 32-bit ones optional
-            ls dist/*"_$abi.whl" > /dev/null 2>&1 || { echo "::error::no $abi wheel"; exit 1; }
+          # A package is published only with both 64-bit wheels; 32-bit ones are optional.
+          wheels=()
+          incomplete=()
+          for pkg in $BUILT; do
+            ok=true
+            for abi in arm64_v8a x86_64; do
+              found=(dist/"$pkg"-*"_$abi.whl")
+              [ ${#found[@]} -gt 0 ] || { echo "::error::no $pkg $abi wheel; $pkg is not published"; ok=false; }
+            done
+            if $ok; then wheels+=(dist/"$pkg"-*.whl); else incomplete+=("$pkg"); fi
           done
+          [ ${#wheels[@]} -gt 0 ] || { echo "::error::no complete package was built"; exit 1; }
           python .github/wheels/verify_wheels.py --max-api 24 --python-tag cp314 "${wheels[@]}" > /dev/null
 
           # Start from what is published now (wheels of other ABIs/projects are kept).
@@ -366,6 +467,8 @@ jobs:
             echo "Each wheel carries the license texts of everything it contains in"
             echo "\`*.dist-info/licenses/\` (or \`*.dist-info/LICENSE*\`)."
             echo
+            echo "### numpy"
+            echo
             echo "- **NumPy** — BSD-3-Clause, plus the permissively licensed components listed in its"
             echo "  \`LICENSE.txt\` (https://github.com/numpy/numpy)."
             echo "- **OpenBLAS** (64-bit numpy wheels, vendored as \`numpy.libs/libopenblas-*.so\`) —"
@@ -373,27 +476,54 @@ jobs:
             echo "  \`chaquopy-openblas\` (MIT packaging): \`OpenBLAS-LICENSE.txt\`."
             echo "- **LLVM libc++** (vendored as \`numpy.libs/libc++_shared-*.so\` on 64-bit, linked"
             echo "  statically on 32-bit) — Apache-2.0 WITH LLVM-exception: \`libc++-LICENSE.txt\`."
+            echo
+            echo "### pillow"
+            echo
+            echo "Pillow's extension modules link these libraries statically (built from source by"
+            echo "\`.github/wheels/build_pillow_deps.sh\`); zlib is Android's system \`libz.so\`."
+            echo
+            echo "- **Pillow** — MIT-CMU (https://github.com/python-pillow/Pillow): \`LICENSE\`."
+            echo "- **libjpeg-turbo** — IJG License, BSD-3-Clause and zlib License"
+            echo "  (https://libjpeg-turbo.org): \`libjpeg-turbo-LICENSE.md\`,"
+            echo "  \`libjpeg-turbo-README.ijg.txt\`. This software is based in part on the work of the"
+            echo "  Independent JPEG Group."
+            echo "- **libpng** — PNG Reference Library License version 2 (http://www.libpng.org):"
+            echo "  \`libpng-LICENSE.txt\`."
+            echo "- **FreeType** — used under the FreeType License (FTL) (https://freetype.org):"
+            echo "  \`freetype-LICENSE.txt\`, \`freetype-FTL.txt\`. Portions of this software are"
+            echo "  copyright © The FreeType Project (www.freetype.org). All rights reserved."
+            echo "- **libwebp** — BSD-3-Clause and Google's patent grant"
+            echo "  (https://chromium.googlesource.com/webm/libwebp): \`libwebp-COPYING.txt\`,"
+            echo "  \`libwebp-PATENTS.txt\`."
+            echo "- **libtiff** — libtiff License (https://libtiff.gitlab.io/libtiff/):"
+            echo "  \`libtiff-LICENSE.md\`."
+            echo "- **Little CMS 2** — MIT (https://www.littlecms.com): \`lcms2-LICENSE.txt\`."
           } > site/README.md
 
           if [ "$(cat site/index.json site/README.md | sha256sum)" = "$before" ]; then
             echo "::notice title=Published::nothing new; the wheels branch is unchanged"
-            exit 0
+          else
+            cd site
+            git init -q -b wheels
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -q -m "Android wheels: $(ls *.whl | tr '\n' ' ')"
+            git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:wheels
+            echo "::notice title=Published::$(ls *.whl | tr '\n' ' ')"
+            python -c "import json; print('::notice title=index.json::' + json.dumps(json.load(open('index.json')), separators=(',', ':')))"
+            {
+              echo "### Android wheels"
+              echo '```'
+              cat SHA256SUMS
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
-          cd site
-          git init -q -b wheels
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -q -m "Android wheels: $(ls *.whl | tr '\n' ' ')"
-          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:wheels
-          echo "::notice title=Published::$(ls *.whl | tr '\n' ' ')"
-          python -c "import json; print('::notice title=index.json::' + json.dumps(json.load(open('index.json')), separators=(',', ':')))"
-          {
-            echo "### Android wheels"
-            echo '```'
-            cat SHA256SUMS
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          if [ ${#incomplete[@]} -gt 0 ]; then
+            echo "::error::not published (64-bit wheels missing): ${incomplete[*]}"
+            exit 1
+          fi
         env:
+          BUILT: ${{ needs.plan.outputs.packages }}
           GH_TOKEN: ${{ github.token }}
           REPLACE: ${{ inputs.replace || false }}
