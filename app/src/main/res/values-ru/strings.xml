@@ -150,7 +150,6 @@
     <string name="pip_wheel_native">Нужен нативный код, пока не поддерживается</string>
     <string name="pip_wheel_none">В этом выпуске нет файлов для установки</string>
     <string name="pip_install_anyway">Всё равно попробовать</string>
-    <string name="pip_popular">Популярные пакеты</string>
     <string name="pip_popular_none">Среди популярных такого нет. Нажмите «Найти», чтобы поискать в PyPI.</string>
     <string name="pip_coming_later">Позже</string>
     <string name="pip_needs_64bit">Только 64 бита</string>
@@ -188,6 +187,14 @@
     <string name="pip_uninstalled">%1$s удалён</string>
     <string name="pip_show_log">Показать журнал</string>
     <string name="pip_hide_log">Скрыть журнал</string>
+    <string name="pip_section_prebuilt">Собраны для Android</string>
+    <string name="pip_section_popular">Популярные</string>
+    <string name="pip_section_data">Данные и наука</string>
+    <string name="pip_section_web">Веб и сеть</string>
+    <string name="pip_section_text">Текст и терминал</string>
+    <string name="pip_searching">Ищем в PyPI…</string>
+    <string name="pip_loading_packages">Читаем список пакетов…</string>
+    <string name="pip_no_packages_hint">Найдите пакет на вкладке «Поиск» и нажмите «Установить».</string>
     <string name="pip_pkg_requests">Простые HTTP-запросы</string>
     <string name="pip_pkg_rich">Цвета, таблицы и индикаторы прогресса в терминале</string>
     <string name="pip_pkg_colorama">Цветной текст в терминале</string>
@@ -215,6 +222,7 @@
 
     <!-- Settings -->
     <string name="settings_section_editor">Редактор</string>
+    <string name="settings_section_editing">Ввод и правка</string>
     <string name="settings_section_app">Приложение</string>
     <string name="settings_font_size">Размер шрифта</string>
     <string name="settings_font_size_range">%1$d–%2$d sp</string>

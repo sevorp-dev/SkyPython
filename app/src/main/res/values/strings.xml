@@ -157,7 +157,6 @@
     <string name="pip_wheel_native">Needs native code, not supported yet</string>
     <string name="pip_wheel_none">This release has no files to install</string>
     <string name="pip_install_anyway">Try anyway</string>
-    <string name="pip_popular">Popular packages</string>
     <string name="pip_popular_none">No popular package matches. Tap Find to look it up on PyPI.</string>
     <string name="pip_coming_later">Coming later</string>
     <string name="pip_needs_64bit">64-bit only</string>
@@ -195,6 +194,14 @@
     <string name="pip_uninstalled">Removed %1$s</string>
     <string name="pip_show_log">Show log</string>
     <string name="pip_hide_log">Hide log</string>
+    <string name="pip_section_prebuilt">Prebuilt for Android</string>
+    <string name="pip_section_popular">Popular</string>
+    <string name="pip_section_data">Data &amp; science</string>
+    <string name="pip_section_web">Web &amp; network</string>
+    <string name="pip_section_text">Text &amp; terminal</string>
+    <string name="pip_searching">Searching PyPI…</string>
+    <string name="pip_loading_packages">Reading installed packages…</string>
+    <string name="pip_no_packages_hint">Find a package on the Search tab and tap Install.</string>
     <string name="pip_pkg_requests">Simple HTTP requests</string>
     <string name="pip_pkg_rich">Colors, tables and progress bars in the terminal</string>
     <string name="pip_pkg_colorama">Colored terminal text</string>
@@ -222,6 +229,7 @@
 
     <!-- Settings -->
     <string name="settings_section_editor">Editor</string>
+    <string name="settings_section_editing">Editing</string>
     <string name="settings_section_app">App</string>
     <string name="settings_font_size">Font size</string>
     <string name="settings_font_size_range">%1$d–%2$d sp</string>

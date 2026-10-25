@@ -3,6 +3,7 @@ package dev.skyloft.skypython.pip
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
@@ -83,8 +84,8 @@ class PipScreenTest {
         rule.waitUntilAtLeastOneExists(hasTestTag(popularInstalledTag("rich")), 5_000)
         rule.onNode(install).assertDoesNotExist()
         rule.onNode(hasTestTag(popularInstalledTag("rich"))).assertIsDisplayed()
-        // The Installed tab lists it straight away as well.
-        rule.onNode(hasText(str(R.string.pip_tab_installed))).performClick()
+        // The Installed tab lists it straight away as well (the chip says "Installed" too).
+        rule.onNode(hasText(str(R.string.pip_tab_installed)) and hasClickAction()).performClick()
         rule.waitUntilAtLeastOneExists(hasText("rich"), 5_000)
         rule.onNode(hasText("14.0.0", substring = true)).assertExists()
     }

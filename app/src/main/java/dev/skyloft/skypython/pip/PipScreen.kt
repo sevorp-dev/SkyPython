@@ -1,27 +1,14 @@
 package dev.skyloft.skypython.pip
 
-import dev.skyloft.skypython.ui.rememberMainScope
-import dev.skyloft.skypython.ui.theme.TextBright
-import dev.skyloft.skypython.ui.theme.SlatePanel
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
-import dev.skyloft.skypython.ui.theme.SlateLine
-import dev.skyloft.skypython.ui.theme.Ink
-import dev.skyloft.skypython.ui.theme.SuccessGreen
-import dev.skyloft.skypython.ui.theme.SectionLabel
-import dev.skyloft.skypython.ui.theme.Slate
-import dev.skyloft.skypython.ui.theme.Orange
-import androidx.compose.ui.unit.Dp
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
-import androidx.compose.material3.TabRowDefaults
-import dev.skyloft.skypython.ui.theme.CodeFont
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -37,6 +24,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -46,23 +34,23 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.ui.platform.testTag
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.SearchOff
+import androidx.compose.material.icons.outlined.Upgrade
 import androidx.compose.material.icons.outlined.Warning
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -74,42 +62,67 @@ import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.skyloft.skypython.R
-import dev.skyloft.skypython.ui.theme.SlateBar
+import dev.skyloft.skypython.ui.rememberMainScope
+import dev.skyloft.skypython.ui.theme.ChipTone
+import dev.skyloft.skypython.ui.theme.CodeFont
 import dev.skyloft.skypython.ui.theme.Hairline
-import dev.skyloft.skypython.ui.theme.brandButtonColors
+import dev.skyloft.skypython.ui.theme.IconTile
+import dev.skyloft.skypython.ui.theme.Ink
+import dev.skyloft.skypython.ui.theme.LetterAvatar
+import dev.skyloft.skypython.ui.theme.MutedText
+import dev.skyloft.skypython.ui.theme.Orange
+import dev.skyloft.skypython.ui.theme.SectionLabel
+import dev.skyloft.skypython.ui.theme.SheetShape
+import dev.skyloft.skypython.ui.theme.SkyAlertDialog
+import dev.skyloft.skypython.ui.theme.SkyCard
 import dev.skyloft.skypython.ui.theme.SkyTopBar
+import dev.skyloft.skypython.ui.theme.SlateBar
+import dev.skyloft.skypython.ui.theme.SlateLine
+import dev.skyloft.skypython.ui.theme.SlateRaised
+import dev.skyloft.skypython.ui.theme.StatusChip
+import dev.skyloft.skypython.ui.theme.SuccessGreen
+import dev.skyloft.skypython.ui.theme.brandButtonColors
+import dev.skyloft.skypython.ui.theme.floatingOutline
+import dev.skyloft.skypython.ui.theme.skyFieldColors
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
+
+/** Side gutter and gap between cards. */
+private val Gutter = 16.dp
+private val CardGap = 8.dp
 
 /**
  * Pip: search PyPI and a popular list, the installed packages (upgrade, uninstall, details)
@@ -187,7 +200,7 @@ fun PipScreen(
                         text = {
                             Text(
                                 stringResource(tab.labelRes()),
-                                fontWeight = FontWeight.Medium,
+                                fontWeight = if (state.tab == tab) FontWeight.SemiBold else FontWeight.Medium,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
@@ -214,7 +227,7 @@ fun PipScreen(
     state.details?.let { details -> DetailsSheet(details, state, viewModel) }
 
     state.confirmUninstall?.let { pkg ->
-        AlertDialog(
+        SkyAlertDialog(
             onDismissRequest = viewModel::dismissUninstall,
             title = { Text(stringResource(R.string.pip_uninstall_title, pkg.name)) },
             text = { Text(stringResource(R.string.pip_uninstall_text, pkg.version)) },
@@ -236,8 +249,11 @@ fun PipScreen(
 private fun SearchTab(state: PipState, viewModel: PipViewModel) {
     val is64Bit = remember { is64BitProcess() }
     val popular = remember(state.spec) { PopularPackages.matching(state.spec) }
+    val sections = remember(popular, state.catalog) {
+        PopularPackages.sections(popular) { state.prebuiltFor(it.name) is PrebuiltStatus.Available }
+    }
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.padding(start = 12.dp, end = 12.dp, top = 8.dp), verticalAlignment = Alignment.Top) {
+        Row(Modifier.padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 4.dp), verticalAlignment = Alignment.Top) {
             OutlinedTextField(
                 value = state.spec,
                 onValueChange = viewModel::onSpecChange,
@@ -259,6 +275,7 @@ private fun SearchTab(state: PipState, viewModel: PipViewModel) {
                 supportingText = state.specError?.let { { Text(stringResource(it.messageRes())) } },
                 textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = CodeFont),
                 shape = RoundedCornerShape(12.dp),
+                colors = skyFieldColors(),
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.None,
                     autoCorrectEnabled = false,
@@ -276,117 +293,164 @@ private fun SearchTab(state: PipState, viewModel: PipViewModel) {
                 modifier = Modifier.padding(top = 8.dp).height(56.dp),
             ) { Text(stringResource(R.string.pip_search_action)) }
         }
-        if (state.searching) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp))
 
         // The result goes in above the popular rows, and a lazy list keeps its first visible row
         // in place when items are inserted before it: without this the result would land above
         // the viewport, out of sight (always so on a small screen with the keyboard up).
         val listState = rememberLazyListState()
-        LaunchedEffect(state.lookup) {
-            if (state.lookup != null) listState.scrollToItem(0)
+        LaunchedEffect(state.lookup, state.searching) {
+            if (state.lookup != null || state.searching) listState.scrollToItem(0)
         }
-        LazyColumn(Modifier.fillMaxSize(), state = listState) {
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            state = listState,
+            contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 8.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(CardGap),
+        ) {
+            if (state.searching) {
+                item(key = "searching") { SearchingCard() }
+            }
             state.lookup?.let { lookup ->
                 item(key = "result") {
                     LookupCard(lookup, state, onInstall = viewModel::installPackage)
                 }
             }
-            item(key = "popular-label") {
-                SectionLabel(
-                    stringResource(R.string.pip_popular),
-                    Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 6.dp),
-                )
-            }
             if (popular.isEmpty()) {
                 item(key = "popular-none") {
-                    Text(
-                        stringResource(R.string.pip_popular_none),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    EmptyState(
+                        icon = Icons.Outlined.SearchOff,
+                        title = stringResource(R.string.pip_popular_none),
+                        modifier = Modifier.padding(top = 24.dp),
                     )
                 }
             }
-            items(popular, key = { "p-" + it.name }) { pkg ->
-                PopularRow(
-                    pkg = pkg,
-                    installed = state.isInstalled(pkg.name),
-                    action = PopularPackages.action(pkg, state.prebuiltFor(pkg.name), is64Bit),
-                    busy = state.installing,
-                    onInstall = { viewModel.installPackage(pkg.name) },
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            sections.forEach { (section, packages) ->
+                item(key = "s-" + section.name) {
+                    SectionHeader(stringResource(section.label), packages.size)
+                }
+                items(packages, key = { "p-" + it.name }) { pkg ->
+                    PopularCard(
+                        pkg = pkg,
+                        installed = state.isInstalled(pkg.name),
+                        action = PopularPackages.action(pkg, state.prebuiltFor(pkg.name), is64Bit),
+                        busy = state.installing,
+                        installingThis = (state.running as? PipOperation.Install)
+                            ?.let { PyPiJson.normalize(PackageSpec.nameOf(it.spec)) == PyPiJson.normalize(pkg.name) } == true,
+                        onInstall = { viewModel.installPackage(pkg.name) },
+                    )
+                }
             }
             item(key = "intro") {
-                Text(
-                    stringResource(R.string.pip_intro) + " " + stringResource(
-                        if (state.catalog != null) R.string.pip_prebuilt_hint else R.string.pip_pure_python_hint,
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(16.dp),
-                )
+                Row(Modifier.padding(top = 12.dp, start = 4.dp, end = 4.dp), verticalAlignment = Alignment.Top) {
+                    Icon(Icons.Outlined.Info, null, tint = MutedText, modifier = Modifier.padding(top = 2.dp).size(16.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        stringResource(R.string.pip_intro) + " " + stringResource(
+                            if (state.catalog != null) R.string.pip_prebuilt_hint else R.string.pip_pure_python_hint,
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(text: String, count: Int? = null) {
+    Row(
+        Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 12.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SectionLabel(text, Modifier.weight(1f, fill = false))
+        if (count != null) {
+            Spacer(Modifier.width(8.dp))
+            Text(count.toString(), color = MutedText, fontSize = 12.sp, fontFamily = CodeFont)
+        }
+    }
+}
+
+@Composable
+private fun SearchingCard() {
+    SkyCard(Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = Orange)
+            Spacer(Modifier.width(12.dp))
+            Text(stringResource(R.string.pip_searching), style = MaterialTheme.typography.bodyMedium, color = MutedText)
         }
     }
 }
 
 @Composable
 private fun LookupCard(lookup: LookupResult, state: PipState, onInstall: (String) -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = SlatePanel, contentColor = TextBright),
-        border = BorderStroke(1.dp, SlateLine),
-    ) {
-        Column(Modifier.padding(16.dp)) {
-            when (lookup) {
-                is LookupResult.Found -> FoundProject(lookup.project, state, onInstall)
-                is LookupResult.NotFound -> IconLine(
-                    Icons.Outlined.Info,
-                    stringResource(R.string.pip_result_not_found, lookup.name),
-                    MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                is LookupResult.Offline -> IconLine(
-                    Icons.Outlined.Warning,
-                    stringResource(R.string.pip_result_offline),
-                    MaterialTheme.colorScheme.error,
-                )
-                is LookupResult.Failed -> IconLine(
-                    Icons.Outlined.Error,
-                    stringResource(R.string.pip_result_failed, lookup.message),
-                    MaterialTheme.colorScheme.error,
-                )
+    SkyCard(Modifier.fillMaxWidth(), border = if (lookup is LookupResult.Found) Orange.copy(alpha = 0.35f) else SlateLine) {
+        when (lookup) {
+            is LookupResult.Found -> FoundProject(lookup.project, state, onInstall)
+            is LookupResult.NotFound -> NoticeRow(
+                Icons.Outlined.SearchOff,
+                stringResource(R.string.pip_result_not_found, lookup.name),
+                MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            is LookupResult.Offline -> NoticeRow(
+                Icons.Outlined.CloudOff,
+                stringResource(R.string.pip_result_offline),
+                MaterialTheme.colorScheme.error,
+            )
+            is LookupResult.Failed -> NoticeRow(
+                Icons.Outlined.Error,
+                stringResource(R.string.pip_result_failed, lookup.message),
+                MaterialTheme.colorScheme.error,
+            )
+        }
+    }
+}
+
+/** An icon in a tinted circle and a message: offline, not found, failed. */
+@Composable
+private fun NoticeRow(icon: ImageVector, text: String, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier.size(40.dp).background(color.copy(alpha = 0.12f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) { Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp)) }
+        Spacer(Modifier.width(12.dp))
+        Text(text, color = color, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun PackageHeader(name: String, version: String?, avatarSize: Dp = 40.dp, trailing: @Composable () -> Unit = {}) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        LetterAvatar(name, size = avatarSize)
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                name,
+                style = MaterialTheme.typography.titleMedium,
+                fontFamily = CodeFont,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (version != null) {
+                Spacer(Modifier.height(2.dp))
+                StatusChip(version, mono = true)
             }
         }
+        trailing()
     }
 }
 
 @Composable
 private fun ColumnScope.FoundProject(project: PyPiProject, state: PipState, onInstall: (String) -> Unit) {
     val uriHandler = LocalUriHandler.current
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            project.name,
-            style = MaterialTheme.typography.titleMedium,
-            fontFamily = CodeFont,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f, fill = false),
-        )
-        if (state.isInstalled(project.name)) {
-            Spacer(Modifier.width(8.dp))
-            InstalledBadge()
-        }
+    val installed = state.isInstalled(project.name)
+    PackageHeader(project.name, stringResource(R.string.pip_latest_version, project.version)) {
+        if (installed) InstalledChip()
     }
-    Text(
-        stringResource(R.string.pip_latest_version, project.version),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        fontFamily = CodeFont,
-    )
     project.summary?.let {
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(10.dp))
         Text(it, style = MaterialTheme.typography.bodyMedium)
     }
     project.license?.let {
@@ -399,13 +463,13 @@ private fun ColumnScope.FoundProject(project: PyPiProject, state: PipState, onIn
             overflow = TextOverflow.Ellipsis,
         )
     }
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(10.dp))
     // SkyPython's wheel index wins over what PyPI has.
     val prebuilt = state.prebuiltFor(project.name)
     when (prebuilt) {
         is PrebuiltStatus.Available -> {
             PrebuiltBadge()
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(6.dp))
             IconLine(
                 Icons.Outlined.CheckCircle,
                 stringResource(R.string.pip_prebuilt_line, prebuilt.wheel.name, prebuilt.wheel.version),
@@ -428,22 +492,20 @@ private fun ColumnScope.FoundProject(project: PyPiProject, state: PipState, onIn
             IconLine(icon, stringResource(text), color)
         }
     }
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
     Row(verticalAlignment = Alignment.CenterVertically) {
+        val canInstall = prebuilt is PrebuiltStatus.Available ||
+            (prebuilt == null && project.wheel in listOf(WheelSupport.Pure, WheelSupport.PrebuiltAndroid, WheelSupport.SourceOnly))
+        // Installed already: no button, unless a particular version was typed (six==1.16.0).
+        val typed = state.spec.trim()
         when {
-            prebuilt is PrebuiltStatus.Available -> Button(
+            installed && PackageSpec.nameOf(typed) == typed -> Unit
+            canInstall -> Button(
                 colors = brandButtonColors(),
                 onClick = { onInstall(project.name) },
                 enabled = !state.installing,
             ) { Text(stringResource(R.string.pip_install)) }
-            prebuilt is PrebuiltStatus.OtherAbis -> Unit
-            project.wheel == WheelSupport.Pure || project.wheel == WheelSupport.PrebuiltAndroid ||
-                project.wheel == WheelSupport.SourceOnly -> Button(
-                colors = brandButtonColors(),
-                onClick = { onInstall(project.name) },
-                enabled = !state.installing,
-            ) { Text(stringResource(R.string.pip_install)) }
-            project.wheel == WheelSupport.NativeOnly -> OutlinedButton(
+            prebuilt == null && project.wheel == WheelSupport.NativeOnly -> OutlinedButton(
                 onClick = { onInstall(project.name) },
                 enabled = !state.installing,
             ) { Text(stringResource(R.string.pip_install_anyway)) }
@@ -460,44 +522,70 @@ private fun ColumnScope.FoundProject(project: PyPiProject, state: PipState, onIn
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun PopularRow(pkg: PopularPackage, installed: Boolean, action: PopularAction, busy: Boolean, onInstall: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(
-                pkg.name,
-                fontFamily = CodeFont,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                stringResource(pkg.summary),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (action == PopularAction.Prebuilt) {
-                Spacer(Modifier.height(4.dp))
-                PrebuiltBadge()
+private fun PopularCard(
+    pkg: PopularPackage,
+    installed: Boolean,
+    action: PopularAction,
+    busy: Boolean,
+    installingThis: Boolean,
+    onInstall: () -> Unit,
+) {
+    // Long "not for this device" notes go under the summary; short ones sit on the right.
+    val longNote = when (action) {
+        PopularAction.Not32Bit -> R.string.pip_prebuilt_32bit
+        PopularAction.NotThisDevice -> R.string.pip_prebuilt_other_abi
+        else -> null
+    }
+    SkyCard(Modifier.fillMaxWidth(), contentPadding = 14.dp) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            LetterAvatar(pkg.name)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    pkg.name,
+                    fontFamily = CodeFont,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    stringResource(pkg.summary),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (action == PopularAction.Prebuilt || longNote != null) {
+                    Spacer(Modifier.height(8.dp))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (action == PopularAction.Prebuilt) PrebuiltBadge()
+                        if (longNote != null) StatusChip(stringResource(longNote))
+                    }
+                }
             }
-        }
-        Spacer(Modifier.width(8.dp))
-        when {
-            action == PopularAction.ComingLater -> DisabledNote(stringResource(R.string.pip_coming_later))
-            action == PopularAction.Needs64Bit -> DisabledNote(stringResource(R.string.pip_needs_64bit))
-            action == PopularAction.Not32Bit -> DisabledNote(stringResource(R.string.pip_prebuilt_32bit))
-            action == PopularAction.NotThisDevice -> DisabledNote(stringResource(R.string.pip_prebuilt_other_abi))
-            installed -> Box(Modifier.testTag(popularInstalledTag(pkg.name))) { InstalledBadge() }
-            else -> TextButton(
-                onClick = onInstall,
-                enabled = !busy,
-                modifier = Modifier.testTag(popularInstallTag(pkg.name)),
-            ) { Text(stringResource(R.string.pip_install)) }
+            Spacer(Modifier.width(8.dp))
+            when {
+                action == PopularAction.ComingLater -> StatusChip(stringResource(R.string.pip_coming_later))
+                action == PopularAction.Needs64Bit -> StatusChip(stringResource(R.string.pip_needs_64bit))
+                longNote != null -> Unit
+                installed -> InstalledChip(Modifier.testTag(popularInstalledTag(pkg.name)))
+                installingThis -> CircularProgressIndicator(
+                    Modifier.padding(horizontal = 18.dp).size(22.dp),
+                    strokeWidth = 2.dp,
+                    color = Orange,
+                )
+                else -> Button(
+                    onClick = onInstall,
+                    enabled = !busy,
+                    colors = brandButtonColors(),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    modifier = Modifier.height(36.dp).testTag(popularInstallTag(pkg.name)),
+                ) { Text(stringResource(R.string.pip_install), fontSize = 14.sp) }
+            }
         }
     }
 }
@@ -514,50 +602,22 @@ fun popularInstalledTag(name: String) = "pip_popular_installed_$name"
 /** "Prebuilt for Android": the package comes from SkyPython's wheel index. */
 @Composable
 private fun PrebuiltBadge() {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .testTag(PREBUILT_BADGE_TAG)
-            .border(1.dp, Orange, RoundedCornerShape(50))
-            .padding(horizontal = 8.dp, vertical = 2.dp),
-    ) {
-        Icon(Icons.Outlined.Bolt, contentDescription = null, tint = Orange, modifier = Modifier.size(14.dp))
-        Spacer(Modifier.width(4.dp))
-        Text(
-            stringResource(R.string.pip_prebuilt_badge),
-            style = MaterialTheme.typography.labelSmall,
-            color = Orange,
-            maxLines = 1,
-        )
-    }
-}
-
-@Composable
-private fun DisabledNote(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 12.dp),
+    StatusChip(
+        stringResource(R.string.pip_prebuilt_badge),
+        Modifier.testTag(PREBUILT_BADGE_TAG),
+        tone = ChipTone.Accent,
+        icon = Icons.Outlined.Bolt,
     )
 }
 
 @Composable
-private fun InstalledBadge() {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp)) {
-        Icon(
-            Icons.Outlined.CheckCircle,
-            contentDescription = null,
-            tint = SuccessGreen,
-            modifier = Modifier.size(16.dp),
-        )
-        Spacer(Modifier.width(4.dp))
-        Text(
-            stringResource(R.string.pip_installed_badge),
-            style = MaterialTheme.typography.labelMedium,
-            color = SuccessGreen,
-        )
-    }
+private fun InstalledChip(modifier: Modifier = Modifier) {
+    StatusChip(
+        stringResource(R.string.pip_installed_badge),
+        modifier,
+        tone = ChipTone.Success,
+        icon = Icons.Outlined.CheckCircle,
+    )
 }
 
 @Composable
@@ -569,60 +629,109 @@ private fun IconLine(icon: ImageVector, text: String, color: Color) {
     }
 }
 
+/** A centred icon in a soft circle, a title and an optional hint. */
+@Composable
+private fun EmptyState(icon: ImageVector, title: String, modifier: Modifier = Modifier, hint: String? = null) {
+    Column(
+        modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            Modifier.size(64.dp).background(SlateRaised, CircleShape).border(1.dp, SlateLine, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) { Icon(icon, contentDescription = null, tint = MutedText, modifier = Modifier.size(28.dp)) }
+        Spacer(Modifier.height(16.dp))
+        Text(title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+        if (hint != null) {
+            Spacer(Modifier.height(6.dp))
+            Text(
+                hint,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MutedText,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
 // --- Installed ---------------------------------------------------------------------------------
 
 @Composable
 private fun InstalledTab(state: PipState, viewModel: PipViewModel) {
     Column(Modifier.fillMaxSize()) {
-        if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-        state.listError?.let {
-            Text(
-                it,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                fontFamily = CodeFont,
-                modifier = Modifier.padding(12.dp),
-            )
+        if (state.loading && state.packages.isNotEmpty()) {
+            LinearProgressIndicator(Modifier.fillMaxWidth(), color = Orange, trackColor = SlateBar)
         }
-        if (state.packages.isEmpty() && !state.loading && state.listError == null) {
-            Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-                Text(stringResource(R.string.pip_no_packages), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        state.listError?.let {
+            SkyCard(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 12.dp)) {
+                NoticeRow(Icons.Outlined.Error, it, MaterialTheme.colorScheme.error)
             }
-            return
         }
         when {
-            state.checkingUpdates -> StatusLine(stringResource(R.string.pip_checking_updates))
-            state.updatesFailed -> StatusLine(stringResource(R.string.pip_updates_failed))
-        }
-        LazyColumn(Modifier.fillMaxSize()) {
-            items(state.packages, key = { it.name }) { pkg ->
-                PackageRow(
-                    pkg = pkg,
-                    update = state.updateFor(pkg),
-                    busy = state.uninstalling == pkg.name || (state.running as? PipOperation.Upgrade)?.name == pkg.name,
-                    enabled = state.uninstalling == null && !state.installing,
-                    onOpen = { viewModel.openDetails(pkg) },
-                    onUpgrade = { viewModel.upgrade(pkg) },
-                    onUninstall = { viewModel.requestUninstall(pkg) },
+            state.packages.isEmpty() && state.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(Modifier.size(32.dp), strokeWidth = 3.dp, color = Orange)
+                    Spacer(Modifier.height(16.dp))
+                    Text(stringResource(R.string.pip_loading_packages), color = MutedText, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+            state.packages.isEmpty() && state.listError == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                EmptyState(
+                    icon = Icons.Outlined.Inventory2,
+                    title = stringResource(R.string.pip_no_packages),
+                    hint = stringResource(R.string.pip_no_packages_hint),
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
+            else -> LazyColumn(
+                Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 4.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(CardGap),
+            ) {
+                item(key = "header") {
+                    Row(Modifier.padding(start = 4.dp, end = 4.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        SectionLabel(stringResource(R.string.pip_tab_installed))
+                        Spacer(Modifier.width(8.dp))
+                        Text(state.packages.size.toString(), color = MutedText, fontSize = 12.sp, fontFamily = CodeFont)
+                        Spacer(Modifier.weight(1f))
+                        when {
+                            state.checkingUpdates -> {
+                                CircularProgressIndicator(Modifier.size(12.dp), strokeWidth = 1.5.dp, color = MutedText)
+                                Spacer(Modifier.width(6.dp))
+                                StatusText(stringResource(R.string.pip_checking_updates))
+                            }
+                            state.updatesFailed -> StatusText(stringResource(R.string.pip_updates_failed))
+                        }
+                    }
+                }
+                items(state.packages, key = { it.name }) { pkg ->
+                    PackageCard(
+                        pkg = pkg,
+                        update = state.updateFor(pkg),
+                        busy = state.uninstalling == pkg.name || (state.running as? PipOperation.Upgrade)?.name == pkg.name,
+                        enabled = state.uninstalling == null && !state.installing,
+                        onOpen = { viewModel.openDetails(pkg) },
+                        onUpgrade = { viewModel.upgrade(pkg) },
+                        onUninstall = { viewModel.requestUninstall(pkg) },
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun StatusLine(text: String) {
+private fun StatusText(text: String) {
     Text(
         text,
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
     )
 }
 
 @Composable
-private fun PackageRow(
+private fun PackageCard(
     pkg: PipPackage,
     update: String?,
     busy: Boolean,
@@ -631,44 +740,52 @@ private fun PackageRow(
     onUpgrade: () -> Unit,
     onUninstall: () -> Unit,
 ) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onOpen)
-            .padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(pkg.name, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(
-                pkg.version,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
-                fontFamily = CodeFont,
-            )
-            update?.let {
+    SkyCard(Modifier.fillMaxWidth(), onClick = onOpen, contentPadding = 14.dp) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            LetterAvatar(pkg.name)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
                 Text(
-                    stringResource(R.string.pip_update_available, it),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodySmall,
+                    pkg.name,
+                    fontFamily = CodeFont,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                Spacer(Modifier.height(4.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    StatusChip(pkg.version, mono = true)
+                    if (update != null) {
+                        StatusChip(
+                            stringResource(R.string.pip_update_available, update),
+                            tone = ChipTone.Accent,
+                            icon = Icons.Outlined.Upgrade,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                    }
+                }
             }
-        }
-        if (busy) {
-            CircularProgressIndicator(Modifier.padding(12.dp).size(20.dp), strokeWidth = 2.dp)
-        } else {
-            if (update != null) {
-                TextButton(onClick = onUpgrade, enabled = enabled) { Text(stringResource(R.string.pip_upgrade)) }
-            }
-            IconButton(onClick = onUninstall, enabled = enabled) {
-                Icon(
-                    Icons.Outlined.Delete,
-                    contentDescription = stringResource(R.string.pip_uninstall),
-                    tint = if (enabled) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            if (busy) {
+                CircularProgressIndicator(Modifier.padding(12.dp).size(20.dp), strokeWidth = 2.dp, color = Orange)
+            } else {
+                if (update != null) {
+                    Spacer(Modifier.width(4.dp))
+                    Button(
+                        onClick = onUpgrade,
+                        enabled = enabled,
+                        colors = brandButtonColors(),
+                        contentPadding = PaddingValues(horizontal = 14.dp),
+                        modifier = Modifier.height(36.dp),
+                    ) { Text(stringResource(R.string.pip_upgrade), fontSize = 14.sp) }
+                }
+                IconButton(onClick = onUninstall, enabled = enabled) {
+                    Icon(
+                        Icons.Outlined.Delete,
+                        contentDescription = stringResource(R.string.pip_uninstall),
+                        tint = if (enabled) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }
@@ -680,43 +797,39 @@ private fun DetailsSheet(details: DetailsState, state: PipState, viewModel: PipV
     val uriHandler = LocalUriHandler.current
     val pkg = details.pkg
     val update = state.updateFor(pkg)
-    ModalBottomSheet(onDismissRequest = viewModel::closeDetails) {
+    ModalBottomSheet(
+        onDismissRequest = viewModel::closeDetails,
+        shape = SheetShape,
+        modifier = Modifier.floatingOutline(SheetShape),
+    ) {
         Column(
             Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
         ) {
-            Text(
-                pkg.name,
-                style = MaterialTheme.typography.titleLarge,
-                fontFamily = CodeFont,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                stringResource(R.string.pip_version, details.info?.version ?: pkg.version),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            PackageHeader(pkg.name, stringResource(R.string.pip_version, details.info?.version ?: pkg.version), avatarSize = 48.dp)
             update?.let {
-                Text(
-                    stringResource(R.string.pip_update_available, it),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+                Spacer(Modifier.height(10.dp))
+                StatusChip(stringResource(R.string.pip_update_available, it), tone = ChipTone.Accent, icon = Icons.Outlined.Upgrade)
             }
-            Spacer(Modifier.height(12.dp))
-            if (details.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
+            Spacer(Modifier.height(16.dp))
+            if (details.loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Orange, trackColor = SlateBar)
             details.error?.let {
                 Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, fontFamily = CodeFont)
             }
             details.info?.let { info ->
-                info.summary?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
-                info.license?.let { DetailLine(stringResource(R.string.pip_license, it)) }
-                DetailLine(stringResource(R.string.pip_details_requires, info.requires.joinOrNone()))
-                DetailLine(stringResource(R.string.pip_details_required_by, info.requiredBy.joinOrNone()))
+                SkyCard(Modifier.fillMaxWidth()) {
+                    info.summary?.let {
+                        Text(it, style = MaterialTheme.typography.bodyLarge)
+                        Spacer(Modifier.height(4.dp))
+                    }
+                    info.license?.let { DetailLine(stringResource(R.string.pip_license, it)) }
+                    DetailLine(stringResource(R.string.pip_details_requires, info.requires.joinOrNone()))
+                    DetailLine(stringResource(R.string.pip_details_required_by, info.requiredBy.joinOrNone()))
+                }
                 info.homePage?.let { url ->
-                    TextButton(onClick = { runCatching { uriHandler.openUri(url) } }) {
+                    TextButton(onClick = { runCatching { uriHandler.openUri(url) } }, modifier = Modifier.padding(top = 4.dp)) {
                         Text(stringResource(R.string.pip_home_page))
                         Spacer(Modifier.width(4.dp))
                         Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -738,7 +851,12 @@ private fun DetailsSheet(details: DetailsState, state: PipState, viewModel: PipV
                 OutlinedButton(
                     onClick = { viewModel.requestUninstall(pkg) },
                     enabled = !state.installing && state.uninstalling == null,
-                ) { Text(stringResource(R.string.pip_uninstall), color = MaterialTheme.colorScheme.error) }
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f)),
+                ) {
+                    Icon(Icons.Outlined.Delete, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.pip_uninstall), color = MaterialTheme.colorScheme.error)
+                }
             }
         }
     }
@@ -768,73 +886,69 @@ private fun RequirementsTab(state: PipState, viewModel: PipViewModel, currentFil
     }
     val openFile = openFileState.value
     Column(Modifier.fillMaxSize()) {
-        if (state.scanningFiles) LinearProgressIndicator(Modifier.fillMaxWidth())
-        LazyColumn(Modifier.fillMaxSize()) {
+        if (state.scanningFiles) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Orange, trackColor = SlateBar)
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 12.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(CardGap),
+        ) {
             item(key = "intro") {
-                Text(
-                    stringResource(R.string.pip_req_intro),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(16.dp),
-                )
-            }
-            if (openFile != null) {
-                item(key = "open-label") { SectionTitle(stringResource(R.string.pip_req_open_file)) }
-                item(key = "open-file") {
-                    FileRow(openFile, projectsRoot, enabled = !state.installing) { viewModel.installRequirements(openFile) }
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                }
-            }
-            item(key = "files-label") { SectionTitle(stringResource(R.string.pip_req_project_files)) }
-            if (state.requirementFiles.isEmpty() && !state.scanningFiles) {
-                item(key = "files-none") {
+                Row(Modifier.padding(horizontal = 4.dp), verticalAlignment = Alignment.Top) {
+                    Icon(Icons.Outlined.Info, null, tint = MutedText, modifier = Modifier.padding(top = 2.dp).size(16.dp))
+                    Spacer(Modifier.width(8.dp))
                     Text(
-                        stringResource(R.string.pip_req_none),
+                        stringResource(R.string.pip_req_intro),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     )
                 }
             }
+            if (openFile != null) {
+                item(key = "open-label") { SectionHeader(stringResource(R.string.pip_req_open_file)) }
+                item(key = "open-file") {
+                    FileCard(openFile, projectsRoot, enabled = !state.installing) { viewModel.installRequirements(openFile) }
+                }
+            }
+            item(key = "files-label") { SectionHeader(stringResource(R.string.pip_req_project_files)) }
+            if (state.requirementFiles.isEmpty() && !state.scanningFiles) {
+                item(key = "files-none") {
+                    EmptyState(icon = Icons.Outlined.Description, title = stringResource(R.string.pip_req_none))
+                }
+            }
             items(state.requirementFiles, key = { "f-" + it.path }) { file ->
-                FileRow(file, projectsRoot, enabled = !state.installing) { viewModel.installRequirements(file) }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                FileCard(file, projectsRoot, enabled = !state.installing) { viewModel.installRequirements(file) }
             }
         }
     }
 }
 
 @Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
-    )
-}
-
-@Composable
-private fun FileRow(file: File, projectsRoot: File?, enabled: Boolean, onInstall: () -> Unit) {
+private fun FileCard(file: File, projectsRoot: File?, enabled: Boolean, onInstall: () -> Unit) {
     val projects = stringResource(R.string.projects_label)
     val where = remember(file, projectsRoot, projects) { displayPath(file, projectsRoot, projects) }
-    Row(
-        Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(Icons.Outlined.Description, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(file.name, fontFamily = CodeFont, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(
-                where,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+    SkyCard(Modifier.fillMaxWidth(), contentPadding = 14.dp) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconTile(Icons.Outlined.Description, size = 40.dp)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(file.name, fontFamily = CodeFont, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    where,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Button(
+                onClick = onInstall,
+                enabled = enabled,
+                colors = brandButtonColors(),
+                contentPadding = PaddingValues(horizontal = 14.dp),
+                modifier = Modifier.height(36.dp),
+            ) { Text(stringResource(R.string.pip_req_install), fontSize = 14.sp) }
         }
-        TextButton(onClick = onInstall, enabled = enabled) { Text(stringResource(R.string.pip_req_install)) }
     }
 }
 
@@ -854,59 +968,80 @@ private fun OperationPanel(state: PipState, onClose: () -> Unit) {
     var showLog by rememberSaveable { mutableStateOf(true) }
     val running = state.running
     val outcome = state.outcome
-    Surface(color = SlateBar) {
+    val accent = when {
+        running != null -> Orange.copy(alpha = 0.45f)
+        outcome is InstallOutcome.Succeeded -> SuccessGreen.copy(alpha = 0.40f)
+        outcome is InstallOutcome.Failed -> MaterialTheme.colorScheme.error.copy(alpha = 0.45f)
+        else -> SlateLine
+    }
+    Box(Modifier.fillMaxWidth().background(SlateBar)) {
         Column(Modifier.fillMaxWidth()) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Row(
-                Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 2.dp, bottom = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            Hairline()
+            SkyCard(
+                Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                border = accent,
+                contentPadding = 0.dp,
             ) {
-                val (text, color) = when {
-                    running != null -> runningText(running) to MaterialTheme.colorScheme.onSurface
-                    outcome is InstallOutcome.Succeeded -> doneText(outcome.operation) to SuccessGreen
-                    outcome is InstallOutcome.Failed -> failedText(outcome.operation) to MaterialTheme.colorScheme.error
-                    else -> "" to MaterialTheme.colorScheme.onSurface
-                }
-                when {
-                    running != null -> CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                    outcome is InstallOutcome.Succeeded -> Icon(Icons.Outlined.CheckCircle, null, tint = color, modifier = Modifier.size(18.dp))
-                    outcome is InstallOutcome.Failed -> Icon(Icons.Outlined.Error, null, tint = color, modifier = Modifier.size(18.dp))
-                }
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    text,
-                    color = color,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
-                TextButton(onClick = { showLog = !showLog }) {
-                    Text(stringResource(if (showLog) R.string.pip_hide_log else R.string.pip_show_log), maxLines = 1)
-                }
-                if (running == null) {
-                    IconButton(onClick = onClose) {
-                        Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.action_close))
+                Row(
+                    Modifier.fillMaxWidth().padding(start = 14.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val (text, color) = when {
+                        running != null -> runningText(running) to MaterialTheme.colorScheme.onSurface
+                        outcome is InstallOutcome.Succeeded -> doneText(outcome.operation) to SuccessGreen
+                        outcome is InstallOutcome.Failed -> failedText(outcome.operation) to MaterialTheme.colorScheme.error
+                        else -> "" to MaterialTheme.colorScheme.onSurface
+                    }
+                    when {
+                        running != null -> CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Orange)
+                        outcome is InstallOutcome.Succeeded -> Icon(Icons.Outlined.CheckCircle, null, tint = color, modifier = Modifier.size(18.dp))
+                        outcome is InstallOutcome.Failed -> Icon(Icons.Outlined.Error, null, tint = color, modifier = Modifier.size(18.dp))
+                    }
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text,
+                        color = color,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(onClick = { showLog = !showLog }) {
+                        Text(stringResource(if (showLog) R.string.pip_hide_log else R.string.pip_show_log), maxLines = 1)
+                    }
+                    if (running == null) {
+                        IconButton(onClick = onClose) {
+                            Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.action_close))
+                        }
                     }
                 }
-            }
-            if (running != null) LinearProgressIndicator(Modifier.fillMaxWidth())
-            if (outcome is InstallOutcome.Failed && outcome.buildFailure) {
-                Text(
-                    stringResource(R.string.pip_pure_python_hint),
-                    color = MaterialTheme.colorScheme.tertiary,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                )
-            }
-            if (showLog) {
-                InstallLog(
-                    state.log,
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 64.dp, max = 200.dp)
-                        .padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
-                )
+                if (running != null) {
+                    LinearProgressIndicator(
+                        Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(3.dp),
+                        color = Orange,
+                        trackColor = SlateRaised,
+                        strokeCap = StrokeCap.Round,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                }
+                if (outcome is InstallOutcome.Failed && outcome.buildFailure) {
+                    Text(
+                        stringResource(R.string.pip_pure_python_hint),
+                        color = MaterialTheme.colorScheme.tertiary,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp),
+                    )
+                }
+                if (showLog) {
+                    InstallLog(
+                        state.log,
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 64.dp, max = 200.dp)
+                            .padding(start = 10.dp, end = 10.dp, bottom = 10.dp),
+                    )
+                }
             }
         }
     }
@@ -918,9 +1053,9 @@ private fun InstallLog(log: String, modifier: Modifier) {
     LaunchedEffect(log) { scroll.scrollTo(scroll.maxValue) }
     Box(
         modifier
-            .background(Ink, RoundedCornerShape(12.dp))
-            .border(1.dp, SlateLine, RoundedCornerShape(12.dp))
-            .padding(8.dp)
+            .background(Ink, RoundedCornerShape(8.dp))
+            .border(1.dp, SlateLine, RoundedCornerShape(8.dp))
+            .padding(10.dp)
             .verticalScroll(scroll),
     ) {
         SelectionContainer {

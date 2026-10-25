@@ -121,7 +121,7 @@ fun IconTile(icon: ImageVector, modifier: Modifier = Modifier, size: Dp = 36.dp,
         contentAlignment = Alignment.Center,
         modifier = modifier
             .size(size)
-            .background(if (accent) OrangeTint else SlatePanel, shape)
+            .background(if (accent) OrangeTint else SlateRaised, shape)
             .border(1.dp, if (accent) Orange.copy(alpha = 0.35f) else SlateLine, shape),
     ) {
         Icon(

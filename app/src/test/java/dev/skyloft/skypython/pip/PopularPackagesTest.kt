@@ -35,6 +35,19 @@ class PopularPackagesTest {
     }
 
     @Test
+    fun sectionsKeepTheirOrderAndPrebuiltOnesMoveUp() {
+        val sections = PopularPackages.sections(all) { it.name == "numpy" }
+        assertEquals(PopularSection.entries, sections.map { it.first })
+        assertEquals(listOf("numpy"), sections.first().second.map { it.name })
+        assertEquals("requests", sections[1].second.first().name)
+        assertTrue(sections.drop(1).none { (_, list) -> list.any { it.name == "numpy" } })
+        assertEquals(all.size, sections.sumOf { it.second.size })
+        // Nothing prebuilt (no index), and empty sections left out.
+        val noIndex = PopularPackages.sections(PopularPackages.matching("numpy")) { false }
+        assertEquals(listOf(PopularSection.Data), noIndex.map { it.first })
+    }
+
+    @Test
     fun matchingFiltersByNormalizedSubstring() {
         assertEquals(all, PopularPackages.matching("  "))
         assertEquals(listOf("python-dateutil"), PopularPackages.matching("DateUtil").map { it.name })
