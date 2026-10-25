@@ -4,6 +4,7 @@ import android.text.InputType
 import java.io.File
 
 import dev.skyloft.skypython.lang.Diagnostic
+import dev.skyloft.skypython.settings.CodeFontChoice
 import dev.skyloft.skypython.settings.EditorSettings
 import dev.skyloft.skypython.settings.clampFontSize
 import kotlin.math.roundToInt
@@ -48,6 +49,8 @@ data class EditorViewConfig(
     val codeCompletion: Boolean = true,
     val autoClosePairs: Boolean = true,
     val keyboardSuggestions: Boolean = false,
+    /** Code typeface: the bundled JetBrains Mono, or the system monospace. */
+    val codeFont: CodeFontChoice = CodeFontChoice.JetBrainsMono,
 ) {
     companion object {
         const val MIN_FONT_SP = 12
@@ -61,9 +64,17 @@ data class EditorViewConfig(
             codeCompletion = settings.codeCompletion,
             autoClosePairs = settings.autoClosePairs,
             keyboardSuggestions = settings.keyboardSuggestions,
+            codeFont = settings.codeFont,
         )
     }
 }
+
+/** Status-line cursor text: 1-based "Ln 3, Col 26" from the 0-based [CursorPosition]. */
+fun cursorLabel(cursor: CursorPosition, format: String = CURSOR_FORMAT): String =
+    String.format(java.util.Locale.ROOT, format, cursor.line + 1, cursor.column + 1)
+
+/** English status-line cursor format (the UI uses `R.string.editor_status_cursor`). */
+const val CURSOR_FORMAT = "Ln %1\$d, Col %2\$d"
 
 /** Status-line text for a problem: "Line 3: SyntaxError: '(' was never closed". */
 fun problemLabel(d: Diagnostic): String = "Line ${d.line}: ${d.message.lineSequence().first()}"

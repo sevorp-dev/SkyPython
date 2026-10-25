@@ -1,5 +1,19 @@
 package dev.skyloft.skypython.settings
 
+import dev.skyloft.skypython.ui.theme.SlatePanel
+import dev.skyloft.skypython.ui.theme.OrangeSoft
+import dev.skyloft.skypython.ui.theme.MutedText
+import dev.skyloft.skypython.ui.theme.Ink
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.FormatSize
+import androidx.compose.material.icons.outlined.FontDownload
+import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import dev.skyloft.skypython.ui.theme.CodeFont
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,16 +30,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.WrapText
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.FormatListNumbered
-import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.TextFields
-import androidx.compose.material.icons.filled.DataArray
-import androidx.compose.material.icons.filled.Keyboard
-import androidx.compose.material.icons.filled.SpaceBar
+import androidx.compose.material.icons.automirrored.outlined.WrapText
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.FormatListNumbered
+import androidx.compose.material.icons.outlined.LightMode
+import androidx.compose.material.icons.outlined.Remove
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.TextFields
+import androidx.compose.material.icons.outlined.DataArray
+import androidx.compose.material.icons.outlined.Keyboard
+import androidx.compose.material.icons.outlined.SpaceBar
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
@@ -63,8 +77,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.skyloft.skypython.ui.theme.DividerNavy
-import dev.skyloft.skypython.ui.theme.EditorBackground
+import dev.skyloft.skypython.ui.theme.SlateLine
+import dev.skyloft.skypython.ui.theme.Slate
 import dev.skyloft.skypython.ui.theme.IconTile
 import dev.skyloft.skypython.ui.theme.SectionLabel
 import dev.skyloft.skypython.ui.theme.brandSwitchColors
@@ -74,18 +88,15 @@ import android.content.Context
 import android.content.ContextWrapper
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import dev.skyloft.skypython.locale.AppLanguage
 import dev.skyloft.skypython.locale.AppLocale
-import dev.skyloft.skypython.ui.theme.ElectricBlue
+import dev.skyloft.skypython.ui.theme.Orange
 
 /** Settings list. Changes are saved immediately. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -107,45 +118,68 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
             Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 24.dp),
         ) {
             SectionTitle(stringResource(R.string.settings_section_editor))
             FontSizeRow(
                 sizeSp = s.fontSizeSp,
+                min = MIN_FONT_SIZE_SP,
+                max = MAX_FONT_SIZE_SP,
                 onChange = { sp -> update { it.copy(fontSizeSp = clampFontSize(sp)) } },
             )
-            CodePreview(s.fontSizeSp)
-            HorizontalDivider(Modifier.padding(top = 12.dp), color = DividerNavy)
+            ChoiceRow(
+                icon = Icons.Outlined.FontDownload,
+                title = stringResource(R.string.settings_font_family),
+                selected = s.codeFont,
+                options = CodeFontChoice.entries,
+                label = { it.label() },
+                onSelect = { v -> update { it.copy(codeFont = v) } },
+            )
+            CodePreview(s.fontSizeSp, s.codeFont)
+            Text(
+                stringResource(R.string.settings_pinch_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 20.dp, end = 16.dp, top = 2.dp, bottom = 4.dp),
+            )
             SwitchRow(
-                icon = Icons.AutoMirrored.Filled.WrapText,
+                icon = Icons.AutoMirrored.Outlined.WrapText,
                 title = stringResource(R.string.settings_word_wrap),
                 summary = stringResource(R.string.settings_word_wrap_summary),
                 checked = s.wordWrap,
                 onChange = { v -> update { it.copy(wordWrap = v) } },
             )
             SwitchRow(
-                icon = Icons.Filled.FormatListNumbered,
+                icon = Icons.Outlined.FormatListNumbered,
                 title = stringResource(R.string.settings_line_numbers),
                 summary = stringResource(R.string.settings_line_numbers_summary),
                 checked = s.lineNumbers,
                 onChange = { v -> update { it.copy(lineNumbers = v) } },
             )
             SwitchRow(
-                icon = Icons.Filled.AutoAwesome,
-                title = "Code completion",
-                summary = "Suggestions while typing and error underlines",
+                icon = Icons.Outlined.LightMode,
+                title = stringResource(R.string.settings_keep_screen_on),
+                summary = stringResource(R.string.settings_keep_screen_on_summary),
+                checked = s.keepScreenOn,
+                onChange = { v -> update { it.copy(keepScreenOn = v) } },
+            )
+            SwitchRow(
+                icon = Icons.Outlined.AutoAwesome,
+                title = stringResource(R.string.settings_code_completion),
+                summary = stringResource(R.string.settings_code_completion_summary),
                 checked = s.codeCompletion,
                 onChange = { v -> update { it.copy(codeCompletion = v) } },
             )
             SwitchRow(
-                icon = Icons.Filled.DataArray,
+                icon = Icons.Outlined.DataArray,
                 title = stringResource(R.string.settings_auto_close),
                 summary = stringResource(R.string.settings_auto_close_summary),
                 checked = s.autoClosePairs,
                 onChange = { v -> update { it.copy(autoClosePairs = v) } },
             )
             SwitchRow(
-                icon = Icons.Filled.Keyboard,
+                icon = Icons.Outlined.Keyboard,
                 title = stringResource(R.string.settings_keyboard_suggestions),
                 summary = stringResource(R.string.settings_keyboard_suggestions_summary),
                 checked = s.keyboardSuggestions,
@@ -155,16 +189,85 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 saved = s.symbolKeys,
                 onSave = { spec -> update { it.copy(symbolKeys = spec) } },
             )
-            SwitchRow(
-                icon = Icons.Filled.LightMode,
-                title = stringResource(R.string.settings_keep_screen_on),
-                summary = stringResource(R.string.settings_keep_screen_on_summary),
-                checked = s.keepScreenOn,
-                onChange = { v -> update { it.copy(keepScreenOn = v) } },
+            SectionDivider()
+            SectionTitle(stringResource(R.string.settings_section_terminal))
+            FontSizeRow(
+                sizeSp = s.terminalFontSizeSp,
+                min = MIN_TERMINAL_FONT_SP,
+                max = MAX_TERMINAL_FONT_SP,
+                onChange = { sp -> update { it.copy(terminalFontSizeSp = clampTerminalFontSize(sp)) } },
             )
-            HorizontalDivider(color = DividerNavy)
+            ChoiceRow(
+                icon = Icons.Outlined.Palette,
+                title = stringResource(R.string.settings_terminal_theme),
+                selected = s.terminalTheme,
+                options = TerminalTheme.entries,
+                label = { it.label() },
+                onSelect = { v -> update { it.copy(terminalTheme = v) } },
+            )
+            SectionDivider()
             SectionTitle(stringResource(R.string.settings_section_app))
             LanguageRow()
+        }
+    }
+}
+
+@Composable
+private fun SectionDivider() {
+    HorizontalDivider(Modifier.padding(top = 8.dp), color = SlateLine)
+}
+
+@Composable
+private fun CodeFontChoice.label(): String = when (this) {
+    CodeFontChoice.JetBrainsMono -> stringResource(R.string.settings_font_jetbrains_mono)
+    CodeFontChoice.SystemMono -> stringResource(R.string.settings_font_system_mono)
+}
+
+@Composable
+private fun TerminalTheme.label(): String = when (this) {
+    TerminalTheme.Dark -> stringResource(R.string.settings_terminal_theme_dark)
+    TerminalTheme.Black -> stringResource(R.string.settings_terminal_theme_black)
+}
+
+/** A setting with a few named values: the current one on the right, a menu to pick another. */
+@Composable
+private fun <T> ChoiceRow(
+    icon: ImageVector,
+    title: String,
+    selected: T,
+    options: List<T>,
+    label: @Composable (T) -> String,
+    onSelect: (T) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.DropdownList) { open = true }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        IconTile(icon, size = 40.dp)
+        Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Box {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(label(selected), style = MaterialTheme.typography.bodyMedium, color = OrangeSoft)
+                Icon(Icons.Outlined.ExpandMore, contentDescription = null, tint = MutedText, modifier = Modifier.padding(start = 4.dp).size(20.dp))
+            }
+            DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(label(option)) },
+                        trailingIcon = if (option == selected) {
+                            { Icon(Icons.Outlined.Check, contentDescription = null, tint = OrangeSoft) }
+                        } else {
+                            null
+                        },
+                        onClick = { open = false; onSelect(option) },
+                    )
+                }
+            }
         }
     }
 }
@@ -183,7 +286,7 @@ private fun SymbolKeysRow(saved: String, onSave: (String) -> Unit) {
     }
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            IconTile(Icons.Filled.SpaceBar, size = 40.dp)
+            IconTile(Icons.Outlined.SpaceBar, size = 40.dp)
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.settings_symbol_keys), style = MaterialTheme.typography.bodyLarge)
                 Text(
@@ -196,7 +299,7 @@ private fun SymbolKeysRow(saved: String, onSave: (String) -> Unit) {
         OutlinedTextField(
             value = text,
             onValueChange = { text = it },
-            textStyle = TextStyle(fontFamily = FontFamily.Monospace),
+            textStyle = TextStyle(fontFamily = CodeFont),
             keyboardOptions = KeyboardOptions(
                 autoCorrectEnabled = false,
                 capitalization = KeyboardCapitalization.None,
@@ -220,61 +323,75 @@ private fun SectionTitle(text: String) {
     SectionLabel(text, Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp))
 }
 
+/** Font size with − / + steppers in a quiet pill (each button a full 48dp touch target). */
 @Composable
-private fun FontSizeRow(sizeSp: Int, onChange: (Int) -> Unit) {
+private fun FontSizeRow(sizeSp: Int, min: Int, max: Int, onChange: (Int) -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
+            .padding(start = 16.dp, end = 12.dp, top = 8.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconTile(Icons.Filled.TextFields, size = 40.dp)
+        IconTile(Icons.Outlined.FormatSize, size = 40.dp)
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
             Text(stringResource(R.string.settings_font_size), style = MaterialTheme.typography.bodyLarge)
             Text(
-                stringResource(R.string.settings_font_size_range, MIN_FONT_SIZE_SP, MAX_FONT_SIZE_SP),
+                stringResource(R.string.settings_font_size_range, min, max),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        IconButton(onClick = { onChange(sizeSp - 1) }, enabled = sizeSp > MIN_FONT_SIZE_SP) {
-            Icon(Icons.Filled.Remove, contentDescription = stringResource(R.string.settings_smaller))
-        }
-        Text(
-            "$sizeSp",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.width(32.dp),
-            textAlign = TextAlign.Center,
-        )
-        IconButton(onClick = { onChange(sizeSp + 1) }, enabled = sizeSp < MAX_FONT_SIZE_SP) {
-            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.settings_larger))
+        Row(
+            Modifier
+                .background(SlatePanel, RoundedCornerShape(24.dp))
+                .border(1.dp, SlateLine, RoundedCornerShape(24.dp)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = { onChange(sizeSp - 1) }, enabled = sizeSp > min) {
+                Icon(Icons.Outlined.Remove, contentDescription = stringResource(R.string.settings_smaller), modifier = Modifier.size(20.dp))
+            }
+            Text(
+                "$sizeSp",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.width(28.dp),
+                textAlign = TextAlign.Center,
+            )
+            IconButton(onClick = { onChange(sizeSp + 1) }, enabled = sizeSp < max) {
+                Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.settings_larger), modifier = Modifier.size(20.dp))
+            }
         }
     }
 }
 
-/** One line of highlighted Python at the chosen size, so the user sees the effect immediately. */
+/** One line of highlighted Python at the chosen size and font, so the user sees the effect immediately. */
 @Composable
-private fun CodePreview(sizeSp: Int) {
+private fun CodePreview(sizeSp: Int, font: CodeFontChoice) {
     val code = remember {
         buildAnnotatedString {
-            withStyle(SpanStyle(color = Color(0xFF82A8F0))) { append("def ") }
-            withStyle(SpanStyle(color = Color(0xFF72C6E4))) { append("greet") }
+            withStyle(SpanStyle(color = Color(0xFFF7B474))) { append("def ") }
+            withStyle(SpanStyle(color = Color(0xFF7AB8F5))) { append("greet") }
             append("(name):  ")
-            withStyle(SpanStyle(color = Color(0xFFB8A6EE))) { append("return ") }
-            withStyle(SpanStyle(color = Color(0xFFE2B48A))) { append("f\"Hi {name}\"") }
+            withStyle(SpanStyle(color = Color(0xFFF28C38))) { append("return ") }
+            withStyle(SpanStyle(color = Color(0xFFA8D48C))) { append("f\"Hi {name}\"") }
         }
     }
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .background(EditorBackground, RoundedCornerShape(12.dp))
-            .border(1.dp, DividerNavy, RoundedCornerShape(12.dp))
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .background(Ink, RoundedCornerShape(12.dp))
+            .border(1.dp, SlateLine, RoundedCornerShape(12.dp))
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
-        Text(code, fontFamily = FontFamily.Monospace, fontSize = sizeSp.sp, color = Color(0xFFD8DEEA), softWrap = false)
+        Text(
+            code,
+            fontFamily = if (font == CodeFontChoice.SystemMono) FontFamily.Monospace else CodeFont,
+            fontSize = sizeSp.sp,
+            color = Color(0xFFDCE2EA),
+            softWrap = false,
+        )
     }
 }
 
@@ -324,7 +441,7 @@ private fun LanguageRow() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        IconTile(Icons.Filled.Language, size = 40.dp)
+        IconTile(Icons.Outlined.Language, size = 40.dp)
         Column(Modifier.weight(1f)) {
             Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.bodyLarge)
             Text(current.label(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -355,7 +472,7 @@ private fun LanguageRow() {
                         RadioButton(
                             selected = language == current,
                             onClick = null,
-                            colors = RadioButtonDefaults.colors(selectedColor = ElectricBlue),
+                            colors = RadioButtonDefaults.colors(selectedColor = Orange),
                         )
                         Text(language.label(), style = MaterialTheme.typography.bodyLarge)
                     }

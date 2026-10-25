@@ -3,7 +3,7 @@ package dev.skyloft.skypython.ui.theme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -20,12 +20,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import dev.skyloft.skypython.R
 
-/** Colours shared by every top bar: flat [BarNavy], light icons and title. */
+/** Colours shared by every top bar: the page's own [Slate] (a calm, continuous header), light icons. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun skyTopBarColors() = TopAppBarDefaults.topAppBarColors(
-    containerColor = BarNavy,
-    scrolledContainerColor = BarNavy,
+    containerColor = Slate,
+    scrolledContainerColor = SlateBar,
     navigationIconContentColor = TextBright,
     titleContentColor = TextBright,
     actionIconContentColor = TextBright,
@@ -34,10 +34,10 @@ fun skyTopBarColors() = TopAppBarDefaults.topAppBarColors(
 /** 1dp hairline under a bar or between sections. */
 @Composable
 fun Hairline(modifier: Modifier = Modifier) {
-    HorizontalDivider(modifier, thickness = 1.dp, color = DividerNavy)
+    HorizontalDivider(modifier, thickness = 1.dp, color = SlateLine)
 }
 
-/** The one top bar of every secondary screen: [BarNavy], back arrow, title, a [Hairline] under it. */
+/** The one top bar of every secondary screen: back arrow, title, a [Hairline] under it. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SkyTopBar(
@@ -49,11 +49,11 @@ fun SkyTopBar(
     Column {
         TopAppBar(
             title = {
-                Text(title, fontSize = 20.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(title, fontSize = 19.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             },
             navigationIcon = {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.action_back))
                 }
             },
             actions = actions,

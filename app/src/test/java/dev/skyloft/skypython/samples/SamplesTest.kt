@@ -73,6 +73,20 @@ class SamplesTest {
         assertFalse(File(File(root, "samples"), "missing.py").exists())
     }
 
+    @Test
+    fun filterMatchesEveryWordInTitleOrName() {
+        val all = listOf(
+            Sample("01_hello.py", "Hello world: print text and ask for your name"),
+            Sample("02_loops_and_lists.py", "Loops and lists: for, while, ranges"),
+            Sample("06_json.py", "JSON: turn Python data into JSON text"),
+        )
+        assertEquals(all, filterSamples(all, "   "))
+        assertEquals(listOf(all[1]), filterSamples(all, "LOOPS"))
+        assertEquals(listOf(all[1]), filterSamples(all, "lists for"))
+        assertEquals(listOf(all[2]), filterSamples(all, "06_json"))
+        assertEquals(emptyList<Sample>(), filterSamples(all, "hello json"))
+    }
+
     /** Unit tests run with cwd = app/. */
     @Test
     fun bundledSamplesAllHaveCommentTitles() {

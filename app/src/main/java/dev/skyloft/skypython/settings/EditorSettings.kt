@@ -14,4 +14,30 @@ data class EditorSettings(
     val symbolKeys: String = DEFAULT_SYMBOL_KEYS,
     /** Let the soft keyboard suggest and autocorrect words; off keeps code intact. */
     val keyboardSuggestions: Boolean = false,
+    /** Typeface of the code editor (the console and terminal follow it too). */
+    val codeFont: CodeFontChoice = CodeFontChoice.JetBrainsMono,
+    /** Text size of the interpreter and the terminal, in sp (see [clampTerminalFontSize]). */
+    val terminalFontSizeSp: Int = 14,
+    /** Colours of the interpreter and the terminal. */
+    val terminalTheme: TerminalTheme = TerminalTheme.Dark,
 )
+
+/** Code typeface choices. [key] is what DataStore keeps (stable across renames). */
+enum class CodeFontChoice(val key: String) {
+    JetBrainsMono("jetbrains_mono"),
+    SystemMono("system_mono");
+
+    companion object {
+        fun fromKey(key: String?): CodeFontChoice = entries.firstOrNull { it.key == key } ?: JetBrainsMono
+    }
+}
+
+/** Terminal colour themes: the app's slate, or near-black (easier on OLED screens at night). */
+enum class TerminalTheme(val key: String) {
+    Dark("dark"),
+    Black("black");
+
+    companion object {
+        fun fromKey(key: String?): TerminalTheme = entries.firstOrNull { it.key == key } ?: Dark
+    }
+}

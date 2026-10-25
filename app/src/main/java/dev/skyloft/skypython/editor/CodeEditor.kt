@@ -1,5 +1,9 @@
 package dev.skyloft.skypython.editor
 
+import io.github.rosemoe.sora.widget.SelectionMovement
+import dev.skyloft.skypython.settings.CodeFontChoice
+import dev.skyloft.skypython.R
+import androidx.core.content.res.ResourcesCompat
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.ColorFilter
@@ -66,8 +70,8 @@ import dev.skyloft.skypython.settings.symbolInsertion
 import io.github.rosemoe.sora.widget.schemes.EditorColorScheme
 import org.eclipse.tm4e.core.registry.IThemeSource
 
-private const val EDITOR_BG = 0xFF0E1424.toInt()
-private const val GUTTER_DIVIDER = 0xFF1E2638.toInt()
+private const val EDITOR_BG = 0xFF1C2530.toInt()
+private const val GUTTER_DIVIDER = 0xFF2A3644.toInt()
 private const val THEME_PATH = "textmate/skypython-dark.json"
 private const val THEME_NAME = "skypython-dark"
 private const val PYTHON_SCOPE = "source.python"
@@ -114,6 +118,8 @@ private class SkyColorScheme(registry: ThemeRegistry) :
         // Selection toolbar (cut / copy / paste …): the same dark popup as the suggestions.
         TEXT_ACTION_WINDOW_BACKGROUND -> POPUP_BG
         TEXT_ACTION_WINDOW_ICON_COLOR -> POPUP_TEXT
+        // Selection handles: the accent, like the cursor (Sora's default is a stock blue).
+        SELECTION_HANDLE -> ACCENT
         PROBLEM_ERROR -> SQUIGGLE_ERROR
         PROBLEM_WARNING -> SQUIGGLE_WARNING
         else -> super.getColor(type)
@@ -122,18 +128,19 @@ private class SkyColorScheme(registry: ThemeRegistry) :
 
 private const val PINCH_SAVE_DELAY_MS = 600L
 private val JUMP_RESCROLL_MS = longArrayOf(150L, 500L, 1_200L)
-// Completion popup and problem tooltip: the app's raised panel (PanelNavy) and text colours.
-private const val POPUP_BG = 0xFF1B2338.toInt()
-private const val POPUP_BORDER = 0xFF273149.toInt()
-private const val POPUP_SELECTED = 0xFF263457.toInt()
-private const val POPUP_TEXT = 0xFFE4E8F2.toInt()
-private const val POPUP_TEXT_SECONDARY = 0xFF9AA5BF.toInt()
-private const val POPUP_MATCHED = 0xFF86AEFF.toInt()
-private const val SQUIGGLE_ERROR = 0xFFFF7A8A.toInt()
+// Completion popup and problem tooltip: the app's raised panel (SlatePanel) and text colours.
+private const val POPUP_BG = 0xF5273240.toInt()
+private const val POPUP_BORDER = 0xFF334051.toInt()
+private const val POPUP_SELECTED = 0xFF4A3B2B.toInt()
+private const val POPUP_TEXT = 0xFFE8ECF1.toInt()
+private const val POPUP_TEXT_SECONDARY = 0xFF8C99A8.toInt()
+private const val POPUP_MATCHED = 0xFFF5A962.toInt()
+private const val SQUIGGLE_ERROR = 0xFFFF7B72.toInt()
+private const val ACCENT = 0xFFF28C38.toInt()
 private const val SQUIGGLE_WARNING = 0xFFE3B95C.toInt()
 
 /**
- * Completion-list badge: the kind's first letter on a soft tonal circle in the accent blue,
+ * Completion-list badge: the kind's first letter on a soft tonal circle in the accent orange,
  * instead of Sora's saturated per-kind colours.
  */
 internal class CompletionBadge(kind: CompletionItemKind) : Drawable() {
@@ -167,7 +174,7 @@ internal class CompletionBadge(kind: CompletionItemKind) : Drawable() {
     override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
 }
 
-private const val BADGE_BG = 0xFF2A3A63.toInt()
+private const val BADGE_BG = 0xFF3D3328.toInt()
 
 /** Text and a position in it, as the language server takes them: 1-based [line], UTF-16 [column]. */
 data class LookupPosition(val source: String, val line: Int, val column: Int)
@@ -191,6 +198,17 @@ class EditorController {
         v.getComponent(EditorTextActionWindow::class.java).dismiss()
         v.hideAutoCompleteWindow()
     }
+
+    /** Focuses the code and opens the soft keyboard (the symbol bar's keyboard key). */
+    fun showKeyboard() {
+        val v = view ?: return
+        v.requestFocus()
+        v.showSoftInput()
+    }
+
+    /** Moves the cursor one character left / right (the symbol bar's arrow keys). */
+    fun cursorLeft() { view?.moveSelection(SelectionMovement.LEFT) }
+    fun cursorRight() { view?.moveSelection(SelectionMovement.RIGHT) }
 
     fun undo() { view?.undo() }
     fun redo() { view?.redo() }
@@ -468,11 +486,29 @@ private fun CodeEditor.cursorPosition(): CursorPosition {
     return CursorPosition(line = c.leftLine, column = c.leftColumn, lineCount = text.lineCount)
 }
 
+@Volatile private var jetBrainsMono: Typeface? = null
+
+/**
+ * The code typeface for [choice]: bundled JetBrains Mono (loaded once), or the system monospace.
+ * Shared by the editor, the console and the terminal.
+ */
+fun codeTypeface(context: Context, choice: CodeFontChoice): Typeface = when (choice) {
+    CodeFontChoice.SystemMono -> Typeface.MONOSPACE
+    CodeFontChoice.JetBrainsMono -> jetBrainsMono
+        ?: (runCatching { ResourcesCompat.getFont(context, R.font.jetbrains_mono_regular) }.getOrNull() ?: Typeface.MONOSPACE)
+            .also { jetBrainsMono = it }
+}
+
 /** True while [applyConfig] sets the text size, so that change isn't taken for a pinch. */
 private var applyingTextSize = false
 
 /** Applies user settings; each setter is skipped when unchanged so a re-apply doesn't relayout. */
 internal fun CodeEditor.applyConfig(config: EditorViewConfig) {
+    val face = codeTypeface(context, config.codeFont)
+    if (typefaceText !== face) {
+        typefaceText = face
+        typefaceLineNumber = face
+    }
     // Sora's setTextSize takes sp and scales by the display's font metrics itself.
     val px = android.util.TypedValue.applyDimension(
         android.util.TypedValue.COMPLEX_UNIT_SP, config.textSizeSp, resources.displayMetrics,
@@ -610,8 +646,6 @@ fun CodeEditor(
         factory = { ctx ->
             TextMateSetup.ensure(ctx)
             DebugAwareCodeEditor(ctx).apply {
-                typefaceText = Typeface.MONOSPACE
-                typefaceLineNumber = Typeface.MONOSPACE
                 tabWidth = 4
                 // Backspace in leading spaces removes a whole indent level (4 spaces).
                 props.deleteMultiSpaces = -1

@@ -32,7 +32,6 @@
     <string name="title_terminal">Terminal</string>
 
     <!-- Drawer -->
-    <string name="drawer_section_run">Run</string>
     <string name="drawer_section_tools">Tools</string>
     <string name="drawer_section_settings">Settings</string>
     <string name="drawer_line">Line: %1$d/%2$d</string>
@@ -248,6 +247,26 @@
     <string name="share_chooser_title">Share %1$s</string>
     <string name="share_no_app">No app can share this file</string>
 
+    <!-- ▶ Run on a terminal: output actions -->
+    <string name="use_simple_output">Use simple output</string>
+    <string name="run_again">Run again</string>
+    <string name="back_to_editor">Back to editor</string>
+    <string name="run_exit_code">Exit code %1$d</string>
+    <string name="output_more">More options</string>
+    <string name="output_copy_all">Copy all</string>
+    <string name="output_share">Share output</string>
+    <string name="output_save">Save output</string>
+    <string name="output_save_as">Save as…</string>
+    <string name="output_clear">Clear</string>
+    <string name="output_scroll_top">Scroll to top</string>
+    <string name="output_scroll_bottom">Scroll to bottom</string>
+    <string name="output_font_smaller">Smaller text</string>
+    <string name="output_font_bigger">Bigger text</string>
+    <string name="output_font_size">Text %1$d sp</string>
+    <string name="output_copied">Output copied</string>
+    <string name="output_nothing">No output yet</string>
+    <string name="output_saved">Saved to %1$s</string>
+    <string name="output_save_failed">Couldn\'t save: %1$s</string>
     <!-- Debugger -->
     <string name="title_debug">Debug</string>
     <string name="debug_run_menu_run">Run</string>
@@ -365,4 +384,69 @@
     <string name="settings_keyboard_suggestions">Keyboard suggestions</string>
     <string name="settings_keyboard_suggestions_summary">Let the keyboard suggest and autocorrect words. Off keeps code from being changed.</string>
     <string name="settings_pinch_hint">Tip: pinch the editor with two fingers to zoom.</string>
+    <!-- Orange theme: status line, drawer, settings, terminal, samples -->
+    <string name="editor_status_python">Python %1$s</string>
+    <string name="editor_status_cursor">Ln %1$d, Col %2$d</string>
+    <string name="editor_keyboard_show">Show keyboard</string>
+    <string name="editor_keyboard_hide">Hide keyboard</string>
+    <string name="editor_cursor_left">Cursor left</string>
+    <string name="editor_cursor_right">Cursor right</string>
+    <string name="editor_close_tab">Close %1$s</string>
+    <string name="editor_go_to_error">Go to error</string>
+    <string name="editor_empty_hint">Create a file or open one from your projects to start coding.</string>
+    <string name="drawer_section_workspace">Workspace</string>
+    <string name="drawer_projects">Projects</string>
+    <string name="drawer_editor">Editor</string>
+    <string name="settings_font_family">Font family</string>
+    <string name="settings_font_jetbrains_mono" translatable="false">JetBrains Mono</string>
+    <string name="settings_font_system_mono">System monospace</string>
+    <string name="settings_code_completion">Code completion</string>
+    <string name="settings_code_completion_summary">Suggestions while typing and error underlines</string>
+    <string name="settings_section_terminal">Terminal</string>
+    <string name="settings_terminal_theme">Theme</string>
+    <string name="settings_terminal_theme_dark">Dark</string>
+    <string name="settings_terminal_theme_black">Black</string>
+    <string name="terminal_command_hint">Type a command…</string>
+    <string name="samples_search">Search samples</string>
+    <string name="samples_search_hint">Search…</string>
+    <string name="samples_no_match">No samples match “%1$s”</string>
+    <string name="action_clear_search">Clear search</string>
+
+    <!-- Problem reports -->
+    <string name="report_problem">Report a problem</string>
+    <string name="about_report_summary">Send an error report to the developers</string>
+    <string name="report_privacy">Nothing is sent automatically. Review the report before sending: it has the error and device details, never your code or files.</string>
+    <string name="report_attach">Attached problem</string>
+    <string name="report_none">None</string>
+    <string name="report_kind_crash">Crash · %1$s</string>
+    <string name="report_kind_error">%1$s · %2$s</string>
+    <string name="report_description_label">What were you doing?</string>
+    <string name="report_description_hint">Steps, what you expected, what happened instead</string>
+    <string name="report_include_device">Include device info</string>
+    <string name="report_include_device_summary">Model, Android version, memory, network, mobile operator</string>
+    <string name="report_open_issue">Open GitHub issue</string>
+    <string name="report_share">Share</string>
+    <string name="report_copy">Copy</string>
+    <string name="report_copied">Report copied</string>
+    <string name="report_issue_copied">The full report is also on the clipboard</string>
+    <string name="report_issue_truncated">The report was too long for the link. The full report is on the clipboard: paste it into the issue.</string>
+    <string name="report_no_browser">No browser to open GitHub. The report is on the clipboard.</string>
+    <string name="report_delete">Delete this report</string>
+    <string name="report_deleted">Report deleted</string>
+    <string name="report_full_text">Full report</string>
+    <string name="report_share_subject">SkyPython problem report</string>
+    <string name="report_share_chooser">Send the report</string>
+    <string name="report_share_summary">SkyPython problem report: %1$s (full report attached)</string>
+    <string name="report_banner">%1$s: something went wrong</string>
+    <string name="report_banner_action">Report</string>
+    <string name="report_where_python">Python setup</string>
+    <string name="report_where_terminal">Terminal</string>
+    <string name="report_where_language_server">Code hints</string>
+    <string name="report_where_debugger">Debugger</string>
+    <string name="report_where_pip">pip setup</string>
+    <string name="report_where_app">SkyPython</string>
+    <string name="crash_dialog_title">SkyPython closed unexpectedly</string>
+    <string name="crash_dialog_text">Send a report to the developers? You will see the whole report before anything is sent.</string>
+    <string name="crash_dialog_send">Send report</string>
+    <string name="crash_dialog_later">Not now</string>
 </resources>

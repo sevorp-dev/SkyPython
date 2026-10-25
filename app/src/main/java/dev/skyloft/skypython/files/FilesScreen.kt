@@ -19,18 +19,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.NoteAdd
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.CreateNewFolder
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.FileOpen
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.NoteAdd
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.ArrowUpward
+import androidx.compose.material.icons.outlined.CreateNewFolder
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.FileOpen
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import dev.skyloft.skypython.share.shareFile
@@ -62,7 +62,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
@@ -75,17 +74,17 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import dev.skyloft.skypython.ui.theme.BarNavy
-import dev.skyloft.skypython.ui.theme.DividerNavy
-import dev.skyloft.skypython.ui.theme.EditorBackground
+import dev.skyloft.skypython.ui.theme.SlateBar
+import dev.skyloft.skypython.ui.theme.SlateLine
+import dev.skyloft.skypython.ui.theme.Slate
 import dev.skyloft.skypython.ui.theme.MutedText
 import dev.skyloft.skypython.ui.theme.BrandFab
 import dev.skyloft.skypython.ui.theme.Hairline
-import dev.skyloft.skypython.ui.theme.SkyBlue
+import dev.skyloft.skypython.ui.theme.OrangeSoft
 import dev.skyloft.skypython.ui.theme.TextBright
 import dev.skyloft.skypython.ui.theme.SkyPythonTheme
 import androidx.compose.foundation.background
-import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -252,7 +251,7 @@ private fun FilesContent(
     }
 
     Scaffold(
-        containerColor = EditorBackground,
+        containerColor = Slate,
         topBar = {
             SkyTopBar(
                 title = stringResource(R.string.title_files),
@@ -260,7 +259,7 @@ private fun FilesContent(
                 divider = false,
                 actions = {
                     IconButton(onClick = onOpenExternal) {
-                        Icon(Icons.Filled.FileOpen, contentDescription = stringResource(R.string.files_open_external))
+                        Icon(Icons.Outlined.FileOpen, contentDescription = stringResource(R.string.files_open_external))
                     }
                 },
             )
@@ -296,7 +295,7 @@ private fun FilesContent(
                             onDelete = { onDelete(entry) },
                             onShare = { onShare(entry) },
                         )
-                        HorizontalDivider(Modifier.padding(start = 72.dp), color = DividerNavy)
+                        HorizontalDivider(Modifier.padding(start = 72.dp), color = SlateLine)
                     }
                 }
             }
@@ -309,13 +308,13 @@ private fun Breadcrumbs(state: FilesState, onUp: () -> Unit, onNavigate: (File) 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(BarNavy)
+            .background(SlateBar)
             .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onUp, enabled = state.canGoUp) {
             Icon(
-                Icons.Filled.ArrowUpward,
+                Icons.Outlined.ArrowUpward,
                 contentDescription = stringResource(R.string.files_up_one_folder),
                 tint = if (state.canGoUp) TextBright else MutedText.copy(alpha = 0.5f),
             )
@@ -329,7 +328,7 @@ private fun Breadcrumbs(state: FilesState, onUp: () -> Unit, onNavigate: (File) 
             state.breadcrumbs.forEachIndexed { index, crumb ->
                 if (index > 0) {
                     Icon(
-                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        Icons.AutoMirrored.Outlined.KeyboardArrowRight,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
                         tint = MutedText,
@@ -365,24 +364,24 @@ private fun EntryRow(
         leadingContent = {
             Icon(
                 when {
-                    entry.isDirectory -> Icons.Filled.Folder
-                    entry.name.endsWith(".py") -> Icons.Filled.Code
-                    else -> Icons.Filled.Description
+                    entry.isDirectory -> Icons.Outlined.Folder
+                    entry.name.endsWith(".py") -> Icons.Outlined.Code
+                    else -> Icons.Outlined.Description
                 },
                 contentDescription = stringResource(if (entry.isDirectory) R.string.files_folder else R.string.files_file),
-                tint = if (entry.isDirectory) SkyBlue else MutedText,
+                tint = if (entry.isDirectory) OrangeSoft else MutedText,
             )
         },
         headlineContent = { Text(entry.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         trailingContent = {
             Box {
                 IconButton(onClick = { menuOpen = true }) {
-                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.files_more_options, entry.name))
+                    Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.files_more_options, entry.name))
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.title_share)) },
-                        leadingIcon = { Icon(Icons.Filled.Share, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Outlined.Share, contentDescription = null) },
                         onClick = {
                             menuOpen = false
                             onShare()
@@ -390,7 +389,7 @@ private fun EntryRow(
                     )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.action_rename)) },
-                        leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Outlined.Edit, contentDescription = null) },
                         onClick = {
                             menuOpen = false
                             onRename()
@@ -398,7 +397,7 @@ private fun EntryRow(
                     )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.action_delete)) },
-                        leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null) },
                         onClick = {
                             menuOpen = false
                             onDelete()
@@ -414,11 +413,11 @@ private fun EntryRow(
 private fun NewItemFab(onNewFile: () -> Unit, onNewFolder: () -> Unit) {
     var menuOpen by remember { mutableStateOf(false) }
     Box {
-        BrandFab(onClick = { menuOpen = true }, icon = Icons.Filled.Add, contentDescription = stringResource(R.string.files_new))
+        BrandFab(onClick = { menuOpen = true }, icon = Icons.Outlined.Add, contentDescription = stringResource(R.string.files_new))
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.files_new_file)) },
-                leadingIcon = { Icon(Icons.AutoMirrored.Filled.NoteAdd, contentDescription = null) },
+                leadingIcon = { Icon(Icons.AutoMirrored.Outlined.NoteAdd, contentDescription = null) },
                 onClick = {
                     menuOpen = false
                     onNewFile()
@@ -426,7 +425,7 @@ private fun NewItemFab(onNewFile: () -> Unit, onNewFolder: () -> Unit) {
             )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.files_new_folder)) },
-                leadingIcon = { Icon(Icons.Filled.CreateNewFolder, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Outlined.CreateNewFolder, contentDescription = null) },
                 onClick = {
                     menuOpen = false
                     onNewFolder()

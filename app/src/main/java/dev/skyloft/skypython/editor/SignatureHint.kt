@@ -14,7 +14,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
+import dev.skyloft.skypython.ui.theme.CodeFont
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -60,7 +60,7 @@ internal fun SignatureHintBubble(state: HintState) {
     Text(
         text,
         color = MaterialTheme.colorScheme.onSurface,
-        fontFamily = FontFamily.Monospace,
+        fontFamily = CodeFont,
         fontSize = 13.sp,
         maxLines = 2,
         overflow = TextOverflow.Ellipsis,

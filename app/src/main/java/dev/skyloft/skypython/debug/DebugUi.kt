@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.debug
 
+import dev.skyloft.skypython.ui.theme.CodeFont
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
@@ -45,7 +46,7 @@ fun rememberDebugMarks(
     val frame = st.currentFrame
     val executionLine = frame?.line?.takeIf { st.phase == DebugPhase.Paused && frame.file == docPath }
     val breakpointColor = colors.error.toArgb()
-    val executionColor = colors.secondary.toArgb()
+    val executionColor = colors.inversePrimary.toArgb() // the solid orange accent
     return remember(docPath, list, executionLine, breakpointColor, executionColor) {
         EditorDebugMarks(
             breakpoints = list.mapTo(HashSet()) { it.line },
@@ -77,7 +78,7 @@ fun BreakpointConditionDialog(vm: DebugViewModel, path: String, line: Int, onDis
                     onValueChange = { text = it },
                     label = { Text(stringResource(R.string.debug_condition_label)) },
                     singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = CodeFont),
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.None,
                         autoCorrectEnabled = false,

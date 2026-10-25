@@ -27,7 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
+import dev.skyloft.skypython.ui.theme.CodeFont
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -113,7 +113,7 @@ private fun OutlineRow(row: Outlines.Row, selected: Boolean, onClick: () -> Unit
         Text(
             item.name,
             color = colors.onSurface,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = CodeFont,
             fontSize = 15.sp,
             fontWeight = if (item.kind == SymbolKind.CLASS) FontWeight.SemiBold else FontWeight.Normal,
             maxLines = 1,

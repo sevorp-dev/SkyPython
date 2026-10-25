@@ -7,6 +7,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import dev.skyloft.skypython.locale.AppLocale
 import dev.skyloft.skypython.ui.theme.SkyPythonTheme
 
@@ -25,7 +34,12 @@ class MainActivity : ComponentActivity() {
         )
         setContent {
             SkyPythonTheme {
-                SkyPythonApp()
+                val snackbar = remember { SnackbarHostState() }
+                // The error banner floats above every screen.
+                Box(Modifier.fillMaxSize()) {
+                    SkyPythonApp(snackbar)
+                    SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().imePadding())
+                }
             }
         }
     }

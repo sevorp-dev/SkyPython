@@ -3,9 +3,11 @@ package dev.skyloft.skypython
 import android.app.Application
 import android.widget.Toast
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,7 +19,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -40,6 +45,10 @@ import dev.skyloft.skypython.files.describeFileError
 import dev.skyloft.skypython.locale.AppLocale
 import dev.skyloft.skypython.pip.PipScreen
 import dev.skyloft.skypython.pip.PipViewModel
+import dev.skyloft.skypython.report.CrashPrompt
+import dev.skyloft.skypython.report.ErrorBanner
+import dev.skyloft.skypython.report.ErrorReporter
+import dev.skyloft.skypython.report.ReportScreen
 import dev.skyloft.skypython.samples.SamplesScreen
 import dev.skyloft.skypython.settings.EditorSettings
 import dev.skyloft.skypython.settings.SettingsScreen
@@ -55,6 +64,7 @@ import java.io.File
 private object Routes {
     const val EDITOR = "editor"
     const val CONSOLE = "console"
+    const val RUN = "run"
     const val INTERPRETER = "interpreter"
     const val TERMINAL = "terminal"
     const val FILES = "files"
@@ -62,6 +72,11 @@ private object Routes {
     const val SETTINGS = "settings"
     const val SAMPLES = "samples"
     const val ABOUT = "about"
+    const val REPORT = "report"
+    const val REPORT_ID = "id"
+
+    /** The Report screen, with a saved crash or a recent error attached when [id] is given. */
+    fun report(id: String? = null) = if (id == null) REPORT else "$REPORT?$REPORT_ID=$id"
 }
 
 /**
@@ -69,7 +84,8 @@ private object Routes {
  * shares the same instances (scoped to the activity).
  */
 @Composable
-fun SkyPythonApp() {
+// [snackbar]: where problems the app survived are announced; MainActivity draws it above every screen.
+fun SkyPythonApp(snackbar: SnackbarHostState) {
     val context = LocalContext.current
     val app = context.applicationContext as Application
     // Canonical: filesDir is reached via a symlink (/data/user/0 -> /data/data) and Files lists
@@ -92,6 +108,11 @@ fun SkyPythonApp() {
         key = "terminal-shell",
         factory = TerminalViewModel.factory(app, workspace.root, TerminalKind.Shell),
     )
+    // ▶ Run: the script on a terminal of its own (real input(), colours, Ctrl+C).
+    val runVm: TerminalViewModel = viewModel(
+        key = "terminal-run",
+        factory = TerminalViewModel.factory(app, workspace.root, TerminalKind.Run),
+    )
 
     val debugVm: DebugViewModel = viewModel(factory = DebugViewModel.factory(app, workspace.root))
     // Activity-scoped so other screens can call pipVm.installNow(...).
@@ -100,6 +121,12 @@ fun SkyPythonApp() {
     val nav = rememberNavController()
     val scope = rememberCoroutineScope()
     val openConsole = { nav.go(Routes.CONSOLE) }
+    val openRun = { nav.go(Routes.RUN) }
+    val openInEditor = { file: File, line: Int ->
+        editorVm.openAt(file, line)
+        nav.popBackStack(Routes.EDITOR, inclusive = false)
+        Unit
+    }
     // Debugging stays in the editor: the program runs in the console, its panel sits under the code.
     val attachDebugger = { target: RunTarget.Debug -> debugVm.attach(target) { consoleVm.isActive(target) } }
     val startDebug: (File) -> Unit = { file ->
@@ -121,6 +148,14 @@ fun SkyPythonApp() {
         }
     }
     var conditionFor by remember { mutableStateOf<Pair<String, Int>?>(null) }
+    // Problem reports name the screen the user was on.
+    DisposableEffect(nav) {
+        val listener = NavController.OnDestinationChangedListener { _, destination, _ -> ErrorReporter.onScreen(destination.route) }
+        nav.addOnDestinationChangedListener(listener)
+        onDispose { nav.removeOnDestinationChangedListener(listener) }
+    }
+    ErrorBanner(snackbar) { nav.go(Routes.report(it.id)) }
+    CrashPrompt { nav.go(Routes.report(it.id)) }
 
     NavHost(navController = nav, startDestination = Routes.EDITOR) {
         composable(Routes.EDITOR) {
@@ -130,27 +165,31 @@ fun SkyPythonApp() {
                 onEditCondition = { path, line -> conditionFor = path to line },
                 onUnsupported = { Toast.makeText(context, R.string.debug_breakpoints_need_project_file, Toast.LENGTH_SHORT).show() },
             )
+            // Save first so a rename/delete in Files never loses edits.
+            val openFilesScreen: () -> Unit = {
+                scope.launch {
+                    editorVm.saveAll().join()
+                    filesVm.refresh()
+                    nav.go(Routes.FILES)
+                }
+            }
             EditorScreen(
                 viewModel = editorVm,
                 settings = settings,
                 onRun = { file ->
-                    // Only one program at a time: a running one makes this ask first.
-                    if (consoleVm.requestRun(file)) openConsole()
+                    // One script at a time: a running one makes this ask first (RunBusyDialog).
+                    if (runVm.requestRun(file)) openRun()
                 },
-                onOpenFiles = {
-                    // Save first so a rename/delete in Files never loses edits.
-                    scope.launch {
-                        editorVm.saveAll().join()
-                        filesVm.refresh()
-                        nav.go(Routes.FILES)
-                    }
-                },
+                onOpenFiles = openFilesScreen,
                 onDebug = startDebug,
                 debugMarks = debugMarks,
                 debugPanel = if (debugState.phase == DebugPhase.Idle) null else { { DebugPanelHost(debugVm, consoleVm) } },
                 onFontSizeChange = { sp -> scope.launch { settingsStore.update { it.copy(fontSizeSp = sp) } } },
                 onDrawerAction = { action ->
                     when (action) {
+                        DrawerAction.Projects -> openFilesScreen()
+                        // The drawer is only opened from the editor: closing it is all there is to do.
+                        DrawerAction.Editor -> Unit
                         DrawerAction.Debug -> scope.launch { editorVm.runCurrent()?.let(startDebug) }
                         DrawerAction.Interpreter -> {
                             interpreterVm.open()
@@ -167,6 +206,7 @@ fun SkyPythonApp() {
                         }
                         DrawerAction.Samples -> nav.go(Routes.SAMPLES)
                         DrawerAction.Settings -> nav.go(Routes.SETTINGS)
+                        DrawerAction.Report -> nav.go(Routes.report())
                         DrawerAction.About -> nav.go(Routes.ABOUT)
                         DrawerAction.Share -> scope.launch {
                             editorVm.saveAll().join()
@@ -180,6 +220,7 @@ fun SkyPythonApp() {
                     }
                 },
             )
+            RunBusyDialog(runVm = runVm, onConfirmed = openRun)
             RestartDialog(consoleVm = consoleVm, onConfirmed = onTargetConfirmed)
             conditionFor?.let { (path, line) ->
                 BreakpointConditionDialog(debugVm, path, line, onDismiss = { conditionFor = null })
@@ -187,6 +228,22 @@ fun SkyPythonApp() {
         }
         composable(Routes.CONSOLE) {
             ConsoleScreen(viewModel = consoleVm, onBack = { nav.popBackStack() })
+        }
+        val saveTerminalFont: (Int) -> Unit = { sp -> scope.launch { settingsStore.update { it.copy(terminalFontSizeSp = sp) } } }
+        composable(Routes.RUN) {
+            TerminalScreen(
+                viewModel = runVm,
+                onBack = { nav.popBackStack() },
+                // No pseudo-terminal: the same script on the line-mode console over pipes.
+                onUseSimpleConsole = onUseSimpleOutput@{
+                    val script = runVm.state.value.script ?: return@onUseSimpleOutput
+                    nav.popBackStack()
+                    if (consoleVm.requestRun(script)) openConsole()
+                },
+                onOpenInEditor = openInEditor,
+                settings = settings,
+                onFontSizeChange = saveTerminalFont,
+            )
         }
         // Fallback if the pseudo-terminal can't be opened: the line-mode console over pipes.
         val simpleConsole = { start: () -> Boolean ->
@@ -199,6 +256,9 @@ fun SkyPythonApp() {
                 viewModel = interpreterVm,
                 onBack = { nav.popBackStack() },
                 onUseSimpleConsole = { simpleConsole(consoleVm::startInterpreter) },
+                settings = settings,
+                onFontSizeChange = saveTerminalFont,
+                onOpenInEditor = openInEditor,
             )
         }
         composable(Routes.TERMINAL) {
@@ -206,6 +266,9 @@ fun SkyPythonApp() {
                 viewModel = shellVm,
                 onBack = { nav.popBackStack() },
                 onUseSimpleConsole = { simpleConsole(consoleVm::startTerminal) },
+                settings = settings,
+                onFontSizeChange = saveTerminalFont,
+                onOpenInEditor = openInEditor,
             )
         }
         composable(Routes.FILES) {
@@ -250,7 +313,17 @@ fun SkyPythonApp() {
             )
         }
         composable(Routes.ABOUT) {
-            AboutScreen(onBack = { nav.popBackStack() })
+            AboutScreen(onBack = { nav.popBackStack() }, onReport = { nav.go(Routes.report()) })
+        }
+        composable(
+            "${Routes.REPORT}?${Routes.REPORT_ID}={${Routes.REPORT_ID}}",
+            arguments = listOf(navArgument(Routes.REPORT_ID) { type = NavType.StringType; nullable = true; defaultValue = null }),
+        ) { entry ->
+            ReportScreen(
+                reportId = entry.arguments?.getString(Routes.REPORT_ID),
+                settings = settings,
+                onBack = { nav.popBackStack() },
+            )
         }
     }
 }
@@ -274,6 +347,27 @@ private fun RestartDialog(consoleVm: ConsoleViewModel, onConfirmed: (RunTarget) 
         },
         dismissButton = {
             TextButton(onClick = consoleVm::dismissPendingRun) { Text(stringResource(R.string.action_cancel)) }
+        },
+    )
+}
+
+/** "One script at a time" for ▶ Run: asks before replacing the script still running. */
+@Composable
+private fun RunBusyDialog(runVm: TerminalViewModel, onConfirmed: () -> Unit) {
+    val state by runVm.state.collectAsStateWithLifecycle()
+    val pending = state.pending ?: return
+    AlertDialog(
+        onDismissRequest = runVm::dismissPendingRun,
+        title = { Text(stringResource(R.string.restart_title)) },
+        text = { Text(stringResource(R.string.restart_text, pending.name)) },
+        confirmButton = {
+            TextButton(onClick = {
+                runVm.confirmPendingRun()
+                onConfirmed()
+            }) { Text(stringResource(R.string.restart_confirm)) }
+        },
+        dismissButton = {
+            TextButton(onClick = runVm::dismissPendingRun) { Text(stringResource(R.string.action_cancel)) }
         },
     )
 }

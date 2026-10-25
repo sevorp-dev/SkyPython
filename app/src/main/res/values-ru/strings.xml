@@ -27,7 +27,6 @@
     <string name="title_terminal">Терминал</string>
 
     <!-- Drawer -->
-    <string name="drawer_section_run">Запуск</string>
     <string name="drawer_section_tools">Инструменты</string>
     <string name="drawer_section_settings">Настройки</string>
     <string name="drawer_line">Строка: %1$d/%2$d</string>
@@ -241,6 +240,26 @@
     <string name="share_chooser_title">Поделиться %1$s</string>
     <string name="share_no_app">Нет приложения, чтобы поделиться файлом</string>
 
+    <!-- ▶ Запуск в терминале: действия с выводом -->
+    <string name="use_simple_output">Простой вывод</string>
+    <string name="run_again">Запустить снова</string>
+    <string name="back_to_editor">К редактору</string>
+    <string name="run_exit_code">Код выхода %1$d</string>
+    <string name="output_more">Другие действия</string>
+    <string name="output_copy_all">Копировать всё</string>
+    <string name="output_share">Поделиться выводом</string>
+    <string name="output_save">Сохранить вывод</string>
+    <string name="output_save_as">Сохранить как…</string>
+    <string name="output_clear">Очистить</string>
+    <string name="output_scroll_top">В начало</string>
+    <string name="output_scroll_bottom">В конец</string>
+    <string name="output_font_smaller">Мельче</string>
+    <string name="output_font_bigger">Крупнее</string>
+    <string name="output_font_size">Текст %1$d sp</string>
+    <string name="output_copied">Вывод скопирован</string>
+    <string name="output_nothing">Вывода пока нет</string>
+    <string name="output_saved">Сохранено: %1$s</string>
+    <string name="output_save_failed">Не удалось сохранить: %1$s</string>
     <!-- Debugger -->
     <string name="title_debug">Отладка</string>
     <string name="debug_run_menu_run">Запуск</string>
@@ -355,4 +374,68 @@
     <string name="settings_keyboard_suggestions">Подсказки клавиатуры</string>
     <string name="settings_keyboard_suggestions_summary">Клавиатура предлагает и исправляет слова. Если выключено, код не будет искажён.</string>
     <string name="settings_pinch_hint">Совет: масштаб в редакторе меняется щипком двумя пальцами.</string>
+    <!-- Orange theme: status line, drawer, settings, terminal, samples -->
+    <string name="editor_status_python">Python %1$s</string>
+    <string name="editor_status_cursor">Стр %1$d, стлб %2$d</string>
+    <string name="editor_keyboard_show">Показать клавиатуру</string>
+    <string name="editor_keyboard_hide">Скрыть клавиатуру</string>
+    <string name="editor_cursor_left">Курсор влево</string>
+    <string name="editor_cursor_right">Курсор вправо</string>
+    <string name="editor_close_tab">Закрыть %1$s</string>
+    <string name="editor_go_to_error">Перейти к ошибке</string>
+    <string name="editor_empty_hint">Создайте файл или откройте его из проектов, чтобы начать.</string>
+    <string name="drawer_section_workspace">Рабочая область</string>
+    <string name="drawer_projects">Проекты</string>
+    <string name="drawer_editor">Редактор</string>
+    <string name="settings_font_family">Шрифт</string>
+    <string name="settings_font_system_mono">Системный моноширинный</string>
+    <string name="settings_code_completion">Автодополнение</string>
+    <string name="settings_code_completion_summary">Подсказки при наборе и подчёркивание ошибок</string>
+    <string name="settings_section_terminal">Терминал</string>
+    <string name="settings_terminal_theme">Тема</string>
+    <string name="settings_terminal_theme_dark">Тёмная</string>
+    <string name="settings_terminal_theme_black">Чёрная</string>
+    <string name="terminal_command_hint">Введите команду…</string>
+    <string name="samples_search">Поиск примеров</string>
+    <string name="samples_search_hint">Поиск…</string>
+    <string name="samples_no_match">Нет примеров по запросу «%1$s»</string>
+    <string name="action_clear_search">Очистить поиск</string>
+
+    <!-- Отчёты о проблемах -->
+    <string name="report_problem">Сообщить о проблеме</string>
+    <string name="about_report_summary">Отправить отчёт об ошибке разработчикам</string>
+    <string name="report_privacy">Ничего не отправляется автоматически. Проверьте отчёт перед отправкой: в нём ошибка и сведения об устройстве, но нет вашего кода и файлов.</string>
+    <string name="report_attach">Прикреплённая проблема</string>
+    <string name="report_none">Нет</string>
+    <string name="report_kind_crash">Сбой · %1$s</string>
+    <string name="report_kind_error">%1$s · %2$s</string>
+    <string name="report_description_label">Что вы делали?</string>
+    <string name="report_description_hint">Шаги, что ожидали и что произошло на самом деле</string>
+    <string name="report_include_device">Добавить сведения об устройстве</string>
+    <string name="report_include_device_summary">Модель, версия Android, память, сеть, мобильный оператор</string>
+    <string name="report_open_issue">Создать issue на GitHub</string>
+    <string name="report_share">Поделиться</string>
+    <string name="report_copy">Копировать</string>
+    <string name="report_copied">Отчёт скопирован</string>
+    <string name="report_issue_copied">Полный отчёт также скопирован в буфер обмена</string>
+    <string name="report_issue_truncated">Отчёт не поместился в ссылку целиком. Полный отчёт в буфере обмена — вставьте его в issue.</string>
+    <string name="report_no_browser">Нет браузера, чтобы открыть GitHub. Отчёт скопирован в буфер обмена.</string>
+    <string name="report_delete">Удалить этот отчёт</string>
+    <string name="report_deleted">Отчёт удалён</string>
+    <string name="report_full_text">Полный отчёт</string>
+    <string name="report_share_subject">Отчёт о проблеме SkyPython</string>
+    <string name="report_share_chooser">Отправить отчёт</string>
+    <string name="report_share_summary">Отчёт о проблеме SkyPython: %1$s (полный отчёт во вложении)</string>
+    <string name="report_banner">%1$s: что-то пошло не так</string>
+    <string name="report_banner_action">Сообщить</string>
+    <string name="report_where_python">Установка Python</string>
+    <string name="report_where_terminal">Терминал</string>
+    <string name="report_where_language_server">Подсказки кода</string>
+    <string name="report_where_debugger">Отладчик</string>
+    <string name="report_where_pip">Установка pip</string>
+    <string name="report_where_app">SkyPython</string>
+    <string name="crash_dialog_title">SkyPython неожиданно закрылся</string>
+    <string name="crash_dialog_text">Отправить отчёт разработчикам? Перед отправкой вы увидите его целиком.</string>
+    <string name="crash_dialog_send">Отправить отчёт</string>
+    <string name="crash_dialog_later">Не сейчас</string>
 </resources>

@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.skyloft.skypython.R
 import dev.skyloft.skypython.locale.AppLocale
+import dev.skyloft.skypython.report.ErrorReporter
 import dev.skyloft.skypython.runtime.ConsoleEvent
 import dev.skyloft.skypython.runtime.PythonInstaller
 import dev.skyloft.skypython.runtime.PythonPaths
@@ -290,6 +291,7 @@ class ConsoleViewModel(
         return result.fold(
             onSuccess = { it.also { paths = it } },
             onFailure = { e ->
+                ErrorReporter.report(ErrorReporter.Where.PYTHON, e)
                 _state.update {
                     it.copy(running = false, installError = e.message ?: e.toString())
                 }

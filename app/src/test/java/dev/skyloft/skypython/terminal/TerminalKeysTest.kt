@@ -72,6 +72,8 @@ class TerminalKeysTest {
         assertEquals(0, TerminalKeys.controlCode(' '.code))
         assertEquals('-'.code, TerminalKeys.controlCode('-'.code)) // no control form: unchanged
         assertEquals("\u0003", TerminalKeys.CTRL_C)
+        // Clear redraws the prompt with Ctrl+L: the same byte the keyboard's Ctrl+L sends.
+        assertEquals(TerminalKeys.controlCode('l'.code).toChar().toString(), TerminalKeys.CTRL_L)
     }
 
     @Test

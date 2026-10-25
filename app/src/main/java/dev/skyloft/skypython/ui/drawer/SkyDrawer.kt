@@ -4,12 +4,15 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,43 +31,56 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.LibraryBooks
-import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Terminal
+import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
+import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.DataObject
+import androidx.compose.material.icons.outlined.Feedback
 import androidx.compose.material.icons.outlined.Code
-import androidx.compose.material.icons.outlined.Slideshow
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.ui.text.font.FontFamily
+import dev.skyloft.skypython.ui.theme.CodeFont
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.skyloft.skypython.R
 import dev.skyloft.skypython.editor.CursorPosition
-import dev.skyloft.skypython.ui.theme.BarNavy
 import dev.skyloft.skypython.ui.theme.BrandText
+import dev.skyloft.skypython.ui.theme.Chevron
 import dev.skyloft.skypython.ui.theme.Hairline
-import dev.skyloft.skypython.ui.theme.IconTile
 import dev.skyloft.skypython.ui.theme.MutedText
+import dev.skyloft.skypython.ui.theme.Orange
+import dev.skyloft.skypython.ui.theme.OrangeSoft
+import dev.skyloft.skypython.ui.theme.OrangeTint
 import dev.skyloft.skypython.ui.theme.SectionLabel
+import dev.skyloft.skypython.ui.theme.Slate
+import dev.skyloft.skypython.ui.theme.SlateLine
+import dev.skyloft.skypython.ui.theme.SlatePanel
 import dev.skyloft.skypython.ui.theme.TextBright
 
 /** Texts of the drawer header; [line] and [offset] are null when no file is open. */
@@ -93,19 +109,30 @@ fun drawerHeader(
 data class DrawerSection(val title: String, @StringRes val titleRes: Int, val actions: List<DrawerAction>)
 
 val DRAWER_SECTIONS: List<DrawerSection> = listOf(
-    DrawerSection("Run", R.string.drawer_section_run, listOf(DrawerAction.Debug, DrawerAction.Interpreter, DrawerAction.Terminal)),
-    DrawerSection("Tools", R.string.drawer_section_tools, listOf(DrawerAction.Pip, DrawerAction.Share, DrawerAction.Samples)),
-    DrawerSection("Settings", R.string.drawer_section_settings, listOf(DrawerAction.Settings, DrawerAction.About)),
+    DrawerSection(
+        "Workspace",
+        R.string.drawer_section_workspace,
+        listOf(DrawerAction.Projects, DrawerAction.Editor, DrawerAction.Terminal),
+    ),
+    DrawerSection(
+        "Tools",
+        R.string.drawer_section_tools,
+        listOf(DrawerAction.Interpreter, DrawerAction.Debug, DrawerAction.Pip, DrawerAction.Share, DrawerAction.Samples),
+    ),
+    DrawerSection("Settings", R.string.drawer_section_settings, listOf(DrawerAction.Settings, DrawerAction.Report, DrawerAction.About)),
 )
 
 @StringRes
 private fun DrawerAction.labelRes(): Int = when (this) {
+    DrawerAction.Projects -> R.string.drawer_projects
+    DrawerAction.Editor -> R.string.drawer_editor
     DrawerAction.Interpreter -> R.string.title_interpreter
     DrawerAction.Terminal -> R.string.title_terminal
     DrawerAction.Pip -> R.string.title_pip
     DrawerAction.Share -> R.string.title_share
     DrawerAction.Samples -> R.string.title_samples
     DrawerAction.Settings -> R.string.title_settings
+    DrawerAction.Report -> R.string.report_problem
     DrawerAction.About -> R.string.title_about
     DrawerAction.Debug -> R.string.title_debug
 }
@@ -119,35 +146,38 @@ object DrawerLinks {
     val ALL: List<String> = listOf(TELEGRAM, GITHUB, DEVELOPER)
 }
 
-/** The sheet: one step below the header ([BarNavy]). */
-private val SheetColor = Color(0xFF121929)
-private val HeaderColor = BarNavy
-private val ItemText = TextBright
-
 private fun DrawerAction.icon(): ImageVector = when (this) {
-    DrawerAction.Interpreter -> Icons.Outlined.Slideshow
-    DrawerAction.Terminal -> Icons.Filled.Terminal
-    DrawerAction.Pip -> Icons.AutoMirrored.Filled.LibraryBooks
-    DrawerAction.Share -> Icons.Filled.Share
-    DrawerAction.Samples -> Icons.Filled.School
-    DrawerAction.Settings -> Icons.Filled.Settings
-    DrawerAction.About -> Icons.Filled.Info
-    DrawerAction.Debug -> Icons.Filled.BugReport
+    DrawerAction.Projects -> Icons.Outlined.Folder
+    DrawerAction.Editor -> Icons.Outlined.Code
+    DrawerAction.Interpreter -> Icons.Outlined.DataObject
+    DrawerAction.Terminal -> Icons.Outlined.Terminal
+    DrawerAction.Pip -> Icons.Outlined.Inventory2
+    DrawerAction.Share -> Icons.Outlined.Share
+    DrawerAction.Samples -> Icons.Outlined.School
+    DrawerAction.Settings -> Icons.Outlined.Settings
+    DrawerAction.Report -> Icons.Outlined.Feedback
+    DrawerAction.About -> Icons.Outlined.Info
+    DrawerAction.Debug -> Icons.Outlined.BugReport
 }
 
 /**
- * Content of the left tool drawer: file/cursor header, the Run / Tools / Settings sections and a
- * footer with the studio's links. The footer sits at the bottom when there is room and follows
- * the list (scrolling with it) on short screens.
+ * Content of the left tool drawer: brand header (mark, name, version, ✕), the open file, the
+ * Workspace / Tools / Settings sections and a footer with the studio's links. [current] is the
+ * screen the drawer was opened from (highlighted). The footer sits at the bottom when there is
+ * room and follows the list (scrolling with it) on short screens.
  */
 @Composable
 fun SkyDrawer(
     fileName: String?,
     cursor: CursorPosition,
+    onClose: () -> Unit = {},
+    current: DrawerAction = DrawerAction.Editor,
     /** `Class.method` around the cursor, from the outline; null when unknown or at top level. */
     symbol: String? = null,
     onAction: (DrawerAction) -> Unit,
 ) {
+    val context = LocalContext.current
+    val version = remember { appVersion(context) }
     val noFile = stringResource(R.string.no_file_open)
     val lineFormat = stringResource(R.string.drawer_line)
     val offsetFormat = stringResource(R.string.drawer_line_offset)
@@ -161,45 +191,30 @@ fun SkyDrawer(
         ),
     )
     ModalDrawerSheet(
-        modifier = Modifier.fillMaxWidth(0.85f).widthIn(max = 360.dp),
-        drawerShape = RectangleShape,
-        drawerContainerColor = SheetColor,
+        modifier = Modifier.fillMaxWidth(0.86f).widthIn(max = 360.dp),
+        drawerShape = RoundedCornerShape(topEnd = 20.dp, bottomEnd = 20.dp),
+        drawerContainerColor = Slate,
         windowInsets = WindowInsets(0),
     ) {
-        Column(
+        Row(
             Modifier
                 .fillMaxWidth()
-                .background(HeaderColor)
                 .statusBarsPadding()
-                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
+                .padding(start = 16.dp, end = 4.dp, top = 12.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painterResource(R.drawable.ic_launcher_foreground),
-                    contentDescription = null,
-                    modifier = Modifier.size(44.dp),
-                )
-                Spacer(Modifier.width(6.dp))
-                BrandText(stringResource(R.string.app_name), fontSize = 20.sp)
-            }
-            Spacer(Modifier.height(14.dp))
-            Text(
-                header.title,
-                color = TextBright,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+            Image(
+                painterResource(R.drawable.ic_skypython_mark),
+                contentDescription = null,
+                modifier = Modifier.size(width = 44.dp, height = 31.dp),
             )
-            if (header.line != null) {
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    header.line + "  ·  " + header.offset.orEmpty(),
-                    color = MutedText,
-                    fontSize = 13.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                BrandText(stringResource(R.string.app_name), fontSize = 19.sp)
+                Text("v$version", color = MutedText, fontSize = 12.sp)
+            }
+            IconButton(onClick = onClose) {
+                Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.action_close), tint = MutedText)
             }
             if (header.line != null && symbol != null) {
                 Spacer(Modifier.height(2.dp))
@@ -207,13 +222,14 @@ fun SkyDrawer(
                     stringResource(R.string.drawer_in_symbol, symbol),
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 13.sp,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = CodeFont,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
         }
-        Hairline()
+        FileCard(header)
+        Hairline(Modifier.padding(top = 12.dp))
         BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
             val minHeight = maxHeight
             Column(
@@ -225,15 +241,15 @@ fun SkyDrawer(
                     Modifier.fillMaxWidth().heightIn(min = minHeight).navigationBarsPadding(),
                     verticalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Column {
+                    Column(Modifier.padding(horizontal = 8.dp)) {
                         DRAWER_SECTIONS.forEachIndexed { index, section ->
-                            if (index > 0) Hairline(Modifier.padding(vertical = 4.dp))
+                            if (index > 0) Hairline(Modifier.padding(horizontal = 8.dp, vertical = 6.dp))
                             SectionLabel(
                                 stringResource(section.titleRes),
-                                Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp),
+                                Modifier.padding(start = 12.dp, top = 10.dp, bottom = 6.dp),
                             )
                             section.actions.forEach { action ->
-                                DrawerItem(action) { onAction(action) }
+                                DrawerItem(action, selected = action == current) { onAction(action) }
                             }
                         }
                         Spacer(Modifier.height(8.dp))
@@ -245,26 +261,79 @@ fun SkyDrawer(
     }
 }
 
+/** The open file and the cursor, on a quiet card under the brand row. */
 @Composable
-private fun DrawerItem(action: DrawerAction, onClick: () -> Unit) {
+private fun FileCard(header: DrawerHeader) {
+    val shape = RoundedCornerShape(12.dp)
+    Row(
+        Modifier
+            .padding(horizontal = 16.dp)
+            .fillMaxWidth()
+            .clip(shape)
+            .background(SlatePanel)
+            .border(1.dp, SlateLine, shape)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            Icons.AutoMirrored.Outlined.InsertDriveFile,
+            contentDescription = null,
+            tint = if (header.line != null) OrangeSoft else MutedText,
+            modifier = Modifier.size(20.dp),
+        )
+        Column(Modifier.padding(start = 12.dp)) {
+            Text(
+                header.title,
+                color = TextBright,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (header.line != null) {
+                Text(
+                    header.line + "  ·  " + header.offset.orEmpty(),
+                    color = MutedText,
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DrawerItem(action: DrawerAction, selected: Boolean, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(12.dp)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .height(52.dp)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp),
+            .height(48.dp)
+            .clip(shape)
+            .background(if (selected) OrangeTint else androidx.compose.ui.graphics.Color.Transparent)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { this.selected = selected }
+            .padding(horizontal = 12.dp),
     ) {
-        IconTile(action.icon(), size = 36.dp)
+        Icon(
+            action.icon(),
+            contentDescription = null,
+            tint = if (selected) Orange else TextBright.copy(alpha = 0.86f),
+            modifier = Modifier.size(22.dp),
+        )
         Spacer(Modifier.width(16.dp))
         Text(
             stringResource(action.labelRes()),
-            color = ItemText,
+            color = if (selected) OrangeSoft else TextBright,
             fontSize = 15.sp,
-            fontWeight = FontWeight.Medium,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
         )
+        Chevron()
     }
 }
 
@@ -285,16 +354,17 @@ private fun DrawerFooter() {
             title = stringResource(R.string.drawer_footer_github),
             subtitle = stringResource(R.string.drawer_footer_repo),
         ) { openLink(context, DrawerLinks.GITHUB) }
-        Text(
-            stringResource(R.string.drawer_footer_developer),
-            color = MutedText,
-            fontSize = 12.sp,
-            modifier = Modifier
-                .padding(start = 8.dp, bottom = 8.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .clickable { openLink(context, DrawerLinks.DEVELOPER) }
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-        )
+        Box(Modifier.padding(start = 8.dp, bottom = 8.dp)) {
+            Text(
+                stringResource(R.string.drawer_footer_developer),
+                color = MutedText,
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { openLink(context, DrawerLinks.DEVELOPER) }
+                    .padding(horizontal = 12.dp, vertical = 12.dp),
+            )
+        }
     }
 }
 
@@ -304,8 +374,9 @@ private fun FooterLink(icon: ImageVector, title: String, subtitle: String, onCli
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 20.dp, vertical = 6.dp),
     ) {
         Icon(icon, contentDescription = null, tint = MutedText, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(16.dp))
@@ -314,6 +385,19 @@ private fun FooterLink(icon: ImageVector, title: String, subtitle: String, onCli
             Text(subtitle, color = MutedText, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
+}
+
+private fun appVersion(context: Context): String = try {
+    val pm = context.packageManager
+    val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        pm.getPackageInfo(context.packageName, android.content.pm.PackageManager.PackageInfoFlags.of(0))
+    } else {
+        @Suppress("DEPRECATION")
+        pm.getPackageInfo(context.packageName, 0)
+    }
+    info.versionName ?: "?"
+} catch (e: Exception) {
+    "?"
 }
 
 private fun openLink(context: Context, url: String) {

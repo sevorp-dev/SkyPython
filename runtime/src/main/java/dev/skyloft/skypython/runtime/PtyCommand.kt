@@ -4,7 +4,8 @@ import java.io.File
 import java.io.IOException
 
 /**
- * A program to start on a pseudo-terminal ([Pty.createSubprocess]): the interpreter or the shell.
+ * A program to start on a pseudo-terminal ([Pty.createSubprocess]): a script, the interpreter or
+ * the shell.
  *
  * @property executable absolute path, exec'd directly (no PATH lookup).
  * @property argv full argument vector, `argv[0]` (the name the program sees) included.
@@ -23,20 +24,25 @@ data class PtyCommand(
             "COLORTERM" to "truecolor",
         )
 
+        /** Variables that would switch colour output off (tracebacks, rich, colorama). */
+        val COLOUR_BLOCKERS: Set<String> = setOf("NO_COLOR")
+
         /**
-         * [command] (interpreter or shell) for a PTY: the same program and variables as the pipe
-         * version ([PythonEnvironment]) on top of [appEnv], plus [TERMINAL_ENV]. Pure; see [prepare].
+         * [command] for a PTY: the same program and variables as the pipe version
+         * ([PythonEnvironment]) on top of [appEnv] (minus [COLOUR_BLOCKERS]), plus [TERMINAL_ENV].
+         * Pure; see [prepare].
          */
         fun of(
             paths: PythonPaths,
             command: RunCommand,
             appEnv: Map<String, String> = System.getenv(),
         ): PtyCommand {
-            require(command !is RunCommand.Script && command !is RunCommand.Debug) { "Scripts run on pipes, not in a terminal" }
+            require(command !is RunCommand.Debug) { "The debugger runs on pipes, not in a terminal" }
             // argv[0] stays the full path, as with ProcessBuilder: Python derives sys.executable
             // from it (subprocess, venv and pip rely on that).
             val line = PythonEnvironment.command(paths, command)
             val env = LinkedHashMap(appEnv)
+            env.keys.removeAll(COLOUR_BLOCKERS)
             env.putAll(PythonEnvironment.environment(paths, command))
             env.putAll(TERMINAL_ENV)
             return PtyCommand(

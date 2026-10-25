@@ -66,6 +66,26 @@ public interface TerminalViewClient {
     void onEmulatorSet();
 
 
+    // SkyPython: the text selection menu and scrolling.
+
+    /** Whether the selection menu offers Paste (the program can take input). */
+    default boolean canPaste() {
+        return true;
+    }
+
+    /** "Copy all" in the selection menu: the whole transcript. */
+    default void onCopyAll() {
+    }
+
+    /** "Share" in the selection menu, with the selected text. */
+    default void onShareText(String text) {
+    }
+
+    /** The view stopped (false) or started again (true) showing the newest output. */
+    default void onScrolledToBottomChanged(boolean atBottom) {
+    }
+
+
     void logError(String tag, String message);
 
     void logWarn(String tag, String message);
