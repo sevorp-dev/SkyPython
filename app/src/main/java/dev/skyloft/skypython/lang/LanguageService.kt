@@ -1,7 +1,8 @@
 package dev.skyloft.skypython.lang
 
 import android.content.Context
-import android.util.Log
+import dev.skyloft.skypython.report.AppLog
+import dev.skyloft.skypython.report.ErrorReporter
 import dev.skyloft.skypython.runtime.LanguageServerInstaller
 import dev.skyloft.skypython.runtime.LanguageServerProcess
 import dev.skyloft.skypython.runtime.LineTransport
@@ -119,6 +120,10 @@ class LanguageService(
         if (earlyDeaths >= config.maxEarlyDeaths) {
             gaveUp = true
             log("language server keeps dying; completions fall back to plain words")
+            ErrorReporter.report(
+                ErrorReporter.Where.LANGUAGE_SERVER,
+                "the language server stopped $earlyDeaths times in a row; code hints are off until restart",
+            )
         }
     }
 
@@ -157,14 +162,7 @@ class LanguageService(
     companion object {
         private const val TAG = "LanguageService"
 
-        /** Logcat; a no-op in JVM unit tests, where android.util.Log is a throwing stub. */
-        private fun log(message: String) {
-            try {
-                Log.w(TAG, message)
-            } catch (e: RuntimeException) {
-                // not on a device
-            }
-        }
+        private fun log(message: String) = AppLog.w(TAG, message)
 
         @Volatile private var instance: LanguageService? = null
 

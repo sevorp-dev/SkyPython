@@ -9,6 +9,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.skyloft.skypython.R
 import dev.skyloft.skypython.console.RunTarget
 import dev.skyloft.skypython.locale.AppLocale
+import dev.skyloft.skypython.report.ErrorReporter
 import dev.skyloft.skypython.runtime.DebugSocket
 import dev.skyloft.skypython.runtime.DebuggerInstaller
 import kotlinx.coroutines.Dispatchers
@@ -61,6 +62,7 @@ class DebugViewModel(
         return driver.fold(
             onSuccess = { RunTarget.Debug(file, it, installer.newChannel()) },
             onFailure = { e ->
+                ErrorReporter.report(ErrorReporter.Where.DEBUGGER, e)
                 session.begin(file.name)
                 session.fail(AppLocale.string(app, R.string.debug_error_start, e.message ?: e.toString()))
                 null
@@ -93,6 +95,8 @@ class DebugViewModel(
                     session.attach(it, store.state.value, store.watches.value, roots)
                 },
                 onFailure = { e ->
+                    // The program may simply have ended before the debugger connected.
+                    if (isActive()) ErrorReporter.report(ErrorReporter.Where.DEBUGGER, e)
                     session.fail(AppLocale.string(app, R.string.debug_error_start, e.message ?: e.toString()))
                 },
             )

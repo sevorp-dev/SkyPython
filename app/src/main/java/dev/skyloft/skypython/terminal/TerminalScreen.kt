@@ -96,6 +96,7 @@ import dev.skyloft.skypython.R
 import dev.skyloft.skypython.console.InstallError
 import dev.skyloft.skypython.console.Installing
 import dev.skyloft.skypython.console.InterruptButton
+import dev.skyloft.skypython.report.AppLog
 import dev.skyloft.skypython.ui.theme.BarNavy
 import dev.skyloft.skypython.ui.theme.SkyTopBar
 import kotlinx.coroutines.launch
@@ -510,11 +511,11 @@ private class ViewClient(
     override fun onScrolledToBottomChanged(atBottom: Boolean) = viewModel.onScrolledToBottomChanged(atBottom)
 
     override fun logError(tag: String?, message: String?) {
-        Log.e(tag, message.orEmpty())
+        AppLog.e(tag ?: "TerminalView", message.orEmpty())
     }
 
     override fun logWarn(tag: String?, message: String?) {
-        Log.w(tag, message.orEmpty())
+        AppLog.w(tag ?: "TerminalView", message.orEmpty())
     }
 
     override fun logInfo(tag: String?, message: String?) {
@@ -530,11 +531,11 @@ private class ViewClient(
     }
 
     override fun logStackTraceWithMessage(tag: String?, message: String?, e: Exception?) {
-        Log.e(tag, message.orEmpty(), e)
+        AppLog.e(tag ?: "TerminalView", message.orEmpty(), e)
     }
 
     override fun logStackTrace(tag: String?, e: Exception?) {
-        Log.e(tag, "", e)
+        AppLog.e(tag ?: "TerminalView", "", e)
     }
 }
 
