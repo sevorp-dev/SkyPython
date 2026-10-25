@@ -5,6 +5,8 @@
     <cache-path name="run" path="run/" />
     <cache-path name="share" path="share/" />
     <cache-path name="reports" path="reports/" />
+    <!-- Downloaded updates, for the system installer when a session can't be used. -->
+    <cache-path name="updates" path="updates/" />
     <!-- Projects opened from the phone's storage. Only files the user shares or opens with another
          app get a URI (with a one-off read grant); the provider is not exported. -->
     <external-path name="storage" path="." />

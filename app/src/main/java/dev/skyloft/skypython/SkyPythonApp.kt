@@ -101,6 +101,14 @@ import dev.skyloft.skypython.terminal.TerminalScreen
 import dev.skyloft.skypython.terminal.TerminalViewModel
 import dev.skyloft.skypython.ui.drawer.DrawerAction
 import dev.skyloft.skypython.viewer.ImageViewerScreen
+import dev.skyloft.skypython.update.UpdateAboutSection
+import dev.skyloft.skypython.update.UpdateBanner
+import dev.skyloft.skypython.update.UpdateMessage
+import dev.skyloft.skypython.update.UpdateScreen
+import dev.skyloft.skypython.update.UpdateSettingsSection
+import dev.skyloft.skypython.update.UpdateViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -120,6 +128,7 @@ private object Routes {
     const val IMAGE = "image"
     const val IMAGE_PATH = "path"
     const val OPEN_PROJECT = "open-project"
+    const val UPDATE = "update"
 
     /** The image viewer showing [file]. */
     fun image(file: File) = "$IMAGE?$IMAGE_PATH=${android.net.Uri.encode(file.path)}"
@@ -174,6 +183,11 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
     val debugVm: DebugViewModel = viewModel(factory = DebugViewModel.factory(app, projectRoot))
     // Activity-scoped so other screens can call pipVm.installNow(...).
     val pipVm: PipViewModel = viewModel(factory = PipViewModel.factory(app, projectRoot))
+    // In-app updates: checks on start (at most every 12 h), banner, badge, the Update screen.
+    val updates = viewModel<UpdateViewModel>(factory = UpdateViewModel.factory(app)).controller
+    val updateState by updates.state.collectAsStateWithLifecycle()
+    // Back from "Install unknown apps": go on with the update if it's allowed now.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { updates.onResume() }
 
     // Files follows the open project; the app's own folder is created when missing, others never are.
     LaunchedEffect(project) { filesVm.setRoot(project, create = project.path == workspace.root.path) }
@@ -218,6 +232,17 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
         onDispose { nav.removeOnDestinationChangedListener(listener) }
     }
     ErrorBanner(snackbar) { nav.go(Routes.report(it.id)) }
+    val openUpdate = { nav.go(Routes.UPDATE) }
+    // What a "Check for updates" found.
+    LaunchedEffect(updateState.message) {
+        val message = updateState.message ?: return@LaunchedEffect
+        updates.consumeMessage()
+        when (message) {
+            is UpdateMessage.Available -> openUpdate()
+            is UpdateMessage.UpToDate -> snackbar.showSnackbar(AppLocale.string(context, R.string.update_up_to_date, message.version))
+            UpdateMessage.CheckFailed -> snackbar.showSnackbar(AppLocale.string(context, R.string.update_check_failed))
+        }
+    }
     CrashPrompt { nav.go(Routes.report(it.id)) }
 
     // Bottom navigation (a setting; the ☰ drawer stays either way). Hidden until the setting is
@@ -312,6 +337,20 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                         controller = editorController,
                         onDrawerOpenChange = { drawerOpen = it },
                         projectName = projectName,
+                        notice = if (!updateState.banner) null else {
+                            {
+                                UpdateBanner(
+                                    updateState,
+                                    onWhatsNew = openUpdate,
+                                    onUpdate = {
+                                        updates.install()
+                                        openUpdate()
+                                    },
+                                    onDismiss = updates::dismissBanner,
+                                )
+                            }
+                        },
+                        drawerBadges = if (updateState.badge) setOf(DrawerAction.About) else emptySet(),
                         onDrawerAction = { action ->
                             when (action) {
                                 DrawerAction.Projects -> openFilesScreen()
@@ -467,7 +506,11 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                     )
                 }
                 composable(Routes.SETTINGS) {
-                    SettingsScreen(store = settingsStore, onBack = { nav.popBackStack() })
+                    SettingsScreen(
+                        store = settingsStore,
+                        onBack = { nav.popBackStack() },
+                        updates = { UpdateSettingsSection(updates, onOpen = openUpdate) },
+                    )
                 }
                 composable(Routes.SAMPLES) {
                     SamplesScreen(
@@ -480,7 +523,14 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                     )
                 }
                 composable(Routes.ABOUT) {
-                    AboutScreen(onBack = { nav.popBackStack() }, onReport = { nav.go(Routes.report()) })
+                    AboutScreen(
+                        onBack = { nav.popBackStack() },
+                        onReport = { nav.go(Routes.report()) },
+                        updates = { UpdateAboutSection(updates, onOpen = openUpdate) },
+                    )
+                }
+                composable(Routes.UPDATE) {
+                    UpdateScreen(updates, onBack = { nav.popBackStack() })
                 }
                 composable(
                     "${Routes.REPORT}?${Routes.REPORT_ID}={${Routes.REPORT_ID}}",

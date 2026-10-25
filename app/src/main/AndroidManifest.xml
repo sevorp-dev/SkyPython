@@ -22,6 +22,10 @@
         android:maxSdkVersion="29"
         tools:ignore="ScopedStorage" />
 
+    <!-- In-app updates: SkyPython installs a newer release of itself (GitHub APKs, verified by
+         SHA-256). Android still asks the user to allow it and to confirm every install. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <!-- Problem reports name the browser components' versions (package visibility, API 30+). -->
     <queries>
         <package android:name="com.android.chrome" />
@@ -50,6 +54,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- The status of an update's install session (update/SystemApkInstaller.kt). -->
+        <receiver
+            android:name=".update.UpdateInstallReceiver"
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

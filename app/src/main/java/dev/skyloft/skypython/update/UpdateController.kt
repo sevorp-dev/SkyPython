@@ -21,6 +21,8 @@ sealed interface InstallResult {
     data object Success : InstallResult
     /** The user said no in the system dialog. */
     data object Cancelled : InstallResult
+    /** Given to the system's installer screen, which reports nothing back. */
+    data object HandedOff : InstallResult
     /** [status] is a PackageInstaller STATUS_* code; [message] the system's text. */
     data class Failed(val status: Int, val message: String?) : InstallResult
 }
@@ -245,7 +247,7 @@ class UpdateController(
     private fun onInstallResult(result: InstallResult) {
         val phase = when (result) {
             // The system restarts the app as the new version; nothing to show meanwhile.
-            InstallResult.Success, InstallResult.Cancelled -> UpdatePhase.Idle
+            InstallResult.Success, InstallResult.Cancelled, InstallResult.HandedOff -> UpdatePhase.Idle
             is InstallResult.Failed -> UpdatePhase.Failed(
                 UpdateFailure.Install(result.status, result.message, isIncompatible(result.status, result.message)),
             )
