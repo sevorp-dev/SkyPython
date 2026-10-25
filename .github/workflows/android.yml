@@ -77,7 +77,10 @@ jobs:
               for s in suites:
                   print(f"::notice title=API ${{ matrix.api-level }} ${{ matrix.arch }} {s.get('name')}::tests={s.get('tests')} failures={s.get('failures')} errors={s.get('errors')} skipped={s.get('skipped')}")
                   for c in s.findall('testcase'):
-                      if c.find('failure') is not None or c.find('error') is not None:
+                      bad = c.find('failure') if c.find('failure') is not None else c.find('error')
+                      if bad is not None:
+                          detail = ' '.join((bad.text or bad.get('message') or '').split())[:1500].replace('%', '%25')
+                          print(f"::error title=Failure detail {c.get('name')}::{detail}")
                           print(f"::error title=API ${{ matrix.api-level }} ${{ matrix.arch }} FAILED {c.get('classname')}.{c.get('name')}::failed")
           PY
 
