@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sharing a project folder -->
+    <string name="share_folder_too_large">Папка больше %1$d МБ — слишком велика, чтобы отправить её одним архивом</string>
+    <string name="share_folder_failed">Не удалось упаковать папку для отправки (%1$s)</string>
+    <!-- Debugger -->
+    <string name="debug_error_connect">Отладчик не смог подключиться к программе (%1$s)</string>
+    <!-- Find & replace -->
+    <string name="find_replace_timeout">Выражение работало дольше %1$d с и было остановлено; ничего не заменено</string>
+    <string name="find_replace_changed">Текст изменился во время замены; ничего не заменено</string>
+    <!-- A run that stopped on a missing module -->
+    <string name="run_missing_module">Нет модуля %1$s</string>
+    <string name="run_install_missing">Установить %1$s</string>
+    <string name="run_install_missing_as">Установить %1$s (%2$s)</string>
+    <string name="run_install_busy">pip занят другим пакетом; попробуйте, когда он закончит</string>
+    <string name="run_install_retry">Повторить</string>
+    <!-- pip errors: the sentence, then pip's own last lines -->
+    <string name="pip_error_exit">%1$s завершился с ошибкой (код выхода %2$d)</string>
+    <string name="pip_error_unfinished">%1$s не завершился</string>
+    <string name="pip_error_start">Не удалось запустить Python для pip (%1$s)</string>
+    <string name="pip_error_other">Ошибка pip (%1$s)</string>
+    <!-- Saving output -->
+    <string name="io_reason_no_space">недостаточно свободного места</string>
+    <string name="io_reason_denied">нет прав на запись</string>
+    <string name="io_reason_read_only">хранилище доступно только для чтения</string>
+    <string name="io_reason_other">ошибка хранилища</string>
+</resources>

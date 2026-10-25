@@ -35,6 +35,16 @@ class PrivacyTest {
         }
     }
 
+    @Test fun `no install, update or uptime timestamps`() {
+        // They help no bug report and, together, single a phone out.
+        for (file in sources) {
+            val code = file.readLines().filterNot { it.trimStart().startsWith("//") || it.trimStart().startsWith("*") }.joinToString("\n")
+            for (api in listOf("firstInstallTime", "lastUpdateTime", "elapsedRealtime", "uptimeMillis")) {
+                assertFalse("${file.name} uses $api", api in code)
+            }
+        }
+    }
+
     @Test fun `no dangerous permissions are requested`() {
         val manifest = File("src/main/AndroidManifest.xml").readText()
         for (permission in listOf("READ_PHONE_STATE", "READ_PHONE_NUMBERS", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "GET_ACCOUNTS", "READ_CONTACTS", "AD_ID")) {

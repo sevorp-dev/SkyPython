@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.IOException
 
 /**
  * The debugger for the app: breakpoints and watches ([store], kept across restarts) and the
@@ -36,11 +35,16 @@ class DebugViewModel(
     private val stateFile = File(app.filesDir, STATE_FILE)
     private val saves = Channel<String>(Channel.CONFLATED)
 
-    val store = BreakpointStore(runCatching { stateFile.takeIf { it.isFile }?.readText() }.getOrNull()) { saves.trySend(it) }
+    /** Filled from [stateFile] off the main thread right after creation (see [BreakpointStore.restore]). */
+    val store = BreakpointStore(null) { saves.trySend(it) }
     private val session = DebugSession(viewModelScope)
     val state: StateFlow<DebugState> = session.state
 
     init {
+        viewModelScope.launch {
+            val saved = withContext(Dispatchers.IO) { runCatching { stateFile.takeIf { it.isFile }?.readText() }.getOrNull() }
+            if (saved != null) store.restore(saved)
+        }
         viewModelScope.launch(Dispatchers.IO) {
             for (json in saves) {
                 runCatching {
@@ -64,7 +68,7 @@ class DebugViewModel(
             onFailure = { e ->
                 ErrorReporter.report(ErrorReporter.Where.DEBUGGER, e)
                 session.begin(file.name)
-                session.fail(AppLocale.string(app, R.string.debug_error_start, e.message ?: e.toString()))
+                session.fail(AppLocale.string(app, R.string.debug_error_start, e.message ?: e.javaClass.simpleName))
                 null
             },
         )
@@ -76,30 +80,36 @@ class DebugViewModel(
      */
     fun attach(target: RunTarget.Debug, isActive: () -> Boolean) {
         session.begin(target.file.name)
-        viewModelScope.launch {
-            val socket = withContext(Dispatchers.IO) {
+        val roots = listOfNotNull(projectsRoot.path, target.file.absoluteFile.parentFile?.path).distinct()
+        // Tracked by the session: Stop before the driver answered ends quietly, not as a failure.
+        session.connect(
+            open = {
                 try {
-                    Result.success(DebugSocket.connect(target.channel, CONNECT_TIMEOUT_MS, isActive))
-                } catch (e: IOException) {
-                    Result.failure(e)
+                    DebugSocket.connect(target.channel, CONNECT_TIMEOUT_MS, isActive)
                 } finally {
                     target.channel.delete()
                 }
-            }
-            socket.fold(
-                onSuccess = {
-                    val roots = listOfNotNull(
-                        projectsRoot.path,
-                        target.file.absoluteFile.parentFile?.path,
-                    ).distinct()
-                    session.attach(it, store.state.value, store.watches.value, roots)
-                },
-                onFailure = { e ->
-                    // The program may simply have ended before the debugger connected.
-                    if (isActive()) ErrorReporter.report(ErrorReporter.Where.DEBUGGER, e)
-                    session.fail(AppLocale.string(app, R.string.debug_error_start, e.message ?: e.toString()))
-                },
-            )
+            },
+            breakpoints = { store.state.value },
+            watches = { store.watches.value },
+            userRoots = roots,
+            failure = { e ->
+                // The program may simply have ended before the debugger connected.
+                if (isActive()) ErrorReporter.report(ErrorReporter.Where.DEBUGGER, e)
+                AppLocale.string(app, R.string.debug_error_connect, e.message ?: e.javaClass.simpleName)
+            },
+        )
+    }
+
+    /**
+     * [file] (or a folder) was deleted in Files: its breakpoints go too, so a new file with the
+     * same name doesn't inherit them. Paths are stored canonical; both spellings are dropped.
+     */
+    fun onDeleted(file: File) {
+        store.remove(file.path)
+        viewModelScope.launch {
+            val canonical = withContext(Dispatchers.IO) { runCatching { file.canonicalPath }.getOrNull() }
+            if (canonical != null && canonical != file.path) store.remove(canonical)
         }
     }
 

@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import dev.skyloft.skypython.locale.AppLocale
 import java.io.File
 
 enum class PipTab { Search, Installed, Requirements }
@@ -100,6 +101,8 @@ class PipViewModel(
     private val pip: PipManager,
     private val index: PackageIndex = PackageIndex { LookupResult.Offline("") },
     private val findRequirements: suspend () -> List<File> = { emptyList() },
+    /** A failure as the user reads it (localized in the app; the English message in tests). */
+    private val describe: (Throwable) -> String = { it.message ?: it.toString() },
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PipState())
@@ -205,7 +208,7 @@ class PipViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                val message = e.message ?: e.toString()
+                val message = describe(e)
                 val log = _state.value.log
                 _state.update { it.copy(log = capped(withNewline(it.log) + message + "\n")) }
                 InstallOutcome.Failed(op, message, PipLog.isBuildFailure(log))
@@ -254,7 +257,7 @@ class PipViewModel(
             val result = pip.uninstall(pkg.name)
             _state.update { it.copy(uninstalling = null) }
             result.onFailure { e ->
-                _state.update { it.copy(listError = e.message ?: e.toString()) }
+                _state.update { it.copy(listError = describe(e)) }
                 return@launch
             }
             _state.update { it.copy(notice = PipNotice.Uninstalled(pkg.name)) }
@@ -273,7 +276,7 @@ class PipViewModel(
             },
             onFailure = { e ->
                 listStale = true
-                _state.update { it.copy(loading = false, listError = e.message ?: e.toString()) }
+                _state.update { it.copy(loading = false, listError = describe(e)) }
             },
         )
     }
@@ -311,7 +314,7 @@ class PipViewModel(
                         pkg,
                         loading = false,
                         info = result.getOrNull(),
-                        error = result.exceptionOrNull()?.let { e -> e.message ?: e.toString() },
+                        error = result.exceptionOrNull()?.let(describe),
                     ),
                 )
             }
@@ -350,6 +353,7 @@ class PipViewModel(
                     pip = PipRepository.create(app),
                     index = PyPiClient(),
                     findRequirements = { withContext(Dispatchers.IO) { RequirementsFiles.find(projectsRoot) } },
+                    describe = { e -> describePipError(e) { id, args -> AppLocale.string(app, id, *args) } },
                 )
             }
         }

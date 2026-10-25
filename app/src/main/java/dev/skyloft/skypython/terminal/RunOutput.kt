@@ -1,6 +1,7 @@
 package dev.skyloft.skypython.terminal
 
 import com.termux.terminal.TerminalBuffer
+import dev.skyloft.skypython.share.ShareDirs
 import java.io.File
 
 /** The line written under a script's output when it ends. */
@@ -98,6 +99,32 @@ object OutputFiles {
     }
 
     fun shareAsFile(text: String): Boolean = text.length > MAX_SHARE_TEXT
+
+    /** Shared output files kept: a receiving app may still be reading an earlier one. */
+    private const val SHARES_KEPT = 3
+
+    /**
+     * Where "Save output" writes: next to [script] when it is in the projects, else (the
+     * interpreter, the shell, or a file opened with the system picker, which runs as a copy in
+     * the cache) the projects folder itself. Reads the disk (canonical paths): call off the main thread.
+     */
+    fun saveDir(script: File?, projectsRoot: File): File {
+        val parent = script?.absoluteFile?.parentFile ?: return projectsRoot
+        val root = runCatching { projectsRoot.canonicalFile }.getOrNull() ?: return projectsRoot
+        val dir = runCatching { parent.canonicalFile }.getOrNull() ?: return projectsRoot
+        val inside = dir == root || dir.path.startsWith(root.path.trimEnd(File.separatorChar) + File.separator)
+        return if (inside) parent else projectsRoot
+    }
+
+    /**
+     * A new file [name] for sharing, in a folder of its own under [shareRoot] (see [ShareDirs]):
+     * sharing again never overwrites a file another app may still be reading.
+     */
+    fun shareFile(shareRoot: File, name: String): File {
+        val dir = ShareDirs.newDir(shareRoot)
+        ShareDirs.prune(shareRoot, keep = dir, count = SHARES_KEPT)
+        return File(dir, name)
+    }
 }
 
 /** What the terminal screens offer, given what runs. */

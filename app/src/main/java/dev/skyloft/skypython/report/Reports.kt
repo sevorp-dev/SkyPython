@@ -19,6 +19,49 @@ object Reports {
     /** Longer reports are shared as a .txt file (messengers cut long messages). */
     const val SHARE_AS_FILE_CHARS = 3_500
 
+    /** Report files kept after sharing: the receiving app reads one some time after the chooser closed. */
+    const val SHARE_FILES_KEPT = 3
+
+    /**
+     * A new file in [dir] for a report being shared, named after [nowMillis] (unique even within
+     * a second). Older ones are deleted, all but the newest [SHARE_FILES_KEPT]; the rest goes at
+     * the next app start ([cleanUpOnStart]).
+     */
+    fun newShareFile(dir: File, nowMillis: Long = System.currentTimeMillis()): File {
+        if (!dir.isDirectory && !dir.mkdirs()) throw IOException("Cannot create $dir")
+        val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date(nowMillis))
+        // Names sort by creation: the time, then a counter within the second.
+        val prefix = "skypython-report-$stamp-"
+        var n = 1 + dir.list().orEmpty()
+            .mapNotNull { it.removePrefix(prefix).takeIf { r -> r != it }?.removeSuffix(".txt")?.toIntOrNull() }
+            .fold(0, ::maxOf)
+        var file: File
+        do {
+            file = File(dir, String.format(Locale.US, "%s%03d.txt", prefix, n++))
+        } while (!file.createNewFile())
+        dir.listFiles { f -> f.isFile && f != file }.orEmpty()
+            .sortedByDescending { it.name }
+            .drop(SHARE_FILES_KEPT - 1)
+            .forEach { it.delete() }
+        return file
+    }
+
+    /**
+     * Once per app start, in the background: shared report files from the last session (their
+     * receivers have long read them) and half-written crash reports go.
+     */
+    fun cleanUpOnStart(context: Context) {
+        val app = context.applicationContext
+        Thread({
+            try {
+                File(app.cacheDir, "reports").listFiles().orEmpty().forEach { it.delete() }
+                store(app).removeLeftovers()
+            } catch (e: Exception) {
+                AppLog.w("Reports", "clean-up failed", e)
+            }
+        }, "report-cleanup").apply { isDaemon = true }.start()
+    }
+
     fun store(context: Context) = PendingReports(File(context.applicationContext.filesDir, "crash"))
 
     /** From Application.onCreate (every process of the app): saves crash reports from now on. */
@@ -91,10 +134,7 @@ object Reports {
     }
 
     private fun writeShareFile(context: Context, text: String): File? = try {
-        val dir = File(context.cacheDir, "reports").apply { mkdirs() }
-        dir.listFiles().orEmpty().forEach { it.delete() } // only the latest one is kept
-        val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
-        File(dir, "skypython-report-$stamp.txt").apply { writeText(text) }
+        newShareFile(File(context.cacheDir, "reports")).apply { writeText(text) }
     } catch (e: IOException) {
         AppLog.w("Reports", "cannot write the report file", e)
         null

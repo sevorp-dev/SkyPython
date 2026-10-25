@@ -12,6 +12,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -109,7 +110,10 @@ class CrashReportDeviceTest {
         ActivityScenario.launch(MainActivity::class.java).use {
             rule.waitUntilAtLeastOneExists(hasContentDescription(str(R.string.editor_menu)), 30_000)
             rule.onNode(hasContentDescription(str(R.string.editor_menu))).performClick()
-            rule.onNode(hasText(str(R.string.report_problem))).performClick()
+            // The drawer scrolls: on a small screen (CI's default emulator) "Report a problem" is
+            // below the fold, and a click on an off-screen node lands nowhere.
+            rule.waitUntilAtLeastOneExists(hasText(str(R.string.report_problem)), 5_000)
+            rule.onNode(hasText(str(R.string.report_problem))).performScrollTo().performClick()
             rule.waitUntilAtLeastOneExists(hasTestTag(REPORT_DESCRIPTION_TAG), 10_000)
             rule.waitUntil(20_000) { Build.MODEL in rule.reportText() }
             val text = rule.reportText()

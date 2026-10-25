@@ -38,6 +38,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.CircularProgressIndicator
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -88,7 +91,7 @@ fun FindBar(
     showReplace: Boolean,
     onToggleReplace: () -> Unit,
     onClose: () -> Unit,
-    onReplacedAll: (Int) -> Unit,
+    onReplacedAll: (ReplaceAllResult) -> Unit,
     focusRequester: FocusRequester,
     modifier: Modifier = Modifier,
 ) {
@@ -99,6 +102,9 @@ fun FindBar(
     var replacement by rememberSaveable { mutableStateOf("") }
     var index by remember { mutableIntStateOf(-1) }
     var count by remember { mutableIntStateOf(0) }
+    // Replace all runs in the background; closing the bar (leaving this composition) stops it.
+    val replaceScope = rememberCoroutineScope()
+    var replacing by remember { mutableStateOf(false) }
     val query = FindQuery(text, matchCase, wholeWord, regex)
     val error = if (regex) query.error else null
 
@@ -173,7 +179,7 @@ fun FindBar(
             OptionToggle(".*", stringResource(R.string.find_regex), regex) { regex = it }
             when {
                 error != null -> Text(
-                    stringResource(R.string.find_invalid_regex) + ": " + error,
+                    findErrorText(stringResource(R.string.find_invalid_regex), error),
                     color = colors.error, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 )
                 text.isNotEmpty() && count == 0 -> Text(
@@ -196,8 +202,24 @@ fun FindBar(
                 TextButton(onClick = { controller.replaceCurrent(replacement) }, enabled = count > 0) {
                     Text(stringResource(R.string.find_replace_one))
                 }
-                TextButton(onClick = { onReplacedAll(controller.replaceAll(replacement)) }, enabled = count > 0) {
-                    Text(stringResource(R.string.find_replace_all))
+                TextButton(
+                    onClick = {
+                        replacing = true
+                        replaceScope.launch {
+                            try {
+                                onReplacedAll(controller.replaceAll(replacement))
+                            } finally {
+                                replacing = false
+                            }
+                        }
+                    },
+                    enabled = count > 0 && !replacing,
+                ) {
+                    if (replacing) {
+                        CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(stringResource(R.string.find_replace_all))
+                    }
                 }
             }
         }

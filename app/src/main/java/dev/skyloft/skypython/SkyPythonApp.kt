@@ -317,6 +317,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                         onOpenInEditor = openInEditor,
                         settings = settings,
                         onFontSizeChange = saveTerminalFont,
+                        pip = pipVm,
                     )
                 }
                 // Fallback if the pseudo-terminal can't be opened: the line-mode console over pipes.
@@ -356,7 +357,10 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                             editorVm.openExternal(uri)
                             nav.popBackStack()
                         },
-                        onDeleted = editorVm::closeFile,
+                        onDeleted = { file ->
+                            editorVm.closeFile(file)
+                            debugVm.onDeleted(file)
+                        },
                         onRenamed = { old, new ->
                             editorVm.onRenamed(old, new)
                             debugVm.store.rename(old.path, new.path)

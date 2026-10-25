@@ -39,8 +39,35 @@ interface PipManager {
     suspend fun show(name: String): Result<PackageDetails>
 }
 
-/** pip (or ensurepip) failed. [exitCode] is null if Python could not be started. */
-class PipFailedException(val exitCode: Int?, message: String) : Exception(message)
+/**
+ * pip (or ensurepip, [what]) failed: it exited with [exitCode] (null: it didn't finish), or
+ * Python could not start ([startFailure]). [output] is the end of what it printed. The message
+ * is English, for logs and reports; [describePipError] gives the user's text.
+ */
+class PipFailedException(
+    val exitCode: Int?,
+    val what: String = "pip",
+    val output: String = "",
+    val startFailure: String? = null,
+) : Exception(
+    startFailure ?: buildString {
+        append(if (exitCode == null) "$what did not finish" else "$what exited with code $exitCode")
+        if (output.isNotEmpty()) append("\n").append(output)
+    },
+)
+
+/** [e] in the app's language ([text] reads a string resource), the technical detail appended. */
+fun describePipError(e: Throwable, text: (Int, Array<out Any>) -> String): String = when (e) {
+    is PipFailedException -> {
+        val head = when {
+            e.startFailure != null -> text(R.string.pip_error_start, arrayOf(e.startFailure))
+            e.exitCode == null -> text(R.string.pip_error_unfinished, arrayOf(e.what))
+            else -> text(R.string.pip_error_exit, arrayOf(e.what, e.exitCode))
+        }
+        if (e.output.isBlank()) head else head + "\n" + e.output.trim()
+    }
+    else -> text(R.string.pip_error_other, arrayOf(e.message ?: e.javaClass.simpleName))
+}
 
 /**
  * pip in the user site (`PYTHONUSERBASE`). The first operation bootstraps pip from the
@@ -192,12 +219,11 @@ class PipRepository(
     }
 
     private fun Run.orThrow(what: String, includeOutput: Boolean = true): Run {
-        failure?.let { throw PipFailedException(null, it) }
+        failure?.let { throw PipFailedException(null, what = what, startFailure = it) }
         val code = exitCode
         if (code == 0) return this
-        val head = if (code == null) "$what did not finish" else "$what exited with code $code"
         val tail = output.trim().lines().takeLast(OUTPUT_LINES_IN_ERROR).joinToString("\n")
-        throw PipFailedException(code, if (includeOutput && tail.isNotEmpty()) "$head\n$tail" else head)
+        throw PipFailedException(code, what = what, output = if (includeOutput) tail else "")
     }
 
     private inline fun <T> catching(block: () -> T): Result<T> = try {

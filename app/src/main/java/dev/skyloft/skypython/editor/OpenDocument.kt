@@ -113,6 +113,11 @@ class DocumentsState {
         if (find(id) != null) currentId = id
     }
 
+    /** Doc [id], shown read-only, becomes a normal editable tab (same text, place and selection). */
+    fun makeEditable(id: String) {
+        docs = docs.map { if (it.id == id) it.copy(readOnly = false) else it }
+    }
+
     /** Closes [id]; if it was current, selects the right neighbour, else the left one. */
     fun close(id: String) {
         val index = docs.indexOfFirst { it.id == id }
@@ -182,6 +187,15 @@ class DocumentsState {
         currentId = currentId?.let { renamed[it]?.id ?: it }?.takeIf { find(it) != null } ?: docs.firstOrNull()?.id
     }
 }
+
+/**
+ * Whether opening a file that already has the tab [existing], asking for [readOnly], should turn
+ * that tab editable: a read-only tab of a file inside the projects ([insideProjects]) opened
+ * normally (from Files, recent files, a traceback). Library code outside stays read-only, and a
+ * read-only request (Go to definition) never takes editing away.
+ */
+fun reopenAsEditable(existing: OpenDocument, readOnly: Boolean, insideProjects: Boolean): Boolean =
+    existing.readOnly && !readOnly && insideProjects && existing.source is DocSource.Local
 
 /** Tab label: the file name, or a path relative to [projectsRoot] if names clash. */
 fun tabLabel(doc: OpenDocument, all: List<OpenDocument>, projectsRoot: File): String {

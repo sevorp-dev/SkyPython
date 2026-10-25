@@ -20,6 +20,8 @@ import com.termux.terminal.TerminalEmulator
 import com.termux.terminal.TerminalSession
 import com.termux.terminal.TerminalSessionClient
 import com.termux.view.TerminalView
+import dev.skyloft.skypython.files.describeIoError
+import dev.skyloft.skypython.pip.MissingPackage
 import dev.skyloft.skypython.report.AppLog
 import dev.skyloft.skypython.report.ErrorReporter
 import dev.skyloft.skypython.runtime.PtyCommand
@@ -73,6 +75,8 @@ data class TerminalState(
     val atBottom: Boolean = true,
     /** Terminal text size. */
     val fontSp: Float = DEFAULT_FONT_SP,
+    /** The finished script stopped on `No module named 'x'` that pip can install ([TerminalKind.Run]). */
+    val missing: MissingPackage? = null,
 ) {
     fun actions(kind: TerminalKind): OutputActions = OutputActions.of(kind, running, hasOutput)
 
@@ -268,8 +272,9 @@ class TerminalViewModel(
             val file = if (OutputFiles.shareAsFile(text)) {
                 runCatching {
                     withContext(Dispatchers.IO) {
-                        val dir = File(app.cacheDir, "run").apply { mkdirs() }
-                        File(dir, OutputFiles.name(title)).apply { writeText(text) }
+                        // Its own file each time: never over a saved output or an earlier share.
+                        OutputFiles.shareFile(File(app.cacheDir, "share/output"), OutputFiles.name(title))
+                            .apply { writeText(text) }
                     }
                 }.getOrNull()
             } else {
@@ -280,8 +285,9 @@ class TerminalViewModel(
     }
 
     /**
-     * Save output: `<script>_output.txt` next to the script (the interpreter's and the shell's go
-     * to the projects folder), never over an earlier one.
+     * Save output: `<script>_output.txt` next to the script (the interpreter's and the shell's, and
+     * a picked file's that ran as a copy in the cache, go to the projects folder), never over an
+     * earlier one.
      */
     fun saveOutput(onSaved: (File) -> Unit = {}) {
         val text = transcript()
@@ -289,10 +295,11 @@ class TerminalViewModel(
             message(R.string.output_nothing)
             return
         }
-        val dir = _state.value.script?.absoluteFile?.parentFile ?: projectsRoot
+        val script = _state.value.script
         viewModelScope.launch {
             val result = runCatching {
                 withContext(Dispatchers.IO) {
+                    val dir = OutputFiles.saveDir(script, projectsRoot)
                     dir.mkdirs()
                     OutputFiles.unique(dir, OutputFiles.name(title)).apply { writeText(text + "\n") }
                 }
@@ -301,7 +308,7 @@ class TerminalViewModel(
                 message(AppLocale.string(app, R.string.output_saved, file.relativeToOrSelf(projectsRoot.parentFile ?: projectsRoot).path))
                 onSaved(file)
             }.onFailure { e ->
-                message(AppLocale.string(app, R.string.output_save_failed, e.message ?: e.toString()))
+                message(AppLocale.string(app, R.string.output_save_failed, describeIoError(e) { AppLocale.string(app, it) }))
             }
         }
     }
@@ -320,7 +327,7 @@ class TerminalViewModel(
                 }
             }
             result.onSuccess { message(AppLocale.string(app, R.string.output_saved, uri.lastPathSegment ?: "")) }
-                .onFailure { e -> message(AppLocale.string(app, R.string.output_save_failed, e.message ?: e.toString())) }
+                .onFailure { e -> message(AppLocale.string(app, R.string.output_save_failed, describeIoError(e) { AppLocale.string(app, it) })) }
         }
     }
 
@@ -370,15 +377,20 @@ class TerminalViewModel(
 
     /**
      * A tap on screen row [row] (scrollback rows are negative): if it is a traceback's
-     * `File "…", line N` for a file in the projects, asks to open it there. @return true if so.
+     * `File "…", line N`, the file is looked up off the main thread and, when it is in the
+     * projects, opened there ([TerminalEvent.OpenInEditor]). @return true if the row is such a
+     * line (the tap is taken), whether or not the file turns out to be openable.
      */
     fun openTracebackAt(row: Int): Boolean {
         val screen = _state.value.session?.emulator?.screen ?: return false
         if (row < -screen.activeTranscriptRows || row >= screen.activeRows - screen.activeTranscriptRows) return false
         val location = Tracebacks.parse(Transcript.logicalLine(screen, row)) ?: return false
         val cwd = _state.value.script?.absoluteFile?.parentFile ?: projectsRoot
-        val file = Tracebacks.resolve(location, cwd, projectsRoot) ?: return false
-        emit(TerminalEvent.OpenInEditor(file, location.line))
+        viewModelScope.launch {
+            // Canonical paths and isFile read the disk.
+            val file = withContext(Dispatchers.IO) { Tracebacks.resolve(location, cwd, projectsRoot) } ?: return@launch
+            emit(TerminalEvent.OpenInEditor(file, location.line))
+        }
         return true
     }
 
@@ -423,7 +435,7 @@ class TerminalViewModel(
     private fun start() {
         if (kind == TerminalKind.Run && _state.value.script == null) return
         startJob = viewModelScope.launch {
-            _state.update { it.copy(installError = null, startError = null, exitCode = null) }
+            _state.update { it.copy(installError = null, startError = null, exitCode = null, missing = null) }
             val p = paths ?: run {
                 _state.update { it.copy(installing = true) }
                 val result = install()
@@ -492,11 +504,15 @@ class TerminalViewModel(
         override fun onSessionFinished(finishedSession: TerminalSession) {
             if (finishedSession !== _state.value.session) return
             finishedSession.startError?.let { ErrorReporter.report(ErrorReporter.Where.TERMINAL, "${kind.name} could not start: $it") }
+            val exitCode = RunFooter.exitCode(finishedSession.exitStatus)
+            // A script that failed on a missing module: offer to install it.
+            val missing = if (kind == TerminalKind.Run) MissingPackage.afterRun(exitCode, transcript()) else null
             _state.update {
                 it.copy(
                     running = false,
                     startError = finishedSession.startError,
-                    exitCode = RunFooter.exitCode(finishedSession.exitStatus),
+                    exitCode = exitCode,
+                    missing = missing,
                     modifiers = Modifiers(),
                 )
             }

@@ -8,6 +8,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.util.Locale
 
 class PendingReportsTest {
 
@@ -103,5 +104,38 @@ class PendingReportsTest {
         )
         handler.uncaughtException(Thread.currentThread(), RuntimeException("x"))
         assertTrue(delegated)
+    }
+
+    @Test fun `file names use ASCII digits whatever the phone's language`() {
+        val saved = Locale.getDefault()
+        try {
+            // Persian and Arabic phones format numbers with their own digits by default.
+            Locale.setDefault(Locale.forLanguageTag("fa-IR"))
+            val store = PendingReports(tmp.newFolder("crash"))
+            store.add(crash(1))
+            store.add(crash(2))
+            val names = store.dir.listFiles()!!.map { it.name }.filter { it.endsWith(".json") }
+            assertTrue(names.toString(), names.all { Regex("[0-9]{15}-id[0-9][.]json").matches(it) })
+            assertEquals(listOf("id2", "id1"), store.list().map { it.id })
+        } finally {
+            Locale.setDefault(saved)
+        }
+    }
+
+    @Test fun `leftover temporary files of an interrupted save are cleaned up`() {
+        val store = PendingReports(tmp.newFolder("crash"))
+        store.add(crash(1))
+        File(store.dir, "000000000002000-id2.tmp").writeText("{half")
+        store.removeLeftovers()
+        assertEquals(listOf("000000000001000-id1.json"), store.dir.listFiles()!!.map { it.name }.filter { it != "prompted" })
+    }
+
+    @Test fun `shared report files are kept for a while, each with its own name`() {
+        val dir = tmp.newFolder("reports")
+        val files = (1..5).map { Reports.newShareFile(dir, nowMillis = 1_700_000_000_000L).apply { writeText("r$it") } }
+        assertEquals(5, files.map { it.name }.toSet().size)
+        assertTrue("the one just shared stays", files.last().isFile)
+        assertTrue(files.takeLast(Reports.SHARE_FILES_KEPT).all { it.isFile })
+        assertTrue(files.dropLast(Reports.SHARE_FILES_KEPT).none { it.exists() })
     }
 }

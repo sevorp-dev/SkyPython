@@ -13,7 +13,6 @@ import android.os.BatteryManager
 import android.os.Build
 import android.os.PowerManager
 import android.os.StatFs
-import android.os.SystemClock
 import android.telephony.TelephonyManager
 import android.view.Display
 import android.webkit.WebView
@@ -79,8 +78,6 @@ object DeviceInfo {
         add("Package") { context.packageName }
         add("Installer") { installer(context) }
         add("Target SDK") { context.applicationInfo.targetSdkVersion }
-        add("Installed") { packageInfo(context, context.packageName)?.firstInstallTime?.let(::date) }
-        add("Updated") { packageInfo(context, context.packageName)?.lastUpdateTime?.let(::date) }
         add("Native libs extracted") { File(context.applicationInfo.nativeLibraryDir).isDirectory }
     }
 
@@ -93,7 +90,6 @@ object DeviceInfo {
         add("Build type / tags") { "${Build.TYPE} / ${Build.TAGS}" }
         add("Kernel") { System.getProperty("os.version") }
         add("Runtime") { "${System.getProperty("java.vm.name")} ${System.getProperty("java.vm.version")}" }
-        add("Uptime") { duration(SystemClock.elapsedRealtime()) }
     }
 
     private fun device() = section("Device") {
@@ -266,12 +262,4 @@ object DeviceInfo {
         n >= 1L shl 20 -> "%.0f MB".format(Locale.US, n / (1L shl 20).toDouble())
         else -> "$n B"
     }
-
-    private fun duration(ms: Long): String {
-        val minutes = ms / 60_000
-        return "${minutes / (24 * 60)}d ${minutes / 60 % 24}h ${minutes % 60}m"
-    }
-
-    private fun date(ms: Long): String =
-        java.text.SimpleDateFormat("yyyy-MM-dd", Locale.US).format(java.util.Date(ms))
 }
