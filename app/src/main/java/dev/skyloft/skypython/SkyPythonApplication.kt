@@ -8,5 +8,6 @@ class SkyPythonApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         Reports.install(this)
+        Reports.cleanUpOnStart(this)
     }
 }
