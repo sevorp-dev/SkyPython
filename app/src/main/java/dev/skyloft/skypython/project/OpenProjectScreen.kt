@@ -269,7 +269,11 @@ private fun HomeContent(
                         if (i > 0) Hairline(Modifier.padding(start = 68.dp))
                         val dir = File(recent.path)
                         val name = dir.name.ifEmpty { dir.path }
-                        val whenText = DateUtils.getRelativeTimeSpanString(recent.openedAt, now, DateUtils.MINUTE_IN_MILLIS).toString()
+                        val whenText = if (now - recent.openedAt < DateUtils.MINUTE_IN_MILLIS) {
+                            stringResource(R.string.projects_just_now)
+                        } else {
+                            DateUtils.getRelativeTimeSpanString(recent.openedAt, now, DateUtils.MINUTE_IN_MILLIS).toString()
+                        }
                         ProjectRow(
                             icon = Icons.Outlined.History,
                             title = name,

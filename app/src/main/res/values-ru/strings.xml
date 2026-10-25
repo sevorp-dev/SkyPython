@@ -469,6 +469,7 @@
     <string name="projects_root_sd">SD-карта</string>
     <string name="projects_root_desc">Выберите папку и откройте её как проект</string>
     <string name="projects_opened_at">Открыт %1$s</string>
+    <string name="projects_just_now">только что</string>
     <string name="projects_remove_recent">Убрать %1$s из недавних проектов</string>
     <string name="projects_use_folder">Открыть эту папку</string>
     <string name="projects_show_hidden">Скрытые</string>

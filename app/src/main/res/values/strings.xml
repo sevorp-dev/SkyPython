@@ -480,6 +480,7 @@
     <string name="projects_root_sd">SD card</string>
     <string name="projects_root_desc">Browse folders and open one as a project</string>
     <string name="projects_opened_at">Opened %1$s</string>
+    <string name="projects_just_now">just now</string>
     <string name="projects_remove_recent">Remove %1$s from recent projects</string>
     <string name="projects_use_folder">Use this folder</string>
     <string name="projects_show_hidden">Show hidden</string>
