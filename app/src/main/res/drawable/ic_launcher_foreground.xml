@@ -1,17 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Cloud with a prompt sign, inside the 66dp safe zone of a 108dp adaptive icon. -->
+<!--
+  Glowing cloud with a ">_" prompt and a 4-point sparkle, in the brand gradient
+  (cyan → blue → violet). Everything stays inside the 66dp safe zone (radius 33 around 54,54)
+  of a 108dp adaptive icon.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Soft glow behind the cloud. -->
+    <path android:pathData="M22,54 a32,32 0 1,0 64,0 a32,32 0 1,0 -64,0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="54"
+                android:centerY="54"
+                android:gradientRadius="32"
+                android:type="radial">
+                <item android:color="#663D7BFF" android:offset="0" />
+                <item android:color="#2A8B5CF6" android:offset="0.65" />
+                <item android:color="#008B5CF6" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Cloud: a body and four bumps, filled as one shape. -->
+    <path android:pathData="M34,50 L34,70 L74,70 L74,50 Z M24,60 a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0 Z M64,60 a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0 Z M32,48 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0 Z M55,51 a12,12 0 1,0 24,0 a12,12 0 1,0 -24,0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="82"
+                android:endY="70"
+                android:startX="26"
+                android:startY="36"
+                android:type="linear">
+                <item android:color="#FF38BDF8" android:offset="0" />
+                <item android:color="#FF3D7BFF" android:offset="0.5" />
+                <item android:color="#FFA855F7" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Prompt ">_" -->
     <path
-        android:fillColor="#4FC3F7"
-        android:pathData="M38,70 L72,70 A12,12 0 0,0 72,46 A16,16 0 0,0 42,42 A14,14 0 0,0 38,70 Z" />
-    <path
-        android:strokeColor="#0F1720"
-        android:strokeWidth="4"
+        android:pathData="M43,51 L50,57 L43,63 M54,63 L64,63"
+        android:strokeWidth="4.5"
+        android:strokeColor="#FFFFFFFF"
         android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M46,52 L53,58 L46,64 M57,64 L66,64" />
+        android:strokeLineJoin="round" />
+    <!-- Sparkles -->
+    <path
+        android:fillColor="#FFE0F2FE"
+        android:pathData="M75,29.5 Q76,33 79.5,34 Q76,35 75,38.5 Q74,35 70.5,34 Q74,33 75,29.5 Z" />
+    <path
+        android:fillColor="#B3E0F2FE"
+        android:pathData="M29,37 a1.6,1.6 0 1,0 3.2,0 a1.6,1.6 0 1,0 -3.2,0 Z" />
 </vector>
