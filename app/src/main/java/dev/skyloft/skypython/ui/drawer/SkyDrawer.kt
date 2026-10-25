@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.outlined.Slideshow
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,7 +37,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.skyloft.skypython.R
 import dev.skyloft.skypython.editor.CursorPosition
+import dev.skyloft.skypython.ui.theme.BrandText
+import dev.skyloft.skypython.ui.theme.DividerNavy
+import dev.skyloft.skypython.ui.theme.GlowLine
+import dev.skyloft.skypython.ui.theme.NightSkyBrush
+import dev.skyloft.skypython.ui.theme.OutlinedIconTile
+import dev.skyloft.skypython.ui.theme.SkyBlue
+import dev.skyloft.skypython.ui.theme.SectionLabel
+import dev.skyloft.skypython.ui.theme.SoftViolet
+import dev.skyloft.skypython.ui.theme.TextBright
+import androidx.compose.foundation.Image
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.res.painterResource
 
 /** Texts of the drawer header; [line] and [offset] are null when no file is open. */
 data class DrawerHeader(val title: String, val line: String?, val offset: String?)
@@ -59,12 +72,17 @@ val DRAWER_SECTIONS: List<DrawerSection> = listOf(
     DrawerSection("Settings", listOf(DrawerAction.Settings, DrawerAction.About)),
 )
 
-private val HeaderBlue = Color(0xFF0B2B3F)
-private val SheetColor = Color(0xFF1A242D)
-private val SectionGrey = Color(0xFF9AA7B2)
-private val ItemText = Color(0xFFE6EDF3)
-private val ItemIcon = Color(0xFFC9D3DC)
-private val DividerColor = Color(0xFF2C3946)
+private val SheetColor = Color(0xFF0D1536)
+private val ItemText = TextBright
+private val HeaderSubtext = Color(0xFFC9D4F5)
+private val DividerColor = DividerNavy
+
+/** A few fixed "stars" (x, y as fractions of the header, radius in dp) for the night-sky header. */
+private val STARS = listOf(
+    Triple(0.62f, 0.22f, 1.2f), Triple(0.78f, 0.12f, 0.8f), Triple(0.90f, 0.35f, 1.4f),
+    Triple(0.70f, 0.55f, 0.7f), Triple(0.84f, 0.70f, 1.0f), Triple(0.95f, 0.85f, 0.7f),
+    Triple(0.55f, 0.80f, 0.6f), Triple(0.45f, 0.30f, 0.6f),
+)
 
 private fun DrawerAction.icon(): ImageVector = when (this) {
     DrawerAction.Interpreter -> Icons.Outlined.Slideshow
@@ -89,10 +107,24 @@ fun SkyDrawer(fileName: String?, cursor: CursorPosition, onAction: (DrawerAction
         Column(
             Modifier
                 .fillMaxWidth()
-                .background(HeaderBlue)
+                .background(NightSkyBrush)
+                .drawBehind {
+                    for ((x, y, r) in STARS) {
+                        drawCircle(Color.White.copy(alpha = 0.75f), radius = r.dp.toPx(), center = Offset(size.width * x, size.height * y))
+                    }
+                }
                 .statusBarsPadding()
-                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 16.dp),
         ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painterResource(R.drawable.ic_launcher_foreground),
+                    contentDescription = null,
+                    modifier = Modifier.size(52.dp),
+                )
+                BrandText("SkyPython", fontSize = 24.sp)
+            }
+            Spacer(Modifier.height(8.dp))
             Text(
                 header.title,
                 color = Color.White,
@@ -102,23 +134,19 @@ fun SkyDrawer(fileName: String?, cursor: CursorPosition, onAction: (DrawerAction
                 overflow = TextOverflow.Ellipsis,
             )
             if (header.line != null) {
-                Spacer(Modifier.height(10.dp))
-                Text(header.line, color = Color(0xFFCFDCE6), fontSize = 14.sp)
+                Spacer(Modifier.height(6.dp))
+                Text(header.line, color = HeaderSubtext, fontSize = 14.sp)
                 Spacer(Modifier.height(2.dp))
-                Text(header.offset.orEmpty(), color = Color(0xFFCFDCE6), fontSize = 14.sp)
+                Text(header.offset.orEmpty(), color = HeaderSubtext, fontSize = 14.sp)
             }
         }
+        GlowLine()
         Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding()) {
             DRAWER_SECTIONS.forEachIndexed { index, section ->
                 if (index > 0) HorizontalDivider(color = DividerColor)
-                Text(
-                    section.title,
-                    color = SectionGrey,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 4.dp),
-                )
+                SectionLabel(section.title, Modifier.padding(start = 16.dp, top = 16.dp, bottom = 6.dp))
                 section.actions.forEach { action ->
-                    DrawerItem(action) { onAction(action) }
+                    DrawerItem(action, action.ordinal) { onAction(action) }
                 }
                 Spacer(Modifier.height(4.dp))
             }
@@ -127,17 +155,17 @@ fun SkyDrawer(fileName: String?, cursor: CursorPosition, onAction: (DrawerAction
 }
 
 @Composable
-private fun DrawerItem(action: DrawerAction, onClick: () -> Unit) {
+private fun DrawerItem(action: DrawerAction, index: Int, onClick: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .height(48.dp)
+            .height(52.dp)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp),
     ) {
-        Icon(action.icon(), contentDescription = null, tint = ItemIcon, modifier = Modifier.size(24.dp))
-        Spacer(Modifier.width(32.dp))
+        OutlinedIconTile(action.icon(), size = 36.dp, tint = if (index % 2 == 0) SkyBlue else SoftViolet)
+        Spacer(Modifier.width(20.dp))
         Text(action.name, color = ItemText, fontSize = 15.sp, fontWeight = FontWeight.Medium)
     }
 }

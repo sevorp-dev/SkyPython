@@ -34,6 +34,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import dev.skyloft.skypython.ui.theme.OutlinedIconTile
+import androidx.compose.ui.unit.dp
 
 /**
  * Lists the bundled samples. Tapping one copies it to `projectsRoot/samples/<name>`
@@ -76,7 +78,7 @@ fun SamplesScreen(projectsRoot: File, onOpen: (File) -> Unit, onBack: () -> Unit
                         )
                     },
                     leadingContent = {
-                        Icon(Icons.Filled.Code, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        OutlinedIconTile(Icons.Filled.Code, size = 40.dp)
                     },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.clickable {
