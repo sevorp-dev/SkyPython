@@ -159,6 +159,21 @@ jobs:
           cp "$RUNNER_TEMP"/openblas/chaquopy_openblas-*.dist-info/LICENSE "$RUNNER_TEMP/OpenBLAS-LICENSE.txt"
           echo "::notice title=OpenBLAS $ABI::$(ls openblas-dl) sha256 $(sha256sum openblas-dl/*.whl | cut -d' ' -f1)"
 
+      - name: Start an x86_64 emulator that runs 32-bit x86 apps
+        if: matrix.abi == 'x86'
+        run: |
+          set -euo pipefail
+          img="system-images;android-30;google_apis;x86_64"
+          bin="$ANDROID_HOME/cmdline-tools/latest/bin"
+          yes | "$bin/sdkmanager" --install emulator platform-tools "$img" > /dev/null
+          echo no | "$bin/avdmanager" create avd -n x86test -k "$img" -d pixel_5 > /dev/null
+          adb="$ANDROID_HOME/platform-tools/adb"
+          nohup "$ANDROID_HOME/emulator/emulator" -avd x86test -no-window -no-audio -no-boot-anim \
+            -no-snapshot -gpu swiftshader_indirect > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          timeout 600 "$adb" wait-for-device
+          timeout 600 sh -c "until [ \"\$('$adb' shell getprop sys.boot_completed | tr -d '\r')\" = 1 ]; do sleep 5; done"
+          echo "::notice title=x86 test emulator::$("$adb" devices | tr '\n' ' ') abilist=$("$adb" shell getprop ro.product.cpu.abilist | tr -d '\r')"
+
       # Our own cibuildwheel config (replaces the one in NumPy's pyproject.toml).
       - name: Write the cibuildwheel config
         run: |
@@ -204,6 +219,10 @@ jobs:
               "environment = { %s }" % ", ".join(f"{k} = {q(v)}" for k, v in env.items()),
               f"repair-wheel-command = {q(repair)}",
           ]
+          if os.environ["ABI"] == "x86":
+              # The Gradle-managed emulator only accepts x86_64 APKs, so test on the emulator
+              # started by the previous step (an x86_64 image that also runs x86 apps).
+              lines.append('test-runtime = { args = ["--connected", "emulator-5554"] }')
           path = f"{tmp}/cibw.toml"
           open(path, "w").write("\n".join(lines) + "\n")
           print(open(path).read())
