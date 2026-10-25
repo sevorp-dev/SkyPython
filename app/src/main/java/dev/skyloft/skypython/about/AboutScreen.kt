@@ -52,6 +52,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import dev.skyloft.skypython.ui.theme.BrandTextBrush
 import androidx.annotation.StringRes
 import androidx.compose.ui.res.stringResource
 
@@ -101,10 +105,17 @@ fun AboutScreen(onBack: () -> Unit) {
                     modifier = Modifier.size(128.dp),
                 )
                 BrandText(stringResource(R.string.app_name), fontSize = 36.sp, fontWeight = FontWeight.ExtraBold)
-                Row {
-                    Text(stringResource(R.string.about_tagline_start), fontSize = 18.sp, fontWeight = FontWeight.Medium, color = TextBright)
-                    BrandText(stringResource(R.string.about_tagline_end), fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                }
+                // One Text, so a longer translation wraps instead of being cut off.
+                val start = stringResource(R.string.about_tagline_start)
+                val end = stringResource(R.string.about_tagline_end)
+                Text(
+                    buildAnnotatedString {
+                        withStyle(SpanStyle(color = TextBright, fontWeight = FontWeight.Medium)) { append(start) }
+                        withStyle(SpanStyle(brush = BrandTextBrush, fontWeight = FontWeight.Bold)) { append(end) }
+                    },
+                    fontSize = 18.sp,
+                    textAlign = TextAlign.Center,
+                )
                 Text(stringResource(R.string.about_version, version), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(8.dp))
                 Text(
