@@ -110,10 +110,10 @@ and open it on your phone (allow *Install unknown apps* for your browser or file
 
 | Your phone | File to pick | Size |
 |---|---|---|
-| Most phones (2017 and newer) | `SkyPython-<version>-arm64-v8a.apk` | ~14 MB |
+| Most phones (2017 and newer) | `SkyPython-<version>-arm64-v8a.apk` | ~15 MB |
 | Old 32-bit phones | `SkyPython-<version>-armeabi-v7a.apk` | ~14 MB |
-| Not sure | `SkyPython-<version>-universal.apk` — works everywhere | ~25 MB |
-| Emulators, x86 Chromebooks | `SkyPython-<version>-x86_64.apk` (`-x86.apk` for 32-bit) | ~14 MB |
+| Not sure | `SkyPython-<version>-universal.apk` — works everywhere | ~47 MB |
+| Emulators, x86 Chromebooks | `SkyPython-<version>-x86_64.apk` (`-x86.apk` for 32-bit) | ~15 MB |
 
 If Android says *"App not installed"*, you picked the wrong one — take `universal`.
 `SHA256SUMS` in the release lets you verify the download. New versions install over old ones.
