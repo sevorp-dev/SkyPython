@@ -25,8 +25,14 @@ enum class EntryType { MISSING, DIRECTORY, OTHER }
 fun entryTypeNoFollow(file: File): EntryType =
     if (hasNioFiles) NioEntryType.of(file) else lstatEntryType(file)
 
+/** True if [file] itself is a symbolic link (to anything, or dangling). */
+fun isSymlink(file: File): Boolean =
+    if (hasNioFiles) NioEntryType.isLink(file) else lstatIsLink(file)
+
 @RequiresApi(Build.VERSION_CODES.O)
 private object NioEntryType {
+    fun isLink(file: File): Boolean = Files.isSymbolicLink(file.toPath())
+
     fun of(file: File): EntryType {
         val path = file.toPath()
         return when {
@@ -35,6 +41,12 @@ private object NioEntryType {
             else -> EntryType.MISSING
         }
     }
+}
+
+private fun lstatIsLink(file: File): Boolean = try {
+    OsConstants.S_ISLNK(Os.lstat(file.path).st_mode)
+} catch (e: ErrnoException) {
+    false
 }
 
 /** API 24/25: lstat(2) (android.system.Os, API 21+) does not follow symlinks either. */

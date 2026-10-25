@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sharing a project folder -->
+    <string name="share_folder_too_large">Папка больше %1$d МБ — слишком велика, чтобы отправить её одним архивом</string>
+    <string name="share_folder_failed">Не удалось упаковать папку для отправки (%1$s)</string>
+</resources>

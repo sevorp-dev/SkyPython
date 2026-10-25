@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Messages added with the 0.0.3 review fixes (kept apart from strings.xml to keep merges simple). -->
+<resources>
+    <!-- Sharing a project folder -->
+    <string name="share_folder_too_large">This folder is over %1$d MB, too big to share as one archive</string>
+    <string name="share_folder_failed">Couldn\'t pack the folder for sharing (%1$s)</string>
+</resources>
