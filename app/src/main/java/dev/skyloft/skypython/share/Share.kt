@@ -42,6 +42,31 @@ fun shareFile(context: Context, file: File) {
 }
 
 /**
+ * Open with…: offers [file] to the apps that can view it (`ACTION_VIEW` through the same
+ * FileProvider as [shareFile]), always with the chooser so the user picks each time.
+ */
+fun openWith(context: Context, file: File) {
+    val uri = try {
+        FileProvider.getUriForFile(context, "${context.packageName}.files", file)
+    } catch (e: IllegalArgumentException) {
+        Toast.makeText(context, R.string.share_cannot_share, Toast.LENGTH_SHORT).show()
+        return
+    }
+    val view = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, mimeTypeFor(file))
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    val chooser = Intent.createChooser(view, context.getString(R.string.open_with_chooser_title, file.name)).apply {
+        if (context !is android.app.Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    try {
+        context.startActivity(chooser)
+    } catch (e: ActivityNotFoundException) {
+        Toast.makeText(context, R.string.open_with_no_app, Toast.LENGTH_SHORT).show()
+    }
+}
+
+/**
  * Shares a whole project folder: packs it into `cacheDir/share/<unique>/<name>.zip` (off the
  * main thread) and sends the archive like a file. Cancelling the caller (the screen went away)
  * stops the packing and leaves no partial archive.

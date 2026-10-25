@@ -125,5 +125,10 @@ fun mimeTypeFor(file: File): String = when (file.extension.lowercase()) {
     "html", "htm" -> "text/html"
     "png" -> "image/png"
     "jpg", "jpeg" -> "image/jpeg"
+    "gif" -> "image/gif"
+    "webp" -> "image/webp"
+    "bmp" -> "image/bmp"
+    "svg" -> "image/svg+xml"
+    "pdf" -> "application/pdf"
     else -> "application/octet-stream"
 }

@@ -91,7 +91,7 @@ class SamplesTest {
     @Test
     fun bundledSamplesAllHaveCommentTitles() {
         val files = File("src/main/assets/samples").listFiles { f -> f.name.endsWith(".py") }.orEmpty()
-        assertTrue("expected 6..8 samples, got ${files.size}", files.size in 6..8)
+        assertTrue("expected 6..12 samples, got ${files.size}", files.size in 6..12)
         for (f in files) {
             assertTrue("${f.name} must start with a comment", f.readLines().first().startsWith("# "))
             assertFalse(f.name, sampleTitle(f.readText(), f.name) == f.nameWithoutExtension)

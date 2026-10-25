@@ -94,6 +94,7 @@ import dev.skyloft.skypython.terminal.TerminalKind
 import dev.skyloft.skypython.terminal.TerminalScreen
 import dev.skyloft.skypython.terminal.TerminalViewModel
 import dev.skyloft.skypython.ui.drawer.DrawerAction
+import dev.skyloft.skypython.viewer.ImageViewerScreen
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -110,6 +111,11 @@ private object Routes {
     const val ABOUT = "about"
     const val REPORT = "report"
     const val REPORT_ID = "id"
+    const val IMAGE = "image"
+    const val IMAGE_PATH = "path"
+
+    /** The image viewer showing [file]. */
+    fun image(file: File) = "$IMAGE?$IMAGE_PATH=${android.net.Uri.encode(file.path)}"
 
     /** The Report screen, with a saved crash or a recent error attached when [id] is given. */
     fun report(id: String? = null) = if (id == null) REPORT else "$REPORT?$REPORT_ID=$id"
@@ -161,6 +167,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
     val scope = rememberMainScope()
     val openConsole = { nav.go(Routes.CONSOLE) }
     val openRun = { nav.go(Routes.RUN) }
+    val openImage: (File) -> Unit = { file -> nav.go(Routes.image(file)) }
     val openInEditor = { file: File, line: Int ->
         editorVm.openAt(file, line)
         nav.popBackStack(Routes.EDITOR, inclusive = false)
@@ -340,6 +347,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                         settings = settings,
                         onFontSizeChange = saveTerminalFont,
                         pip = pipVm,
+                        onOpenImage = openImage,
                     )
                 }
                 // Fallback if the pseudo-terminal can't be opened: the line-mode console over pipes.
@@ -390,6 +398,26 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                             debugVm.store.rename(old.path, new.path)
                         },
                         onBack = { nav.popBackStack() },
+                        onOpenImage = openImage,
+                    )
+                }
+                composable(
+                    "${Routes.IMAGE}?${Routes.IMAGE_PATH}={${Routes.IMAGE_PATH}}",
+                    arguments = listOf(navArgument(Routes.IMAGE_PATH) { type = NavType.StringType; nullable = true; defaultValue = null }),
+                ) { entry ->
+                    val path = entry.arguments?.getString(Routes.IMAGE_PATH)
+                    if (path == null) {
+                        LaunchedEffect(Unit) { nav.popBackStack() }
+                        return@composable
+                    }
+                    val file = remember(path) { File(path) }
+                    ImageViewerScreen(
+                        file = file,
+                        onBack = { nav.popBackStack() },
+                        onDeleted = {
+                            filesVm.refresh()
+                            nav.popBackStack()
+                        },
                     )
                 }
                 composable(Routes.PIP) {

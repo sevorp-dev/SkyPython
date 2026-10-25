@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Просмотр изображений, «Открыть в…» и картинки, созданные запуском. -->
+<resources>
+    <string name="open_with">Открыть в…</string>
+    <string name="open_with_chooser_title">Открыть %1$s в</string>
+    <string name="open_with_no_app">Нет приложения, чтобы открыть этот файл</string>
+
+    <string name="viewer_info">%1$d × %2$d · %3$s</string>
+    <string name="viewer_fit">Вписать в экран</string>
+    <string name="viewer_error_title">Не удаётся показать изображение</string>
+    <string name="viewer_error_missing">Этого файла больше нет.</string>
+    <string name="viewer_error_unsupported">Файл повреждён или его формат не поддерживается.</string>
+    <string name="viewer_error_memory">Изображение слишком большое для памяти этого устройства.</string>
+    <string name="viewer_error_read">Не удалось прочитать файл: %1$s</string>
+    <string name="viewer_delete_failed">Не удалось удалить файл</string>
+
+    <string name="files_unsupported_title">Этот тип файла не открыть</string>
+    <string name="files_unsupported_text">SkyPython не умеет открывать «%1$s». Им можно поделиться или открыть его в другом приложении.</string>
+
+    <string name="run_images_label">Новые изображения</string>
+    <string name="run_image_open">Открыть изображение %1$s</string>
+</resources>

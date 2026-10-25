@@ -148,4 +148,15 @@ class ProjectZipTest {
         assertEquals("application/json", mimeTypeFor(File("data.JSON")))
         assertEquals("application/octet-stream", mimeTypeFor(File("blob.bin")))
     }
+
+    @Test
+    fun imageMimeTypes() {
+        assertEquals("image/png", mimeTypeFor(File("plot.PNG")))
+        assertEquals("image/jpeg", mimeTypeFor(File("a.jpeg")))
+        assertEquals("image/gif", mimeTypeFor(File("a.gif")))
+        assertEquals("image/webp", mimeTypeFor(File("a.webp")))
+        assertEquals("image/bmp", mimeTypeFor(File("a.bmp")))
+        assertEquals("image/svg+xml", mimeTypeFor(File("logo.svg")))
+        assertEquals("application/pdf", mimeTypeFor(File("doc.pdf")))
+    }
 }
