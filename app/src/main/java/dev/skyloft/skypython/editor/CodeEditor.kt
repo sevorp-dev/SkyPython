@@ -1,7 +1,12 @@
 package dev.skyloft.skypython.editor
 
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.ColorFilter
+import android.graphics.Paint
+import android.graphics.PixelFormat
 import android.graphics.Typeface
+import android.graphics.drawable.Drawable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -19,6 +24,7 @@ import dev.skyloft.skypython.lang.LanguageService
 import dev.skyloft.skypython.lang.Severity
 import io.github.rosemoe.sora.event.ContentChangeEvent
 import io.github.rosemoe.sora.event.SelectionChangeEvent
+import io.github.rosemoe.sora.lang.completion.CompletionItemKind
 import io.github.rosemoe.sora.lang.diagnostic.DiagnosticDetail
 import io.github.rosemoe.sora.lang.diagnostic.DiagnosticRegion
 import io.github.rosemoe.sora.lang.diagnostic.DiagnosticsContainer
@@ -94,6 +100,43 @@ private const val POPUP_TEXT_SECONDARY = 0xFF9AA5BF.toInt()
 private const val POPUP_MATCHED = 0xFF86AEFF.toInt()
 private const val SQUIGGLE_ERROR = 0xFFFF7A8A.toInt()
 private const val SQUIGGLE_WARNING = 0xFFE3B95C.toInt()
+
+/**
+ * Completion-list badge: the kind's first letter on a soft tonal circle in the accent blue,
+ * instead of Sora's saturated per-kind colours.
+ */
+internal class CompletionBadge(kind: CompletionItemKind) : Drawable() {
+    private val letter = kind.name.first().uppercase()
+    private val circle = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = BADGE_BG }
+    private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = POPUP_MATCHED
+        textAlign = Paint.Align.CENTER
+        typeface = Typeface.DEFAULT_BOLD
+    }
+
+    override fun draw(canvas: Canvas) {
+        val b = bounds
+        val r = minOf(b.width(), b.height()) / 2f
+        canvas.drawCircle(b.exactCenterX(), b.exactCenterY(), r, circle)
+        text.textSize = r
+        canvas.drawText(letter, b.exactCenterX(), b.exactCenterY() - (text.descent() + text.ascent()) / 2, text)
+    }
+
+    override fun setAlpha(alpha: Int) {
+        circle.alpha = alpha
+        text.alpha = alpha
+    }
+
+    override fun setColorFilter(colorFilter: ColorFilter?) {
+        circle.colorFilter = colorFilter
+        text.colorFilter = colorFilter
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
+}
+
+private const val BADGE_BG = 0xFF2A3A63.toInt()
 
 /** Imperative handle for toolbar / symbol-bar actions on the live editor view. */
 class EditorController {

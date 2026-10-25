@@ -57,6 +57,7 @@ import com.termux.view.TerminalViewClient
 import dev.skyloft.skypython.console.InstallError
 import dev.skyloft.skypython.console.Installing
 import dev.skyloft.skypython.console.InterruptButton
+import dev.skyloft.skypython.ui.theme.BarNavy
 import dev.skyloft.skypython.ui.theme.SkyTopBar
 import dev.skyloft.skypython.ui.theme.brandButtonColors
 import kotlin.math.roundToInt
@@ -185,11 +186,21 @@ private fun showKeyboard(view: TerminalView) {
     imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
 }
 
+/**
+ * The 16 ANSI colours, softened to sit calmly on the navy background (the stock xterm ones are
+ * pure, saturated primaries — e.g. the Python REPL's prompt came out bright magenta).
+ */
+private val ANSI_COLORS = longArrayOf(
+    0xFF2A3450, 0xFFF0808F, 0xFF7FD1A0, 0xFFE8CB8A, 0xFF82A8F0, 0xFFB8A6EE, 0xFF72C6E4, 0xFFC8CEDD,
+    0xFF5E6985, 0xFFFF9AA6, 0xFF9BE0B5, 0xFFF2D9A2, 0xFFA3C0F7, 0xFFCDBFF5, 0xFF96D6EE, 0xFFF2F4F8,
+).let { argb -> IntArray(argb.size) { argb[it].toInt() } }
+
 /** The app theme's colours as the terminal's default foreground, background and cursor. */
 private data class TerminalPalette(val foreground: Int, val background: Int, val cursor: Int) {
     /** For emulators created from now on, and for a full reset (`ESC c`). */
     fun applyDefaults() {
         val d = TerminalColors.COLOR_SCHEME.mDefaultColors
+        ANSI_COLORS.copyInto(d)
         d[TextStyle.COLOR_INDEX_FOREGROUND] = foreground
         d[TextStyle.COLOR_INDEX_BACKGROUND] = background
         d[TextStyle.COLOR_INDEX_CURSOR] = cursor
@@ -198,6 +209,7 @@ private data class TerminalPalette(val foreground: Int, val background: Int, val
     /** For an emulator that already exists (colours a program set itself are kept). */
     fun applyTo(session: TerminalSession) {
         val c = session.emulator?.mColors?.mCurrentColors ?: return
+        ANSI_COLORS.copyInto(c)
         c[TextStyle.COLOR_INDEX_FOREGROUND] = foreground
         c[TextStyle.COLOR_INDEX_BACKGROUND] = background
         c[TextStyle.COLOR_INDEX_CURSOR] = cursor
@@ -296,7 +308,7 @@ private fun KeyRow(modifiers: Modifiers, enabled: Boolean, onKey: (ExtraKey) -> 
         Modifier
             .fillMaxWidth()
             .height(44.dp)
-            .background(colors.surfaceContainer)
+            .background(BarNavy)
             .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,

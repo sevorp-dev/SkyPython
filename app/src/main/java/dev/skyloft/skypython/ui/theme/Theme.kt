@@ -19,7 +19,7 @@ val NightNavy = Color(0xFF090D1A)
 val EditorBackground = Color(0xFF0E1424)
 /** Top bars, the tab strip, the symbol bar and key rows: one step above the background. */
 val BarNavy = Color(0xFF151C2F)
-/** Raised panels: cards, menus, dialogs, the drawer header. */
+/** Raised panels: menus, the completion popup, cards. */
 val PanelNavy = Color(0xFF1B2338)
 /** 1dp hairlines between rows and sections. */
 val DividerNavy = Color(0xFF273149)
@@ -83,9 +83,10 @@ private val SkyColors = darkColorScheme(
     surfaceDim = NightNavy,
     surfaceContainerLowest = NightNavy,
     surfaceContainerLow = Color(0xFF121929),
-    surfaceContainer = BarNavy,
-    surfaceContainerHigh = PanelNavy,
-    surfaceContainerHighest = Color(0xFF222B42),
+    // Menus (surfaceContainer) and dialogs (surfaceContainerHigh) sit clearly above the page.
+    surfaceContainer = PanelNavy,
+    surfaceContainerHigh = Color(0xFF222B42),
+    surfaceContainerHighest = Color(0xFF29334D),
 )
 
 /** Consistent corners: 8dp small controls, 12dp menus / fields / cards, 16dp+ dialogs and sheets. */
