@@ -20,6 +20,7 @@ import com.termux.terminal.TerminalEmulator
 import com.termux.terminal.TerminalSession
 import com.termux.terminal.TerminalSessionClient
 import com.termux.view.TerminalView
+import dev.skyloft.skypython.pip.MissingPackage
 import dev.skyloft.skypython.report.AppLog
 import dev.skyloft.skypython.report.ErrorReporter
 import dev.skyloft.skypython.runtime.PtyCommand
@@ -73,6 +74,8 @@ data class TerminalState(
     val atBottom: Boolean = true,
     /** Terminal text size. */
     val fontSp: Float = DEFAULT_FONT_SP,
+    /** The finished script stopped on `No module named 'x'` that pip can install ([TerminalKind.Run]). */
+    val missing: MissingPackage? = null,
 ) {
     fun actions(kind: TerminalKind): OutputActions = OutputActions.of(kind, running, hasOutput)
 
@@ -431,7 +434,7 @@ class TerminalViewModel(
     private fun start() {
         if (kind == TerminalKind.Run && _state.value.script == null) return
         startJob = viewModelScope.launch {
-            _state.update { it.copy(installError = null, startError = null, exitCode = null) }
+            _state.update { it.copy(installError = null, startError = null, exitCode = null, missing = null) }
             val p = paths ?: run {
                 _state.update { it.copy(installing = true) }
                 val result = install()
@@ -500,11 +503,15 @@ class TerminalViewModel(
         override fun onSessionFinished(finishedSession: TerminalSession) {
             if (finishedSession !== _state.value.session) return
             finishedSession.startError?.let { ErrorReporter.report(ErrorReporter.Where.TERMINAL, "${kind.name} could not start: $it") }
+            val exitCode = RunFooter.exitCode(finishedSession.exitStatus)
+            // A script that failed on a missing module: offer to install it.
+            val missing = if (kind == TerminalKind.Run) MissingPackage.afterRun(exitCode, transcript()) else null
             _state.update {
                 it.copy(
                     running = false,
                     startError = finishedSession.startError,
-                    exitCode = RunFooter.exitCode(finishedSession.exitStatus),
+                    exitCode = exitCode,
+                    missing = missing,
                     modifiers = Modifiers(),
                 )
             }

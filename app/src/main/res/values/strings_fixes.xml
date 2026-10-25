@@ -9,4 +9,10 @@
     <!-- Find & replace -->
     <string name="find_replace_timeout">The pattern ran over %1$d s and was stopped; nothing was replaced</string>
     <string name="find_replace_changed">The text changed while replacing; nothing was replaced</string>
+    <!-- A run that stopped on a missing module -->
+    <string name="run_missing_module">No module named %1$s</string>
+    <string name="run_install_missing">Install %1$s</string>
+    <string name="run_install_missing_as">Install %1$s (%2$s)</string>
+    <string name="run_install_busy">pip is busy with another package; try again when it is done</string>
+    <string name="run_install_retry">Try again</string>
 </resources>

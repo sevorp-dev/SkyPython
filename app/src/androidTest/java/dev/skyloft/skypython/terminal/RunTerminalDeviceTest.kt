@@ -186,6 +186,21 @@ class RunTerminalDeviceTest {
     }
 
     @Test
+    fun aRunThatStopsOnAMissingModuleOffersItsPipPackage() {
+        val vm = run("cam.py", "import cv2")
+        vm.await("No module named 'cv2'")
+        vm.await(footer(1))
+        assertEquals(
+            dev.skyloft.skypython.pip.MissingPackage("cv2", "opencv-python"),
+            waitFor("the missing package") { vm.state.value.missing },
+        )
+        // Run again clears it until the run fails the same way again.
+        val ok = run("fine.py", "print('ok')")
+        ok.await(footer(0))
+        assertEquals(null, onMain { ok.state.value.missing })
+    }
+
+    @Test
     fun saveOutputWritesANewFileNextToTheScript() {
         val vm = run("save.py", """print("to keep")""")
         vm.await(footer(0))

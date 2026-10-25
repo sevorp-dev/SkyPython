@@ -43,7 +43,6 @@ val MODULE_TO_PIP: Map<String, String> = mapOf(
     "usb" to "pyusb",
     "win32api" to "pywin32",
     "win32con" to "pywin32",
-    "google" to "protobuf",
     "Bio" to "biopython",
     "MySQLdb" to "mysqlclient",
     "psycopg2" to "psycopg2-binary",
@@ -71,4 +70,30 @@ val MODULE_TO_PIP: Map<String, String> = mapOf(
 fun pipNameForModule(module: String): String {
     val top = module.trim().substringBefore('.')
     return MODULE_TO_PIP[top] ?: top
+}
+
+/** A module a run could not import, and the pip package that provides it. */
+data class MissingPackage(val module: String, val pipName: String) {
+    companion object {
+        /**
+         * Import names that are namespaces shared by many distributions (`google.protobuf`,
+         * `google.cloud.storage`…): the missing package can't be told from the top-level name.
+         */
+        private val NAMESPACES = setOf("google")
+
+        /** How much of the end of the output is searched: the traceback is the last thing printed. */
+        private const val TAIL_CHARS = 20_000
+
+        /**
+         * What to offer after a run that ended with [exitCode] (null: still running): the package
+         * for the last `ModuleNotFoundError` in [output], when the run failed and pip can provide it.
+         */
+        fun afterRun(exitCode: Int?, output: String): MissingPackage? {
+            if (exitCode == null || exitCode == 0) return null
+            val module = missingModuleFrom(output.takeLast(TAIL_CHARS)) ?: return null
+            if (module in NAMESPACES) return null
+            val pip = pipNameForModule(module)
+            return if (PackageSpec.isName(pip)) MissingPackage(module, pip) else null
+        }
+    }
 }

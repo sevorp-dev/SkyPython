@@ -8,4 +8,10 @@
     <!-- Find & replace -->
     <string name="find_replace_timeout">Выражение работало дольше %1$d с и было остановлено; ничего не заменено</string>
     <string name="find_replace_changed">Текст изменился во время замены; ничего не заменено</string>
+    <!-- A run that stopped on a missing module -->
+    <string name="run_missing_module">Нет модуля %1$s</string>
+    <string name="run_install_missing">Установить %1$s</string>
+    <string name="run_install_missing_as">Установить %1$s (%2$s)</string>
+    <string name="run_install_busy">pip занят другим пакетом; попробуйте, когда он закончит</string>
+    <string name="run_install_retry">Повторить</string>
 </resources>

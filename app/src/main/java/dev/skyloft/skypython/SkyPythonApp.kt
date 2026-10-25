@@ -317,6 +317,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                         onOpenInEditor = openInEditor,
                         settings = settings,
                         onFontSizeChange = saveTerminalFont,
+                        pip = pipVm,
                     )
                 }
                 // Fallback if the pseudo-terminal can't be opened: the line-mode console over pipes.
