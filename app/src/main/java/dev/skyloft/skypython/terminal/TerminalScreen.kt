@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.terminal
 
+import dev.skyloft.skypython.ui.keepsSnackbarsAbove
 import dev.skyloft.skypython.ui.theme.TextBright
 import dev.skyloft.skypython.ui.theme.SlateRaised
 import dev.skyloft.skypython.ui.theme.SlatePanel
@@ -355,6 +356,7 @@ private fun FinishedBar(exitCode: Int, onRunAgain: () -> Unit, onBackToEditor: (
     val colors = MaterialTheme.colorScheme
     Row(
         Modifier
+            .keepsSnackbarsAbove()
             .fillMaxWidth()
             .background(SlateBar)
             .padding(horizontal = 12.dp, vertical = 6.dp),
@@ -640,6 +642,7 @@ private fun KeyRow(modifiers: Modifiers, enabled: Boolean, onKey: (ExtraKey) -> 
     val colors = MaterialTheme.colorScheme
     Row(
         Modifier
+            .keepsSnackbarsAbove()
             .fillMaxWidth()
             .height(44.dp)
             .background(SlateBar)
@@ -716,6 +719,7 @@ private fun CommandLine(enabled: Boolean, onSend: (String) -> Unit) {
     val shape = RoundedCornerShape(12.dp)
     Row(
         Modifier
+            .keepsSnackbarsAbove()
             .fillMaxWidth()
             .background(SlateBar)
             .padding(start = 12.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),

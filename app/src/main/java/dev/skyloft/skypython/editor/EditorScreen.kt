@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.editor
 
+import dev.skyloft.skypython.ui.keepsSnackbarsAbove
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import dev.skyloft.skypython.ui.theme.brandButtonColors
@@ -543,7 +544,7 @@ fun EditorScreen(
             bottomBar = {
                 // Library code (read-only): nothing to type or fix.
                 if (current != null && !current.readOnly) {
-                    Column(Modifier.background(SlateBar).navigationBarsPadding().imePadding()) {
+                    Column(Modifier.keepsSnackbarsAbove().background(SlateBar).navigationBarsPadding().imePadding()) {
                         Hairline()
                         DiagnosticsMapping.firstError(problems)?.let { error ->
                             ProblemLine(error, onClick = { controller.goTo(error) })

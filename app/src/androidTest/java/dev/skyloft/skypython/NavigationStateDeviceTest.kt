@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.skyloft.skypython.editor.EditorViewModel
+import dev.skyloft.skypython.report.ErrorReporter
 import dev.skyloft.skypython.settings.SettingsStore
 import dev.skyloft.skypython.terminal.TERMINAL_TAG
 import dev.skyloft.skypython.terminal.TerminalViewModel
@@ -183,6 +184,23 @@ class NavigationStateDeviceTest {
         onMain { editor().undo() }
         rule.waitUntil(5_000) { onMain { editor().text.toString() == text } }
     }
+
+    @Test
+    fun problemBannerStaysAboveTheSymbolBar() {
+        waitForEditor()
+        hideKeyboard()
+        ErrorReporter.report(ErrorReporter.Where.PYTHON, IllegalStateException("banner placement"))
+        val action = hasText(str(R.string.report_banner_action))
+        rule.waitUntilAtLeastOneExists(action, 10_000)
+        val banner = rule.onNode(action).fetchSemanticsNode().boundsInWindow
+        // The code view ends where the editor's bottom controls (status line, symbol bar) begin.
+        val codeBottom = onMain {
+            val e = editor()
+            val at = IntArray(2)
+            e.getLocationInWindow(at)
+            at[1] + e.height
+        }
+        assertTrue("banner bottom ${banner.bottom} over the symbol bar at $codeBottom", banner.bottom <= codeBottom)    }
 
     private companion object {
         const val TIMEOUT_MS = 90_000L

@@ -1,5 +1,15 @@
 package dev.skyloft.skypython
 
+import kotlin.math.roundToInt
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.findRootCoordinates
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.CompositionLocalProvider
+import dev.skyloft.skypython.ui.LocalSnackbarClearance
+import dev.skyloft.skypython.ui.SnackbarClearance
 import android.app.Application
 import android.widget.Toast
 import androidx.compose.material3.AlertDialog
@@ -238,11 +248,18 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
         }
     }
 
+    // The editor's symbol bar, the terminal's key row: the problem banner keeps above them.
+    val clearance = remember { SnackbarClearance() }
+    var hostGapPx by remember { mutableIntStateOf(0) }
+    CompositionLocalProvider(LocalSnackbarClearance provides clearance) {
     Column(Modifier.fillMaxSize().background(Slate)) {
         Box(
             Modifier
                 .fillMaxWidth()
                 .weight(1f)
+                .onGloballyPositioned { c ->
+                    hostGapPx = (c.findRootCoordinates().size.height - c.positionInRoot().y - c.size.height).roundToInt()
+                }
                 // The bar below pads itself for the system navigation bar: the screens must not too.
                 .then(if (showBottomBar) Modifier.consumeWindowInsets(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)) else Modifier),
         ) {
@@ -407,8 +424,18 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                     )
                 }
             }
-            // Snackbars sit above the bottom bar (and above the keyboard), over every screen.
-            SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().imePadding())
+            // Snackbars sit above the bottom bar (and above the keyboard), over every screen, and
+            // above the screen's own bottom controls.
+            val lift = SnackbarClearance.lift(clearance.px, hostGapPx)
+            SnackbarHost(
+                snackbar,
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .then(
+                        if (lift > 0) Modifier.padding(bottom = with(LocalDensity.current) { lift.toDp() })
+                        else Modifier.navigationBarsPadding().imePadding(),
+                    ),
+            )
         }
         if (showBottomBar) {
             SkyBottomBar(
@@ -417,6 +444,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                 onSelect = onBottomItem,
             )
         }
+    }
     }
 }
 
