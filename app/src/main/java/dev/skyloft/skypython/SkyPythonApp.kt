@@ -85,6 +85,9 @@ fun SkyPythonApp() {
         factory = TerminalViewModel.factory(app, workspace.root, TerminalKind.Shell),
     )
 
+    // Activity-scoped so other screens can call pipVm.installNow(...).
+    val pipVm: PipViewModel = viewModel(factory = PipViewModel.factory(app, workspace.root))
+
     val nav = rememberNavController()
     val scope = rememberCoroutineScope()
     val openConsole = { nav.go(Routes.CONSOLE) }
@@ -116,7 +119,11 @@ fun SkyPythonApp() {
                             shellVm.open()
                             nav.go(Routes.TERMINAL)
                         }
-                        DrawerAction.Pip -> nav.go(Routes.PIP)
+                        // Save first: the requirements tab installs from files on disk.
+                        DrawerAction.Pip -> scope.launch {
+                            editorVm.saveAll().join()
+                            nav.go(Routes.PIP)
+                        }
                         DrawerAction.Samples -> nav.go(Routes.SAMPLES)
                         DrawerAction.Settings -> nav.go(Routes.SETTINGS)
                         DrawerAction.About -> nav.go(Routes.ABOUT)
@@ -174,7 +181,13 @@ fun SkyPythonApp() {
             )
         }
         composable(Routes.PIP) {
-            PipScreen(viewModel(factory = PipViewModel.factory(app)), onBack = { nav.popBackStack() })
+            val editorState by editorVm.state.collectAsStateWithLifecycle()
+            PipScreen(
+                viewModel = pipVm,
+                onBack = { nav.popBackStack() },
+                currentFile = (editorState.current?.source as? DocSource.Local)?.file,
+                projectsRoot = workspace.root,
+            )
         }
         composable(Routes.SETTINGS) {
             SettingsScreen(store = settingsStore, onBack = { nav.popBackStack() })

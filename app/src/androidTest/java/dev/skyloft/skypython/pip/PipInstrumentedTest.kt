@@ -65,6 +65,37 @@ class PipInstrumentedTest {
         }
     }
 
+    @Test
+    fun pypiLookupSeesAPureWheel(): Unit = runBlocking {
+        assumeTrue("no network to PyPI", canReach("pypi.org"))
+        val result = withTimeout(60_000) { PyPiClient().lookup("Six") }
+        val project = (result as? LookupResult.Found)?.project ?: throw AssertionError("lookup six: $result")
+        assertEquals("six", project.name)
+        assertEquals(WheelSupport.Pure, project.wheel)
+        assertTrue(PyPiClient().lookup("no-such-package-skypython-test") is LookupResult.NotFound)
+    }
+
+    @Test
+    fun requirementsFileInstallsAndShowWorks(): Unit = runBlocking {
+        assumeTrue("no network to PyPI", canReach("pypi.org") && canReach("files.pythonhosted.org"))
+        withTimeout(INSTALL_TIMEOUT_MS) {
+            val dir = File(context.filesDir, "pip-test").apply { deleteRecursively(); mkdirs() }
+            val req = File(dir, "requirements.txt").apply { writeText("# test\nsix\n") }
+            val log = StringBuilder()
+            try {
+                repo.installRequirements(req).collect { log.append(it) }
+            } catch (e: PipFailedException) {
+                throw AssertionError("pip install -r failed: ${e.message}\n$log", e)
+            }
+            val details = repo.show("six").getOrThrow()
+            assertEquals("six", details.name.lowercase())
+            assertTrue(details.version, details.version.isNotEmpty())
+            // Needs PyPI too; six is current, so it's simply not listed.
+            assertTrue(repo.listOutdated().getOrThrow().keys.none { it == "pip" })
+            repo.uninstall("six").getOrThrow()
+        }
+    }
+
     private fun canReach(host: String): Boolean = try {
         Socket().use { it.connect(InetSocketAddress(host, 443), 5_000) }
         true

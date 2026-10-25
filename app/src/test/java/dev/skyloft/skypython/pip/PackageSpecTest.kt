@@ -44,6 +44,15 @@ class PackageSpecTest {
     }
 
     @Test
+    fun nameOfTakesTheLeadingName() {
+        assertEquals("requests", PackageSpec.nameOf(" requests[socks]>=2.0 "))
+        assertEquals("zope.interface", PackageSpec.nameOf("zope.interface==5"))
+        assertEquals("six", PackageSpec.nameOf("six"))
+        assertEquals("", PackageSpec.nameOf("==1"))
+        assertEquals("", PackageSpec.nameOf(""))
+    }
+
+    @Test
     fun invalidHasAReason() {
         val r = PackageSpec.check("a b") as SpecCheck.Invalid
         assertTrue(r.reason.isNotBlank())

@@ -118,13 +118,10 @@
     <string name="files_error_failed">Не удалось выполнить действие</string>
 
     <!-- Pip -->
-    <string name="pip_tab_install">Установить</string>
     <string name="pip_tab_installed">Установленные</string>
-    <string name="pip_package">Пакет</string>
     <string name="pip_package_hint">например, requests или six==1.16.0</string>
     <string name="pip_install">Установить</string>
     <string name="pip_installed_spec">Установлен %1$s</string>
-    <string name="pip_install_failed">Установка не удалась</string>
     <string name="pip_intro">Пакеты для ваших скриптов устанавливаются из PyPI.</string>
     <string name="pip_pure_python_hint">Пока поддерживаются только пакеты на чистом Python.</string>
     <string name="pip_no_packages">Установленных пакетов пока нет</string>
@@ -136,6 +133,72 @@
     <string name="pip_spec_spaces">Устанавливайте по одному пакету, без пробелов</string>
     <string name="pip_spec_options">Параметры здесь не поддерживаются</string>
     <string name="pip_spec_invalid">Введите имя пакета, например six или requests==2.32.3</string>
+    <string name="pip_tab_search">Поиск</string>
+    <string name="pip_tab_requirements">Из файла</string>
+    <string name="pip_search_label">Поиск в PyPI</string>
+    <string name="pip_search_action">Найти</string>
+    <string name="pip_clear">Очистить</string>
+    <string name="pip_result_not_found">В PyPI нет пакета «%1$s»</string>
+    <string name="pip_result_offline">Нет подключения к интернету. Проверьте сеть и попробуйте снова.</string>
+    <string name="pip_result_failed">Не удалось связаться с PyPI: %1$s</string>
+    <string name="pip_latest_version">Последняя версия %1$s</string>
+    <string name="pip_version">Версия %1$s</string>
+    <string name="pip_license">Лицензия: %1$s</string>
+    <string name="pip_home_page">Сайт проекта</string>
+    <string name="pip_wheel_pure">Чистый Python: можно устанавливать</string>
+    <string name="pip_wheel_android">Готовая сборка для Android (64-битные устройства)</string>
+    <string name="pip_wheel_source">Готовой сборки нет: pip попробует собрать пакет сам, а это получится только для кода на чистом Python</string>
+    <string name="pip_wheel_native">Нужен нативный код, пока не поддерживается</string>
+    <string name="pip_wheel_none">В этом выпуске нет файлов для установки</string>
+    <string name="pip_install_anyway">Всё равно попробовать</string>
+    <string name="pip_popular">Популярные пакеты</string>
+    <string name="pip_popular_none">Среди популярных такого нет. Нажмите «Найти», чтобы поискать в PyPI.</string>
+    <string name="pip_coming_later">Позже</string>
+    <string name="pip_needs_64bit">Только 64 бита</string>
+    <string name="pip_installed_badge">Установлен</string>
+    <string name="pip_upgrade">Обновить</string>
+    <string name="pip_update_available">Есть обновление: %1$s</string>
+    <string name="pip_checking_updates">Проверяем обновления…</string>
+    <string name="pip_updates_failed">Не удалось проверить обновления (нет интернета?)</string>
+    <string name="pip_details_requires">Зависит от: %1$s</string>
+    <string name="pip_details_required_by">Нужен для: %1$s</string>
+    <string name="pip_details_none">ничего</string>
+    <string name="pip_req_intro">Установить все пакеты из файла зависимостей (pip install -r): по одному пакету в строке.</string>
+    <string name="pip_req_open_file">Открыт в редакторе</string>
+    <string name="pip_req_project_files">Текстовые файлы в «Проектах»</string>
+    <string name="pip_req_none">В «Проектах» пока нет файлов .txt. Создайте requirements.txt и впишите по одному пакету в строке, например requests==2.32.3.</string>
+    <string name="pip_req_install">Установить всё</string>
+    <string name="pip_running_install">Устанавливаем %1$s…</string>
+    <string name="pip_running_upgrade">Обновляем %1$s…</string>
+    <string name="pip_running_requirements">Устанавливаем пакеты из %1$s…</string>
+    <string name="pip_done_upgrade">%1$s обновлён</string>
+    <string name="pip_done_requirements">Пакеты из %1$s установлены</string>
+    <string name="pip_failed_install">Не удалось установить %1$s</string>
+    <string name="pip_failed_upgrade">Не удалось обновить %1$s</string>
+    <string name="pip_failed_requirements">Не удалось установить пакеты из %1$s</string>
+    <string name="pip_uninstalled">%1$s удалён</string>
+    <string name="pip_show_log">Показать журнал</string>
+    <string name="pip_hide_log">Скрыть журнал</string>
+    <string name="pip_pkg_requests">Простые HTTP-запросы</string>
+    <string name="pip_pkg_rich">Цвета, таблицы и индикаторы прогресса в терминале</string>
+    <string name="pip_pkg_colorama">Цветной текст в терминале</string>
+    <string name="pip_pkg_beautifulsoup4">Разбор HTML-страниц</string>
+    <string name="pip_pkg_dateutil">Разбор дат и вычисления с датами</string>
+    <string name="pip_pkg_tabulate">Красивые текстовые таблицы</string>
+    <string name="pip_pkg_tqdm">Индикаторы прогресса для циклов</string>
+    <string name="pip_pkg_httpx">Современный HTTP-клиент, синхронный и асинхронный</string>
+    <string name="pip_pkg_click">Интерфейсы командной строки</string>
+    <string name="pip_pkg_art">ASCII-арт и текстовые шрифты</string>
+    <string name="pip_pkg_pyfiglet">Большие ASCII-надписи</string>
+    <string name="pip_pkg_termcolor">Цвет текста в терминале</string>
+    <string name="pip_pkg_emoji">Эмодзи по названию</string>
+    <string name="pip_pkg_faker">Тестовые имена, адреса и тексты</string>
+    <string name="pip_pkg_sympy">Символьная математика</string>
+    <string name="pip_pkg_mpmath">Вычисления с произвольной точностью</string>
+    <string name="pip_pkg_networkx">Графы и сети</string>
+    <string name="pip_pkg_prompt_toolkit">Интерактивный ввод в командной строке</string>
+    <string name="pip_pkg_jinja2">Шаблоны текста и HTML</string>
+    <string name="pip_pkg_pillow">Изображения (нужен нативный код)</string>
 
     <!-- Samples -->
     <string name="samples_open_failed">Не удалось открыть пример: %1$s</string>
