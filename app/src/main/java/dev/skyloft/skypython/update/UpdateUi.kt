@@ -58,6 +58,9 @@ import dev.skyloft.skypython.ui.theme.CardDivider
 import dev.skyloft.skypython.ui.theme.CardGroup
 import dev.skyloft.skypython.ui.theme.Chevron
 import dev.skyloft.skypython.ui.theme.ChipTone
+import dev.skyloft.skypython.ui.theme.CodeFont
+import dev.skyloft.skypython.ui.theme.SlateBar
+import androidx.compose.foundation.shape.RoundedCornerShape
 import dev.skyloft.skypython.ui.theme.ErrorRed
 import dev.skyloft.skypython.ui.theme.ErrorSurface
 import dev.skyloft.skypython.ui.theme.IconTile
@@ -342,6 +345,16 @@ private fun Notes(blocks: List<NoteBlock>) {
                     Text(block.text, fontSize = 14.sp, color = TextBright)
                 }
                 is NoteBlock.Paragraph -> Text(block.text, fontSize = 14.sp, color = TextBright)
+                is NoteBlock.Code -> Text(
+                    block.text,
+                    fontSize = 13.sp,
+                    fontFamily = CodeFont,
+                    color = TextBright,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(SlateBar, RoundedCornerShape(8.dp))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                )
             }
         }
     }

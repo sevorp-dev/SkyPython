@@ -46,6 +46,19 @@ class ReleaseNotesTest {
     }
 
     @Test
+    fun fencedCodeIsKeptVerbatim() {
+        val blocks = ReleaseNotes.parse("Try:\n\n```python\nimport numpy as np\nprint(np.arange(3))  # **not bold**\n```\nDone.\n")
+        assertEquals(
+            listOf(
+                NoteBlock.Paragraph("Try:"),
+                NoteBlock.Code("import numpy as np\nprint(np.arange(3))  # **not bold**"),
+                NoteBlock.Paragraph("Done."),
+            ),
+            blocks,
+        )
+    }
+
+    @Test
     fun emptyNotes() {
         assertEquals(emptyList<NoteBlock>(), ReleaseNotes.parse("\n  \n"))
     }

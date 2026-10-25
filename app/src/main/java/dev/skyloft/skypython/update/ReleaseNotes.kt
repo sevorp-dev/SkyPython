@@ -5,10 +5,13 @@ sealed interface NoteBlock {
     data class Heading(val level: Int, val text: String) : NoteBlock
     data class Bullet(val text: String, val marker: String = "•") : NoteBlock
     data class Paragraph(val text: String) : NoteBlock
+    /** A fenced code block, verbatim. */
+    data class Code(val text: String) : NoteBlock
 }
 
 /** Just enough Markdown for the files in `.github/release-notes`: headings, lists, paragraphs. */
 object ReleaseNotes {
+    private const val NL = "\n"
     private val HEADING = Regex("""^(#{1,6})\s+(.*?)\s*#*$""")
     private val BULLET = Regex("""^[-*+]\s+(.*)$""")
     private val NUMBERED = Regex("""^(\d{1,3}[.)])\s+(.*)$""")
@@ -33,9 +36,27 @@ object ReleaseNotes {
             para.clear()
         }
 
+        // Lines of the open ``` block, or null outside one.
+        var code: MutableList<String>? = null
+
         for (raw in markdown.lines()) {
             val line = raw.trimEnd()
             val trimmed = line.trim()
+            if (trimmed.startsWith("```")) {
+                val open = code
+                if (open == null) {
+                    flush()
+                    code = mutableListOf()
+                } else {
+                    if (open.isNotEmpty()) out += NoteBlock.Code(open.joinToString(NL))
+                    code = null
+                }
+                continue
+            }
+            code?.let {
+                it += line
+                continue
+            }
             if (trimmed.isEmpty() || RULE.matches(trimmed)) {
                 flush()
                 continue
@@ -70,6 +91,7 @@ object ReleaseNotes {
             }
         }
         flush()
+        code?.takeIf { it.isNotEmpty() }?.let { out += NoteBlock.Code(it.joinToString(NL)) }
         return out
     }
 
