@@ -121,6 +121,7 @@ private class SkyColorScheme(registry: ThemeRegistry) :
 }
 
 private const val PINCH_SAVE_DELAY_MS = 600L
+private val JUMP_RESCROLL_MS = longArrayOf(150L, 500L, 1_200L)
 // Completion popup and problem tooltip: the app's raised panel (PanelNavy) and text colours.
 private const val POPUP_BG = 0xFF1B2338.toInt()
 private const val POPUP_BORDER = 0xFF273149.toInt()
@@ -183,7 +184,13 @@ class EditorController {
     fun flushPendingText() { flusher?.invoke() }
 
     /** Closes the soft keyboard; the console and other screens must not open under it. */
-    fun hideKeyboard() { view?.hideSoftInput() }
+    fun hideKeyboard() {
+        val v = view ?: return
+        v.hideSoftInput()
+        // The selection toolbar is a popup window: it would float over the drawer or a sheet.
+        v.getComponent(EditorTextActionWindow::class.java).dismiss()
+        v.hideAutoCompleteWindow()
+    }
 
     fun undo() { view?.undo() }
     fun redo() { view?.redo() }
@@ -378,6 +385,12 @@ class EditorController {
             if (end > start) v.setSelectionRegion(line, start, line, end, true) else v.setSelection(line, start, true)
             v.ensurePositionVisible(line, start)
             v.requestFocus()
+            // With word wrap the rows of a just-opened file are laid out in the background: scroll
+            // again once they are, or a long file stops short of the target.
+            for (delayMs in JUMP_RESCROLL_MS) v.postDelayed({
+                val c = v.cursor
+                if (v.text === t && c.leftLine == line && c.leftColumn == start) v.ensurePositionVisible(line, start)
+            }, delayMs)
         }
     }
 

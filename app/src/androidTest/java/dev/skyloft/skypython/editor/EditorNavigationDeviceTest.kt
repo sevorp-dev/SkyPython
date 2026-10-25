@@ -87,10 +87,11 @@ class EditorNavigationDeviceTest {
         e.setSelection(line, column)
     }
 
-    private fun key(code: Int, meta: Int = 0) {
+    /** A hardware-keyboard key, straight to the editor view (as when it has focus). */
+    private fun key(code: Int, meta: Int = 0) = onMain {
         val now = SystemClock.uptimeMillis()
-        instrumentation.sendKeySync(KeyEvent(now, now, KeyEvent.ACTION_DOWN, code, 0, meta))
-        instrumentation.sendKeySync(KeyEvent(now, now, KeyEvent.ACTION_UP, code, 0, meta))
+        editor().dispatchKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, code, 0, meta))
+        editor().dispatchKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_UP, code, 0, meta))
     }
 
     private fun selected(): String = onMain {
@@ -109,7 +110,13 @@ class EditorNavigationDeviceTest {
                 Thread.sleep(200)
             }
         }
-        error("did not land on $name")
+        val sel = selected()
+        val where = onMain {
+            val e = editor()
+            "cursor ${e.cursor.leftLine}:${e.cursor.leftColumn}, selected '$sel', " +
+                "editable ${e.isEditable}, text starts '${e.text.toString().take(40)}'"
+        }
+        error("did not land on $name: $where")
     }
 
     @Test
