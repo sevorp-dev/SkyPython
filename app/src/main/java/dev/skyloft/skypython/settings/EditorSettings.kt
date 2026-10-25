@@ -6,4 +6,6 @@ data class EditorSettings(
     val wordWrap: Boolean = true,
     val lineNumbers: Boolean = true,
     val keepScreenOn: Boolean = false,
+    /** Suggestions while typing and error underlines (the language server). */
+    val codeCompletion: Boolean = true,
 )

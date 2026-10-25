@@ -53,6 +53,10 @@ private val NOTICES = listOf(
     Notice("Sora Editor", "LGPL-2.1"),
     Notice("MagicPython grammar", "MIT"),
     Notice("VS Code Dark+ theme", "MIT"),
+    Notice("jedi", "MIT"),
+    Notice("parso", "MIT"),
+    Notice("pyflakes", "MIT"),
+    Notice("typeshed", "Apache-2.0"),
 )
 
 @OptIn(ExperimentalMaterial3Api::class)

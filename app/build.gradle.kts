@@ -120,6 +120,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.sora.editor)
     implementation(libs.sora.textmate)
+    // Already in the APK through tm4e; declared because the language client uses it directly.
+    implementation(libs.gson)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)

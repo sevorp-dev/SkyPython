@@ -13,8 +13,13 @@ class SettingsMappingTest {
     }
 
     @Test
+    fun codeCompletionIsOnByDefault() {
+        assertEquals(true, SettingsMapping.read(emptyPreferences()).codeCompletion)
+    }
+
+    @Test
     fun writeThenReadRoundTrips() {
-        val s = EditorSettings(fontSizeSp = 20, wordWrap = false, lineNumbers = false, keepScreenOn = true)
+        val s = EditorSettings(fontSizeSp = 20, wordWrap = false, lineNumbers = false, keepScreenOn = true, codeCompletion = false)
         val prefs = mutablePreferencesOf()
         SettingsMapping.write(prefs, s)
         assertEquals(s, SettingsMapping.read(prefs))

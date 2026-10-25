@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
@@ -68,6 +70,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.skyloft.skypython.lang.Diagnostic
+import dev.skyloft.skypython.lang.DiagnosticsMapping
 import dev.skyloft.skypython.settings.EditorSettings
 import dev.skyloft.skypython.ui.drawer.DrawerAction
 import dev.skyloft.skypython.ui.drawer.SkyDrawer
@@ -81,6 +85,9 @@ import java.io.File
 private val TabSelected = Color.White
 private val TabIdle = Color(0xFF93A4B3)
 private val SubtitleColor = Color(0xFFB3C2CE)
+private val ProblemBackground = Color(0xFF2A1A1E)
+private val ProblemRed = Color(0xFFF14C4C)
+private val ProblemText = Color(0xFFE6C7C7)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -100,6 +107,8 @@ fun EditorScreen(
     var running by remember { mutableStateOf(false) }
     // Read only inside the drawer, so cursor moves don't recompose the whole screen.
     val cursor = remember { mutableStateOf(CursorPosition()) }
+    // Problems the language server found in the shown doc (squiggles; the first error is listed).
+    var problems by remember { mutableStateOf(emptyList<Diagnostic>()) }
     val config = remember(settings) { EditorViewConfig.from(settings) }
 
     val saveAsLauncher = rememberLauncherForActivityResult(
@@ -228,11 +237,15 @@ fun EditorScreen(
             },
             bottomBar = {
                 if (current != null) {
-                    SymbolBar(
-                        onInsert = controller::insert,
-                        onRun = if (imeVisible) runCurrent else null,
-                        modifier = Modifier.navigationBarsPadding().imePadding(),
-                    )
+                    Column(Modifier.navigationBarsPadding().imePadding()) {
+                        DiagnosticsMapping.firstError(problems)?.let { error ->
+                            ProblemLine(error, onClick = { controller.goTo(error) })
+                        }
+                        SymbolBar(
+                            onInsert = controller::insert,
+                            onRun = if (imeVisible) runCurrent else null,
+                        )
+                    }
                 }
             },
             snackbarHost = { SnackbarHost(snackbar) },
@@ -245,12 +258,14 @@ fun EditorScreen(
                     current == null -> EmptyEditor(openFiles)
                     else -> CodeEditor(
                         docId = current.id,
+                        docPath = (current.source as? DocSource.Local)?.file?.path,
                         initialText = current.text,
                         openIds = state.docs.mapTo(HashSet()) { it.id },
                         controller = controller,
                         config = config,
                         onTextChanged = viewModel::onTextChanged,
                         onCursorChanged = { cursor.value = it },
+                        onDiagnostics = { problems = it },
                         modifier = Modifier.fillMaxWidth().weight(1f),
                     )
                 }
@@ -327,6 +342,34 @@ private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel, onClose: (
                 }
             }
         }
+    }
+}
+
+/** One thin line above the symbol bar: the first error. Tap: jump there and show it. */
+@Composable
+private fun ProblemLine(error: Diagnostic, onClick: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(ProblemBackground)
+            .clickable(onClickLabel = "Go to error", onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            Icons.Filled.ErrorOutline,
+            contentDescription = null,
+            tint = ProblemRed,
+            modifier = Modifier.size(16.dp),
+        )
+        Text(
+            problemLabel(error),
+            color = ProblemText,
+            fontSize = 13.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = 8.dp),
+        )
     }
 }
 
