@@ -13,6 +13,8 @@ Standard library only, so it can run anywhere: python verify_wheels.py wheelhous
 from __future__ import annotations
 
 import argparse
+import hashlib
+import os
 import posixpath
 import re
 import struct
@@ -33,7 +35,13 @@ SYSTEM_LIBS = {
     "libmediandk.so", "libvulkan.so", "libnativewindow.so", "libsync.so", "libstdc++.so",
 }
 PAGE = 16384
-TAG_RE = re.compile(r"-android_(\d+)_([a-z0-9_]+)\.whl$")
+
+TAG_RE = re.compile(r"-([a-z0-9_.]+)-([a-z0-9_]+)-android_(\d+)_([a-z0-9_]+)\.whl$")
+
+
+def sha256_file(path: str) -> str:
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
 
 
 def elf_info(b: bytes) -> dict:
@@ -89,17 +97,21 @@ def elf_info(b: bytes) -> dict:
     return {"class": cls, "machine": machine, "aligns": aligns, "needed": needed, "runpath": runpath}
 
 
-def check_wheel(path: str, max_api: int) -> list[str]:
+def check_wheel(path: str, max_api: int, python_tag: str | None) -> list[str]:
     errors = []
     m = TAG_RE.search(path)
     if not m:
         return [f"{path}: not an android_<api>_<abi> wheel"]
-    api, abi = int(m.group(1)), m.group(2)
+    py, py_abi, api, abi = m.group(1), m.group(2), int(m.group(3)), m.group(4)
+    if python_tag and (py, py_abi) != (python_tag, python_tag):
+        errors.append(f"{path}: tag {py}-{py_abi}, want {python_tag}-{python_tag}")
     if api > max_api:
         errors.append(f"{path}: API level {api} > {max_api}; devices on API {max_api} cannot install it")
     if abi not in ABIS:
         return errors + [f"{path}: unknown ABI {abi}"]
     want_cls, want_machine = ABIS[abi]
+    notable: list[str] = []
+    ext_sets: dict[str, int] = {}
 
     with zipfile.ZipFile(path) as z:
         names = z.namelist()
@@ -123,7 +135,19 @@ def check_wheel(path: str, max_api: int) -> list[str]:
                 if lib in SYSTEM_LIBS or re.fullmatch(r"libpython3\.\d+\.so", lib) or lib in basenames:
                     continue
                 errors.append(f"{where}: needs {lib}, which is neither a system library nor in the wheel")
-            print(f"  {n}: ELF{info['class']} align={sorted(set(info['aligns']))} needed={info['needed']} runpath={info['runpath']}")
+            for r in info["runpath"]:
+                if any(p.startswith("/") for p in r.split(":")):
+                    errors.append(f"{where}: absolute RUNPATH {r!r} (a build-machine path)")
+            line = f"{n}: ELF{info['class']} machine={info['machine']:#x} align={sorted(set(info['aligns']))} needed={info['needed']} runpath={info['runpath']}"
+            print("  " + line)
+            if ".cpython-" in posixpath.basename(n):
+                key = f"extensions: align={sorted(set(info['aligns']))} needed={info['needed']} runpath={info['runpath']}"
+                ext_sets[key] = ext_sets.get(key, 0) + 1
+            else:
+                notable.append(line)
+    summary = [f"{posixpath.basename(path)} ({os.path.getsize(path)} bytes, sha256 {sha256_file(path)}): "
+               f"{len(libs)} ELF files"] + notable + [f"{c} x {k}" for k, c in ext_sets.items()]
+    print("::notice title=" + posixpath.basename(path) + "::" + "%0A".join(summary))
     return errors
 
 
@@ -131,11 +155,12 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("wheels", nargs="+")
     ap.add_argument("--max-api", type=int, default=24)
+    ap.add_argument("--python-tag", default="cp314", help="required python/abi tag ('' to skip)")
     args = ap.parse_args()
     errors = []
     for w in args.wheels:
         print(w)
-        errors += check_wheel(w, args.max_api)
+        errors += check_wheel(w, args.max_api, args.python_tag or None)
     for e in errors:
         print(f"::error::{e}")
     print("OK" if not errors else f"{len(errors)} problem(s)")
