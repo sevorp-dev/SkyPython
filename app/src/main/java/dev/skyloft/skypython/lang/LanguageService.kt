@@ -33,6 +33,8 @@ class LanguageService(
     data class Config(
         val completeTimeoutMs: Long = 4_000,
         val diagnoseTimeoutMs: Long = 15_000,
+        /** Go to definition, usages, outline: the user is waiting, but a big library takes a while. */
+        val navigateTimeoutMs: Long = 15_000,
         /** First start unpacks the bundle and compiles jedi's bytecode: slow on old phones. */
         val readyTimeoutMs: Long = 90_000,
         val maxEarlyDeaths: Int = 3,
@@ -73,6 +75,33 @@ class LanguageService(
     suspend fun diagnose(source: String, path: String?): List<Diagnostic>? {
         val c = readyClient() ?: startAsync()?.await() ?: return null
         return c.diagnose(source, path, config.diagnoseTimeoutMs).also { check(c) }
+    }
+
+    /** Where the name at the position is defined, waiting for the server if needed; null if unavailable. */
+    suspend fun definition(source: String, line: Int, column: Int, path: String?): List<Definition>? {
+        val c = readyClient() ?: startAsync()?.await() ?: return null
+        return c.definition(source, line, column, path, config.navigateTimeoutMs).also { check(c) }
+    }
+
+    /** Usages of the name at the position in this file, waiting for the server; null if unavailable. */
+    suspend fun references(source: String, line: Int, column: Int, path: String?): List<Usage>? {
+        val c = readyClient() ?: startAsync()?.await() ?: return null
+        return c.references(source, line, column, path, config.navigateTimeoutMs).also { check(c) }
+    }
+
+    /** The file's classes and functions, waiting for the server; null if unavailable. */
+    suspend fun outline(source: String): List<OutlineItem>? {
+        val c = readyClient() ?: startAsync()?.await() ?: return null
+        return c.outline(source, config.navigateTimeoutMs).also { check(c) }
+    }
+
+    /**
+     * The call around the cursor, for the parameter hint. Like [complete] it never waits for a
+     * starting server (null meanwhile): a hint that comes late is worse than none.
+     */
+    suspend fun signature(source: String, line: Int, column: Int, path: String?): Signature? {
+        val c = readyClient() ?: run { startAsync(); return null }
+        return c.signature(source, line, column, path, config.completeTimeoutMs).also { check(c) }
     }
 
     /** Stops the server (code completion was switched off). A later request starts a new one. */

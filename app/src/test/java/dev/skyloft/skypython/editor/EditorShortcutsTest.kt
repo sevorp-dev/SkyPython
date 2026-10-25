@@ -30,4 +30,12 @@ class EditorShortcutsTest {
         assertNull(editorShortcut(KeyEvent.KEYCODE_Y, ctrl = true, shift = false))
         assertNull(editorShortcut(KeyEvent.KEYCODE_C, ctrl = true, shift = false))
     }
+
+    @Test
+    fun goToDefinitionIsCtrlBOrF12() {
+        assertEquals(EditorShortcut.GoToDefinition, editorShortcut(KeyEvent.KEYCODE_B, ctrl = true, shift = false))
+        assertEquals(EditorShortcut.GoToDefinition, editorShortcut(KeyEvent.KEYCODE_F12, ctrl = false, shift = false))
+        assertEquals(EditorShortcut.Outline, editorShortcut(KeyEvent.KEYCODE_O, ctrl = true, shift = true))
+        assertNull(editorShortcut(KeyEvent.KEYCODE_B, ctrl = false, shift = false))
+    }
 }

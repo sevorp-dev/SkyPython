@@ -110,6 +110,15 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.skyloft.skypython.lang.Diagnostic
 import dev.skyloft.skypython.lang.DiagnosticsMapping
+import dev.skyloft.skypython.lang.EditorRange
+import dev.skyloft.skypython.lang.LanguageService
+import dev.skyloft.skypython.lang.NavTarget
+import dev.skyloft.skypython.lang.Navigation
+import dev.skyloft.skypython.lang.OutlineItem
+import dev.skyloft.skypython.lang.Outlines
+import androidx.compose.material.icons.outlined.AccountTree
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.automirrored.outlined.CallMade
 import dev.skyloft.skypython.settings.EditorSettings
 import dev.skyloft.skypython.ui.drawer.DrawerAction
 import dev.skyloft.skypython.ui.drawer.SkyDrawer
@@ -227,6 +236,83 @@ fun EditorScreen(
     val runCurrent: () -> Unit = { startCurrent(onRun) }
     var runMenuOpen by remember { mutableStateOf(false) }
 
+    // ---- code navigation (language server) ----
+    val service = remember { LanguageService.get(context) }
+    var outlineOpen by remember { mutableStateOf(false) }
+    var outlineItems by remember { mutableStateOf<List<OutlineItem>?>(null) }
+    // The function / class around the cursor, for the drawer header (refreshed when it opens).
+    var drawerSymbol by remember { mutableStateOf<String?>(null) }
+    val docPath = (current?.source as? DocSource.Local)?.file?.path
+    fun say(id: Int, vararg args: Any) {
+        scope.launch { snackbar.showSnackbar(AppLocale.string(context, id, *args)) }
+    }
+    /** The cursor's position for a lookup, or null (with a message) when navigation can't run. */
+    fun navPosition(): LookupPosition? {
+        if (!config.codeCompletion) { say(R.string.nav_hints_off); return null }
+        val pos = controller.lookupPosition() ?: return null
+        val line = pos.source.lineSequence().drop(pos.line - 1).firstOrNull().orEmpty()
+        if (wordAt(line, pos.column) == null) { say(R.string.nav_not_on_a_name); return null }
+        return pos
+    }
+    val goToDefinition: () -> Unit = goToDefinition@{
+        val pos = navPosition() ?: return@goToDefinition
+        val path = docPath
+        val name = wordAt(pos.source.lineSequence().drop(pos.line - 1).first(), pos.column).orEmpty()
+        scope.launch {
+            val defs = service.definition(pos.source, pos.line, pos.column, path)
+            when {
+                defs == null -> say(R.string.nav_unavailable)
+                defs.isEmpty() -> say(R.string.nav_no_definition, name)
+                else -> when (val t = Navigation.target(defs.first(), viewModel.projectsRoot)) {
+                    null -> say(R.string.nav_no_definition, name)
+                    is NavTarget.InFile -> controller.jumpTo(t.range)
+                    is NavTarget.OtherFile -> {
+                        controller.flushPendingText()
+                        controller.hideKeyboard()
+                        viewModel.open(t.file, readOnly = t.readOnly) { id -> controller.jumpWhenShown(id, t.range) }
+                    }
+                }
+            }
+        }
+    }
+    val findUsages: () -> Unit = findUsages@{
+        val pos = navPosition() ?: return@findUsages
+        val name = wordAt(pos.source.lineSequence().drop(pos.line - 1).first(), pos.column).orEmpty()
+        scope.launch {
+            val usages = service.references(pos.source, pos.line, pos.column, docPath)
+            if (usages == null) {
+                say(R.string.nav_unavailable)
+            } else {
+                controller.highlightUsages(usages)
+                say(R.string.nav_usages_count, name, usages.size)
+            }
+        }
+    }
+    val openOutline: () -> Unit = openOutline@{
+        if (current == null) return@openOutline
+        if (!config.codeCompletion) { say(R.string.nav_hints_off); return@openOutline }
+        val source = controller.lookupPosition()?.source ?: return@openOutline
+        controller.hideKeyboard()
+        outlineItems = null
+        outlineOpen = true
+        scope.launch {
+            val items = service.outline(source)
+            if (items == null) { outlineOpen = false; say(R.string.nav_unavailable) } else outlineItems = items
+        }
+    }
+    LaunchedEffect(drawerState.isOpen) {
+        if (!drawerState.isOpen) return@LaunchedEffect
+        drawerSymbol = null
+        val pos = controller.lookupPosition() ?: return@LaunchedEffect
+        if (!config.codeCompletion || !service.isReady) return@LaunchedEffect
+        val items = service.outline(pos.source) ?: return@LaunchedEffect
+        drawerSymbol = Outlines.symbolAt(items, pos.line)
+    }
+    SideEffect {
+        controller.onGoToDefinition = goToDefinition
+        controller.onFindUsages = findUsages
+    }
+
     val openFind = { replace: Boolean ->
         if (findOpen) runCatching { findFocus.requestFocus() }
         findOpen = true
@@ -258,6 +344,8 @@ fun EditorScreen(
                 EditorShortcut.ToggleComment -> controller.toggleComment()
                 EditorShortcut.Run -> runCurrent()
                 EditorShortcut.Redo -> controller.redo()
+                EditorShortcut.GoToDefinition -> goToDefinition()
+                EditorShortcut.Outline -> openOutline()
             }
         }
         controller.onPinchFontSize = onFontSizeChange
@@ -281,6 +369,18 @@ fun EditorScreen(
             onDismiss = { goToLineOpen = false },
         )
     }
+    if (outlineOpen) {
+        OutlineSheet(
+            items = outlineItems,
+            currentLine = cursor.value.line + 1,
+            onPick = { item ->
+                outlineOpen = false
+                val line = item.line - 1
+                controller.jumpTo(EditorRange(line, item.column, line, item.column + item.name.length))
+            },
+            onDismiss = { outlineOpen = false },
+        )
+    }
     if (newFileOpen) {
         NewFileDialog(onCreate = viewModel::newFile, onDismiss = { newFileOpen = false })
     }
@@ -301,6 +401,7 @@ fun EditorScreen(
             SkyDrawer(
                 fileName = current?.name,
                 cursor = cursor.value,
+                symbol = drawerSymbol,
                 onClose = { scope.launch { drawerState.close() } },
             ) { action ->
                 scope.launch { drawerState.close() }
@@ -330,7 +431,7 @@ fun EditorScreen(
                             }
                             // Run lives in the bar (always in the same place, never over the code);
                             // hidden while the debugger panel has its own controls.
-                            if (current != null && debugPanel == null) {
+                            if (current != null && !current.readOnly && debugPanel == null) {
                                 Box(Modifier.padding(horizontal = 4.dp)) {
                                     // Long press: Run / Debug.
                                     RunButton(
@@ -380,6 +481,10 @@ fun EditorScreen(
                                     MenuItem(R.string.editor_redo, Icons.AutoMirrored.Outlined.Redo, enabled = has) { close(); controller.redo() }
                                     MenuItem(R.string.find_and_replace, Icons.Outlined.Search, enabled = has) { close(); openFind(false) }
                                     MenuItem(R.string.go_to_line, Icons.Outlined.FormatListNumbered, enabled = has) { close(); goToLineOpen = true }
+                                    MenuItem(R.string.editor_action_go_to_definition, Icons.AutoMirrored.Outlined.CallMade, enabled = has) {
+                                        close(); goToDefinition()
+                                    }
+                                    MenuItem(R.string.editor_outline, Icons.Outlined.AccountTree, enabled = has) { close(); openOutline() }
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.editor_menu_edit)) },
                                         leadingIcon = { Icon(Icons.Outlined.EditNote, null) },
@@ -436,7 +541,8 @@ fun EditorScreen(
                 }
             },
             bottomBar = {
-                if (current != null) {
+                // Library code (read-only): nothing to type or fix.
+                if (current != null && !current.readOnly) {
                     Column(Modifier.background(SlateBar).navigationBarsPadding().imePadding()) {
                         Hairline()
                         DiagnosticsMapping.firstError(problems)?.let { error ->
@@ -484,6 +590,7 @@ fun EditorScreen(
                             onDiagnostics = { problems = it },
                             modifier = Modifier.fillMaxSize(),
                             debugMarks = debugMarks,
+                            readOnly = current.readOnly,
                         )
                     }
                 }
@@ -501,13 +608,17 @@ private fun EditorTitle(doc: OpenDocument?, projectsRoot: File) {
         return
     }
     Column {
-        Text(
-            doc.name,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                doc.name,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            if (doc.readOnly) ReadOnlyBadge(Modifier.padding(start = 8.dp))
+        }
         Text(
             docSubtitle(
                 doc,
@@ -519,6 +630,28 @@ private fun EditorTitle(doc: OpenDocument?, projectsRoot: File) {
             color = SubtitleColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/** "Read-only" on a soft tonal pill: library code opened by "Go to definition". */
+@Composable
+private fun ReadOnlyBadge(modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .background(colors.primary.copy(alpha = 0.14f), RoundedCornerShape(50))
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+    ) {
+        Icon(Icons.Filled.Lock, contentDescription = null, tint = colors.primary, modifier = Modifier.size(12.dp))
+        Text(
+            stringResource(R.string.editor_read_only),
+            color = colors.primary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            modifier = Modifier.padding(start = 4.dp),
         )
     }
 }

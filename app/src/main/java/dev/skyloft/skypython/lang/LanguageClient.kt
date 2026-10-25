@@ -107,6 +107,34 @@ class LanguageClient(
         return (call("diagnose", params, timeoutMs) as? Reply.Ok)?.let { Protocol.diagnostics(it.result) }
     }
 
+    private fun positionParams(source: String, line: Int, column: Int, path: String?) = JsonObject().apply {
+        addProperty("source", source)
+        addProperty("line", line)
+        addProperty("column", column)
+        if (path != null) addProperty("path", path)
+    }
+
+    /** Where the name at [line] / [column] is defined (empty: nowhere), or null if unavailable. */
+    suspend fun definition(source: String, line: Int, column: Int, path: String?, timeoutMs: Long): List<Definition>? =
+        (call("definition", positionParams(source, line, column, path), timeoutMs) as? Reply.Ok)
+            ?.let { Protocol.definitions(it.result) }
+
+    /** Usages in this file of the name at [line] / [column], or null if unavailable. */
+    suspend fun references(source: String, line: Int, column: Int, path: String?, timeoutMs: Long): List<Usage>? =
+        (call("references", positionParams(source, line, column, path), timeoutMs) as? Reply.Ok)
+            ?.let { Protocol.usages(it.result) }
+
+    /** The call at [line] / [column]; null outside a call or if unavailable. */
+    suspend fun signature(source: String, line: Int, column: Int, path: String?, timeoutMs: Long): Signature? =
+        (call("signature", positionParams(source, line, column, path), timeoutMs) as? Reply.Ok)
+            ?.let { Protocol.signature(it.result) }
+
+    /** Classes and functions of [source], or null if unavailable. */
+    suspend fun outline(source: String, timeoutMs: Long): List<OutlineItem>? {
+        val params = JsonObject().apply { addProperty("source", source) }
+        return (call("outline", params, timeoutMs) as? Reply.Ok)?.let { Protocol.outline(it.result) }
+    }
+
     /** Stops the server and fails everything pending. */
     fun close() {
         closed()

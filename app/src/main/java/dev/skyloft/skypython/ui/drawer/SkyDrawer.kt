@@ -47,7 +47,9 @@ import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import dev.skyloft.skypython.ui.theme.CodeFont
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -170,6 +172,8 @@ fun SkyDrawer(
     cursor: CursorPosition,
     onClose: () -> Unit = {},
     current: DrawerAction = DrawerAction.Editor,
+    /** `Class.method` around the cursor, from the outline; null when unknown or at top level. */
+    symbol: String? = null,
     onAction: (DrawerAction) -> Unit,
 ) {
     val context = LocalContext.current
@@ -211,6 +215,17 @@ fun SkyDrawer(
             }
             IconButton(onClick = onClose) {
                 Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.action_close), tint = MutedText)
+            }
+            if (header.line != null && symbol != null) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    stringResource(R.string.drawer_in_symbol, symbol),
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 13.sp,
+                    fontFamily = CodeFont,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
         FileCard(header)

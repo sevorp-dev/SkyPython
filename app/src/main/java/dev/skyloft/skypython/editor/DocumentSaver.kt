@@ -34,7 +34,9 @@ class DocumentSaver(
     suspend fun save(doc: OpenDocument): Boolean = withContext(NonCancellable) { saveOne(doc) }
 
     private suspend fun saveOne(doc: OpenDocument): Boolean = mutex.withLock {
-        val text = docs.find(doc.id)?.text ?: return@withLock true
+        val latest = docs.find(doc.id) ?: return@withLock true
+        if (latest.readOnly) return@withLock true // library code is never written
+        val text = latest.text
         val result = withContext(io) { runCatching { write(doc.source, text) } }
         result.onSuccess { docs.markSaved(doc.id, text); onSaved() }
             .onFailure { onError(doc, it) }

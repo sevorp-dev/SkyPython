@@ -93,6 +93,44 @@ class LanguageServerDeviceTest {
     }
 
     @Test
+    fun definitionInAnotherFileOfTheProject(): Unit = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val dir = File(context.cacheDir, "navproj").apply { mkdirs() }
+        File(dir, "helper.py").writeText("LOUD = True\n\ndef shout(text):\n    return text.upper()\n")
+        val main = File(dir, "main.py")
+        val source = "from helper import shout\nshout('hi')\n"
+        main.writeText(source)
+        val defs = answered(service.definition(source, 2, 2, main.canonicalPath))
+        Log.i(TAG, "definition across files -> $defs")
+        val d = defs.single()
+        assertEquals(File(dir, "helper.py").canonicalPath, File(d.path!!).canonicalPath)
+        assertEquals(Origin.PROJECT, d.origin)
+        assertEquals(3, d.line)
+        assertEquals(4, d.column)
+        dir.deleteRecursively()
+    }
+
+    @Test
+    fun builtinDefinitionIsInTheStdlibStubs(): Unit = runBlocking {
+        val d = answered(service.definition("print('x')\n", 1, 2, null)).also { Log.i(TAG, "print -> $it") }.first()
+        assertEquals(Origin.STDLIB, d.origin)
+        assertTrue(d.path, d.path!!.endsWith("builtins.pyi"))
+        val json = answered(service.definition("import json\njson.dumps\n", 2, 6, null)).first()
+        Log.i(TAG, "json.dumps -> $json")
+        assertEquals(Origin.STDLIB, json.origin)
+    }
+
+    @Test
+    fun outlineAndSignature(): Unit = runBlocking {
+        val items = answered(service.outline("class A:\n    def m(self):\n        pass\n"))
+        assertEquals("A", items.single().name)
+        assertEquals("m", items.single().children.single().name)
+        var sig: Signature? = null
+        withTimeout(READY_TIMEOUT_MS) { while (sig == null) { sig = service.signature("print(", 1, 6, null); if (sig == null) delay(200) } }
+        assertEquals("*values", sig!!.short.first())
+    }
+
+    @Test
     fun bundleLivesOutsideTheUserSite(): Unit = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val script = LanguageServerInstaller(context).ensureInstalled().getOrThrow()
