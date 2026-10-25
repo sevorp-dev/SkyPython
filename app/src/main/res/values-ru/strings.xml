@@ -155,6 +155,16 @@
     <string name="pip_coming_later">Позже</string>
     <string name="pip_needs_64bit">Только 64 бита</string>
     <string name="pip_installed_badge">Установлен</string>
+    <string name="pip_prebuilt_badge">Готовая сборка для Android</string>
+    <string name="pip_prebuilt_hint">Пакеты с нативным кодом устанавливаются, если отмечены «Готовая сборка для Android»; остальные пока должны быть на чистом Python.</string>
+    <string name="pip_prebuilt_line">SkyPython собирает %1$s %2$s для Android: компилятор не нужен</string>
+    <string name="pip_prebuilt_32bit">Пока недоступно для 32-битных устройств</string>
+    <string name="pip_prebuilt_other_abi">Пока недоступно для этого устройства</string>
+    <string name="pip_downloading_wheel">Загрузка %1$s %2$s (%3$s), готовая сборка SkyPython для Android…</string>
+    <string name="pip_error_prebuilt_32bit">%1$s пока недоступен для 32-битных устройств.</string>
+    <string name="pip_error_prebuilt_abi">Готовой сборки %1$s для этого устройства (%2$s) пока нет.</string>
+    <string name="pip_error_prebuilt_version">Готовой сборки %1$s%2$s для Android нет. Есть: %3$s</string>
+    <string name="pip_error_wheel_checksum">Файл %1$s загрузился с повреждениями (не совпала контрольная сумма). Попробуйте ещё раз.</string>
     <string name="pip_upgrade">Обновить</string>
     <string name="pip_update_available">Есть обновление: %1$s</string>
     <string name="pip_checking_updates">Проверяем обновления…</string>
@@ -198,6 +208,7 @@
     <string name="pip_pkg_prompt_toolkit">Интерактивный ввод в командной строке</string>
     <string name="pip_pkg_jinja2">Шаблоны текста и HTML</string>
     <string name="pip_pkg_pillow">Изображения (нужен нативный код)</string>
+    <string name="pip_pkg_numpy">Быстрые массивы и математика (нативный код)</string>
 
     <!-- Samples -->
     <string name="samples_open_failed">Не удалось открыть пример: %1$s</string>

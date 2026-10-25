@@ -10,8 +10,10 @@ import dev.skyloft.skypython.runtime.PythonPaths
 import dev.skyloft.skypython.runtime.userBase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -66,6 +68,12 @@ fun describePipError(e: Throwable, text: (Int, Array<out Any>) -> String): Strin
         }
         if (e.output.isBlank()) head else head + "\n" + e.output.trim()
     }
+    is PrebuiltUnavailableException ->
+        if (e.abi in ABIS_32_BIT) text(R.string.pip_error_prebuilt_32bit, arrayOf(e.name))
+        else text(R.string.pip_error_prebuilt_abi, arrayOf(e.name, e.abi))
+    is PrebuiltVersionException ->
+        text(R.string.pip_error_prebuilt_version, arrayOf(e.name, e.spec, e.versions.joinToString(", ")))
+    is WheelVerificationException -> text(R.string.pip_error_wheel_checksum, arrayOf(e.file))
     else -> text(R.string.pip_error_other, arrayOf(e.message ?: e.javaClass.simpleName))
 }
 
@@ -73,12 +81,22 @@ fun describePipError(e: Throwable, text: (Int, Array<out Any>) -> String): Strin
  * pip in the user site (`PYTHONUSERBASE`). The first operation bootstraps pip from the
  * bundled wheel with `ensurepip --user --default-pip` (offline); a marker in the user base
  * remembers that. One pip process at a time.
+ *
+ * Packages in SkyPython's wheel index ([wheels]) are downloaded and verified first, then pip
+ * installs them with `--find-links <wheel folder> --prefer-binary`, pinned to the downloaded
+ * versions: the native wheel comes from the folder, pure-Python dependencies from PyPI.
  */
 class PipRepository(
     private val install: suspend () -> Result<PythonPaths>,
     private val runnerFor: (PythonPaths) -> PipRunner,
     /** First line of the log while pip is bootstrapped. */
     private val setupMessage: () -> String = { "Setting up pip (first run)…" },
+    /** SkyPython's prebuilt Android wheels; null: PyPI only. */
+    private val wheels: PrebuiltWheels? = null,
+    /** The log line before a wheel is downloaded. */
+    private val downloadMessage: (IndexWheel) -> String = { w ->
+        "Downloading ${w.name} ${w.version} (${formatSize(w.size)}), prebuilt for Android by SkyPython…"
+    },
 ) : PipManager {
 
     private val lock = Mutex()
@@ -102,27 +120,70 @@ class PipRepository(
             is SpecCheck.Valid -> check.spec
             is SpecCheck.Invalid -> throw IllegalArgumentException(check.reason)
         }
-        runInstall(listOf(valid))
+        runInstall(emptyList(), valid) { emit(it) }
     }
 
     override fun upgrade(name: String): Flow<String> = flow {
         require(PackageSpec.isName(name)) { "Not a package name: $name" }
-        runInstall(listOf("--upgrade", name))
+        runInstall(listOf("--upgrade"), name) { emit(it) }
     }
 
     override fun installRequirements(file: File): Flow<String> = flow {
         require(file.isAbsolute) { "Not an absolute path: $file" }
         require(withContext(Dispatchers.IO) { file.isFile }) { "No such file: $file" }
-        runInstall(listOf("-r", file.absolutePath))
+        runInstall(listOf("-r", file.absolutePath), null) { emit(it) }
     }
 
-    /** `pip install --user …` + [args], streaming the output into the flow. */
-    private suspend fun FlowCollector<String>.runInstall(args: List<String>) {
-        lock.withLock {
-            val p = paths()
-            bootstrap(p) { emit(it) }
-            run(p, "pip", INSTALL + args) { emit(it) }.orThrow("pip", includeOutput = false)
+    /**
+     * `pip install --user …` + [options] + [request] (null: none), streaming the output to [log].
+     * A [request] for a package of the wheel index downloads its wheels first.
+     */
+    private suspend fun runInstall(options: List<String>, request: String?, log: suspend (String) -> Unit) {
+        val plan = request?.let { wheels?.catalog()?.plan(it) } ?: WheelPlan.NotInIndex
+        val targets = when (plan) {
+            WheelPlan.NotInIndex -> listOfNotNull(request)
+            is WheelPlan.Unavailable -> throw PrebuiltUnavailableException(plan.name, plan.abi, plan.abis)
+            is WheelPlan.NoVersion -> throw PrebuiltVersionException(plan.name, plan.spec, plan.versions)
+            is WheelPlan.Ready -> {
+                val dir = requireNotNull(wheels).wheelDir
+                val pinned = plan.wheels.mapIndexed { i, w ->
+                    val extras = if (i == plan.wheels.lastIndex) plan.extras else ""
+                    "${w.name}$extras==${w.version}"
+                }
+                listOf("--find-links", dir.absolutePath, "--prefer-binary") + pinned
+            }
         }
+        lock.withLock {
+            if (plan is WheelPlan.Ready) {
+                for (w in plan.wheels) download(w, log)
+            }
+            val p = paths()
+            bootstrap(p, log)
+            run(p, "pip", INSTALL + options + targets, log).orThrow("pip", includeOutput = false)
+        }
+    }
+
+    /** Downloads [wheel], logging "  10%  20% … 100%" as it goes. */
+    private suspend fun download(wheel: IndexWheel, log: suspend (String) -> Unit) {
+        log(downloadMessage(wheel) + "\n")
+        // The download reports from its IO thread; the log (a flow) is written only from here.
+        val steps = Channel<Int>(Channel.CONFLATED)
+        var shown = 0
+        coroutineScope {
+            launch {
+                requireNotNull(wheels).download(wheel) { done, total ->
+                    steps.send(if (total <= 0) 100 else (done * 100 / total).toInt() / 10 * 10)
+                }
+                steps.close()
+            }
+            for (step in steps) {
+                if (step > shown) {
+                    log("  $step%")
+                    shown = step
+                }
+            }
+        }
+        log(if (shown == 100) "\n" else "  100%\n")
     }
 
     override suspend fun listOutdated(): Result<Map<String, String>> = catching {
@@ -242,13 +303,25 @@ class PipRepository(
         private val QUICK_NETWORK = listOf("--retries", "1", "--timeout", "10")
         private val INSTALL = listOf("install", "--user", "--no-input", "--progress-bar", "off")
 
-        fun create(context: Context): PipRepository {
+        /** "1.2 MB" / "340 KB". */
+        fun formatSize(bytes: Long): String = when {
+            bytes >= 1_000_000 -> "%.1f MB".format(java.util.Locale.ROOT, bytes / 1_000_000.0)
+            bytes >= 1_000 -> "${bytes / 1_000} KB"
+            else -> "$bytes B"
+        }
+
+        /** @param wheels SkyPython's wheel index (tests point it elsewhere). */
+        fun create(context: Context, wheels: PrebuiltWheels? = WheelIndex.forApp(context)): PipRepository {
             val app = context.applicationContext
             val installer = PythonInstaller(app)
             return PipRepository(
                 install = installer::ensureInstalled,
                 runnerFor = { PythonPipRunner(it, File(app.cacheDir, "pip")) },
                 setupMessage = { AppLocale.string(app, R.string.pip_setting_up) },
+                wheels = wheels,
+                downloadMessage = { w ->
+                    AppLocale.string(app, R.string.pip_downloading_wheel, w.name, w.version, formatSize(w.size))
+                },
             )
         }
     }

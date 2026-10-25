@@ -44,7 +44,9 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.ui.platform.testTag
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
@@ -230,7 +232,7 @@ fun PipScreen(
 
 @Composable
 private fun SearchTab(state: PipState, viewModel: PipViewModel) {
-    val is64Bit = remember { android.os.Process.is64Bit() }
+    val is64Bit = remember { is64BitProcess() }
     val popular = remember(state.spec) { PopularPackages.matching(state.spec) }
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.padding(start = 12.dp, end = 12.dp, top = 8.dp), verticalAlignment = Alignment.Top) {
@@ -307,7 +309,7 @@ private fun SearchTab(state: PipState, viewModel: PipViewModel) {
                 PopularRow(
                     pkg = pkg,
                     installed = state.isInstalled(pkg.name),
-                    is64Bit = is64Bit,
+                    action = PopularPackages.action(pkg, state.prebuiltFor(pkg.name), is64Bit),
                     busy = state.installing,
                     onInstall = { viewModel.installPackage(pkg.name) },
                 )
@@ -315,7 +317,9 @@ private fun SearchTab(state: PipState, viewModel: PipViewModel) {
             }
             item(key = "intro") {
                 Text(
-                    stringResource(R.string.pip_intro) + " " + stringResource(R.string.pip_pure_python_hint),
+                    stringResource(R.string.pip_intro) + " " + stringResource(
+                        if (state.catalog != null) R.string.pip_prebuilt_hint else R.string.pip_pure_python_hint,
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(16.dp),
@@ -394,27 +398,54 @@ private fun ColumnScope.FoundProject(project: PyPiProject, state: PipState, onIn
         )
     }
     Spacer(Modifier.height(8.dp))
-    val (icon, text, color) = when (project.wheel) {
-        WheelSupport.Pure -> Triple(Icons.Outlined.CheckCircle, R.string.pip_wheel_pure, SuccessGreen)
-        WheelSupport.PrebuiltAndroid -> Triple(Icons.Outlined.CheckCircle, R.string.pip_wheel_android, SuccessGreen)
-        WheelSupport.SourceOnly -> Triple(Icons.Outlined.Info, R.string.pip_wheel_source, MaterialTheme.colorScheme.tertiary)
-        WheelSupport.NativeOnly -> Triple(Icons.Outlined.Warning, R.string.pip_wheel_native, MaterialTheme.colorScheme.error)
-        WheelSupport.NoFiles -> Triple(Icons.Outlined.Warning, R.string.pip_wheel_none, MaterialTheme.colorScheme.error)
+    // SkyPython's wheel index wins over what PyPI has.
+    val prebuilt = state.prebuiltFor(project.name)
+    when (prebuilt) {
+        is PrebuiltStatus.Available -> {
+            PrebuiltBadge()
+            Spacer(Modifier.height(4.dp))
+            IconLine(
+                Icons.Outlined.CheckCircle,
+                stringResource(R.string.pip_prebuilt_line, prebuilt.wheel.name, prebuilt.wheel.version),
+                SuccessGreen,
+            )
+        }
+        is PrebuiltStatus.OtherAbis -> IconLine(
+            Icons.Outlined.Warning,
+            stringResource(if (is64BitProcess()) R.string.pip_prebuilt_other_abi else R.string.pip_prebuilt_32bit),
+            MaterialTheme.colorScheme.error,
+        )
+        null -> {
+            val (icon, text, color) = when (project.wheel) {
+                WheelSupport.Pure -> Triple(Icons.Outlined.CheckCircle, R.string.pip_wheel_pure, SuccessGreen)
+                WheelSupport.PrebuiltAndroid -> Triple(Icons.Outlined.CheckCircle, R.string.pip_wheel_android, SuccessGreen)
+                WheelSupport.SourceOnly -> Triple(Icons.Outlined.Info, R.string.pip_wheel_source, MaterialTheme.colorScheme.tertiary)
+                WheelSupport.NativeOnly -> Triple(Icons.Outlined.Warning, R.string.pip_wheel_native, MaterialTheme.colorScheme.error)
+                WheelSupport.NoFiles -> Triple(Icons.Outlined.Warning, R.string.pip_wheel_none, MaterialTheme.colorScheme.error)
+            }
+            IconLine(icon, stringResource(text), color)
+        }
     }
-    IconLine(icon, stringResource(text), color)
     Spacer(Modifier.height(8.dp))
     Row(verticalAlignment = Alignment.CenterVertically) {
-        when (project.wheel) {
-            WheelSupport.Pure, WheelSupport.PrebuiltAndroid, WheelSupport.SourceOnly -> Button(
+        when {
+            prebuilt is PrebuiltStatus.Available -> Button(
                 colors = brandButtonColors(),
                 onClick = { onInstall(project.name) },
                 enabled = !state.installing,
             ) { Text(stringResource(R.string.pip_install)) }
-            WheelSupport.NativeOnly -> OutlinedButton(
+            prebuilt is PrebuiltStatus.OtherAbis -> Unit
+            project.wheel == WheelSupport.Pure || project.wheel == WheelSupport.PrebuiltAndroid ||
+                project.wheel == WheelSupport.SourceOnly -> Button(
+                colors = brandButtonColors(),
+                onClick = { onInstall(project.name) },
+                enabled = !state.installing,
+            ) { Text(stringResource(R.string.pip_install)) }
+            project.wheel == WheelSupport.NativeOnly -> OutlinedButton(
                 onClick = { onInstall(project.name) },
                 enabled = !state.installing,
             ) { Text(stringResource(R.string.pip_install_anyway)) }
-            WheelSupport.NoFiles -> Unit
+            else -> Unit
         }
         Spacer(Modifier.weight(1f))
         project.homePage?.let { url ->
@@ -428,7 +459,7 @@ private fun ColumnScope.FoundProject(project: PyPiProject, state: PipState, onIn
 }
 
 @Composable
-private fun PopularRow(pkg: PopularPackage, installed: Boolean, is64Bit: Boolean, busy: Boolean, onInstall: () -> Unit) {
+private fun PopularRow(pkg: PopularPackage, installed: Boolean, action: PopularAction, busy: Boolean, onInstall: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -448,14 +479,44 @@ private fun PopularRow(pkg: PopularPackage, installed: Boolean, is64Bit: Boolean
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
+            if (action == PopularAction.Prebuilt) {
+                Spacer(Modifier.height(4.dp))
+                PrebuiltBadge()
+            }
         }
         Spacer(Modifier.width(8.dp))
         when {
-            pkg.availability == Availability.ComingLater -> DisabledNote(stringResource(R.string.pip_coming_later))
-            pkg.availability == Availability.Needs64Bit && !is64Bit -> DisabledNote(stringResource(R.string.pip_needs_64bit))
+            action == PopularAction.ComingLater -> DisabledNote(stringResource(R.string.pip_coming_later))
+            action == PopularAction.Needs64Bit -> DisabledNote(stringResource(R.string.pip_needs_64bit))
+            action == PopularAction.Not32Bit -> DisabledNote(stringResource(R.string.pip_prebuilt_32bit))
+            action == PopularAction.NotThisDevice -> DisabledNote(stringResource(R.string.pip_prebuilt_other_abi))
             installed -> InstalledBadge()
             else -> TextButton(onClick = onInstall, enabled = !busy) { Text(stringResource(R.string.pip_install)) }
         }
+    }
+}
+
+/** Test tag of the "Prebuilt for Android" badge. */
+const val PREBUILT_BADGE_TAG = "pip_prebuilt_badge"
+
+/** "Prebuilt for Android": the package comes from SkyPython's wheel index. */
+@Composable
+private fun PrebuiltBadge() {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .testTag(PREBUILT_BADGE_TAG)
+            .border(1.dp, Orange, RoundedCornerShape(50))
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+    ) {
+        Icon(Icons.Outlined.Bolt, contentDescription = null, tint = Orange, modifier = Modifier.size(14.dp))
+        Spacer(Modifier.width(4.dp))
+        Text(
+            stringResource(R.string.pip_prebuilt_badge),
+            style = MaterialTheme.typography.labelSmall,
+            color = Orange,
+            maxLines = 1,
+        )
     }
 }
 
@@ -921,3 +982,5 @@ private fun SpecProblem.messageRes(): Int = when (this) {
     SpecProblem.Options -> R.string.pip_spec_options
     SpecProblem.Invalid -> R.string.pip_spec_invalid
 }
+
+private fun is64BitProcess(): Boolean = android.os.Process.is64Bit()

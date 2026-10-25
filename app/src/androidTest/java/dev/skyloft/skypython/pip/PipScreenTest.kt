@@ -5,6 +5,8 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onFirst
@@ -106,6 +108,64 @@ class PipScreenTest {
         rule.onNode(hasSetTextAction()).performTextInput("six")
         rule.onNode(hasText(str(R.string.pip_search_action))).performClick()
         rule.waitUntilAtLeastOneExists(hasText(str(R.string.pip_result_offline)), 5_000)
+    }
+
+    private fun catalog(abi: String) = WheelCatalog(
+        WheelIndexData(
+            "cp314",
+            mapOf(
+                "numpy" to listOf(
+                    IndexWheel("numpy", "2.5.4", abi, "numpy.whl", "0".repeat(64), 1, emptyList(), "Arrays"),
+                ),
+            ),
+        ),
+        "x86_64",
+    )
+
+    private fun showWithCatalog(catalog: WheelCatalog, index: PackageIndex = PackageIndex { LookupResult.Offline("offline") }) {
+        val vm = PipViewModel(pip, index, findRequirements = { emptyList() }, prebuilt = { catalog })
+        rule.setContent { SkyPythonTheme { PipScreen(vm, onBack = {}) } }
+    }
+
+    @Test
+    fun aPrebuiltPopularPackageHasTheBadgeAndInstalls() {
+        showWithCatalog(catalog("x86_64"))
+        rule.onNode(hasScrollAction()).performScrollToNode(hasText("numpy"))
+        rule.waitUntilAtLeastOneExists(hasTestTag(PREBUILT_BADGE_TAG), 5_000)
+        rule.onNode(hasTestTag(PREBUILT_BADGE_TAG)).assertIsDisplayed()
+        rule.onNode(hasText(str(R.string.pip_prebuilt_badge))).assertExists()
+        // Only pillow is still "coming later".
+        assertEquals(1, rule.onAllNodes(hasText(str(R.string.pip_coming_later))).fetchSemanticsNodes().size)
+        val installs = rule.onAllNodes(hasText(str(R.string.pip_install)))
+        // numpy is the last popular entry: its Install is the last one.
+        val count = installs.fetchSemanticsNodes().size
+        installs[count - 1].performClick()
+        rule.waitUntilAtLeastOneExists(hasText(str(R.string.pip_installed_spec, "numpy")), 5_000)
+        assertEquals(listOf("install numpy"), pip.runs)
+    }
+
+    @Test
+    fun withoutAWheelForTheDeviceNumpyIsNotInstallable() {
+        showWithCatalog(catalog("arm64-v8a"))
+        rule.onNode(hasScrollAction()).performScrollToNode(hasText("numpy"))
+        rule.onNode(hasTestTag(PREBUILT_BADGE_TAG)).assertDoesNotExist()
+        val note = if (android.os.Process.is64Bit()) R.string.pip_prebuilt_other_abi else R.string.pip_prebuilt_32bit
+        rule.onNode(hasText(str(note))).assertIsDisplayed()
+    }
+
+    @Test
+    fun aSearchResultInTheIndexIsPrebuilt() {
+        showWithCatalog(
+            catalog("x86_64"),
+            PackageIndex { name ->
+                LookupResult.Found(PyPiProject(name, "2.5.4", "Arrays", null, "BSD", WheelSupport.NativeOnly))
+            },
+        )
+        rule.onNode(hasSetTextAction()).performTextInput("numpy")
+        rule.onNode(hasText(str(R.string.pip_search_action))).performClick()
+        rule.waitUntilAtLeastOneExists(hasText(str(R.string.pip_prebuilt_line, "numpy", "2.5.4")), 5_000)
+        rule.onNode(hasText(str(R.string.pip_wheel_native))).assertDoesNotExist()
+        rule.onNode(hasText(str(R.string.pip_install_anyway))).assertDoesNotExist()
     }
 
     @Test

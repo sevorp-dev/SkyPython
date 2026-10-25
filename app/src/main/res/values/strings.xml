@@ -162,6 +162,16 @@
     <string name="pip_coming_later">Coming later</string>
     <string name="pip_needs_64bit">64-bit only</string>
     <string name="pip_installed_badge">Installed</string>
+    <string name="pip_prebuilt_badge">Prebuilt for Android</string>
+    <string name="pip_prebuilt_hint">Packages with native code install when marked “Prebuilt for Android”; others must be pure Python for now.</string>
+    <string name="pip_prebuilt_line">SkyPython builds %1$s %2$s for Android: no compiler needed</string>
+    <string name="pip_prebuilt_32bit">Not available for 32-bit devices yet</string>
+    <string name="pip_prebuilt_other_abi">Not available for this device yet</string>
+    <string name="pip_downloading_wheel">Downloading %1$s %2$s (%3$s), prebuilt for Android by SkyPython…</string>
+    <string name="pip_error_prebuilt_32bit">%1$s isn\'t available for 32-bit devices yet.</string>
+    <string name="pip_error_prebuilt_abi">%1$s isn\'t prebuilt for this device (%2$s) yet.</string>
+    <string name="pip_error_prebuilt_version">%1$s%2$s isn\'t prebuilt for Android. Available: %3$s</string>
+    <string name="pip_error_wheel_checksum">The download of %1$s was damaged (checksum mismatch). Try again.</string>
     <string name="pip_upgrade">Upgrade</string>
     <string name="pip_update_available">Update available: %1$s</string>
     <string name="pip_checking_updates">Checking for updates…</string>
@@ -205,6 +215,7 @@
     <string name="pip_pkg_prompt_toolkit">Interactive command-line input</string>
     <string name="pip_pkg_jinja2">Text and HTML templates</string>
     <string name="pip_pkg_pillow">Images (needs native code)</string>
+    <string name="pip_pkg_numpy">Fast arrays and math (native code)</string>
 
     <!-- Samples -->
     <string name="samples_open_failed">Could not open sample: %1$s</string>
