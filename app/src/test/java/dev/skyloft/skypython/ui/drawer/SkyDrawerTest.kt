@@ -35,7 +35,7 @@ class SkyDrawerTest {
     @Test fun `drawer sections follow the spec order`() {
         assertEquals(
             listOf(
-                "Run" to listOf(DrawerAction.Interpreter, DrawerAction.Terminal),
+                "Run" to listOf(DrawerAction.Debug, DrawerAction.Interpreter, DrawerAction.Terminal),
                 "Tools" to listOf(DrawerAction.Pip, DrawerAction.Share, DrawerAction.Samples),
                 "Settings" to listOf(DrawerAction.Settings, DrawerAction.About),
             ),

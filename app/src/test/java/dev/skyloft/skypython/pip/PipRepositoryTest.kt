@@ -194,4 +194,77 @@ class PipRepositoryTest {
         reply("pip --version", ConsoleEvent.Stdout("pip 25.2 from /x (python 3.14)\n"), ConsoleEvent.Exited(0))
         assertEquals("pip 25.2 from /x (python 3.14)", repo.pipVersion().getOrThrow())
     }
+
+    private val installArgs = listOf("pip", "install", "--user", "--no-input", "--progress-bar", "off")
+
+    @Test
+    fun upgradeRunsInstallUpgrade() = runTest {
+        reply("pip install", ConsoleEvent.Stdout("Successfully installed six-1.17.0\n"), ConsoleEvent.Exited(0))
+        val log = repo.upgrade("six").toList().joinToString("")
+        assertTrue(log, log.contains("Successfully installed"))
+        assertEquals(installArgs + listOf("--upgrade", "six"), calls.last())
+    }
+
+    @Test
+    fun upgradeRejectsNonNames() = runTest {
+        assertTrue(runCatching { repo.upgrade("six==1").toList() }.isFailure)
+        assertTrue(runCatching { repo.upgrade("-r x").toList() }.isFailure)
+        assertEquals(emptyList<List<String>>(), calls)
+    }
+
+    @Test
+    fun installRequirementsPassesTheAbsolutePath() = runTest {
+        val req = tmp.newFile("requirements.txt").apply { writeText("six\n") }
+        repo.installRequirements(req).toList()
+        assertEquals(installArgs + listOf("-r", req.absolutePath), calls.last())
+    }
+
+    @Test
+    fun installRequirementsRejectsMissingOrRelativeFiles() = runTest {
+        assertTrue(runCatching { repo.installRequirements(File(tmp.root, "missing.txt")).toList() }.isFailure)
+        assertTrue(runCatching { repo.installRequirements(File("requirements.txt")).toList() }.isFailure)
+        assertEquals(emptyList<List<String>>(), calls)
+    }
+
+    @Test
+    fun installRequirementsFailureThrows() = runTest {
+        val req = tmp.newFile("r.txt")
+        reply("pip install", ConsoleEvent.Stderr("ERROR: bad\n"), ConsoleEvent.Exited(1))
+        assertTrue(runCatching { repo.installRequirements(req).toList() }.exceptionOrNull() is PipFailedException)
+    }
+
+    @Test
+    fun listOutdatedHidesPip() = runTest {
+        reply(
+            "pip list",
+            ConsoleEvent.Stdout("""[{"name": "pip", "version": "25", "latest_version": "26"},
+                {"name": "six", "version": "1.16.0", "latest_version": "1.17.0"}]"""),
+            ConsoleEvent.Exited(0),
+        )
+        assertEquals(mapOf("six" to "1.17.0"), repo.listOutdated().getOrThrow())
+        assertEquals(listOf("pip", "list", "--outdated", "--user", "--format=json", "--retries", "1", "--timeout", "10"), calls.last())
+    }
+
+    @Test
+    fun listOutdatedFailsOnBadOutputOrExit() = runTest {
+        reply("pip list", ConsoleEvent.Stdout("??"), ConsoleEvent.Exited(0))
+        assertTrue(repo.listOutdated().isFailure)
+        reply("pip list", ConsoleEvent.Stderr("network\n"), ConsoleEvent.Exited(1))
+        assertTrue(repo.listOutdated().isFailure)
+    }
+
+    @Test
+    fun showParsesDetails() = runTest {
+        reply("pip show", ConsoleEvent.Stdout("Name: six\nVersion: 1.17.0\nSummary: Py2/3\n"), ConsoleEvent.Exited(0))
+        val d = repo.show("six").getOrThrow()
+        assertEquals("1.17.0", d.version)
+        assertEquals(listOf("pip", "show", "six"), calls.last())
+    }
+
+    @Test
+    fun showFailsForUnknownOrInvalid() = runTest {
+        reply("pip show", ConsoleEvent.Stderr("WARNING: Package(s) not found: x\n"), ConsoleEvent.Exited(1))
+        assertTrue(repo.show("x").isFailure)
+        assertTrue(repo.show("x y").isFailure)
+    }
 }

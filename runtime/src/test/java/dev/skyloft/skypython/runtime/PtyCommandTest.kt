@@ -103,4 +103,10 @@ class PtyCommandTest {
         val env = PtyCommand.of(paths, RunCommand.Script(File(projects, "a.py")), appEnv + ("NO_COLOR" to "1")).env.asMap()
         assertEquals(null, env["NO_COLOR"])
     }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun theDebuggerStaysOnPipes() {
+        val a = File(projects, "a.py")
+        PtyCommand.of(paths, RunCommand.Debug(a, File(files, "skydbg.py"), File(files, "dbg.sock")), appEnv)
+    }
 }

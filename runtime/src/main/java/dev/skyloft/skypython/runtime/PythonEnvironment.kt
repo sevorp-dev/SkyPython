@@ -34,6 +34,9 @@ object PythonEnvironment {
     /** Command line for [command]. */
     fun command(paths: PythonPaths, command: RunCommand): List<String> = when (command) {
         is RunCommand.Script -> command(paths, command.file)
+        is RunCommand.Debug -> listOf(
+            paths.launcher.path, "-u", command.driver.path, "--channel", "unix:" + command.channel.path, command.file.path,
+        )
         is RunCommand.Interpreter -> listOf(paths.launcher.path, "-i", "-q")
         is RunCommand.Shell -> listOf(SHELL, "-i")
     }

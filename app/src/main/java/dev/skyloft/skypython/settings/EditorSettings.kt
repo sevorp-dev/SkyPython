@@ -8,4 +8,10 @@ data class EditorSettings(
     val keepScreenOn: Boolean = false,
     /** Suggestions while typing and error underlines (the language server). */
     val codeCompletion: Boolean = true,
+    /** Typing an opening bracket or quote also inserts the closing one. */
+    val autoClosePairs: Boolean = true,
+    /** Symbol-bar keys, space separated (see [parseSymbolKeys]). */
+    val symbolKeys: String = DEFAULT_SYMBOL_KEYS,
+    /** Let the soft keyboard suggest and autocorrect words; off keeps code intact. */
+    val keyboardSuggestions: Boolean = false,
 )

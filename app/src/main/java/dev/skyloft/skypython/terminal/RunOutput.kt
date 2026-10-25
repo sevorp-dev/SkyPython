@@ -68,7 +68,8 @@ object Tracebacks {
         val file = runCatching { named.canonicalFile }.getOrNull() ?: return null
         val root = runCatching { projectsRoot.canonicalFile }.getOrNull() ?: return null
         if (!file.isFile) return null
-        return if (file.toPath().startsWith(root.toPath())) file else null
+        val inside = file.path.startsWith(root.path + File.separator)
+        return if (inside) file else null
     }
 }
 

@@ -125,13 +125,10 @@
     <string name="files_error_failed">Operation failed</string>
 
     <!-- Pip -->
-    <string name="pip_tab_install">Install</string>
     <string name="pip_tab_installed">Installed</string>
-    <string name="pip_package">Package</string>
     <string name="pip_package_hint">e.g. requests or six==1.16.0</string>
     <string name="pip_install">Install</string>
     <string name="pip_installed_spec">Installed %1$s</string>
-    <string name="pip_install_failed">Installation failed</string>
     <string name="pip_intro">Packages are installed from PyPI for your scripts.</string>
     <string name="pip_pure_python_hint">Only pure-Python packages are supported for now.</string>
     <string name="pip_no_packages">No packages installed yet</string>
@@ -143,6 +140,72 @@
     <string name="pip_spec_spaces">Install one package at a time, without spaces</string>
     <string name="pip_spec_options">Options are not supported here</string>
     <string name="pip_spec_invalid">Use a package name, e.g. six or requests==2.32.3</string>
+    <string name="pip_tab_search">Search</string>
+    <string name="pip_tab_requirements">From file</string>
+    <string name="pip_search_label">Search PyPI</string>
+    <string name="pip_search_action">Find</string>
+    <string name="pip_clear">Clear</string>
+    <string name="pip_result_not_found">PyPI has no package named “%1$s”</string>
+    <string name="pip_result_offline">No internet connection. Check the network and try again.</string>
+    <string name="pip_result_failed">Couldn’t reach PyPI: %1$s</string>
+    <string name="pip_latest_version">Latest version %1$s</string>
+    <string name="pip_version">Version %1$s</string>
+    <string name="pip_license">License: %1$s</string>
+    <string name="pip_home_page">Home page</string>
+    <string name="pip_wheel_pure">Pure Python: ready to install</string>
+    <string name="pip_wheel_android">Prebuilt for Android (64-bit devices)</string>
+    <string name="pip_wheel_source">No ready-made build: pip will try to build it, which works only for pure-Python code</string>
+    <string name="pip_wheel_native">Needs native code, not supported yet</string>
+    <string name="pip_wheel_none">This release has no files to install</string>
+    <string name="pip_install_anyway">Try anyway</string>
+    <string name="pip_popular">Popular packages</string>
+    <string name="pip_popular_none">No popular package matches. Tap Find to look it up on PyPI.</string>
+    <string name="pip_coming_later">Coming later</string>
+    <string name="pip_needs_64bit">64-bit only</string>
+    <string name="pip_installed_badge">Installed</string>
+    <string name="pip_upgrade">Upgrade</string>
+    <string name="pip_update_available">Update available: %1$s</string>
+    <string name="pip_checking_updates">Checking for updates…</string>
+    <string name="pip_updates_failed">Couldn’t check for updates (no internet?)</string>
+    <string name="pip_details_requires">Requires: %1$s</string>
+    <string name="pip_details_required_by">Required by: %1$s</string>
+    <string name="pip_details_none">nothing</string>
+    <string name="pip_req_intro">Install every package listed in a requirements file (pip install -r), one package per line.</string>
+    <string name="pip_req_open_file">Open in the editor</string>
+    <string name="pip_req_project_files">Text files in Projects</string>
+    <string name="pip_req_none">No .txt files in Projects yet. Create requirements.txt with one package per line, e.g. requests==2.32.3.</string>
+    <string name="pip_req_install">Install all</string>
+    <string name="pip_running_install">Installing %1$s…</string>
+    <string name="pip_running_upgrade">Upgrading %1$s…</string>
+    <string name="pip_running_requirements">Installing packages from %1$s…</string>
+    <string name="pip_done_upgrade">Upgraded %1$s</string>
+    <string name="pip_done_requirements">Installed packages from %1$s</string>
+    <string name="pip_failed_install">Couldn’t install %1$s</string>
+    <string name="pip_failed_upgrade">Couldn’t upgrade %1$s</string>
+    <string name="pip_failed_requirements">Couldn’t install packages from %1$s</string>
+    <string name="pip_uninstalled">Removed %1$s</string>
+    <string name="pip_show_log">Show log</string>
+    <string name="pip_hide_log">Hide log</string>
+    <string name="pip_pkg_requests">Simple HTTP requests</string>
+    <string name="pip_pkg_rich">Colors, tables and progress bars in the terminal</string>
+    <string name="pip_pkg_colorama">Colored terminal text</string>
+    <string name="pip_pkg_beautifulsoup4">Read data from HTML pages</string>
+    <string name="pip_pkg_dateutil">Date parsing and date arithmetic</string>
+    <string name="pip_pkg_tabulate">Pretty text tables</string>
+    <string name="pip_pkg_tqdm">Progress bars for loops</string>
+    <string name="pip_pkg_httpx">Modern HTTP client, sync and async</string>
+    <string name="pip_pkg_click">Command-line interfaces</string>
+    <string name="pip_pkg_art">ASCII art and text fonts</string>
+    <string name="pip_pkg_pyfiglet">Big ASCII banners</string>
+    <string name="pip_pkg_termcolor">Color text in the terminal</string>
+    <string name="pip_pkg_emoji">Emoji by name</string>
+    <string name="pip_pkg_faker">Fake names, addresses and text for testing</string>
+    <string name="pip_pkg_sympy">Symbolic math</string>
+    <string name="pip_pkg_mpmath">Arbitrary-precision math</string>
+    <string name="pip_pkg_networkx">Graphs and networks</string>
+    <string name="pip_pkg_prompt_toolkit">Interactive command-line input</string>
+    <string name="pip_pkg_jinja2">Text and HTML templates</string>
+    <string name="pip_pkg_pillow">Images (needs native code)</string>
 
     <!-- Samples -->
     <string name="samples_open_failed">Could not open sample: %1$s</string>
@@ -205,4 +268,106 @@
     <string name="output_nothing">No output yet</string>
     <string name="output_saved">Saved to %1$s</string>
     <string name="output_save_failed">Couldn\'t save: %1$s</string>
+    <!-- Debugger -->
+    <string name="title_debug">Debug</string>
+    <string name="debug_run_menu_run">Run</string>
+    <string name="debug_run_menu_debug">Debug</string>
+    <string name="debug_tab_variables">Variables</string>
+    <string name="debug_tab_watches">Watches</string>
+    <string name="debug_tab_stack">Call stack</string>
+    <string name="debug_tab_console">Console</string>
+    <string name="debug_continue">Continue</string>
+    <string name="debug_pause">Pause</string>
+    <string name="debug_step_over">Step over</string>
+    <string name="debug_step_into">Step into</string>
+    <string name="debug_step_out">Step out</string>
+    <string name="debug_collapse">Collapse the debugger</string>
+    <string name="debug_expand">Expand the debugger</string>
+    <string name="debug_close">Close the debugger</string>
+    <string name="debug_status_starting">Starting the debugger…</string>
+    <string name="debug_status_running">Running…</string>
+    <string name="debug_status_breakpoint">Breakpoint: %1$s, line %2$d</string>
+    <string name="debug_status_paused">Paused: %1$s, line %2$d</string>
+    <string name="debug_status_exception">Uncaught exception: %1$s</string>
+    <string name="debug_status_finished">Program finished, exit code %1$d</string>
+    <string name="debug_status_ended">Debugging ended</string>
+    <string name="debug_error_start">The debugger couldn\'t start: %1$s</string>
+    <string name="debug_locals">Locals</string>
+    <string name="debug_globals">Globals</string>
+    <string name="debug_more">…and %1$d more</string>
+    <string name="debug_no_variables">Nothing here</string>
+    <string name="debug_variables_when_paused">Variables show up while the program is paused</string>
+    <string name="debug_stack_when_paused">The call stack shows up while the program is paused</string>
+    <string name="debug_watch_hint">Expression, e.g. len(items)</string>
+    <string name="debug_watch_add">Add watch</string>
+    <string name="debug_watch_remove">Remove watch</string>
+    <string name="debug_no_watches">No watches yet: add an expression below to see its value at every stop</string>
+    <string name="debug_frame_library">library</string>
+    <string name="debug_condition_title">Breakpoint on line %1$d</string>
+    <string name="debug_condition_hint">Stop only when this is true, e.g. i == 10. Leave empty to always stop.</string>
+    <string name="debug_condition_label">Condition</string>
+    <string name="debug_condition_remove">Remove</string>
+    <string name="debug_condition_save">Save</string>
+    <string name="debug_breakpoints_need_project_file">Breakpoints work in files saved in SkyPython\'s projects</string>
+    <!-- Drawer footer -->
+    <string name="drawer_footer_studio" translatable="false">SkyLoft Studio</string>
+    <string name="drawer_footer_github" translatable="false">GitHub</string>
+    <string name="drawer_footer_repo" translatable="false">sevorp-dev/SkyPython</string>
+    <string name="drawer_footer_developer">Developed by @Sevorp</string>
+
+    <!-- Editor: find & replace -->
+    <string name="find_hint">Find</string>
+    <string name="replace_hint">Replace with</string>
+    <string name="find_match_case">Match case</string>
+    <string name="find_whole_word">Whole word</string>
+    <string name="find_regex">Regular expression</string>
+    <string name="find_previous">Previous match</string>
+    <string name="find_next">Next match</string>
+    <string name="find_toggle_replace">Show replace</string>
+    <string name="find_close">Close search</string>
+    <string name="find_replace_one">Replace</string>
+    <string name="find_replace_all">All</string>
+    <string name="find_replaced_count">Replaced %1$d</string>
+    <string name="find_no_matches">No matches</string>
+    <string name="find_invalid_regex">Invalid pattern</string>
+
+    <!-- Editor: go to line -->
+    <string name="go_to_line">Go to line…</string>
+    <string name="go_to_line_title">Go to line</string>
+    <string name="go_to_line_label">Line (1–%1$d)</string>
+    <string name="go_to_line_go">Go</string>
+
+    <!-- Editor: line commands -->
+    <string name="editor_action_comment">Comment / uncomment</string>
+    <string name="editor_action_indent">Indent</string>
+    <string name="editor_action_outdent">Outdent</string>
+    <string name="editor_action_duplicate">Duplicate line</string>
+    <string name="editor_action_delete_line">Delete line</string>
+    <string name="editor_action_move_up">Move line up</string>
+    <string name="editor_action_move_down">Move line down</string>
+    <string name="editor_actions_show">Edit actions</string>
+    <string name="editor_actions_hide">Symbols</string>
+    <string name="editor_menu_edit">Edit lines</string>
+    <string name="editor_menu_back">Back</string>
+
+    <!-- Editor: files -->
+    <string name="find_and_replace">Find &amp; replace</string>
+    <string name="new_file">New file…</string>
+    <string name="new_file_title">New file</string>
+    <string name="new_file_name">File name</string>
+    <string name="new_file_create">Create</string>
+    <string name="open_file">Open…</string>
+    <string name="recent_files">Recent files</string>
+    <string name="recent_files_empty">No recent files yet</string>
+    <string name="file_missing">%1$s no longer exists</string>
+
+    <!-- Settings -->
+    <string name="settings_auto_close">Auto-close brackets</string>
+    <string name="settings_auto_close_summary">Typing ( [ { \" or \' also inserts the closing one</string>
+    <string name="settings_symbol_keys">Symbol bar keys</string>
+    <string name="settings_symbol_keys_summary">Keys separated by spaces. \"Tab\" inserts 4 spaces.</string>
+    <string name="settings_symbol_keys_reset">Reset to default</string>
+    <string name="settings_keyboard_suggestions">Keyboard suggestions</string>
+    <string name="settings_keyboard_suggestions_summary">Let the keyboard suggest and autocorrect words. Off keeps code from being changed.</string>
+    <string name="settings_pinch_hint">Tip: pinch the editor with two fingers to zoom.</string>
 </resources>

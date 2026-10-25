@@ -23,6 +23,21 @@ import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.filled.DataArray
+import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.SpaceBar
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import dev.skyloft.skypython.R
+import kotlinx.coroutines.delay
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -50,7 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.skyloft.skypython.ui.theme.DividerNavy
 import dev.skyloft.skypython.ui.theme.EditorBackground
-import dev.skyloft.skypython.ui.theme.OutlinedIconTile
+import dev.skyloft.skypython.ui.theme.IconTile
 import dev.skyloft.skypython.ui.theme.SectionLabel
 import dev.skyloft.skypython.ui.theme.brandSwitchColors
 import kotlinx.coroutines.launch
@@ -67,9 +82,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import dev.skyloft.skypython.R
 import dev.skyloft.skypython.locale.AppLanguage
 import dev.skyloft.skypython.locale.AppLocale
 import dev.skyloft.skypython.ui.theme.ElectricBlue
@@ -125,6 +138,24 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 onChange = { v -> update { it.copy(codeCompletion = v) } },
             )
             SwitchRow(
+                icon = Icons.Filled.DataArray,
+                title = stringResource(R.string.settings_auto_close),
+                summary = stringResource(R.string.settings_auto_close_summary),
+                checked = s.autoClosePairs,
+                onChange = { v -> update { it.copy(autoClosePairs = v) } },
+            )
+            SwitchRow(
+                icon = Icons.Filled.Keyboard,
+                title = stringResource(R.string.settings_keyboard_suggestions),
+                summary = stringResource(R.string.settings_keyboard_suggestions_summary),
+                checked = s.keyboardSuggestions,
+                onChange = { v -> update { it.copy(keyboardSuggestions = v) } },
+            )
+            SymbolKeysRow(
+                saved = s.symbolKeys,
+                onSave = { spec -> update { it.copy(symbolKeys = spec) } },
+            )
+            SwitchRow(
                 icon = Icons.Filled.LightMode,
                 title = stringResource(R.string.settings_keep_screen_on),
                 summary = stringResource(R.string.settings_keep_screen_on_summary),
@@ -135,6 +166,52 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
             SectionTitle(stringResource(R.string.settings_section_app))
             LanguageRow()
         }
+    }
+}
+
+/**
+ * Free-text list of symbol-bar keys. The field keeps its own text (spaces the user is still
+ * typing must not be normalized away) and saves after a short pause.
+ */
+@Composable
+private fun SymbolKeysRow(saved: String, onSave: (String) -> Unit) {
+    var text by remember { mutableStateOf(saved) }
+    LaunchedEffect(text) {
+        if (normalizeSymbolKeys(text) == saved) return@LaunchedEffect
+        delay(600)
+        onSave(text)
+    }
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            IconTile(Icons.Filled.SpaceBar, size = 40.dp)
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.settings_symbol_keys), style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    stringResource(R.string.settings_symbol_keys_summary),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        OutlinedTextField(
+            value = text,
+            onValueChange = { text = it },
+            textStyle = TextStyle(fontFamily = FontFamily.Monospace),
+            keyboardOptions = KeyboardOptions(
+                autoCorrectEnabled = false,
+                capitalization = KeyboardCapitalization.None,
+                keyboardType = KeyboardType.Ascii,
+            ),
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        )
+        TextButton(
+            onClick = {
+                text = DEFAULT_SYMBOL_KEYS
+                onSave(DEFAULT_SYMBOL_KEYS)
+            },
+            enabled = normalizeSymbolKeys(text) != DEFAULT_SYMBOL_KEYS,
+            modifier = Modifier.align(Alignment.End),
+        ) { Text(stringResource(R.string.settings_symbol_keys_reset)) }
     }
 }
 
@@ -151,7 +228,7 @@ private fun FontSizeRow(sizeSp: Int, onChange: (Int) -> Unit) {
             .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        OutlinedIconTile(Icons.Filled.TextFields, size = 40.dp)
+        IconTile(Icons.Filled.TextFields, size = 40.dp)
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
             Text(stringResource(R.string.settings_font_size), style = MaterialTheme.typography.bodyLarge)
@@ -181,23 +258,23 @@ private fun FontSizeRow(sizeSp: Int, onChange: (Int) -> Unit) {
 private fun CodePreview(sizeSp: Int) {
     val code = remember {
         buildAnnotatedString {
-            withStyle(SpanStyle(color = Color(0xFF6EA8FF))) { append("def ") }
-            withStyle(SpanStyle(color = Color(0xFF5ED3F7))) { append("greet") }
+            withStyle(SpanStyle(color = Color(0xFF82A8F0))) { append("def ") }
+            withStyle(SpanStyle(color = Color(0xFF72C6E4))) { append("greet") }
             append("(name):  ")
-            withStyle(SpanStyle(color = Color(0xFFC4A1FF))) { append("return ") }
-            withStyle(SpanStyle(color = Color(0xFFF5B97A))) { append("f\"Hi {name}\"") }
+            withStyle(SpanStyle(color = Color(0xFFB8A6EE))) { append("return ") }
+            withStyle(SpanStyle(color = Color(0xFFE2B48A))) { append("f\"Hi {name}\"") }
         }
     }
     Row(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .background(EditorBackground, RoundedCornerShape(6.dp))
-            .border(1.dp, DividerNavy, RoundedCornerShape(6.dp))
+            .background(EditorBackground, RoundedCornerShape(12.dp))
+            .border(1.dp, DividerNavy, RoundedCornerShape(12.dp))
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
-        Text(code, fontFamily = FontFamily.Monospace, fontSize = sizeSp.sp, color = Color(0xFFDCE3F5), softWrap = false)
+        Text(code, fontFamily = FontFamily.Monospace, fontSize = sizeSp.sp, color = Color(0xFFD8DEEA), softWrap = false)
     }
 }
 
@@ -217,7 +294,7 @@ private fun SwitchRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        OutlinedIconTile(icon, size = 40.dp)
+        IconTile(icon, size = 40.dp)
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
             Text(summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -247,7 +324,7 @@ private fun LanguageRow() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        OutlinedIconTile(Icons.Filled.Language, size = 40.dp)
+        IconTile(Icons.Filled.Language, size = 40.dp)
         Column(Modifier.weight(1f)) {
             Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.bodyLarge)
             Text(current.label(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

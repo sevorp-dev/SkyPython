@@ -22,7 +22,6 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -43,19 +42,18 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import dev.skyloft.skypython.R
 import dev.skyloft.skypython.ui.theme.BrandText
-import dev.skyloft.skypython.ui.theme.OutlinedIconTile
+import dev.skyloft.skypython.ui.theme.BrandTextBrush
+import dev.skyloft.skypython.ui.theme.SkyBlue
+import dev.skyloft.skypython.ui.theme.IconTile
 import dev.skyloft.skypython.ui.theme.SectionLabel
+import dev.skyloft.skypython.ui.theme.Hairline
 import dev.skyloft.skypython.ui.theme.SoftViolet
 import dev.skyloft.skypython.ui.theme.TextBright
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import dev.skyloft.skypython.ui.theme.BrandTextBrush
 import androidx.annotation.StringRes
 import androidx.compose.ui.res.stringResource
 
@@ -97,27 +95,25 @@ fun AboutScreen(onBack: () -> Unit) {
             Column(
                 Modifier
                     .fillMaxWidth()
-                    // The banner's night sky, fading into the page.
-                    .background(Brush.verticalGradient(listOf(Color(0xFF14309A).copy(alpha = 0.45f), Color(0xFF4A2C9E).copy(alpha = 0.18f), Color.Transparent)))
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                    .padding(horizontal = 24.dp, vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Image(
                     painterResource(R.drawable.ic_launcher_foreground),
                     contentDescription = null,
-                    modifier = Modifier.size(128.dp),
+                    modifier = Modifier.size(112.dp),
                 )
-                BrandText(stringResource(R.string.app_name), fontSize = 36.sp, fontWeight = FontWeight.ExtraBold)
+                BrandText(stringResource(R.string.app_name), fontSize = 32.sp, fontWeight = FontWeight.Bold, brush = BrandTextBrush)
                 // One Text, so a longer translation wraps instead of being cut off.
                 val start = stringResource(R.string.about_tagline_start)
                 val end = stringResource(R.string.about_tagline_end)
                 Text(
                     buildAnnotatedString {
-                        withStyle(SpanStyle(color = TextBright, fontWeight = FontWeight.Medium)) { append(start) }
-                        withStyle(SpanStyle(brush = BrandTextBrush, fontWeight = FontWeight.Bold)) { append(end) }
+                        withStyle(SpanStyle(color = TextBright)) { append(start) }
+                        withStyle(SpanStyle(color = SkyBlue, fontWeight = FontWeight.Medium)) { append(end) }
                     },
-                    fontSize = 18.sp,
+                    fontSize = 17.sp,
                     textAlign = TextAlign.Center,
                 )
                 Text(stringResource(R.string.about_version, version), color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -128,18 +124,18 @@ fun AboutScreen(onBack: () -> Unit) {
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
-            HorizontalDivider()
+            Hairline()
             SectionTitle(stringResource(R.string.about_links))
             LinkRow(Icons.Filled.Code, stringResource(R.string.about_source_code), GITHUB_URL) { openUrl(context, GITHUB_URL) }
             LinkRow(Icons.AutoMirrored.Filled.Send, stringResource(R.string.about_telegram), TELEGRAM_URL) { openUrl(context, TELEGRAM_URL) }
-            HorizontalDivider()
+            Hairline()
             SectionTitle(stringResource(R.string.about_license))
             ListItem(
-                leadingContent = { OutlinedIconTile(Icons.Filled.Gavel, size = 40.dp, tint = SoftViolet) },
+                leadingContent = { IconTile(Icons.Filled.Gavel, size = 40.dp, tint = SoftViolet) },
                 headlineContent = { Text("Apache License 2.0") },
                 supportingContent = { Text(stringResource(R.string.about_license_text)) },
             )
-            HorizontalDivider()
+            Hairline()
             SectionTitle(stringResource(R.string.about_third_party))
             for (n in NOTICES) {
                 ListItem(
@@ -147,13 +143,13 @@ fun AboutScreen(onBack: () -> Unit) {
                     supportingContent = { Text(n.license, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 )
             }
-            HorizontalDivider()
+            Hairline()
             Column(
                 Modifier.fillMaxWidth().padding(vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    BrandText("SkyLoft Studio", fontSize = 15.sp)
+                    BrandText("SkyLoft Studio", fontSize = 15.sp, fontWeight = FontWeight.Medium)
                     Text(
                         stringResource(R.string.about_slogan),
                         fontSize = 14.sp,
@@ -175,7 +171,7 @@ private fun SectionTitle(text: String) {
 private fun LinkRow(icon: ImageVector, title: String, url: String, onClick: () -> Unit) {
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
-        leadingContent = { OutlinedIconTile(icon, size = 40.dp) },
+        leadingContent = { IconTile(icon, size = 40.dp) },
         headlineContent = { Text(title) },
         supportingContent = { Text(url, color = MaterialTheme.colorScheme.onSurfaceVariant) },
         trailingContent = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },

@@ -11,6 +11,14 @@ sealed interface RunTarget {
         override val title: String get() = file.name
     }
 
+    /**
+     * [file] under the debugger: the program runs as with [Script] (same console, same input);
+     * the debugger driver listens on [channel] (see the debug package).
+     */
+    data class Debug(val file: File, val driver: File, val channel: File) : RunTarget {
+        override val title: String get() = file.name
+    }
+
     /** Python REPL (`python -i -q`) in the projects root. */
     data object Interpreter : RunTarget {
         override val title: String get() = "Interpreter"
@@ -32,7 +40,7 @@ private val PYTHON_PROMPTS = setOf(">>> ", "... ")
  * terminal. Scripts have no prompts: their stderr is always an error.
  */
 fun promptLength(chunk: String, target: RunTarget): Int {
-    if (target is RunTarget.Script) return 0
+    if (target is RunTarget.Script || target is RunTarget.Debug) return 0
     val last = chunk.substring(chunk.lastIndexOf('\n') + 1)
     val isPrompt = last in PYTHON_PROMPTS ||
         (target is RunTarget.Terminal && (last.endsWith("$ ") || last.endsWith("# ")))
