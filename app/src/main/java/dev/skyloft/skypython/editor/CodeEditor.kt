@@ -795,6 +795,11 @@ fun CodeEditor(
         controller.shownDocId = docId
         controller.applyPendingJump(docId)
         onCursor(view.cursorPosition())
+        // After a recreate (rotation) the view is still being laid out here: report the cursor
+        // again once it is, so the status line doesn't stay on "Ln 1, Col 1".
+        (view as? DebugAwareCodeEditor)?.whenLaidOut {
+            if (controller.shownDocId == docId) onCursor(view.cursorPosition())
+        }
         // The doc's last known problems at once, then a fresh check.
         val check = config.codeCompletion && !readOnly
         val known = problems[docId].orEmpty()

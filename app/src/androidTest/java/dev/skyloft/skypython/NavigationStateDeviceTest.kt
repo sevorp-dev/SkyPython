@@ -179,6 +179,10 @@ class NavigationStateDeviceTest {
         waitForEditor()
         rule.waitUntil(10_000) { onMain { editor().text.toString() == edited } }
         assertEquals("cursor line after a rotation", LINE, onMain { editor().cursor.leftLine })
+        // The status line follows the restored cursor (it used to show "Ln 1, Col 1").
+        rule.waitUntilAtLeastOneExists(
+            hasText(rule.activity.getString(R.string.editor_status_cursor, LINE + 1, 6)), 10_000,
+        )
         // The scroll position is restored after the recreated editor lays out.
         rule.waitUntil(10_000) { onMain { editor().firstVisibleLine <= LINE && LINE <= editor().lastVisibleLine } }
 
