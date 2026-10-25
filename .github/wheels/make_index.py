@@ -1,14 +1,22 @@
-"""Builds a PEP 503 "simple" index for our Android wheels (EXPERIMENTAL, used by build-wheels.yml).
+"""Maintains the `wheels` branch of SkyPython: Android wheels + index.json (used by build-wheels.yml).
 
-The wheels themselves live as assets of a GitHub release (no size limit per repo, keeps git
-small); the `wheels` branch holds only this index and SHA256SUMS, served by GitHub Pages
-(pip needs Content-Type text/html, which raw.githubusercontent.com does not send).
+The app reads https://raw.githubusercontent.com/<owner>/<repo>/wheels/index.json and downloads
+the wheel files next to it. Layout of SITE_DIR (the branch root):
 
-    python make_index.py --site SITE_DIR --url-base RELEASE_DOWNLOAD_URL [new.whl ...]
+    index.json        {"schema": 1, "python": "cp314", "packages": {"numpy": [entry, ...]}}
+    SHA256SUMS        sha256sum-compatible list of the wheels
+    <wheel files>
 
-* adds the SHA-256 of each new wheel to SITE_DIR/SHA256SUMS (replacing an older line for the
-  same file name);
-* rewrites SITE_DIR/simple/index.html and SITE_DIR/simple/<project>/index.html from SHA256SUMS.
+    python make_index.py --site SITE_DIR [--requires numpy=chaquopy-openblas ...] [new.whl ...]
+
+* each new wheel is copied into SITE_DIR; an older wheel of the same project and ABI (another
+  version or build) is removed, so the branch holds one wheel per project x ABI;
+* index.json and SHA256SUMS are rewritten from all wheels in SITE_DIR, reading name, version
+  and summary from each wheel's METADATA.
+
+An entry: {"version", "abi" (Android ABI name: arm64-v8a, x86_64, armeabi-v7a, x86), "file",
+"sha256", "size", "requires" (other projects of THIS index needed at runtime; pure-Python
+dependencies from PyPI are not listed), "summary"}.
 
 Standard library only.
 """
@@ -16,28 +24,34 @@ Standard library only.
 from __future__ import annotations
 
 import argparse
+import email.parser
 import hashlib
-import html
+import json
 import os
 import re
+import shutil
 import sys
-from collections import defaultdict
-from urllib.parse import quote
+import zipfile
+
+PYTHON_TAG = "cp314"
+ABI_NAMES = {"arm64_v8a": "arm64-v8a", "x86_64": "x86_64", "armeabi_v7a": "armeabi-v7a", "x86": "x86"}
+ABI_ORDER = list(ABI_NAMES.values())
+# name-version(-build)?-python-abi-platform.whl
+WHEEL_RE = re.compile(
+    r"^(?P<name>[^-]+)-(?P<version>[^-]+)(?:-\d[^-]*)?-(?P<py>[^-]+)-(?P<abi>[^-]+)"
+    r"-android_(?P<api>\d+)_(?P<arch>[a-z0-9_]+)\.whl$"
+)
 
 
 def normalize(name: str) -> str:  # PEP 503
     return re.sub(r"[-_.]+", "-", name).lower()
 
 
-def read_sums(path: str) -> dict[str, str]:
-    sums: dict[str, str] = {}
-    if os.path.exists(path):
-        with open(path, encoding="utf-8") as f:
-            for line in f:
-                parts = line.split()
-                if len(parts) == 2:
-                    sums[parts[1]] = parts[0]
-    return sums
+def parse(filename: str) -> re.Match[str]:
+    m = WHEEL_RE.match(filename)
+    if not m or m.group("arch") not in ABI_NAMES:
+        sys.exit(f"{filename}: not an Android wheel name this index understands")
+    return m
 
 
 def sha256(path: str) -> str:
@@ -48,56 +62,72 @@ def sha256(path: str) -> str:
     return h.hexdigest()
 
 
-def page(title: str, body: str) -> str:
-    return (
-        "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n"
-        "<meta name=\"pypi:repository-version\" content=\"1.0\">\n"
-        f"<title>{html.escape(title)}</title>\n</head>\n<body>\n{body}</body>\n</html>\n"
-    )
+def metadata(path: str) -> dict[str, str]:
+    with zipfile.ZipFile(path) as z:
+        name = next(n for n in z.namelist() if re.fullmatch(r"[^/]+\.dist-info/METADATA", n))
+        msg = email.parser.Parser().parsestr(z.read(name).decode("utf-8"), headersonly=True)
+    return {"name": msg["Name"], "version": msg["Version"], "summary": (msg["Summary"] or "").strip()}
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--site", required=True)
-    ap.add_argument("--url-base", required=True, help="where the wheel files are downloaded from")
+    ap.add_argument("--requires", action="append", default=[], metavar="PROJECT=DEP[,DEP]",
+                    help="runtime dependencies that are themselves in this index")
     ap.add_argument("wheels", nargs="*")
     args = ap.parse_args()
-
-    sums_path = os.path.join(args.site, "SHA256SUMS")
-    sums = read_sums(sums_path)
-    for w in args.wheels:
-        sums[os.path.basename(w)] = sha256(w)
-
-    projects: dict[str, list[str]] = defaultdict(list)
-    for name in sums:
-        if not name.endswith(".whl"):
-            continue
-        projects[normalize(name.split("-")[0])].append(name)
+    requires = {}
+    for spec in args.requires:
+        proj, _, deps = spec.partition("=")
+        requires[normalize(proj)] = [normalize(d) for d in deps.split(",") if d]
 
     os.makedirs(args.site, exist_ok=True)
-    with open(sums_path, "w", encoding="utf-8", newline="\n") as f:
-        for name in sorted(sums):
-            f.write(f"{sums[name]}  {name}\n")
+    for w in args.wheels:
+        fn = os.path.basename(w)
+        m = parse(fn)
+        key = (normalize(m.group("name")), m.group("arch"))
+        for old in os.listdir(args.site):
+            if old.endswith(".whl") and old != fn:
+                o = parse(old)
+                if (normalize(o.group("name")), o.group("arch")) == key:
+                    print(f"replacing {old}")
+                    os.remove(os.path.join(args.site, old))
+        shutil.copyfile(w, os.path.join(args.site, fn))
 
-    simple = os.path.join(args.site, "simple")
-    os.makedirs(simple, exist_ok=True)
-    links = "".join(f"<a href=\"{html.escape(quote(p))}/\">{html.escape(p)}</a><br>\n" for p in sorted(projects))
-    with open(os.path.join(simple, "index.html"), "w", encoding="utf-8", newline="\n") as f:
-        f.write(page("SkyPython Android wheels", links))
-    base = args.url_base.rstrip("/")
-    for proj, files in projects.items():
-        d = os.path.join(simple, proj)
-        os.makedirs(d, exist_ok=True)
-        body = "".join(
-            f"<a href=\"{html.escape(base)}/{html.escape(quote(fn))}#sha256={sums[fn]}\">"
-            f"{html.escape(fn)}</a><br>\n"
-            for fn in sorted(files)
-        )
-        with open(os.path.join(d, "index.html"), "w", encoding="utf-8", newline="\n") as f:
-            f.write(page(f"Links for {proj}", body))
-    # Serve files as-is (no Jekyll processing on GitHub Pages).
-    open(os.path.join(args.site, ".nojekyll"), "w").close()
-    print(f"{len(projects)} project(s), {sum(map(len, projects.values()))} wheel(s)")
+    packages: dict[str, list[dict]] = {}
+    sums = []
+    for fn in sorted(f for f in os.listdir(args.site) if f.endswith(".whl")):
+        path = os.path.join(args.site, fn)
+        m = parse(fn)
+        if m.group("py") != PYTHON_TAG:
+            sys.exit(f"{fn}: python tag {m.group('py')}, this index is for {PYTHON_TAG}")
+        meta = metadata(path)
+        proj = normalize(meta["name"])
+        digest = sha256(path)
+        sums.append(f"{digest}  {fn}")
+        packages.setdefault(proj, []).append({
+            "version": meta["version"],
+            "abi": ABI_NAMES[m.group("arch")],
+            "file": fn,
+            "sha256": digest,
+            "size": os.path.getsize(path),
+            "requires": requires.get(proj, []),
+            "summary": meta["summary"],
+        })
+    for proj, entries in packages.items():
+        entries.sort(key=lambda e: ABI_ORDER.index(e["abi"]))
+        for e in entries:
+            missing = [d for d in e["requires"] if d not in packages]
+            if missing:
+                sys.exit(f"{e['file']}: requires {missing}, which are not in the index")
+
+    index = {"schema": 1, "python": PYTHON_TAG, "packages": dict(sorted(packages.items()))}
+    with open(os.path.join(args.site, "index.json"), "w", encoding="utf-8", newline="\n") as f:
+        json.dump(index, f, indent=2)
+        f.write("\n")
+    with open(os.path.join(args.site, "SHA256SUMS"), "w", encoding="utf-8", newline="\n") as f:
+        f.write("".join(s + "\n" for s in sums))
+    print(json.dumps(index, indent=2))
     return 0
 
 
