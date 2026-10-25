@@ -60,6 +60,8 @@ data class OpenDocument(
     val name: String,
     val text: String,
     val dirty: Boolean,
+    /** Library code opened by "Go to definition": shown, never edited or saved. */
+    val readOnly: Boolean = false,
 ) {
     companion object {
         fun idOf(source: DocSource): String = when (source) {
@@ -67,15 +69,16 @@ data class OpenDocument(
             is DocSource.External -> "uri:" + source.uri.toString()
         }
 
-        fun of(source: DocSource, text: String): OpenDocument {
+        fun of(source: DocSource, text: String, readOnly: Boolean = false): OpenDocument {
             val name = when (source) {
                 is DocSource.Local -> source.file.name
                 is DocSource.External -> source.name
             }
-            return OpenDocument(idOf(source), source, name, text, dirty = false)
+            return OpenDocument(idOf(source), source, name, text, dirty = false, readOnly = readOnly)
         }
 
-        fun local(file: File, text: String): OpenDocument = of(DocSource.Local(file), text)
+        fun local(file: File, text: String, readOnly: Boolean = false): OpenDocument =
+            of(DocSource.Local(file), text, readOnly)
     }
 }
 
@@ -135,7 +138,7 @@ class DocumentsState {
     }
 
     fun update(id: String, text: String) {
-        docs = docs.map { if (it.id == id && it.text != text) it.copy(text = text, dirty = true) else it }
+        docs = docs.map { if (it.id == id && !it.readOnly && it.text != text) it.copy(text = text, dirty = true) else it }
     }
 
     /**

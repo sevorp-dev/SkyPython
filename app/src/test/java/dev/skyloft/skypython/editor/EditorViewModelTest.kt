@@ -186,6 +186,30 @@ class EditorViewModelTest {
         assertEquals(a.id, s.currentId)
     }
 
+    // --- read-only library tabs ---
+
+    @Test
+    fun readOnlyDocsNeverBecomeDirty() {
+        val s = DocumentsState()
+        val lib = s.open(OpenDocument.local(File("/lib/json/__init__.py"), "x", readOnly = true))
+        assertTrue(lib.readOnly)
+        s.update(lib.id, "changed")
+        assertFalse(s.find(lib.id)!!.dirty)
+        assertEquals("x", s.find(lib.id)!!.text)
+    }
+
+    @Test
+    fun sessionLeavesReadOnlyTabsOut() {
+        val a = doc("/p/a.py")
+        val lib = OpenDocument.local(File("/lib/os.py"), "", readOnly = true)
+        val b = doc("/p/b.py")
+        val s = sessionOf(listOf(a, lib, b), currentId = b.id)
+        assertEquals(listOf("a.py", "b.py"), s.tabs.map { it.name })
+        assertEquals(1, s.currentIndex)
+        // The library tab was current: the session falls back to the tab before it.
+        assertEquals(0, sessionOf(listOf(a, lib, b), currentId = lib.id).currentIndex)
+    }
+
     // --- session persistence codec ---
 
     @Test

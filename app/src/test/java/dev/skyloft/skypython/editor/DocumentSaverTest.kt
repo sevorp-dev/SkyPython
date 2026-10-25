@@ -63,6 +63,19 @@ class DocumentSaverTest {
     }
 
     @Test
+    fun readOnlyDocIsNeverWritten() {
+        val docs = DocumentsState()
+        val lib = docs.open(OpenDocument.local(java.io.File("/lib/os.py"), "source", readOnly = true))
+        val written = mutableListOf<String>()
+        val saver = DocumentSaver(docs, io, write = { _, text -> written += text }, onSaved = {}, onError = { _, _ -> })
+        var ok: Boolean? = null
+        CoroutineScope(Job() + main).launch { ok = saver.save(lib) }
+        scheduler.advanceUntilIdle()
+        assertEquals(true, ok)
+        assertEquals(emptyList<String>(), written)
+    }
+
+    @Test
     fun failedWriteIsReportedAndOthersStillSaved() {
         val docs = dirtyDocs(2)
         val written = mutableListOf<String>()

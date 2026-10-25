@@ -275,6 +275,21 @@
     <string name="go_to_line_label">Line (1–%1$d)</string>
     <string name="go_to_line_go">Go</string>
 
+    <!-- Editor: code navigation -->
+    <string name="editor_action_go_to_definition">Go to definition</string>
+    <string name="editor_action_find_usages">Usages</string>
+    <string name="editor_outline">Outline</string>
+    <string name="editor_outline_empty">No classes or functions in this file yet.</string>
+    <string name="editor_outline_loading">Reading the file…</string>
+    <string name="editor_outline_line">line %1$d</string>
+    <string name="editor_read_only">Read-only</string>
+    <string name="nav_no_definition">No definition found for “%1$s”</string>
+    <string name="nav_not_on_a_name">Put the cursor on a name first</string>
+    <string name="nav_unavailable">Code hints aren’t ready yet. Try again in a moment.</string>
+    <string name="nav_hints_off">Turn on Code completion in Settings to use code navigation</string>
+    <string name="nav_usages_count">Usages of “%1$s” in this file: %2$d</string>
+    <string name="drawer_in_symbol">In %1$s</string>
+
     <!-- Editor: line commands -->
     <string name="editor_action_comment">Comment / uncomment</string>
     <string name="editor_action_indent">Indent</string>

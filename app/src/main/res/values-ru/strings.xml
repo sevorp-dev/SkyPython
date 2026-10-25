@@ -265,6 +265,21 @@
     <string name="go_to_line_label">Строка (1–%1$d)</string>
     <string name="go_to_line_go">Перейти</string>
 
+    <!-- Редактор: навигация по коду -->
+    <string name="editor_action_go_to_definition">Перейти к определению</string>
+    <string name="editor_action_find_usages">Где используется</string>
+    <string name="editor_outline">Структура файла</string>
+    <string name="editor_outline_empty">В этом файле пока нет классов и функций.</string>
+    <string name="editor_outline_loading">Читаю файл…</string>
+    <string name="editor_outline_line">строка %1$d</string>
+    <string name="editor_read_only">Только чтение</string>
+    <string name="nav_no_definition">Не нашлось, где определено «%1$s»</string>
+    <string name="nav_not_on_a_name">Сначала поставьте курсор на имя</string>
+    <string name="nav_unavailable">Подсказки по коду ещё загружаются. Попробуйте чуть позже.</string>
+    <string name="nav_hints_off">Включите «Code completion» в настройках, чтобы пользоваться навигацией по коду</string>
+    <string name="nav_usages_count">«%1$s» в этом файле: %2$d</string>
+    <string name="drawer_in_symbol">Внутри %1$s</string>
+
     <!-- Редактор: команды для строк -->
     <string name="editor_action_comment">Закомментировать / раскомментировать</string>
     <string name="editor_action_indent">Добавить отступ</string>

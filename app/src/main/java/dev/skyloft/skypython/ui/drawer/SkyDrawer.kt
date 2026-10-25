@@ -38,7 +38,9 @@ import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Slideshow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -136,7 +138,13 @@ private fun DrawerAction.icon(): ImageVector = when (this) {
  * the list (scrolling with it) on short screens.
  */
 @Composable
-fun SkyDrawer(fileName: String?, cursor: CursorPosition, onAction: (DrawerAction) -> Unit) {
+fun SkyDrawer(
+    fileName: String?,
+    cursor: CursorPosition,
+    /** `Class.method` around the cursor, from the outline; null when unknown or at top level. */
+    symbol: String? = null,
+    onAction: (DrawerAction) -> Unit,
+) {
     val noFile = stringResource(R.string.no_file_open)
     val lineFormat = stringResource(R.string.drawer_line)
     val offsetFormat = stringResource(R.string.drawer_line_offset)
@@ -186,6 +194,17 @@ fun SkyDrawer(fileName: String?, cursor: CursorPosition, onAction: (DrawerAction
                     header.line + "  ·  " + header.offset.orEmpty(),
                     color = MutedText,
                     fontSize = 13.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (header.line != null && symbol != null) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    stringResource(R.string.drawer_in_symbol, symbol),
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 13.sp,
+                    fontFamily = FontFamily.Monospace,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

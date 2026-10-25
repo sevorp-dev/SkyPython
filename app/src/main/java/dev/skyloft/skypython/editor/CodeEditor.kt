@@ -17,11 +17,27 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.toArgb
 import dev.skyloft.skypython.lang.Diagnostic
 import dev.skyloft.skypython.lang.DiagnosticsMapping
 import dev.skyloft.skypython.lang.DiagnosticsRunner
+import dev.skyloft.skypython.lang.EditorRange
 import dev.skyloft.skypython.lang.LanguageService
 import dev.skyloft.skypython.lang.Severity
+import dev.skyloft.skypython.lang.SignatureHints
+import dev.skyloft.skypython.lang.Usage
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.MaterialTheme
+import io.github.rosemoe.sora.event.ScrollEvent
+import io.github.rosemoe.sora.lang.styling.HighlightTextContainer
+import io.github.rosemoe.sora.lang.styling.color.ConstColor
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import io.github.rosemoe.sora.event.ContentChangeEvent
 import io.github.rosemoe.sora.event.EditorKeyEvent
 import io.github.rosemoe.sora.event.PublishSearchResultEvent
@@ -150,6 +166,9 @@ internal class CompletionBadge(kind: CompletionItemKind) : Drawable() {
 }
 
 private const val BADGE_BG = 0xFF2A3A63.toInt()
+
+/** Text and a position in it, as the language server takes them: 1-based [line], UTF-16 [column]. */
+data class LookupPosition(val source: String, val line: Int, val column: Int)
 
 /** Imperative handle for toolbar / symbol-bar actions on the live editor view. */
 class EditorController {
@@ -324,6 +343,85 @@ class EditorController {
     /** The user pinch-zoomed to this font size (whole sp, already clamped). */
     internal var onPinchFontSize: ((Int) -> Unit)? = null
 
+    // ---- code navigation ----
+
+    /** "Go to definition" / "Usages" from the selection toolbar, set by the screen. */
+    internal var onGoToDefinition: (() -> Unit)? = null
+    internal var onFindUsages: (() -> Unit)? = null
+
+    /** Code hints are on (Settings): the toolbar offers navigation only then. */
+    @Volatile internal var navigationEnabled: Boolean = true
+
+    /** The document the view shows now (set by [CodeEditor] when it switches docs). */
+    internal var shownDocId: String? = null
+    private var pendingJump: Pair<String, EditorRange>? = null
+
+    /** The shown text and the start of the cursor / selection, in server positions (1-based line). */
+    fun lookupPosition(): LookupPosition? {
+        val v = view ?: return null
+        val c = v.cursor
+        return LookupPosition(v.text.toString(), c.leftLine + 1, c.leftColumn)
+    }
+
+    /** Selects [range] (0-based) of the shown document and scrolls it into view. */
+    fun jumpTo(range: EditorRange) {
+        val v = view ?: return
+        clearUsages()
+        // After a tab switch the layout is rebuilt first: select once it has been measured.
+        v.post {
+            val t = v.text
+            val line = range.startLine.coerceIn(0, t.lineCount - 1)
+            val len = t.getColumnCount(line)
+            val start = range.startColumn.coerceIn(0, len)
+            val end = range.endColumn.coerceIn(start, len)
+            if (end > start) v.setSelectionRegion(line, start, line, end, true) else v.setSelection(line, start, true)
+            v.ensurePositionVisible(line, start)
+            v.requestFocus()
+        }
+    }
+
+    /** [jumpTo] in doc [docId]: now if it is shown, else as soon as the view switches to it. */
+    fun jumpWhenShown(docId: String, range: EditorRange) {
+        if (shownDocId == docId && view != null) jumpTo(range) else pendingJump = docId to range
+    }
+
+    internal fun applyPendingJump(docId: String) {
+        val (id, range) = pendingJump ?: return
+        if (id != docId) return
+        pendingJump = null
+        jumpTo(range)
+    }
+
+    /** The theme's accent (MaterialTheme primary), set by [CodeEditor]; usages are marked in it. */
+    internal var usageAccent: Color = Color.Unspecified
+
+    /** Marks [usages] (server positions) in the shown document until the next edit. */
+    fun highlightUsages(usages: List<Usage>) {
+        val v = view ?: return
+        val t = v.text
+        val fill = ConstColor(usageAccent.copy(alpha = 0.22f).toArgb())
+        val border = ConstColor(usageAccent.copy(alpha = 0.7f).toArgb())
+        val container = HighlightTextContainer()
+        for (u in usages) {
+            val line = u.line - 1
+            if (line !in 0 until t.lineCount) continue
+            val len = t.getColumnCount(line)
+            val start = u.column.coerceIn(0, len)
+            val end = u.endColumn.coerceIn(start, len)
+            if (end > start) container.add(HighlightTextContainer.HighlightText(line, start, line, end, fill, border))
+        }
+        v.highlightTexts = container
+        v.invalidate()
+    }
+
+    fun clearUsages() {
+        val v = view ?: return
+        if (v.highlightTexts?.isEmpty() == false) {
+            v.highlightTexts = HighlightTextContainer()
+            v.invalidate()
+        }
+    }
+
     /**
      * Moves the cursor to [d] (server positions: 1-based line) and scrolls there; as if tapped,
      * so the problem's tooltip opens.
@@ -389,7 +487,10 @@ internal fun CodeEditor.applyConfig(config: EditorViewConfig) {
  *
  * With [EditorViewConfig.codeCompletion] on, the language server ([LanguageService], started
  * when this is first shown) supplies the completion popup and error squiggles; the shown doc's
- * problems are reported through [onDiagnostics] ([docPath] lets it resolve sibling imports).
+ * problems are reported through [onDiagnostics] ([docPath] lets it resolve sibling imports),
+ * and a parameter hint floats above the cursor inside a call's parentheses.
+ *
+ * A [readOnly] doc (library code opened by "Go to definition") can't be edited and isn't checked.
  */
 @Composable
 fun CodeEditor(
@@ -403,11 +504,13 @@ fun CodeEditor(
     onCursorChanged: (CursorPosition) -> Unit,
     onDiagnostics: (List<Diagnostic>) -> Unit,
     modifier: Modifier = Modifier,
+    readOnly: Boolean = false,
 ) {
     val context = LocalContext.current
     val contents = remember { HashMap<String, Content>() }
     val currentId by rememberUpdatedState(docId)
     val currentPath by rememberUpdatedState(docPath)
+    val currentReadOnly by rememberUpdatedState(readOnly)
     val completionOn by rememberUpdatedState(config.codeCompletion)
     val onChange by rememberUpdatedState(onTextChanged)
     val onCursor by rememberUpdatedState(onCursorChanged)
@@ -436,12 +539,57 @@ fun CodeEditor(
         )
     }
     fun requestDiagnostics(content: Content, immediate: Boolean) {
-        if (!completionOn) return
+        if (!completionOn || currentReadOnly) return
         diagnostics.request(currentId, content.documentVersion, content.length, currentPath, immediate) { content.toString() }
     }
 
+    controller.usageAccent = MaterialTheme.colorScheme.primary
+
+    // ---- parameter hint ----
+    var hint by remember { mutableStateOf<HintState?>(null) }
+    val hintJob = remember { arrayOfNulls<Job>(1) }
+    // Esc hides the hint until the text changes again.
+    val escapedVersion = remember { longArrayOf(-1L) }
+    fun hideHint() {
+        hintJob[0]?.cancel()
+        hint = null
+    }
+    fun updateHint(v: CodeEditor) {
+        hintJob[0]?.cancel()
+        val content = v.text
+        val c = v.cursor
+        if (!completionOn || currentReadOnly || !v.isEditable || c.isSelected ||
+            content.documentVersion == escapedVersion[0] || content.length > DiagnosticsRunner.MAX_CHARS
+        ) {
+            hint = null
+            return
+        }
+        val line = c.leftLine
+        val column = c.leftColumn
+        val firstLine = (line - HINT_LOOKBACK_LINES).coerceAtLeast(0)
+        val before = content.subContent(firstLine, 0, line, column)
+        if (!SignatureHints.mayBeInCall(before)) {
+            hint = null
+            return
+        }
+        // Still in the same call: keep the old hint (moved to the cursor) until the new one is in.
+        hint = hint?.copy(anchor = hintAnchor(v, line, column))
+        val version = content.documentVersion
+        hintJob[0] = scope.launch {
+            delay(HINT_DELAY_MS)
+            val sig = service.signature(content.toString(), line + 1, column, currentPath)
+            val cur = v.cursor
+            // Stale: another doc, more typing or the cursor moved meanwhile (a newer request follows).
+            if (v.text !== content || content.documentVersion != version || cur.isSelected ||
+                cur.leftLine != line || cur.leftColumn != column
+            ) return@launch
+            hint = sig?.let { HintState(SignatureHints.hint(it), hintAnchor(v, line, column)) }
+        }
+    }
+
+    Box(modifier) {
     AndroidView(
-        modifier = modifier,
+        modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
             TextMateSetup.ensure(ctx)
             CodeEditor(ctx).apply {
@@ -455,7 +603,14 @@ fun CodeEditor(
                 setScaleTextSizes(MIN_FONT_SIZE_SP * sp, MAX_FONT_SIZE_SP * sp)
                 replaceComponent(
                     EditorTextActionWindow::class.java,
-                    SkyTextActionWindow(this, onComment = controller::toggleComment, onIndent = controller::indent),
+                    SkyTextActionWindow(
+                        this,
+                        onComment = controller::toggleComment,
+                        onIndent = controller::indent,
+                        onGoToDefinition = { controller.onGoToDefinition?.invoke() },
+                        onFindUsages = { controller.onFindUsages?.invoke() },
+                        navigationEnabled = { controller.navigationEnabled },
+                    ),
                 )
                 // Breathing room around the line-number gutter.
                 val dp = resources.displayMetrics.density
@@ -475,15 +630,28 @@ fun CodeEditor(
                         val content = e.editor.text
                         debouncer.onChanged(currentId) { content.toString() }
                         requestDiagnostics(content, immediate = false)
+                        controller.clearUsages()
                     }
                 }
                 subscribeAlways(SelectionChangeEvent::class.java) { e ->
                     onCursor(e.editor.cursorPosition())
                     controller.publishFind(e.editor)
+                    updateHint(e.editor)
+                }
+                subscribeAlways(ScrollEvent::class.java) { e ->
+                    val h = hint ?: return@subscribeAlways
+                    val c = e.editor.cursor
+                    hint = h.copy(anchor = hintAnchor(e.editor, c.leftLine, c.leftColumn))
                 }
                 subscribeAlways(PublishSearchResultEvent::class.java) { e -> controller.onSearchResult(e.editor) }
                 subscribeAlways(EditorKeyEvent::class.java) { e ->
                     if (e.eventType != EditorKeyEvent.Type.DOWN) return@subscribeAlways
+                    if (e.keyCode == android.view.KeyEvent.KEYCODE_ESCAPE && hint != null) {
+                        escapedVersion[0] = e.editor.text.documentVersion
+                        hideHint()
+                        e.markAsConsumed()
+                        return@subscribeAlways
+                    }
                     val shortcut = editorShortcut(e.keyCode, e.isCtrlPressed, e.isShiftPressed) ?: return@subscribeAlways
                     val handler = controller.onShortcut ?: return@subscribeAlways
                     if (e.repeatCount == 0) handler(shortcut)
@@ -503,22 +671,32 @@ fun CodeEditor(
         onRelease = { view ->
             if (controller.view === view) controller.view = null
             diagnostics.cancel()
+            hideHint()
             view.release()
         },
     )
+    hint?.let { SignatureHintBubble(it) }
+    }
 
     // Switch the shown document when the tab changes.
-    LaunchedEffect(docId) {
+    LaunchedEffect(docId, readOnly) {
         val view = controller.view ?: return@LaunchedEffect
         debouncer.flush() // the previous doc's pending edit, before the view switches docs
+        hideHint()
+        controller.clearUsages()
         val content = contents.getOrPut(docId) { Content(initialText) }
         // reuseContentObject = true keeps this doc's Content (and its undo stack) instead of copying it.
         if (view.text !== content) view.setText(content, true, null)
+        view.isEditable = !readOnly
+        if (readOnly) view.hideSoftInput()
+        controller.shownDocId = docId
+        controller.applyPendingJump(docId)
         onCursor(view.cursorPosition())
         // The doc's last known problems at once, then a fresh check.
+        val check = config.codeCompletion && !readOnly
         val known = problems[docId].orEmpty()
-        view.diagnostics = if (config.codeCompletion) diagnosticsContainer(content, known) else null
-        onProblems(if (config.codeCompletion) known else emptyList())
+        view.diagnostics = if (check) diagnosticsContainer(content, known) else null
+        onProblems(if (check) known else emptyList())
         requestDiagnostics(content, immediate = true)
     }
 
@@ -533,6 +711,11 @@ fun CodeEditor(
     LaunchedEffect(config.codeCompletion) {
         val view = controller.view
         (view?.editorLanguage as? PythonLanguage)?.enabled = config.codeCompletion
+        controller.navigationEnabled = config.codeCompletion
+        if (!config.codeCompletion) {
+            hideHint()
+            controller.clearUsages()
+        }
         if (config.codeCompletion) {
             service.warmUp()
             contents[currentId]?.let { if (view?.text === it) requestDiagnostics(it, immediate = true) }
@@ -555,6 +738,8 @@ fun CodeEditor(
         onDispose {
             debouncer.flush()
             diagnostics.cancel()
+            hintJob[0]?.cancel()
+            controller.shownDocId = null
             contents.clear()
             problems.clear()
         }

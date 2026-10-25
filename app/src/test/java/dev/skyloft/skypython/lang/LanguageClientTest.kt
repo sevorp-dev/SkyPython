@@ -171,6 +171,31 @@ class LanguageClientTest {
     }
 
     @Test
+    fun navigationRequestsSendThePositionAndParseTheAnswer() = runBlocking {
+        val t = FakeTransport(onRequest = autoReply(
+            "definition" to """[{"name":"f","type":"function","path":"/p/h.py","kind":"project","line":2,"column":4,"endColumn":5,"inFile":false}]""",
+            "references" to """[{"line":1,"column":0,"endColumn":1}]""",
+            "signature" to """{"name":"print","params":["*values: object"],"short":["*values"],"index":0}""",
+            "outline" to """[{"name":"f","kind":"function","line":2,"column":4,"endLine":3,"children":[]}]""",
+        ))
+        val c = client(t)
+        assertEquals("/p/h.py", c.definition("f()", 1, 1, "/p/a.py", 2_000)!!.single().path)
+        assertEquals(listOf(Usage(1, 0, 1)), c.references("f", 1, 0, null, 2_000))
+        assertEquals(listOf("*values"), c.signature("print(", 1, 6, null, 2_000)!!.short)
+        assertEquals("f", c.outline("def f(): pass", 2_000)!!.single().name)
+        val def = t.requests().first { it.get("method").asString == "definition" }.getAsJsonObject("params")
+        assertEquals(1, def.get("line").asInt)
+        assertEquals(1, def.get("column").asInt)
+        assertEquals("/p/a.py", def.get("path").asString)
+    }
+
+    @Test
+    fun signatureOutsideACallIsNull() = runBlocking {
+        val t = FakeTransport(onRequest = autoReply("signature" to "null"))
+        assertNull(client(t).signature("x = 1", 1, 5, null, 2_000))
+    }
+
+    @Test
     fun diagnoseParsesDiagnostics() = runBlocking {
         val t = FakeTransport(onRequest = autoReply(
             "diagnose" to """[{"line":1,"column":4,"endLine":1,"endColumn":5,"severity":"error","message":"SyntaxError: '(' was never closed"},

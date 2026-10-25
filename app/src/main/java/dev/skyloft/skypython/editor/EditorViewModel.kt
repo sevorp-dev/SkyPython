@@ -34,6 +34,25 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
+/**
+ * The tabs to reopen next time. Read-only library tabs are left out: they were a quick look, and
+ * reopened as plain files they would become editable. If one was current, the tab before it is.
+ */
+fun sessionOf(docs: List<OpenDocument>, currentId: String?): Session {
+    val kept = docs.filterNot { it.readOnly }
+    val currentPos = docs.indexOfFirst { it.id == currentId }
+    val current = if (currentPos < 0) -1 else docs.take(currentPos + 1).count { !it.readOnly } - 1
+    return Session(
+        tabs = kept.map { d ->
+            when (val s = d.source) {
+                is DocSource.Local -> SavedTab(SavedTab.Kind.LOCAL, s.file.absolutePath, d.name)
+                is DocSource.External -> SavedTab(SavedTab.Kind.EXTERNAL, s.uri.toString(), d.name)
+            }
+        },
+        currentIndex = current,
+    )
+}
+
 data class EditorUiState(
     val docs: List<OpenDocument> = emptyList(),
     val currentId: String? = null,
@@ -103,19 +122,25 @@ class EditorViewModel(
 
     // ---- tabs ----
 
-    fun open(file: File) {
+    /**
+     * Opens [file] in a tab (or selects its tab). [readOnly]: library code shown by "Go to
+     * definition", not editable, not saved, not in recent files. [onOpened] gets the tab's id.
+     */
+    fun open(file: File, readOnly: Boolean = false, onOpened: (String) -> Unit = {}) {
         viewModelScope.launch {
             val source = withContext(Dispatchers.IO) { DocSource.Local(file) }
             val id = OpenDocument.idOf(source)
             if (docsState.find(id) != null) {
-                docsState.select(id); publish(); remember(source.file); return@launch
+                docsState.select(id); publish(); if (!readOnly) remember(source.file); onOpened(id); return@launch
             }
             val text = withContext(Dispatchers.IO) { runCatching { readLocal(source.file) } }
-            text.onSuccess { docsState.open(OpenDocument.of(source, it)); publish(); remember(source.file) }
-                .onFailure { message(R.string.editor_error_open, file.name, it.reason()) }
+            text.onSuccess {
+                docsState.open(OpenDocument.of(source, it, readOnly)); publish()
+                if (!readOnly) remember(source.file)
+                onOpened(id)
+            }.onFailure { message(R.string.editor_error_open, file.name, it.reason()) }
         }
     }
-
     /** Opens a recent file; one that no longer exists is dropped from the list. */
     fun openRecent(path: String) {
         viewModelScope.launch {
@@ -278,18 +303,7 @@ class EditorViewModel(
 
     private fun publish(persistSession: Boolean = true) {
         _state.value = EditorUiState(docsState.docs, docsState.currentId, loading = !restored)
-        if (persistSession) {
-            val docs = docsState.docs
-            sessionToSave.value = Session(
-                tabs = docs.map { d ->
-                    when (val s = d.source) {
-                        is DocSource.Local -> SavedTab(SavedTab.Kind.LOCAL, s.file.absolutePath, d.name)
-                        is DocSource.External -> SavedTab(SavedTab.Kind.EXTERNAL, s.uri.toString(), d.name)
-                    }
-                },
-                currentIndex = docs.indexOfFirst { it.id == docsState.currentId },
-            )
-        }
+        if (persistSession) sessionToSave.value = sessionOf(docsState.docs, docsState.currentId)
     }
 
     private fun message(text: String) {
