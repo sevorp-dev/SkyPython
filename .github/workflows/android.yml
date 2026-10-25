@@ -21,6 +21,14 @@ jobs:
       - name: Build and unit-test
         run: ./gradlew assembleDebug testDebugUnitTest --console=plain
 
+      # The editor's language server against the bundle the build just packed.
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Language server tests (desktop Python)
+        run: python -m unittest discover -s runtime/src/test/python -v
+
       - uses: actions/upload-artifact@v5
         with:
           name: SkyPython-debug-apk

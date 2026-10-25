@@ -3,6 +3,9 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 import java.util.Properties
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
 
 plugins {
     alias(libs.plugins.android.library)
@@ -193,7 +196,93 @@ android {
     }
 }
 
-tasks.named("preBuild") { dependsOn(preparePython) }
+// ---------------------------------------------------------------------------
+// Language server (editor completions and error hints): jedi + parso + pyflakes wheels from
+// PyPI plus src/main/langserver/, packed into assets/langserver/langserver.zip. LanguageServer-
+// Installer unpacks it to filesDir/langserver (never into the user's pip site).
+// ---------------------------------------------------------------------------
+
+val langProps = Properties().apply { file("langserver.properties").inputStream().use { load(it) } }
+val langWheelsDir = layout.buildDirectory.dir("langserver")
+
+/** Packs [wheels] (filtered, see [map]) and [serverDir] into `langserver/langserver.zip` + `.version`. */
+abstract class LangServerBundle : DefaultTask() {
+    @get:InputFiles abstract val wheels: ConfigurableFileCollection
+    @get:InputDirectory abstract val serverDir: DirectoryProperty
+    @get:OutputDirectory abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun bundle() {
+        val out = outputDir.get().asFile
+        out.deleteRecursively()
+        out.mkdirs()
+        val entries = sortedMapOf<String, ByteArray>()
+        for (wheel in wheels.files.sortedBy { it.name }) {
+            ZipFile(wheel).use { zip ->
+                for (e in zip.entries()) {
+                    if (e.isDirectory) continue
+                    val name = map(e.name) ?: continue
+                    entries[name] = zip.getInputStream(e).use { it.readBytes() }
+                }
+            }
+        }
+        val root = serverDir.get().asFile
+        root.walkTopDown().filter { it.isFile && "__pycache__" !in it.path }.forEach {
+            entries[it.relativeTo(root).invariantSeparatorsPath] = it.readBytes()
+        }
+        val zipFile = File(out, "langserver.zip")
+        ZipOutputStream(zipFile.outputStream().buffered()).use { zos ->
+            zos.setLevel(9)
+            for ((name, bytes) in entries) {
+                // Fixed timestamps: the same inputs give the same zip (and .version).
+                zos.putNextEntry(ZipEntry(name).apply { time = 315532800000L })
+                zos.write(bytes)
+                zos.closeEntry()
+            }
+        }
+        val digest = MessageDigest.getInstance("SHA-256").digest(zipFile.readBytes())
+        File(out, "langserver.version").writeText(digest.joinToString("") { "%02x".format(it) })
+        logger.lifecycle("Language server bundle: ${entries.size} files, ${zipFile.length() / 1024} KB")
+    }
+
+    /** Bundle path for a wheel entry, or null to drop it. */
+    private fun map(name: String): String? {
+        val license = Regex("""([A-Za-z_]+)-[^/]+\.dist-info/(?:licenses/)?LICENSE(?:\.txt)?""").matchEntire(name)
+        if (license != null) return "licenses/${license.groupValues[1]}-LICENSE.txt"
+        if (name.substringBefore('/').endsWith(".dist-info")) return null
+        if ("/__pycache__/" in name || name.endsWith(".pyc")) return null
+        val dropped = listOf(
+            // Third-party stubs (~8 MB): pip-installed packages are read from their source.
+            "jedi/third_party/typeshed/stubs/",
+            "jedi/third_party/django-stubs/",
+            // Not in the bundled stdlib (see zipPythonStdlib).
+            "jedi/third_party/typeshed/stdlib/tkinter/",
+            "pyflakes/test/",
+        )
+        return name.takeIf { n -> dropped.none { n.startsWith(it) } }
+    }
+}
+
+val langWheelDownloads = listOf("jedi", "parso", "pyflakes").map { pkg ->
+    val version = langProps.getProperty("$pkg.version")
+    val fileName = "$pkg-$version-py2.py3-none-any.whl"
+    tasks.register<DownloadVerifiedFile>("download${pkg.replaceFirstChar(Char::uppercase)}Wheel") {
+        group = "langserver"
+        url.set("https://files.pythonhosted.org/packages/py2.py3/${pkg.first()}/$pkg/$fileName")
+        sha256.set(langProps.getProperty("$pkg.sha256"))
+        dest.set(langWheelsDir.map { it.file(fileName) })
+    }
+}
+
+val langServerBundle = tasks.register<LangServerBundle>("langServerBundle") {
+    group = "langserver"
+    description = "Packs jedi, parso, pyflakes and the server script into assets/langserver/."
+    wheels.from(langWheelDownloads.map { t -> t.flatMap { it.dest } })
+    serverDir.set(layout.projectDirectory.dir("src/main/langserver"))
+    outputDir.set(layout.projectDirectory.dir("src/main/assets/langserver"))
+}
+
+tasks.named("preBuild") { dependsOn(preparePython, langServerBundle) }
 tasks.configureEach {
     if (name.startsWith("configureCMake") || name.startsWith("buildCMake")) {
         dependsOn(preparePython)
