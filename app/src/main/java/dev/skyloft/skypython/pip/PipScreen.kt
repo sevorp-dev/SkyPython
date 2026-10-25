@@ -164,7 +164,7 @@ fun PipScreen(
         ) {
             PrimaryTabRow(
                 selectedTabIndex = state.tab.ordinal,
-                containerColor = Slate,
+                containerColor = SlateBar,
                 contentColor = MaterialTheme.colorScheme.onSurface,
                 indicator = {
                     TabRowDefaults.PrimaryIndicator(

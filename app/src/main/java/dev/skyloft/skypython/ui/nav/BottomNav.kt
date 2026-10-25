@@ -98,7 +98,7 @@ object BottomNavPolicy {
 }
 
 /**
- * The app's bottom navigation bar: a slate strip with a hairline on top; the current item's
+ * The app's bottom navigation bar: a dark strip with a hairline on top; the current item's
  * icon and label are orange (on a soft orange pill), the others muted. Pads itself for the
  * system navigation bar, so the screens above it must not.
  */

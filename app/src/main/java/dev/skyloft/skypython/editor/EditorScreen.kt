@@ -1,5 +1,8 @@
 package dev.skyloft.skypython.editor
 
+import dev.skyloft.skypython.ui.theme.ErrorSurface
+import dev.skyloft.skypython.ui.theme.ErrorRed
+import dev.skyloft.skypython.ui.theme.OnErrorSurface
 import dev.skyloft.skypython.ui.keepsSnackbarsAbove
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -147,9 +150,9 @@ private val TabSelected = TextBright
 private val TabIdle = MutedText
 private val SubtitleColor = MutedText
 // Error line: a flat, muted red band (warm, so it sits well beside the orange).
-private val ProblemBackground = Color(0xFF3A2629)
-private val ProblemRed = Color(0xFFFF7B72)
-private val ProblemText = Color(0xFFFFD9DE)
+private val ProblemBackground = ErrorSurface
+private val ProblemRed = ErrorRed
+private val ProblemText = OnErrorSurface
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -415,7 +418,7 @@ fun EditorScreen(
         Scaffold(
             containerColor = Slate,
             topBar = {
-                Column(Modifier.background(Slate)) {
+                Column(Modifier.background(SlateBar)) {
                     TopAppBar(
                         colors = skyTopBarColors(),
                         navigationIcon = {
@@ -666,7 +669,7 @@ private fun ReadOnlyBadge(modifier: Modifier = Modifier) {
 
 /**
  * Tab strip: one chip per open doc with its own ✕ (long press still offers Close), and a + that
- * creates a new file. The current tab sits on a raised slate chip with an orange underline.
+ * creates a new file. The current tab sits on a raised chip with an orange underline.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

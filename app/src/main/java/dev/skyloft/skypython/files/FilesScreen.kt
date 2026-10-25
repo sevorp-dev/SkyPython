@@ -520,7 +520,7 @@ private fun DeleteDialog(entry: FileEntry, onConfirm: () -> Unit, onDismiss: () 
     )
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFF121212)
+@Preview(showBackground = true, backgroundColor = 0xFF1E1F22)
 @Composable
 private fun FilesContentPreview() {
     val root = File("/data/user/0/dev.skyloft.skypython/files/projects")

@@ -20,11 +20,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import dev.skyloft.skypython.R
 
-/** Colours shared by every top bar: the page's own [Slate] (a calm, continuous header), light icons. */
+/** Colours shared by every top bar: the IDE bar tone [SlateBar] over the darker page, light icons. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun skyTopBarColors() = TopAppBarDefaults.topAppBarColors(
-    containerColor = Slate,
+    containerColor = SlateBar,
     scrolledContainerColor = SlateBar,
     navigationIconContentColor = TextBright,
     titleContentColor = TextBright,
