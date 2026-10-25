@@ -250,11 +250,16 @@ jobs:
         run: |
           set -euo pipefail
           pip install -q patchelf
-          lic=(--license "libc++-LICENSE.txt=.github/wheels/licenses/libc++-LICENSE.txt$([ "$BITS" = 64 ] && echo '@libc++_shared')")
+          libcxx=.github/wheels/licenses/libc++-LICENSE.txt
           if [ "$BITS" = 64 ]; then
-            lic+=(--license "OpenBLAS-LICENSE.txt=$RUNNER_TEMP/OpenBLAS-LICENSE.txt@libopenblas")
+            # libc++_shared and libopenblas are vendored by auditwheel.
+            lic=(--license "libc++-LICENSE.txt=$libcxx@libc++_shared"
+                 --license "OpenBLAS-LICENSE.txt=$RUNNER_TEMP/OpenBLAS-LICENSE.txt@libopenblas")
+          else
+            lic=(--license "libc++-LICENSE.txt=$libcxx")  # linked statically
           fi
-          python .github/wheels/finish_wheels.py wheelhouse/*.whl "${lic[@]}"
+          python .github/wheels/finish_wheels.py wheelhouse/*.whl "${lic[@]}" 2>&1 | tee finish.log ||
+            { echo "::error title=finish_wheels::$(tail -20 finish.log | sed ':a;N;$!ba;s/\n/%0A/g')"; exit 1; }
 
       - name: Verify the wheel (tag, ELF machine, 16 KB alignment, dependencies)
         run: python .github/wheels/verify_wheels.py --max-api 24 --python-tag cp314 wheelhouse/*.whl
