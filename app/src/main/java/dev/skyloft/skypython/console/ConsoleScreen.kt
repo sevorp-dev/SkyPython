@@ -78,8 +78,8 @@ import androidx.compose.ui.text.input.KeyboardType
 
 /** Terminal-like colours for the output area, independent of the app theme. */
 private val ConsoleBackground = Ink
-private val ConsoleText = Color(0xFFD8DEEA)
-private val ConsoleDim = Color(0xFF7D88A3)
+private val ConsoleText = Color(0xFFDCE2EA)
+private val ConsoleDim = Color(0xFF7A8797)
 private val ConsolePrompt = Orange
 
 private val ConsoleTextStyle = TextStyle(

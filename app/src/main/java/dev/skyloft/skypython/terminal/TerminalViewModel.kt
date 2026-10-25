@@ -111,6 +111,30 @@ class TerminalViewModel(
         write(TerminalKeys.CTRL_C)
     }
 
+    /** True for the Python interpreter (it gets a command line under the terminal). */
+    val isInterpreter: Boolean get() = kind == TerminalKind.Interpreter
+
+    /** A line typed in the command field: sent as if typed, then Enter. */
+    fun sendLine(text: String) {
+        write(text + "\r")
+    }
+
+    /** Everything on screen and in the scrollback, as plain text (null before a session exists). */
+    fun transcript(): String? = _state.value.session?.emulator?.screen?.transcriptText?.trimEnd()
+
+    /**
+     * Clears the screen and the scrollback. A running program then gets Ctrl+L so it redraws its
+     * prompt (Python's REPL and the shell both do).
+     */
+    fun clearScreen() {
+        val session = _state.value.session ?: return
+        val emulator = session.emulator ?: return
+        val seq = "\u001b[H\u001b[2J\u001b[3J".toByteArray(Charsets.UTF_8)
+        emulator.append(seq, seq.size)
+        view?.onScreenUpdated()
+        if (session.isRunning) write(TerminalKeys.CTRL_L)
+    }
+
     /** A key from the key row. */
     fun onExtraKey(key: ExtraKey) {
         if (key.isModifier) {

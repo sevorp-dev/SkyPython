@@ -48,6 +48,9 @@ object TerminalKeys {
     /** Ctrl+C: the PTY turns it into SIGINT for the foreground program. */
     const val CTRL_C = "\u0003"
 
+    /** Ctrl+L: "clear and redraw" to Python's REPL and the shell. */
+    const val CTRL_L = "\u000c"
+
     /**
      * The bytes for [key] with [mods]; null for the modifier keys themselves.
      * @param cursorApp the program asked for application cursor keys (`ESC O A` instead of `ESC [ A`).

@@ -1,5 +1,15 @@
 package dev.skyloft.skypython.pip
 
+import androidx.compose.foundation.border
+import dev.skyloft.skypython.ui.theme.SlateLine
+import dev.skyloft.skypython.ui.theme.Ink
+import dev.skyloft.skypython.ui.theme.SuccessGreen
+import dev.skyloft.skypython.ui.theme.SectionLabel
+import dev.skyloft.skypython.ui.theme.Slate
+import dev.skyloft.skypython.ui.theme.Orange
+import androidx.compose.ui.unit.Dp
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.material3.TabRowDefaults
 import dev.skyloft.skypython.ui.theme.CodeFont
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
@@ -146,8 +156,16 @@ fun PipScreen(
         ) {
             PrimaryTabRow(
                 selectedTabIndex = state.tab.ordinal,
-                containerColor = SlateBar,
+                containerColor = Slate,
                 contentColor = MaterialTheme.colorScheme.onSurface,
+                indicator = {
+                    TabRowDefaults.PrimaryIndicator(
+                        Modifier.tabIndicatorOffset(state.tab.ordinal, matchContentSize = false),
+                        width = Dp.Unspecified,
+                        height = 2.dp,
+                        color = Orange,
+                    )
+                },
                 divider = {},
             ) {
                 PipTab.entries.forEach { tab ->
@@ -228,7 +246,7 @@ private fun SearchTab(state: PipState, viewModel: PipViewModel) {
                 isError = state.specError != null,
                 supportingText = state.specError?.let { { Text(stringResource(it.messageRes())) } },
                 textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = CodeFont),
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(12.dp),
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.None,
                     autoCorrectEnabled = false,
@@ -241,7 +259,7 @@ private fun SearchTab(state: PipState, viewModel: PipViewModel) {
                 colors = brandButtonColors(),
                 onClick = viewModel::search,
                 enabled = !state.searching,
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(12.dp),
                 // The outlined field reserves 8dp above its box for the floating label.
                 modifier = Modifier.padding(top = 8.dp).height(56.dp),
             ) { Text(stringResource(R.string.pip_search_action)) }
@@ -255,11 +273,9 @@ private fun SearchTab(state: PipState, viewModel: PipViewModel) {
                 }
             }
             item(key = "popular-label") {
-                Text(
+                SectionLabel(
                     stringResource(R.string.pip_popular),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
+                    Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 6.dp),
                 )
             }
             if (popular.isEmpty()) {
@@ -745,7 +761,7 @@ private fun OperationPanel(state: PipState, onClose: () -> Unit) {
     var showLog by rememberSaveable { mutableStateOf(true) }
     val running = state.running
     val outcome = state.outcome
-    Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
+    Surface(color = SlateBar) {
         Column(Modifier.fillMaxWidth()) {
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Row(
@@ -754,7 +770,7 @@ private fun OperationPanel(state: PipState, onClose: () -> Unit) {
             ) {
                 val (text, color) = when {
                     running != null -> runningText(running) to MaterialTheme.colorScheme.onSurface
-                    outcome is InstallOutcome.Succeeded -> doneText(outcome.operation) to MaterialTheme.colorScheme.primary
+                    outcome is InstallOutcome.Succeeded -> doneText(outcome.operation) to SuccessGreen
                     outcome is InstallOutcome.Failed -> failedText(outcome.operation) to MaterialTheme.colorScheme.error
                     else -> "" to MaterialTheme.colorScheme.onSurface
                 }
@@ -809,7 +825,8 @@ private fun InstallLog(log: String, modifier: Modifier) {
     LaunchedEffect(log) { scroll.scrollTo(scroll.maxValue) }
     Box(
         modifier
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest, RoundedCornerShape(12.dp))
+            .background(Ink, RoundedCornerShape(12.dp))
+            .border(1.dp, SlateLine, RoundedCornerShape(12.dp))
             .padding(8.dp)
             .verticalScroll(scroll),
     ) {

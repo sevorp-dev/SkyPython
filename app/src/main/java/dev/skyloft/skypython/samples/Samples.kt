@@ -13,6 +13,19 @@ const val SAMPLES_ASSET_DIR = "samples"
 data class Sample(val name: String, val title: String)
 
 /**
+ * Samples whose title or file name contain every word of [query] (case-insensitive, any order);
+ * a blank query keeps them all.
+ */
+fun filterSamples(samples: List<Sample>, query: String): List<Sample> {
+    val words = query.trim().lowercase().split(Regex("\\s+")).filter { it.isNotEmpty() }
+    if (words.isEmpty()) return samples
+    return samples.filter { s ->
+        val text = (s.title + " " + s.name).lowercase()
+        words.all { it in text }
+    }
+}
+
+/**
  * Title of a sample: the text of its first line if that line is a `#` comment,
  * otherwise the file name without extension.
  */

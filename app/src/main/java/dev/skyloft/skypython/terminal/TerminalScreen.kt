@@ -1,5 +1,52 @@
 package dev.skyloft.skypython.terminal
 
+import dev.skyloft.skypython.ui.theme.TextBright
+import dev.skyloft.skypython.ui.theme.SlateRaised
+import dev.skyloft.skypython.ui.theme.SlatePanel
+import dev.skyloft.skypython.ui.theme.SlateLine
+import dev.skyloft.skypython.ui.theme.OrangeTint
+import dev.skyloft.skypython.ui.theme.OrangeSoft
+import dev.skyloft.skypython.ui.theme.Orange
+import dev.skyloft.skypython.ui.theme.OnOrange
+import dev.skyloft.skypython.ui.theme.MutedText
+import dev.skyloft.skypython.ui.theme.Ink
+import dev.skyloft.skypython.settings.clampTerminalFontSize
+import dev.skyloft.skypython.settings.TerminalTheme
+import dev.skyloft.skypython.settings.EditorSettings
+import dev.skyloft.skypython.locale.AppLocale
+import dev.skyloft.skypython.editor.codeTypeface
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.draw.clip
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.ClearAll
+import androidx.compose.material.icons.automirrored.outlined.Send
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import android.widget.Toast
+import android.os.Build
+import android.content.Context
+import android.content.ClipboardManager
+import android.content.ClipData
 import dev.skyloft.skypython.ui.theme.CodeFont
 import android.util.Log
 import android.view.KeyEvent
@@ -65,14 +112,13 @@ import kotlin.math.roundToInt
 import androidx.compose.ui.res.stringResource
 import dev.skyloft.skypython.R
 
-private const val DEFAULT_FONT_SP = 14f
-private const val MIN_FONT_SP = 8f
-private const val MAX_FONT_SP = 32f
-
 /**
  * A real terminal (VT100/xterm emulator on a pseudo-terminal) for the interpreter or the shell,
- * with a key row for the keys a phone keyboard lacks.
+ * with a key row for the keys a phone keyboard lacks. The interpreter also gets a command line
+ * ("Type a command…" and an orange send button) so a line can be edited comfortably before it runs.
  *
+ * @param settings text size, colours and typeface (Settings → Terminal).
+ * @param onFontSizeChange a pinch changed the text size (sp); persist it.
  * @param onUseSimpleConsole fallback when the pseudo-terminal cannot be created.
  */
 @Composable
@@ -80,12 +126,17 @@ fun TerminalScreen(
     viewModel: TerminalViewModel,
     onBack: () -> Unit,
     onUseSimpleConsole: () -> Unit,
+    settings: EditorSettings = EditorSettings(),
+    onFontSizeChange: (Int) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val colors = MaterialTheme.colorScheme
+    val context = LocalContext.current
+    val background = terminalBackground(settings.terminalTheme)
+    var menuOpen by remember { mutableStateOf(false) }
 
     Scaffold(
-        containerColor = colors.background,
+        containerColor = background,
         contentColor = colors.onBackground,
         topBar = {
             SkyTopBar(
@@ -100,6 +151,36 @@ fun TerminalScreen(
                     } else if (state.session != null || state.startError != null) {
                         IconButton(onClick = viewModel::restart) {
                             Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.action_restart))
+                        }
+                    }
+                    if (state.session != null) {
+                        IconButton(onClick = viewModel::clearScreen) {
+                            Icon(Icons.Outlined.ClearAll, contentDescription = stringResource(R.string.terminal_clear))
+                        }
+                        Box {
+                            IconButton(onClick = { menuOpen = true }) {
+                                Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.terminal_more))
+                            }
+                            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.terminal_copy)) },
+                                    leadingIcon = { Icon(Icons.Outlined.ContentCopy, null) },
+                                    onClick = {
+                                        menuOpen = false
+                                        copyTranscript(context, viewModel.transcript())
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.terminal_clear)) },
+                                    leadingIcon = { Icon(Icons.Outlined.ClearAll, null) },
+                                    onClick = { menuOpen = false; viewModel.clearScreen() },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.action_restart)) },
+                                    leadingIcon = { Icon(Icons.Outlined.Refresh, null) },
+                                    onClick = { menuOpen = false; viewModel.restart() },
+                                )
+                            }
                         }
                     }
                 },
@@ -119,9 +200,20 @@ fun TerminalScreen(
                 when {
                     state.installError != null -> InstallError(state.installError!!, viewModel::restart)
                     state.startError != null -> StartError(state.startError!!, onUseSimpleConsole)
-                    session != null -> TerminalPane(session, viewModel)
+                    session != null -> TerminalPane(
+                        session,
+                        viewModel,
+                        settings,
+                        background,
+                        // The interpreter types into its command line; the shell straight into the terminal.
+                        focusOnOpen = !viewModel.isInterpreter,
+                        onFontSizeChange = onFontSizeChange,
+                    )
                     else -> Installing()
                 }
+            }
+            if (viewModel.isInterpreter && state.session != null) {
+                CommandLine(enabled = state.running, onSend = viewModel::sendLine)
             }
             KeyRow(
                 modifiers = state.modifiers,
@@ -132,50 +224,155 @@ fun TerminalScreen(
     }
 }
 
+private fun copyTranscript(context: Context, text: String?) {
+    if (text.isNullOrEmpty()) return
+    val clipboard = context.getSystemService(ClipboardManager::class.java) ?: return
+    clipboard.setPrimaryClip(ClipData.newPlainText("SkyPython", text))
+    // Android 13+ shows its own "copied" confirmation.
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+        Toast.makeText(context, AppLocale.string(context, R.string.terminal_copied), Toast.LENGTH_SHORT).show()
+    }
+}
+
+/** The terminal background for a theme: the app's deepest slate, or near-black. */
+private fun terminalBackground(theme: TerminalTheme): Color = when (theme) {
+    TerminalTheme.Dark -> Ink
+    TerminalTheme.Black -> Color(0xFF0B0E12)
+}
+
+/**
+ * The interpreter's command line: a rounded field and a round orange send button. Enter sends
+ * too; an empty send is a plain Enter (handy after ↑ recalled a line in the terminal).
+ */
+@Composable
+private fun CommandLine(enabled: Boolean, onSend: (String) -> Unit) {
+    var text by rememberSaveable { mutableStateOf("") }
+    val send = {
+        onSend(text)
+        text = ""
+    }
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(enabled) { if (enabled) runCatching { focus.requestFocus() } }
+    val shape = RoundedCornerShape(12.dp)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(SlateBar)
+            .padding(start = 12.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BasicTextField(
+            value = text,
+            onValueChange = { text = it },
+            enabled = enabled,
+            singleLine = true,
+            textStyle = androidx.compose.ui.text.TextStyle(color = TextBright, fontFamily = CodeFont, fontSize = 15.sp),
+            cursorBrush = SolidColor(Orange),
+            // Code, not prose: no auto-capitals ("i" → "I") and no autocorrect.
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.None,
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Ascii,
+                imeAction = ImeAction.Send,
+            ),
+            keyboardActions = KeyboardActions(onSend = { send() }),
+            modifier = Modifier.weight(1f).focusRequester(focus),
+            decorationBox = { inner ->
+                Box(
+                    Modifier
+                        .background(SlatePanel, shape)
+                        .border(1.dp, SlateLine, shape)
+                        .heightIn(min = 44.dp)
+                        .padding(horizontal = 14.dp),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    if (text.isEmpty()) {
+                        Text(stringResource(R.string.terminal_command_hint), color = MutedText, fontSize = 15.sp)
+                    }
+                    inner()
+                }
+            },
+        )
+        val sendLabel = stringResource(R.string.action_send)
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .padding(start = 8.dp)
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(if (enabled) Orange else SlateRaised)
+                .clickable(enabled = enabled, role = Role.Button, onClickLabel = sendLabel) { send() }
+                .semantics { contentDescription = sendLabel },
+        ) {
+            Icon(
+                Icons.AutoMirrored.Outlined.Send,
+                contentDescription = null,
+                tint = if (enabled) OnOrange else MutedText,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+    }
+}
+
 /** The emulator view; survives recomposition, re-attaches to a new session after Restart. */
 @Composable
-private fun TerminalPane(session: TerminalSession, viewModel: TerminalViewModel) {
+private fun TerminalPane(
+    session: TerminalSession,
+    viewModel: TerminalViewModel,
+    settings: EditorSettings,
+    background: Color,
+    focusOnOpen: Boolean,
+    onFontSizeChange: (Int) -> Unit,
+) {
     val colors = MaterialTheme.colorScheme
     val palette = TerminalPalette(
         foreground = colors.onBackground.toArgb(),
-        background = colors.background.toArgb(),
-        cursor = colors.secondary.toArgb(),
+        background = background.toArgb(),
+        cursor = Orange.toArgb(),
     )
-    var fontSp by rememberSaveable { mutableFloatStateOf(DEFAULT_FONT_SP) }
+    // Pinch changes it right away and saves it; Settings changes come back through [settings].
+    var fontSp by remember(settings.terminalFontSizeSp) { mutableIntStateOf(settings.terminalFontSizeSp) }
     val fontPx = with(LocalDensity.current) { fontSp.sp.toPx() }.roundToInt()
     val zoom = { bigger: Boolean ->
-        fontSp = (fontSp + if (bigger) 1f else -1f).coerceIn(MIN_FONT_SP, MAX_FONT_SP)
+        fontSp = clampTerminalFontSize(fontSp + if (bigger) 1 else -1)
+        onFontSizeChange(fontSp)
     }
+    val context = LocalContext.current
+    val typeface = remember(settings.codeFont) { codeTypeface(context, settings.codeFont) }
 
     AndroidView(
-        modifier = Modifier.fillMaxSize(),
-        factory = { context ->
-            TerminalView(context, null).apply {
+        modifier = Modifier.fillMaxSize().padding(start = 4.dp),
+        factory = { ctx ->
+            TerminalView(ctx, null).apply {
                 palette.applyDefaults()
                 setTerminalViewClient(ViewClient(this, viewModel) { zoom(it) })
                 isFocusable = true
                 isFocusableInTouchMode = true
+                setTypeface(typeface)
                 setTextSize(fontPx)
-                tag = fontPx
+                tag = fontPx to typeface
                 attachSession(session)
                 viewModel.attachView(this)
-                post {
-                    requestFocus()
-                    showKeyboard(this)
+                if (focusOnOpen) {
+                    post {
+                        requestFocus()
+                        showKeyboard(this)
+                    }
                 }
             }
         },
         update = { view ->
             palette.applyDefaults()
             palette.applyTo(session)
-            if (view.tag != fontPx) {
-                view.tag = fontPx
+            if (view.tag != (fontPx to typeface)) {
+                view.tag = fontPx to typeface
+                view.setTypeface(typeface)
                 view.setTextSize(fontPx)
             }
             if (view.currentSession !== session) {
                 view.attachSession(session)
-                view.invalidate()
             }
+            view.invalidate()
             viewModel.attachView(view)
         },
         onRelease = { view -> viewModel.detachView(view) },
@@ -188,12 +385,13 @@ private fun showKeyboard(view: TerminalView) {
 }
 
 /**
- * The 16 ANSI colours, softened to sit calmly on the navy background (the stock xterm ones are
- * pure, saturated primaries — e.g. the Python REPL's prompt came out bright magenta).
+ * The 16 ANSI colours, tuned to the slate background and the orange accent (the stock xterm
+ * ones are pure, saturated primaries — e.g. the Python REPL's prompt came out bright magenta).
+ * Order: black, red, green, yellow, blue, magenta, cyan, white, then the bright eight.
  */
 private val ANSI_COLORS = longArrayOf(
-    0xFF2A3450, 0xFFF0808F, 0xFF7FD1A0, 0xFFE8CB8A, 0xFF82A8F0, 0xFFB8A6EE, 0xFF72C6E4, 0xFFC8CEDD,
-    0xFF5E6985, 0xFFFF9AA6, 0xFF9BE0B5, 0xFFF2D9A2, 0xFFA3C0F7, 0xFFCDBFF5, 0xFF96D6EE, 0xFFF2F4F8,
+    0xFF2A3442, 0xFFFF7B72, 0xFFA8D48C, 0xFFF5C26B, 0xFF7AB8F5, 0xFFC9A2F0, 0xFF6CCFC0, 0xFFC8CEDD,
+    0xFF5C6B7C, 0xFFFF9B94, 0xFFBFE3A8, 0xFFFFD48F, 0xFF9CCBF8, 0xFFDABDF5, 0xFF8EDCD0, 0xFFF2F4F8,
 ).let { argb -> IntArray(argb.size) { argb[it].toInt() } }
 
 /** The app theme's colours as the terminal's default foreground, background and cursor. */
@@ -322,7 +520,7 @@ private fun KeyRow(modifiers: Modifiers, enabled: Boolean, onKey: (ExtraKey) -> 
                 enabled = enabled,
                 // An armed Ctrl / Alt sits on a tonal pill, so it reads as "on" at a glance.
                 colors = ButtonDefaults.textButtonColors(
-                    containerColor = if (armed) colors.primaryContainer else Color.Transparent,
+                    containerColor = if (armed) OrangeTint else Color.Transparent,
                 ),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
@@ -337,7 +535,7 @@ private fun KeyRow(modifiers: Modifiers, enabled: Boolean, onKey: (ExtraKey) -> 
                     fontSize = 15.sp,
                     color = when {
                         !enabled -> colors.onSurface.copy(alpha = 0.38f)
-                        armed -> colors.onPrimaryContainer
+                        armed -> OrangeSoft
                         else -> colors.onSurface
                     },
                 )

@@ -130,6 +130,14 @@ fun SkyPythonApp() {
                 onEditCondition = { path, line -> conditionFor = path to line },
                 onUnsupported = { Toast.makeText(context, R.string.debug_breakpoints_need_project_file, Toast.LENGTH_SHORT).show() },
             )
+            // Save first so a rename/delete in Files never loses edits.
+            val openFilesScreen: () -> Unit = {
+                scope.launch {
+                    editorVm.saveAll().join()
+                    filesVm.refresh()
+                    nav.go(Routes.FILES)
+                }
+            }
             EditorScreen(
                 viewModel = editorVm,
                 settings = settings,
@@ -137,20 +145,16 @@ fun SkyPythonApp() {
                     // Only one program at a time: a running one makes this ask first.
                     if (consoleVm.requestRun(file)) openConsole()
                 },
-                onOpenFiles = {
-                    // Save first so a rename/delete in Files never loses edits.
-                    scope.launch {
-                        editorVm.saveAll().join()
-                        filesVm.refresh()
-                        nav.go(Routes.FILES)
-                    }
-                },
+                onOpenFiles = openFilesScreen,
                 onDebug = startDebug,
                 debugMarks = debugMarks,
                 debugPanel = if (debugState.phase == DebugPhase.Idle) null else { { DebugPanelHost(debugVm, consoleVm) } },
                 onFontSizeChange = { sp -> scope.launch { settingsStore.update { it.copy(fontSizeSp = sp) } } },
                 onDrawerAction = { action ->
                     when (action) {
+                        DrawerAction.Projects -> openFilesScreen()
+                        // The drawer is only opened from the editor: closing it is all there is to do.
+                        DrawerAction.Editor -> Unit
                         DrawerAction.Debug -> scope.launch { editorVm.runCurrent()?.let(startDebug) }
                         DrawerAction.Interpreter -> {
                             interpreterVm.open()
@@ -194,11 +198,14 @@ fun SkyPythonApp() {
             if (start()) openConsole()
             else Toast.makeText(context, R.string.script_still_running, Toast.LENGTH_SHORT).show()
         }
+        val saveTerminalFont: (Int) -> Unit = { sp -> scope.launch { settingsStore.update { it.copy(terminalFontSizeSp = sp) } } }
         composable(Routes.INTERPRETER) {
             TerminalScreen(
                 viewModel = interpreterVm,
                 onBack = { nav.popBackStack() },
                 onUseSimpleConsole = { simpleConsole(consoleVm::startInterpreter) },
+                settings = settings,
+                onFontSizeChange = saveTerminalFont,
             )
         }
         composable(Routes.TERMINAL) {
@@ -206,6 +213,8 @@ fun SkyPythonApp() {
                 viewModel = shellVm,
                 onBack = { nav.popBackStack() },
                 onUseSimpleConsole = { simpleConsole(consoleVm::startTerminal) },
+                settings = settings,
+                onFontSizeChange = saveTerminalFont,
             )
         }
         composable(Routes.FILES) {

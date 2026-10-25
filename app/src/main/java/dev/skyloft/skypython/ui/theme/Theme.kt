@@ -40,7 +40,7 @@ val OnOrange = Color(0xFF221203)
 /** Accent as text / icons on slate (links, selected tabs, section labels) — ≥ 7:1 on [Slate]. */
 val OrangeSoft = Color(0xFFF5A962)
 /** A quiet orange wash behind selected rows and armed keys. */
-val OrangeTint = Color(0x29F28C38)
+val OrangeTint = Color(0x1FF28C38)
 
 /** Primary text. */
 val TextBright = Color(0xFFE8ECF1)

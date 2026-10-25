@@ -35,11 +35,19 @@ class SkyDrawerTest {
     @Test fun `drawer sections follow the spec order`() {
         assertEquals(
             listOf(
-                "Run" to listOf(DrawerAction.Debug, DrawerAction.Interpreter, DrawerAction.Terminal),
-                "Tools" to listOf(DrawerAction.Pip, DrawerAction.Share, DrawerAction.Samples),
+                "Workspace" to listOf(DrawerAction.Projects, DrawerAction.Editor, DrawerAction.Terminal),
+                "Tools" to listOf(
+                    DrawerAction.Interpreter, DrawerAction.Debug, DrawerAction.Pip, DrawerAction.Share, DrawerAction.Samples,
+                ),
                 "Settings" to listOf(DrawerAction.Settings, DrawerAction.About),
             ),
             DRAWER_SECTIONS.map { it.title to it.actions },
         )
+    }
+
+    @Test fun `every drawer action appears exactly once`() {
+        val listed = DRAWER_SECTIONS.flatMap { it.actions }
+        assertEquals(DrawerAction.entries.toSet(), listed.toSet())
+        assertEquals(listed.size, listed.toSet().size)
     }
 }

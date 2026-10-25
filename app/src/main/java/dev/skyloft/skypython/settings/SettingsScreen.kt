@@ -1,5 +1,18 @@
 package dev.skyloft.skypython.settings
 
+import dev.skyloft.skypython.ui.theme.SlatePanel
+import dev.skyloft.skypython.ui.theme.OrangeSoft
+import dev.skyloft.skypython.ui.theme.MutedText
+import dev.skyloft.skypython.ui.theme.Ink
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.FormatSize
+import androidx.compose.material.icons.outlined.FontDownload
+import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
 import dev.skyloft.skypython.ui.theme.CodeFont
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -105,15 +118,25 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
             Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 24.dp),
         ) {
             SectionTitle(stringResource(R.string.settings_section_editor))
             FontSizeRow(
                 sizeSp = s.fontSizeSp,
+                min = MIN_FONT_SIZE_SP,
+                max = MAX_FONT_SIZE_SP,
                 onChange = { sp -> update { it.copy(fontSizeSp = clampFontSize(sp)) } },
             )
-            CodePreview(s.fontSizeSp)
-            HorizontalDivider(Modifier.padding(top = 12.dp), color = SlateLine)
+            ChoiceRow(
+                icon = Icons.Outlined.FontDownload,
+                title = stringResource(R.string.settings_font_family),
+                selected = s.codeFont,
+                options = CodeFontChoice.entries,
+                label = { it.label() },
+                onSelect = { v -> update { it.copy(codeFont = v) } },
+            )
+            CodePreview(s.fontSizeSp, s.codeFont)
             SwitchRow(
                 icon = Icons.AutoMirrored.Outlined.WrapText,
                 title = stringResource(R.string.settings_word_wrap),
@@ -129,9 +152,16 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 onChange = { v -> update { it.copy(lineNumbers = v) } },
             )
             SwitchRow(
+                icon = Icons.Outlined.LightMode,
+                title = stringResource(R.string.settings_keep_screen_on),
+                summary = stringResource(R.string.settings_keep_screen_on_summary),
+                checked = s.keepScreenOn,
+                onChange = { v -> update { it.copy(keepScreenOn = v) } },
+            )
+            SwitchRow(
                 icon = Icons.Outlined.AutoAwesome,
-                title = "Code completion",
-                summary = "Suggestions while typing and error underlines",
+                title = stringResource(R.string.settings_code_completion),
+                summary = stringResource(R.string.settings_code_completion_summary),
                 checked = s.codeCompletion,
                 onChange = { v -> update { it.copy(codeCompletion = v) } },
             )
@@ -153,16 +183,85 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 saved = s.symbolKeys,
                 onSave = { spec -> update { it.copy(symbolKeys = spec) } },
             )
-            SwitchRow(
-                icon = Icons.Outlined.LightMode,
-                title = stringResource(R.string.settings_keep_screen_on),
-                summary = stringResource(R.string.settings_keep_screen_on_summary),
-                checked = s.keepScreenOn,
-                onChange = { v -> update { it.copy(keepScreenOn = v) } },
+            SectionDivider()
+            SectionTitle(stringResource(R.string.settings_section_terminal))
+            FontSizeRow(
+                sizeSp = s.terminalFontSizeSp,
+                min = MIN_TERMINAL_FONT_SP,
+                max = MAX_TERMINAL_FONT_SP,
+                onChange = { sp -> update { it.copy(terminalFontSizeSp = clampTerminalFontSize(sp)) } },
             )
-            HorizontalDivider(color = SlateLine)
+            ChoiceRow(
+                icon = Icons.Outlined.Palette,
+                title = stringResource(R.string.settings_terminal_theme),
+                selected = s.terminalTheme,
+                options = TerminalTheme.entries,
+                label = { it.label() },
+                onSelect = { v -> update { it.copy(terminalTheme = v) } },
+            )
+            SectionDivider()
             SectionTitle(stringResource(R.string.settings_section_app))
             LanguageRow()
+        }
+    }
+}
+
+@Composable
+private fun SectionDivider() {
+    HorizontalDivider(Modifier.padding(top = 8.dp), color = SlateLine)
+}
+
+@Composable
+private fun CodeFontChoice.label(): String = when (this) {
+    CodeFontChoice.JetBrainsMono -> stringResource(R.string.settings_font_jetbrains_mono)
+    CodeFontChoice.SystemMono -> stringResource(R.string.settings_font_system_mono)
+}
+
+@Composable
+private fun TerminalTheme.label(): String = when (this) {
+    TerminalTheme.Dark -> stringResource(R.string.settings_terminal_theme_dark)
+    TerminalTheme.Black -> stringResource(R.string.settings_terminal_theme_black)
+}
+
+/** A setting with a few named values: the current one on the right, a menu to pick another. */
+@Composable
+private fun <T> ChoiceRow(
+    icon: ImageVector,
+    title: String,
+    selected: T,
+    options: List<T>,
+    label: @Composable (T) -> String,
+    onSelect: (T) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.DropdownList) { open = true }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        IconTile(icon, size = 40.dp)
+        Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Box {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(label(selected), style = MaterialTheme.typography.bodyMedium, color = OrangeSoft)
+                Icon(Icons.Outlined.ExpandMore, contentDescription = null, tint = MutedText, modifier = Modifier.padding(start = 4.dp).size(20.dp))
+            }
+            DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(label(option)) },
+                        trailingIcon = if (option == selected) {
+                            { Icon(Icons.Outlined.Check, contentDescription = null, tint = OrangeSoft) }
+                        } else {
+                            null
+                        },
+                        onClick = { open = false; onSelect(option) },
+                    )
+                }
+            }
         }
     }
 }
@@ -218,61 +317,75 @@ private fun SectionTitle(text: String) {
     SectionLabel(text, Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp))
 }
 
+/** Font size with − / + steppers in a quiet pill (each button a full 48dp touch target). */
 @Composable
-private fun FontSizeRow(sizeSp: Int, onChange: (Int) -> Unit) {
+private fun FontSizeRow(sizeSp: Int, min: Int, max: Int, onChange: (Int) -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
+            .padding(start = 16.dp, end = 12.dp, top = 8.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconTile(Icons.Outlined.TextFields, size = 40.dp)
+        IconTile(Icons.Outlined.FormatSize, size = 40.dp)
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
             Text(stringResource(R.string.settings_font_size), style = MaterialTheme.typography.bodyLarge)
             Text(
-                stringResource(R.string.settings_font_size_range, MIN_FONT_SIZE_SP, MAX_FONT_SIZE_SP),
+                stringResource(R.string.settings_font_size_range, min, max),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        IconButton(onClick = { onChange(sizeSp - 1) }, enabled = sizeSp > MIN_FONT_SIZE_SP) {
-            Icon(Icons.Outlined.Remove, contentDescription = stringResource(R.string.settings_smaller))
-        }
-        Text(
-            "$sizeSp",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.width(32.dp),
-            textAlign = TextAlign.Center,
-        )
-        IconButton(onClick = { onChange(sizeSp + 1) }, enabled = sizeSp < MAX_FONT_SIZE_SP) {
-            Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.settings_larger))
+        Row(
+            Modifier
+                .background(SlatePanel, RoundedCornerShape(24.dp))
+                .border(1.dp, SlateLine, RoundedCornerShape(24.dp)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = { onChange(sizeSp - 1) }, enabled = sizeSp > min) {
+                Icon(Icons.Outlined.Remove, contentDescription = stringResource(R.string.settings_smaller), modifier = Modifier.size(20.dp))
+            }
+            Text(
+                "$sizeSp",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.width(28.dp),
+                textAlign = TextAlign.Center,
+            )
+            IconButton(onClick = { onChange(sizeSp + 1) }, enabled = sizeSp < max) {
+                Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.settings_larger), modifier = Modifier.size(20.dp))
+            }
         }
     }
 }
 
-/** One line of highlighted Python at the chosen size, so the user sees the effect immediately. */
+/** One line of highlighted Python at the chosen size and font, so the user sees the effect immediately. */
 @Composable
-private fun CodePreview(sizeSp: Int) {
+private fun CodePreview(sizeSp: Int, font: CodeFontChoice) {
     val code = remember {
         buildAnnotatedString {
-            withStyle(SpanStyle(color = Color(0xFF82A8F0))) { append("def ") }
-            withStyle(SpanStyle(color = Color(0xFF72C6E4))) { append("greet") }
+            withStyle(SpanStyle(color = Color(0xFFF7B474))) { append("def ") }
+            withStyle(SpanStyle(color = Color(0xFF7AB8F5))) { append("greet") }
             append("(name):  ")
-            withStyle(SpanStyle(color = Color(0xFFB8A6EE))) { append("return ") }
-            withStyle(SpanStyle(color = Color(0xFFE2B48A))) { append("f\"Hi {name}\"") }
+            withStyle(SpanStyle(color = Color(0xFFF28C38))) { append("return ") }
+            withStyle(SpanStyle(color = Color(0xFFA8D48C))) { append("f\"Hi {name}\"") }
         }
     }
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .background(Slate, RoundedCornerShape(12.dp))
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .background(Ink, RoundedCornerShape(12.dp))
             .border(1.dp, SlateLine, RoundedCornerShape(12.dp))
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
-        Text(code, fontFamily = CodeFont, fontSize = sizeSp.sp, color = Color(0xFFD8DEEA), softWrap = false)
+        Text(
+            code,
+            fontFamily = if (font == CodeFontChoice.SystemMono) FontFamily.Monospace else CodeFont,
+            fontSize = sizeSp.sp,
+            color = Color(0xFFDCE2EA),
+            softWrap = false,
+        )
     }
 }
 
