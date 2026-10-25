@@ -399,15 +399,16 @@ private fun TerminalPane(
     val context = LocalContext.current
     val typeface = remember(settings.codeFont) { codeTypeface(context, settings.codeFont) }
     val fontPx = with(LocalDensity.current) { fontSp.sp.toPx() }.roundToInt()
-    val screenText by viewModel.screenText.collectAsStateWithLifecycle()
+    // The palette and session last given to the view: the update below runs on every
+    // recomposition, and re-applying the colours means a full redraw.
+    val applied = remember { arrayOfNulls<Any>(2) }
 
+    Box(Modifier.fillMaxSize()) {
     AndroidView(
         modifier = Modifier
             .fillMaxSize()
             // A little air between the text and the screen edge.
-            .padding(start = 6.dp)
-            .testTag(TERMINAL_TAG)
-            .semantics { text = AnnotatedString(screenText) },
+            .padding(start = 6.dp),
         factory = { context ->
             TerminalView(context, null).apply {
                 palette.applyDefaults()
@@ -418,6 +419,7 @@ private fun TerminalPane(
                 setTextSize(fontPx)
                 setTypeface(typeface)
                 tag = fontPx to typeface
+                applied[0] = palette
                 attachSession(session)
                 viewModel.attachView(this)
                 onView(this)
@@ -430,8 +432,14 @@ private fun TerminalPane(
             }
         },
         update = { view ->
-            palette.applyDefaults()
-            palette.applyTo(session)
+            // Colours may have changed (Settings → Terminal → Theme), or Restart made a new session.
+            val recolour = applied[0] != palette || applied[1] !== session
+            if (recolour) {
+                palette.applyDefaults()
+                palette.applyTo(session)
+                applied[0] = palette
+                applied[1] = session
+            }
             if (view.tag != (fontPx to typeface)) {
                 view.tag = fontPx to typeface
                 view.setTextSize(fontPx)
@@ -442,8 +450,7 @@ private fun TerminalPane(
                 view.attachSession(session)
                 view.requestFocus()
             }
-            // Colours may have changed (Settings → Terminal → Theme).
-            view.invalidate()
+            if (recolour) view.invalidate()
             viewModel.attachView(view)
         },
         onRelease = { view ->
@@ -451,6 +458,19 @@ private fun TerminalPane(
             onView(null)
         },
     )
+    ScreenTextSemantics(viewModel, Modifier.matchParentSize())
+    }
+}
+
+/**
+ * The text on screen as the terminal's accessibility text (and what UI tests read). Its own
+ * composable: the text changes up to 10 times a second and only this node recomposes for it,
+ * not the terminal view.
+ */
+@Composable
+private fun ScreenTextSemantics(viewModel: TerminalViewModel, modifier: Modifier) {
+    val screenText by viewModel.screenText.collectAsStateWithLifecycle()
+    Box(modifier.testTag(TERMINAL_TAG).semantics { text = AnnotatedString(screenText) })
 }
 
 private fun showKeyboard(view: TerminalView) {
