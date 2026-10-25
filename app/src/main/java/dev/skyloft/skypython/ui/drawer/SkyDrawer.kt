@@ -28,12 +28,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.LibraryBooks
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Terminal
+import androidx.compose.material.icons.automirrored.outlined.LibraryBooks
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Slideshow
 import androidx.compose.material3.Icon
@@ -56,7 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.skyloft.skypython.R
 import dev.skyloft.skypython.editor.CursorPosition
-import dev.skyloft.skypython.ui.theme.BarNavy
+import dev.skyloft.skypython.ui.theme.SlateBar
 import dev.skyloft.skypython.ui.theme.BrandText
 import dev.skyloft.skypython.ui.theme.Hairline
 import dev.skyloft.skypython.ui.theme.IconTile
@@ -115,19 +115,19 @@ object DrawerLinks {
     val ALL: List<String> = listOf(TELEGRAM, GITHUB, DEVELOPER)
 }
 
-/** The sheet: one step below the header ([BarNavy]). */
+/** The sheet: one step below the header ([SlateBar]). */
 private val SheetColor = Color(0xFF121929)
-private val HeaderColor = BarNavy
+private val HeaderColor = SlateBar
 private val ItemText = TextBright
 
 private fun DrawerAction.icon(): ImageVector = when (this) {
     DrawerAction.Interpreter -> Icons.Outlined.Slideshow
-    DrawerAction.Terminal -> Icons.Filled.Terminal
-    DrawerAction.Pip -> Icons.AutoMirrored.Filled.LibraryBooks
-    DrawerAction.Share -> Icons.Filled.Share
-    DrawerAction.Samples -> Icons.Filled.School
-    DrawerAction.Settings -> Icons.Filled.Settings
-    DrawerAction.About -> Icons.Filled.Info
+    DrawerAction.Terminal -> Icons.Outlined.Terminal
+    DrawerAction.Pip -> Icons.AutoMirrored.Outlined.LibraryBooks
+    DrawerAction.Share -> Icons.Outlined.Share
+    DrawerAction.Samples -> Icons.Outlined.School
+    DrawerAction.Settings -> Icons.Outlined.Settings
+    DrawerAction.About -> Icons.Outlined.Info
 }
 
 /**

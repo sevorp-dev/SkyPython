@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.editor
 
+import dev.skyloft.skypython.ui.theme.CodeFont
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,17 +14,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.FormatIndentDecrease
-import androidx.compose.material.icons.automirrored.filled.FormatIndentIncrease
-import androidx.compose.material.icons.automirrored.filled.Redo
-import androidx.compose.material.icons.automirrored.filled.Undo
-import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.DeleteSweep
-import androidx.compose.material.icons.filled.EditNote
-import androidx.compose.material.icons.filled.FormatListNumbered
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.automirrored.outlined.FormatIndentDecrease
+import androidx.compose.material.icons.automirrored.outlined.FormatIndentIncrease
+import androidx.compose.material.icons.automirrored.outlined.Redo
+import androidx.compose.material.icons.automirrored.outlined.Undo
+import androidx.compose.material.icons.outlined.ArrowDownward
+import androidx.compose.material.icons.outlined.ArrowUpward
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material.icons.outlined.FormatListNumbered
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
@@ -46,8 +47,8 @@ import dev.skyloft.skypython.R
 import dev.skyloft.skypython.settings.DEFAULT_SYMBOL_KEYS
 import dev.skyloft.skypython.settings.SymbolKey
 import dev.skyloft.skypython.settings.parseSymbolKeys
-import dev.skyloft.skypython.ui.theme.BarNavy
-import dev.skyloft.skypython.ui.theme.DividerNavy
+import dev.skyloft.skypython.ui.theme.SlateBar
+import dev.skyloft.skypython.ui.theme.SlateLine
 import dev.skyloft.skypython.ui.theme.RunButton
 import dev.skyloft.skypython.ui.theme.TextBright
 
@@ -56,20 +57,20 @@ val SYMBOL_KEYS: List<SymbolKey> = parseSymbolKeys(DEFAULT_SYMBOL_KEYS)
 
 /** Commands on the "edit actions" row of the bar. [label] is `#` for comment, else an icon. */
 enum class EditAction(@StringRes val description: Int, val icon: ImageVector?, val label: String? = null) {
-    Undo(R.string.editor_undo, Icons.AutoMirrored.Filled.Undo),
-    Redo(R.string.editor_redo, Icons.AutoMirrored.Filled.Redo),
+    Undo(R.string.editor_undo, Icons.AutoMirrored.Outlined.Undo),
+    Redo(R.string.editor_redo, Icons.AutoMirrored.Outlined.Redo),
     Comment(R.string.editor_action_comment, null, "#"),
-    Indent(R.string.editor_action_indent, Icons.AutoMirrored.Filled.FormatIndentIncrease),
-    Outdent(R.string.editor_action_outdent, Icons.AutoMirrored.Filled.FormatIndentDecrease),
-    MoveUp(R.string.editor_action_move_up, Icons.Filled.ArrowUpward),
-    MoveDown(R.string.editor_action_move_down, Icons.Filled.ArrowDownward),
-    Duplicate(R.string.editor_action_duplicate, Icons.Filled.ContentCopy),
-    DeleteLine(R.string.editor_action_delete_line, Icons.Filled.DeleteSweep),
-    Find(R.string.find_and_replace, Icons.Filled.Search),
-    GoToLine(R.string.go_to_line_title, Icons.Filled.FormatListNumbered),
+    Indent(R.string.editor_action_indent, Icons.AutoMirrored.Outlined.FormatIndentIncrease),
+    Outdent(R.string.editor_action_outdent, Icons.AutoMirrored.Outlined.FormatIndentDecrease),
+    MoveUp(R.string.editor_action_move_up, Icons.Outlined.ArrowUpward),
+    MoveDown(R.string.editor_action_move_down, Icons.Outlined.ArrowDownward),
+    Duplicate(R.string.editor_action_duplicate, Icons.Outlined.ContentCopy),
+    DeleteLine(R.string.editor_action_delete_line, Icons.Outlined.DeleteSweep),
+    Find(R.string.find_and_replace, Icons.Outlined.Search),
+    GoToLine(R.string.go_to_line_title, Icons.Outlined.FormatListNumbered),
 }
 
-private val KeyDivider = DividerNavy
+private val KeyDivider = SlateLine
 
 /**
  * Strip of quick-insert [keys], separated by thin dividers, above the keyboard. The first key
@@ -86,15 +87,15 @@ fun SymbolBar(
     onRun: (() -> Unit)? = null,
 ) {
     var actions by rememberSaveable { mutableStateOf(false) }
-    Row(modifier.fillMaxWidth().background(BarNavy), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier.fillMaxWidth().background(SlateBar), verticalAlignment = Alignment.CenterVertically) {
         BarKey(
             onClick = { actions = !actions },
             description = stringResource(if (actions) R.string.editor_actions_hide else R.string.editor_actions_show),
         ) {
             if (actions) {
-                Text("{ }", fontFamily = FontFamily.Monospace, fontSize = 15.sp, color = TextBright)
+                Text("{ }", fontFamily = CodeFont, fontSize = 15.sp, color = TextBright)
             } else {
-                Icon(Icons.Filled.EditNote, contentDescription = null, tint = TextBright)
+                Icon(Icons.Outlined.EditNote, contentDescription = null, tint = TextBright)
             }
         }
         VerticalDivider(Modifier.height(28.dp), color = KeyDivider)
@@ -109,7 +110,7 @@ fun SymbolBar(
                         if (action.icon != null) {
                             Icon(action.icon, contentDescription = null, tint = TextBright, modifier = Modifier.size(22.dp))
                         } else {
-                            Text(action.label.orEmpty(), fontFamily = FontFamily.Monospace, fontSize = 16.sp, color = TextBright)
+                            Text(action.label.orEmpty(), fontFamily = CodeFont, fontSize = 16.sp, color = TextBright)
                         }
                     }
                 }
@@ -117,7 +118,7 @@ fun SymbolBar(
                 keys.forEachIndexed { index, key ->
                     if (index > 0) VerticalDivider(Modifier.height(22.dp), color = KeyDivider)
                     BarKey(onClick = { onInsert(key.text) }, description = null) {
-                        Text(key.label, fontFamily = FontFamily.Monospace, fontSize = 16.sp, color = TextBright)
+                        Text(key.label, fontFamily = CodeFont, fontSize = 16.sp, color = TextBright)
                     }
                 }
             }

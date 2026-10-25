@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.console
 
+import dev.skyloft.skypython.ui.theme.CodeFont
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
@@ -20,9 +21,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.automirrored.outlined.Send
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -60,12 +61,12 @@ import dev.skyloft.skypython.R
 import dev.skyloft.skypython.runTargetTitle
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.skyloft.skypython.ui.theme.DividerNavy
-import dev.skyloft.skypython.ui.theme.BarNavy
+import dev.skyloft.skypython.ui.theme.SlateLine
+import dev.skyloft.skypython.ui.theme.SlateBar
 import dev.skyloft.skypython.ui.theme.ErrorRed
 import androidx.compose.material3.HorizontalDivider
-import dev.skyloft.skypython.ui.theme.NightNavy
-import dev.skyloft.skypython.ui.theme.SkyCyan
+import dev.skyloft.skypython.ui.theme.Ink
+import dev.skyloft.skypython.ui.theme.Orange
 import dev.skyloft.skypython.ui.theme.brandButtonColors
 import dev.skyloft.skypython.ui.theme.SkyTopBar
 import androidx.compose.foundation.clickable
@@ -76,14 +77,14 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 
 /** Terminal-like colours for the output area, independent of the app theme. */
-private val ConsoleBackground = NightNavy
+private val ConsoleBackground = Ink
 private val ConsoleText = Color(0xFFD8DEEA)
 private val ConsoleDim = Color(0xFF7D88A3)
-private val ConsolePrompt = SkyCyan
+private val ConsolePrompt = Orange
 
 private val ConsoleTextStyle = TextStyle(
     color = ConsoleText,
-    fontFamily = FontFamily.Monospace,
+    fontFamily = CodeFont,
     fontSize = 14.sp,
     lineHeight = 19.sp,
 )
@@ -105,11 +106,11 @@ fun ConsoleScreen(viewModel: ConsoleViewModel, onBack: () -> Unit) {
                         // Gentle first: KeyboardInterrupt lets the script clean up; Stop kills it.
                         if (state.acceptsInput) InterruptButton(onClick = viewModel::interrupt)
                         IconButton(onClick = viewModel::stop) {
-                            Icon(Icons.Filled.Stop, contentDescription = stringResource(R.string.action_stop), tint = ErrorRed)
+                            Icon(Icons.Outlined.Stop, contentDescription = stringResource(R.string.action_stop), tint = ErrorRed)
                         }
                     } else {
                         IconButton(onClick = viewModel::restart) {
-                            Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.action_restart))
+                            Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.action_restart))
                         }
                     }
                 },
@@ -131,7 +132,7 @@ fun ConsoleScreen(viewModel: ConsoleViewModel, onBack: () -> Unit) {
                     else -> ConsoleOutput(state.lines, state.version, statusLineRegex())
                 }
             }
-            HorizontalDivider(color = DividerNavy)
+            HorizontalDivider(color = SlateLine)
             InputRow(
                 enabled = state.acceptsInput,
                 // The REPL and the shell always want typing; a script may never read input, so the
@@ -246,7 +247,7 @@ private fun InputRow(enabled: Boolean, autoFocus: Boolean, onSend: (String) -> U
         Modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
-            .background(BarNavy)
+            .background(SlateBar)
             .clickable(enabled = enabled, indication = null, interactionSource = null) { focus.requestFocus() }
             .padding(start = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -279,7 +280,7 @@ private fun InputRow(enabled: Boolean, autoFocus: Boolean, onSend: (String) -> U
         }
         IconButton(onClick = send, enabled = enabled) {
             Icon(
-                Icons.AutoMirrored.Filled.Send,
+                Icons.AutoMirrored.Outlined.Send,
                 contentDescription = stringResource(R.string.action_send),
                 modifier = Modifier.size(18.dp),
                 tint = if (enabled) ConsolePrompt else ConsoleDim,
@@ -321,6 +322,6 @@ internal fun InterruptButton(onClick: () -> Unit) {
         onClick = onClick,
         modifier = Modifier.semantics { contentDescription = interrupt },
     ) {
-        Text("^C", fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Text("^C", fontFamily = CodeFont, fontWeight = FontWeight.Bold, fontSize = 16.sp)
     }
 }

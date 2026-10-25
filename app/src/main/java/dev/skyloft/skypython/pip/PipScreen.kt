@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.pip
 
+import dev.skyloft.skypython.ui.theme.CodeFont
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,17 +28,17 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Error
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -83,7 +84,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.skyloft.skypython.R
-import dev.skyloft.skypython.ui.theme.BarNavy
+import dev.skyloft.skypython.ui.theme.SlateBar
 import dev.skyloft.skypython.ui.theme.Hairline
 import dev.skyloft.skypython.ui.theme.brandButtonColors
 import dev.skyloft.skypython.ui.theme.SkyTopBar
@@ -128,7 +129,7 @@ fun PipScreen(
                 actions = {
                     if (state.tab == PipTab.Installed) {
                         IconButton(onClick = viewModel::refresh, enabled = !state.loading) {
-                            Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.action_refresh))
+                            Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.action_refresh))
                         }
                     }
                 },
@@ -145,7 +146,7 @@ fun PipScreen(
         ) {
             PrimaryTabRow(
                 selectedTabIndex = state.tab.ordinal,
-                containerColor = BarNavy,
+                containerColor = SlateBar,
                 contentColor = MaterialTheme.colorScheme.onSurface,
                 divider = {},
             ) {
@@ -214,11 +215,11 @@ private fun SearchTab(state: PipState, viewModel: PipViewModel) {
                 singleLine = true,
                 label = { Text(stringResource(R.string.pip_search_label), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 placeholder = { Text(stringResource(R.string.pip_package_hint), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
                 trailingIcon = if (state.spec.isNotEmpty()) {
                     {
                         IconButton(onClick = { viewModel.onSpecChange("") }) {
-                            Icon(Icons.Filled.Clear, contentDescription = stringResource(R.string.pip_clear))
+                            Icon(Icons.Outlined.Clear, contentDescription = stringResource(R.string.pip_clear))
                         }
                     }
                 } else {
@@ -226,7 +227,7 @@ private fun SearchTab(state: PipState, viewModel: PipViewModel) {
                 },
                 isError = state.specError != null,
                 supportingText = state.specError?.let { { Text(stringResource(it.messageRes())) } },
-                textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace),
+                textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = CodeFont),
                 shape = RoundedCornerShape(8.dp),
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.None,
@@ -303,17 +304,17 @@ private fun LookupCard(lookup: LookupResult, state: PipState, onInstall: (String
             when (lookup) {
                 is LookupResult.Found -> FoundProject(lookup.project, state, onInstall)
                 is LookupResult.NotFound -> IconLine(
-                    Icons.Filled.Info,
+                    Icons.Outlined.Info,
                     stringResource(R.string.pip_result_not_found, lookup.name),
                     MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 is LookupResult.Offline -> IconLine(
-                    Icons.Filled.Warning,
+                    Icons.Outlined.Warning,
                     stringResource(R.string.pip_result_offline),
                     MaterialTheme.colorScheme.error,
                 )
                 is LookupResult.Failed -> IconLine(
-                    Icons.Filled.Error,
+                    Icons.Outlined.Error,
                     stringResource(R.string.pip_result_failed, lookup.message),
                     MaterialTheme.colorScheme.error,
                 )
@@ -329,7 +330,7 @@ private fun ColumnScope.FoundProject(project: PyPiProject, state: PipState, onIn
         Text(
             project.name,
             style = MaterialTheme.typography.titleMedium,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = CodeFont,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -344,7 +345,7 @@ private fun ColumnScope.FoundProject(project: PyPiProject, state: PipState, onIn
         stringResource(R.string.pip_latest_version, project.version),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        fontFamily = FontFamily.Monospace,
+        fontFamily = CodeFont,
     )
     project.summary?.let {
         Spacer(Modifier.height(6.dp))
@@ -362,11 +363,11 @@ private fun ColumnScope.FoundProject(project: PyPiProject, state: PipState, onIn
     }
     Spacer(Modifier.height(8.dp))
     val (icon, text, color) = when (project.wheel) {
-        WheelSupport.Pure -> Triple(Icons.Filled.CheckCircle, R.string.pip_wheel_pure, MaterialTheme.colorScheme.primary)
-        WheelSupport.PrebuiltAndroid -> Triple(Icons.Filled.CheckCircle, R.string.pip_wheel_android, MaterialTheme.colorScheme.primary)
-        WheelSupport.SourceOnly -> Triple(Icons.Filled.Info, R.string.pip_wheel_source, MaterialTheme.colorScheme.tertiary)
-        WheelSupport.NativeOnly -> Triple(Icons.Filled.Warning, R.string.pip_wheel_native, MaterialTheme.colorScheme.error)
-        WheelSupport.NoFiles -> Triple(Icons.Filled.Warning, R.string.pip_wheel_none, MaterialTheme.colorScheme.error)
+        WheelSupport.Pure -> Triple(Icons.Outlined.CheckCircle, R.string.pip_wheel_pure, MaterialTheme.colorScheme.primary)
+        WheelSupport.PrebuiltAndroid -> Triple(Icons.Outlined.CheckCircle, R.string.pip_wheel_android, MaterialTheme.colorScheme.primary)
+        WheelSupport.SourceOnly -> Triple(Icons.Outlined.Info, R.string.pip_wheel_source, MaterialTheme.colorScheme.tertiary)
+        WheelSupport.NativeOnly -> Triple(Icons.Outlined.Warning, R.string.pip_wheel_native, MaterialTheme.colorScheme.error)
+        WheelSupport.NoFiles -> Triple(Icons.Outlined.Warning, R.string.pip_wheel_none, MaterialTheme.colorScheme.error)
     }
     IconLine(icon, stringResource(text), color)
     Spacer(Modifier.height(8.dp))
@@ -388,7 +389,7 @@ private fun ColumnScope.FoundProject(project: PyPiProject, state: PipState, onIn
             TextButton(onClick = { runCatching { uriHandler.openUri(url) } }) {
                 Text(stringResource(R.string.pip_home_page), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Spacer(Modifier.width(4.dp))
-                Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
+                Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
             }
         }
     }
@@ -403,7 +404,7 @@ private fun PopularRow(pkg: PopularPackage, installed: Boolean, is64Bit: Boolean
         Column(Modifier.weight(1f)) {
             Text(
                 pkg.name,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = CodeFont,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -440,7 +441,7 @@ private fun DisabledNote(text: String) {
 private fun InstalledBadge() {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp)) {
         Icon(
-            Icons.Filled.CheckCircle,
+            Icons.Outlined.CheckCircle,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(16.dp),
@@ -474,7 +475,7 @@ private fun InstalledTab(state: PipState, viewModel: PipViewModel) {
                 it,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = CodeFont,
                 modifier = Modifier.padding(12.dp),
             )
         }
@@ -539,7 +540,7 @@ private fun PackageRow(
                 pkg.version,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = CodeFont,
             )
             update?.let {
                 Text(
@@ -559,7 +560,7 @@ private fun PackageRow(
             }
             IconButton(onClick = onUninstall, enabled = enabled) {
                 Icon(
-                    Icons.Filled.Delete,
+                    Icons.Outlined.Delete,
                     contentDescription = stringResource(R.string.pip_uninstall),
                     tint = if (enabled) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -584,7 +585,7 @@ private fun DetailsSheet(details: DetailsState, state: PipState, viewModel: PipV
             Text(
                 pkg.name,
                 style = MaterialTheme.typography.titleLarge,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = CodeFont,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
@@ -602,7 +603,7 @@ private fun DetailsSheet(details: DetailsState, state: PipState, viewModel: PipV
             Spacer(Modifier.height(12.dp))
             if (details.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
             details.error?.let {
-                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
+                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, fontFamily = CodeFont)
             }
             details.info?.let { info ->
                 info.summary?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
@@ -613,7 +614,7 @@ private fun DetailsSheet(details: DetailsState, state: PipState, viewModel: PipV
                     TextButton(onClick = { runCatching { uriHandler.openUri(url) } }) {
                         Text(stringResource(R.string.pip_home_page))
                         Spacer(Modifier.width(4.dp))
-                        Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
                     }
                 }
             }
@@ -712,10 +713,10 @@ private fun FileRow(file: File, projectsRoot: File?, enabled: Boolean, onInstall
         Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Filled.Description, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(Icons.Outlined.Description, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(file.name, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(file.name, fontFamily = CodeFont, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
                 where,
                 style = MaterialTheme.typography.bodySmall,
@@ -759,8 +760,8 @@ private fun OperationPanel(state: PipState, onClose: () -> Unit) {
                 }
                 when {
                     running != null -> CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                    outcome is InstallOutcome.Succeeded -> Icon(Icons.Filled.CheckCircle, null, tint = color, modifier = Modifier.size(18.dp))
-                    outcome is InstallOutcome.Failed -> Icon(Icons.Filled.Error, null, tint = color, modifier = Modifier.size(18.dp))
+                    outcome is InstallOutcome.Succeeded -> Icon(Icons.Outlined.CheckCircle, null, tint = color, modifier = Modifier.size(18.dp))
+                    outcome is InstallOutcome.Failed -> Icon(Icons.Outlined.Error, null, tint = color, modifier = Modifier.size(18.dp))
                 }
                 Spacer(Modifier.width(10.dp))
                 Text(
@@ -776,7 +777,7 @@ private fun OperationPanel(state: PipState, onClose: () -> Unit) {
                 }
                 if (running == null) {
                     IconButton(onClick = onClose) {
-                        Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
+                        Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.action_close))
                     }
                 }
             }
@@ -816,7 +817,7 @@ private fun InstallLog(log: String, modifier: Modifier) {
             Text(
                 text = log,
                 color = MaterialTheme.colorScheme.onSurface,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = CodeFont,
                 fontSize = 12.sp,
                 lineHeight = 16.sp,
             )

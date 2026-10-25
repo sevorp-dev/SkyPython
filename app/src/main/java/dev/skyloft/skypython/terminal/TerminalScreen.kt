@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.terminal
 
+import dev.skyloft.skypython.ui.theme.CodeFont
 import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -21,8 +22,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -57,7 +58,7 @@ import com.termux.view.TerminalViewClient
 import dev.skyloft.skypython.console.InstallError
 import dev.skyloft.skypython.console.Installing
 import dev.skyloft.skypython.console.InterruptButton
-import dev.skyloft.skypython.ui.theme.BarNavy
+import dev.skyloft.skypython.ui.theme.SlateBar
 import dev.skyloft.skypython.ui.theme.SkyTopBar
 import dev.skyloft.skypython.ui.theme.brandButtonColors
 import kotlin.math.roundToInt
@@ -94,11 +95,11 @@ fun TerminalScreen(
                     if (state.running) {
                         InterruptButton(onClick = viewModel::interrupt)
                         IconButton(onClick = viewModel::kill) {
-                            Icon(Icons.Filled.Stop, contentDescription = stringResource(R.string.action_stop), tint = colors.error)
+                            Icon(Icons.Outlined.Stop, contentDescription = stringResource(R.string.action_stop), tint = colors.error)
                         }
                     } else if (state.session != null || state.startError != null) {
                         IconButton(onClick = viewModel::restart) {
-                            Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.action_restart))
+                            Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.action_restart))
                         }
                     }
                 },
@@ -308,7 +309,7 @@ private fun KeyRow(modifiers: Modifiers, enabled: Boolean, onKey: (ExtraKey) -> 
         Modifier
             .fillMaxWidth()
             .height(44.dp)
-            .background(BarNavy)
+            .background(SlateBar)
             .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
@@ -331,7 +332,7 @@ private fun KeyRow(modifiers: Modifiers, enabled: Boolean, onKey: (ExtraKey) -> 
             ) {
                 Text(
                     key.label,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = CodeFont,
                     fontWeight = if (armed) FontWeight.Bold else FontWeight.Normal,
                     fontSize = 15.sp,
                     color = when {

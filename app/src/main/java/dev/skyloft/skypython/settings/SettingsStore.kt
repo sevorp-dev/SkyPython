@@ -17,6 +17,11 @@ const val MAX_FONT_SIZE_SP = 24
 
 fun clampFontSize(sp: Int): Int = sp.coerceIn(MIN_FONT_SIZE_SP, MAX_FONT_SIZE_SP)
 
+const val MIN_TERMINAL_FONT_SP = 10
+const val MAX_TERMINAL_FONT_SP = 24
+
+fun clampTerminalFontSize(sp: Int): Int = sp.coerceIn(MIN_TERMINAL_FONT_SP, MAX_TERMINAL_FONT_SP)
+
 /** Pure mapping between [EditorSettings] and DataStore [Preferences]. Missing keys fall back to defaults. */
 object SettingsMapping {
     private val FONT_SIZE = intPreferencesKey("font_size_sp")
@@ -27,6 +32,9 @@ object SettingsMapping {
     private val AUTO_CLOSE_PAIRS = booleanPreferencesKey("auto_close_pairs")
     private val SYMBOL_KEYS = stringPreferencesKey("symbol_keys")
     private val KEYBOARD_SUGGESTIONS = booleanPreferencesKey("keyboard_suggestions")
+    private val CODE_FONT = stringPreferencesKey("code_font")
+    private val TERMINAL_FONT_SIZE = intPreferencesKey("terminal_font_size_sp")
+    private val TERMINAL_THEME = stringPreferencesKey("terminal_theme")
 
     fun read(prefs: Preferences): EditorSettings {
         val d = EditorSettings()
@@ -39,6 +47,9 @@ object SettingsMapping {
             autoClosePairs = prefs[AUTO_CLOSE_PAIRS] ?: d.autoClosePairs,
             symbolKeys = normalizeSymbolKeys(prefs[SYMBOL_KEYS] ?: d.symbolKeys),
             keyboardSuggestions = prefs[KEYBOARD_SUGGESTIONS] ?: d.keyboardSuggestions,
+            codeFont = prefs[CODE_FONT]?.let(CodeFontChoice::fromKey) ?: d.codeFont,
+            terminalFontSizeSp = clampTerminalFontSize(prefs[TERMINAL_FONT_SIZE] ?: d.terminalFontSizeSp),
+            terminalTheme = prefs[TERMINAL_THEME]?.let(TerminalTheme::fromKey) ?: d.terminalTheme,
         )
     }
 
@@ -51,6 +62,9 @@ object SettingsMapping {
         prefs[AUTO_CLOSE_PAIRS] = settings.autoClosePairs
         prefs[SYMBOL_KEYS] = normalizeSymbolKeys(settings.symbolKeys)
         prefs[KEYBOARD_SUGGESTIONS] = settings.keyboardSuggestions
+        prefs[CODE_FONT] = settings.codeFont.key
+        prefs[TERMINAL_FONT_SIZE] = clampTerminalFontSize(settings.terminalFontSizeSp)
+        prefs[TERMINAL_THEME] = settings.terminalTheme.key
     }
 }
 
@@ -63,7 +77,7 @@ class SettingsStore(context: Context) {
     /** Current settings; emits defaults until something is saved. */
     val settings: Flow<EditorSettings> = store.data.map(SettingsMapping::read).distinctUntilChanged()
 
-    /** Atomically reads, transforms and writes the settings (font size is clamped to 12..24). */
+    /** Atomically reads, transforms and writes the settings (font sizes are clamped to their ranges). */
     suspend fun update(transform: (EditorSettings) -> EditorSettings) {
         store.edit { prefs -> SettingsMapping.write(prefs, transform(SettingsMapping.read(prefs))) }
     }

@@ -25,21 +25,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Redo
-import androidx.compose.material.icons.automirrored.filled.Undo
-import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.SaveAs
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.NoteAdd
-import androidx.compose.material.icons.filled.EditNote
-import androidx.compose.material.icons.filled.FileOpen
-import androidx.compose.material.icons.filled.FormatListNumbered
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.automirrored.outlined.Redo
+import androidx.compose.material.icons.automirrored.outlined.Undo
+import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Save
+import androidx.compose.material.icons.outlined.SaveAs
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.NoteAdd
+import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material.icons.outlined.FileOpen
+import androidx.compose.material.icons.outlined.FormatListNumbered
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.focus.FocusRequester
@@ -88,15 +88,15 @@ import dev.skyloft.skypython.lang.DiagnosticsMapping
 import dev.skyloft.skypython.settings.EditorSettings
 import dev.skyloft.skypython.ui.drawer.DrawerAction
 import dev.skyloft.skypython.ui.drawer.SkyDrawer
-import dev.skyloft.skypython.ui.theme.BarNavy
+import dev.skyloft.skypython.ui.theme.SlateBar
 import dev.skyloft.skypython.ui.theme.BrandText
 import dev.skyloft.skypython.ui.theme.Hairline
-import dev.skyloft.skypython.ui.theme.SkyBlue
+import dev.skyloft.skypython.ui.theme.OrangeSoft
 import dev.skyloft.skypython.ui.theme.TextBright
 import dev.skyloft.skypython.ui.theme.MutedText
 import dev.skyloft.skypython.ui.theme.RunButton
 import dev.skyloft.skypython.ui.theme.skyTopBarColors
-import dev.skyloft.skypython.ui.theme.EditorBackground
+import dev.skyloft.skypython.ui.theme.Slate
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -246,14 +246,14 @@ fun EditorScreen(
         },
     ) {
         Scaffold(
-            containerColor = EditorBackground,
+            containerColor = Slate,
             topBar = {
-                Column(Modifier.background(BarNavy)) {
+                Column(Modifier.background(SlateBar)) {
                     TopAppBar(
                         colors = skyTopBarColors(),
                         navigationIcon = {
                             IconButton(onClick = { controller.hideKeyboard(); scope.launch { drawerState.open() } }) {
-                                Icon(Icons.Filled.Menu, contentDescription = stringResource(R.string.editor_menu))
+                                Icon(Icons.Outlined.Menu, contentDescription = stringResource(R.string.editor_menu))
                             }
                         },
                         title = { EditorTitle(current, viewModel.projectsRoot) },
@@ -262,11 +262,11 @@ fun EditorScreen(
                                 Icon(Icons.Outlined.Folder, contentDescription = stringResource(R.string.title_files))
                             }
                             IconButton(onClick = controller::undo, enabled = current != null) {
-                                Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = stringResource(R.string.editor_undo))
+                                Icon(Icons.AutoMirrored.Outlined.Undo, contentDescription = stringResource(R.string.editor_undo))
                             }
                             Box {
                                 IconButton(onClick = { menuOpen = true }) {
-                                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.editor_more))
+                                    Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.editor_more))
                                 }
                                 DropdownMenu(
                                     expanded = menuOpen,
@@ -275,7 +275,7 @@ fun EditorScreen(
                                     val has = current != null
                                     fun close() { menuOpen = false; linesMenu = false }
                                     if (linesMenu) {
-                                        MenuItem(R.string.editor_menu_back, Icons.AutoMirrored.Filled.ArrowBack) { linesMenu = false }
+                                        MenuItem(R.string.editor_menu_back, Icons.AutoMirrored.Outlined.ArrowBack) { linesMenu = false }
                                         HorizontalDivider()
                                         listOf(
                                             EditAction.Comment, EditAction.Indent, EditAction.Outdent, EditAction.Duplicate,
@@ -287,27 +287,27 @@ fun EditorScreen(
                                         }
                                         return@DropdownMenu
                                     }
-                                    MenuItem(R.string.editor_redo, Icons.AutoMirrored.Filled.Redo, enabled = has) { close(); controller.redo() }
-                                    MenuItem(R.string.find_and_replace, Icons.Filled.Search, enabled = has) { close(); openFind(false) }
-                                    MenuItem(R.string.go_to_line, Icons.Filled.FormatListNumbered, enabled = has) { close(); goToLineOpen = true }
+                                    MenuItem(R.string.editor_redo, Icons.AutoMirrored.Outlined.Redo, enabled = has) { close(); controller.redo() }
+                                    MenuItem(R.string.find_and_replace, Icons.Outlined.Search, enabled = has) { close(); openFind(false) }
+                                    MenuItem(R.string.go_to_line, Icons.Outlined.FormatListNumbered, enabled = has) { close(); goToLineOpen = true }
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.editor_menu_edit)) },
-                                        leadingIcon = { Icon(Icons.Filled.EditNote, null) },
-                                        trailingIcon = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) },
+                                        leadingIcon = { Icon(Icons.Outlined.EditNote, null) },
+                                        trailingIcon = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null) },
                                         enabled = has,
                                         onClick = { linesMenu = true },
                                     )
                                     HorizontalDivider()
-                                    MenuItem(R.string.new_file, Icons.AutoMirrored.Filled.NoteAdd) { close(); newFileOpen = true }
-                                    MenuItem(R.string.open_file, Icons.Filled.FileOpen) { close(); openFiles() }
-                                    MenuItem(R.string.recent_files, Icons.Filled.History) { close(); recentOpen = true }
+                                    MenuItem(R.string.new_file, Icons.AutoMirrored.Outlined.NoteAdd) { close(); newFileOpen = true }
+                                    MenuItem(R.string.open_file, Icons.Outlined.FileOpen) { close(); openFiles() }
+                                    MenuItem(R.string.recent_files, Icons.Outlined.History) { close(); recentOpen = true }
                                     HorizontalDivider()
-                                    MenuItem(R.string.editor_save, Icons.Filled.Save, enabled = has) {
+                                    MenuItem(R.string.editor_save, Icons.Outlined.Save, enabled = has) {
                                         close()
                                         controller.flushPendingText()
                                         viewModel.saveCurrent()
                                     }
-                                    MenuItem(R.string.editor_save_as, Icons.Filled.SaveAs, enabled = has) {
+                                    MenuItem(R.string.editor_save_as, Icons.Outlined.SaveAs, enabled = has) {
                                         close()
                                         controller.flushPendingText()
                                         current?.let { saveAsLauncher.launch(it.name) }
@@ -460,7 +460,7 @@ private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel, onClose: (
                             Modifier
                                 .fillMaxWidth()
                                 .height(2.dp)
-                                .background(SkyBlue, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)),
+                                .background(OrangeSoft, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)),
                         )
                     }
                 }
@@ -487,7 +487,7 @@ private fun ProblemLine(error: Diagnostic, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            Icons.Filled.ErrorOutline,
+            Icons.Outlined.ErrorOutline,
             contentDescription = null,
             tint = ProblemRed,
             modifier = Modifier.size(16.dp),
@@ -544,4 +544,4 @@ private fun MenuItem(label: Int, icon: ImageVector, enabled: Boolean = true, onC
 }
 
 /** Menu icon for a line command (the bar shows `#` as text for Comment). */
-private fun EditAction.menuIcon(): ImageVector = icon ?: Icons.Filled.EditNote
+private fun EditAction.menuIcon(): ImageVector = icon ?: Icons.Outlined.EditNote

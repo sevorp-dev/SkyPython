@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -80,7 +80,7 @@ fun SamplesScreen(projectsRoot: File, onOpen: (File) -> Unit, onBack: () -> Unit
                         )
                     },
                     leadingContent = {
-                        IconTile(Icons.Filled.Code, size = 40.dp)
+                        IconTile(Icons.Outlined.Code, size = 40.dp)
                     },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.clickable {

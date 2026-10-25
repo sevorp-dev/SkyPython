@@ -3,91 +3,143 @@ package dev.skyloft.skypython.ui.theme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import dev.skyloft.skypython.R
 
-// Brand palette, from the SkyPython banner's night sky, toned down for a calm, flat tool:
-// muted navy surfaces in clear elevation steps, one confident blue accent, violet only as a
-// rare secondary touch. Text contrast is WCAG AA (≥ 4.5:1) on every surface below.
+// "Modern dark, minimal": cool slate surfaces in clear elevation steps and one warm orange
+// accent. Translucency is used sparingly — on floating layers (menus, sheets, snackbars, the
+// drawer scrim) — never on text-heavy panels. Text contrast is WCAG AA (≥ 4.5:1) on every surface.
 
-/** Deepest navy: console / terminal output, logs. */
-val NightNavy = Color(0xFF090D1A)
-/** Window and code area background (also used by the Sora view, see CodeEditor) and list screens. */
-val EditorBackground = Color(0xFF0E1424)
-/** Top bars, the tab strip, the symbol bar and key rows: one step above the background. */
-val BarNavy = Color(0xFF151C2F)
-/** Raised panels: menus, the completion popup, cards. */
-val PanelNavy = Color(0xFF1B2338)
-/** 1dp hairlines between rows and sections. */
-val DividerNavy = Color(0xFF273149)
+/** Deepest slate: console / terminal output and logs. */
+val Ink = Color(0xFF161E28)
+/** Window and code-area background (also the Sora view's, see CodeEditor). */
+val Slate = Color(0xFF1C2530)
+/** Top bars, the tab strip, the status line, symbol bar and key rows: one step above [Slate]. */
+val SlateBar = Color(0xFF212B37)
+/** Raised panels: cards, fields, menus, the completion popup. */
+val SlatePanel = Color(0xFF273240)
+/** Dialogs and pressed / selected rows: above [SlatePanel]. */
+val SlateRaised = Color(0xFF2E3A49)
+/** 1dp hairlines between rows and sections, and borders of floating layers. */
+val SlateLine = Color(0xFF334051)
 
-/** The accent: solid fills behind white (Run, FABs, filled buttons, switch tracks) — 5.2:1 with white. */
-val ElectricBlue = Color(0xFF2D63E8)
-/** Accent as text / icons on navy (links, text buttons, selected marks) — ≥ 7:1 on every surface. */
-val SkyBlue = Color(0xFF86AEFF)
-/** Cursor and prompt. */
-val SkyCyan = Color(0xFF6CC8EE)
-/** Violet, the rare secondary accent. */
-val Violet = Color(0xFF7C6CE0)
-/** Violet as text / icons on navy. */
-val SoftViolet = Color(0xFFB3A6F5)
+/** The accent: solid fills (Run, FABs, filled buttons, switch tracks) under [OnOrange] content. */
+val Orange = Color(0xFFF28C38)
+/** Content on [Orange]: a deep brown-black (≈ 7.9:1), sharper than white on orange (2.4:1). */
+val OnOrange = Color(0xFF221203)
+/** Accent as text / icons on slate (links, selected tabs, section labels) — ≥ 7:1 on [Slate]. */
+val OrangeSoft = Color(0xFFF5A962)
+/** A quiet orange wash behind selected rows and armed keys. */
+val OrangeTint = Color(0x29F28C38)
 
 /** Primary text. */
-val TextBright = Color(0xFFE4E8F2)
-/** Secondary text (subtitles, hints) — ≥ 6:1 on every surface. */
-val MutedText = Color(0xFF9AA5BF)
-val ErrorRed = Color(0xFFFF7A8A)
-val SuccessGreen = Color(0xFF5FD38D)
+val TextBright = Color(0xFFE8ECF1)
+/** Secondary text (subtitles, hints) — 5.3:1 on [Slate], 4.6:1 on [SlatePanel]. */
+val MutedText = Color(0xFF8C99A8)
+/** Code functions / links in code — the cool counterpart of the orange keywords. */
+val CodeBlue = Color(0xFF7AB8F5)
+val ErrorRed = Color(0xFFFF7B72)
+val SuccessGreen = Color(0xFF7FD18B)
 
-/** The one gradient left: a soft blue → violet on the brand name in About. */
-val BrandTextBrush: Brush = Brush.linearGradient(listOf(SkyBlue, SoftViolet))
+/** Brand name in About: a soft orange → amber sweep (no glow). */
+val BrandTextBrush: Brush = Brush.linearGradient(listOf(Orange, Color(0xFFFFC27A)))
 
-// Every slot is set: any slot left out falls back to Material's baseline purple-grey tones,
+/** Floating layers (menus, sheets, snackbars) let the content shimmer through a little. */
+const val GLASS_ALPHA = 0.94f
+
+/** UI text: Inter (SIL OFL 1.1), static Latin + Cyrillic subsets in res/font. */
+val InterFamily = FontFamily(
+    Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_medium, FontWeight.Medium),
+    Font(R.font.inter_semibold, FontWeight.SemiBold),
+    // Bold requests get SemiBold rather than a synthesized smear.
+    Font(R.font.inter_semibold, FontWeight.Bold),
+)
+
+/** Code, console, terminal: JetBrains Mono (SIL OFL 1.1), ligatures off (see res/font). */
+val CodeFont = FontFamily(
+    Font(R.font.jetbrains_mono_regular, FontWeight.Normal),
+    Font(R.font.jetbrains_mono_regular, FontWeight.Medium),
+    Font(R.font.jetbrains_mono_bold, FontWeight.SemiBold),
+    Font(R.font.jetbrains_mono_bold, FontWeight.Bold),
+)
+
+// Every slot is set: any slot left out falls back to Material's baseline purple tones,
 // which show up in dialogs, menus, text-field outlines and switch tracks.
 private val SkyColors = darkColorScheme(
-    primary = SkyBlue,
-    onPrimary = Color(0xFF0A1A42),
-    primaryContainer = Color(0xFF213C80),
-    onPrimaryContainer = Color(0xFFDCE6FF),
-    inversePrimary = ElectricBlue,
-    secondary = SkyCyan,
-    onSecondary = Color(0xFF00283B),
-    secondaryContainer = Color(0xFF243150),
-    onSecondaryContainer = Color(0xFFD8E2F8),
-    tertiary = SoftViolet,
-    onTertiary = Color(0xFF231A5C),
-    tertiaryContainer = Color(0xFF342D6B),
-    onTertiaryContainer = Color(0xFFE6E0FF),
-    background = EditorBackground,
+    primary = OrangeSoft,
+    onPrimary = OnOrange,
+    primaryContainer = Color(0xFF5A3313),
+    onPrimaryContainer = Color(0xFFFFDCC0),
+    inversePrimary = Orange,
+    secondary = CodeBlue,
+    onSecondary = Color(0xFF06233F),
+    secondaryContainer = SlateRaised,
+    onSecondaryContainer = TextBright,
+    tertiary = Color(0xFFFFC27A),
+    onTertiary = Color(0xFF3A2400),
+    tertiaryContainer = Color(0xFF4A3520),
+    onTertiaryContainer = Color(0xFFFFE2C2),
+    background = Slate,
     onBackground = TextBright,
-    surface = EditorBackground,
+    surface = Slate,
     onSurface = TextBright,
-    surfaceVariant = Color(0xFF222B42),
+    surfaceVariant = SlatePanel,
     onSurfaceVariant = MutedText,
-    // Flat: no blue tint added to raised surfaces.
+    // Flat: no orange tint added to raised surfaces.
     surfaceTint = Color.Transparent,
-    // Snackbars: a raised navy panel with light-blue actions, not a light slab.
-    inverseSurface = Color(0xFF2A3450),
+    // Snackbars: a raised slate panel with orange actions, not a light slab.
+    inverseSurface = SlateRaised.copy(alpha = 0.97f),
     inverseOnSurface = TextBright,
     error = ErrorRed,
-    onError = Color(0xFF3B0010),
-    errorContainer = Color(0xFF4A1C28),
-    onErrorContainer = Color(0xFFFFD9DE),
-    outline = Color(0xFF5E6985),
-    outlineVariant = DividerNavy,
-    scrim = Color(0xFF02040A),
-    surfaceBright = Color(0xFF283250),
-    surfaceDim = NightNavy,
-    surfaceContainerLowest = NightNavy,
-    surfaceContainerLow = Color(0xFF121929),
-    // Menus (surfaceContainer) and dialogs (surfaceContainerHigh) sit clearly above the page.
-    surfaceContainer = PanelNavy,
-    surfaceContainerHigh = Color(0xFF222B42),
-    surfaceContainerHighest = Color(0xFF29334D),
+    onError = Color(0xFF410002),
+    errorContainer = Color(0xFF4D1F1D),
+    onErrorContainer = Color(0xFFFFDAD6),
+    outline = Color(0xFF5C6B7C),
+    outlineVariant = SlateLine,
+    scrim = Color(0xFF070A0E),
+    surfaceBright = Color(0xFF354253),
+    surfaceDim = Ink,
+    surfaceContainerLowest = Ink,
+    // Bottom sheets.
+    surfaceContainerLow = SlateBar.copy(alpha = 0.97f),
+    // Menus float over content: slightly translucent.
+    surfaceContainer = SlatePanel.copy(alpha = GLASS_ALPHA),
+    // Dialogs stay opaque (they hold text and fields).
+    surfaceContainerHigh = SlatePanel,
+    surfaceContainerHighest = SlateRaised,
 )
+
+private val SkyTypography: Typography = Typography().let { base ->
+    fun TextStyle.inter() = copy(fontFamily = InterFamily)
+    Typography(
+        displayLarge = base.displayLarge.inter(),
+        displayMedium = base.displayMedium.inter(),
+        displaySmall = base.displaySmall.inter(),
+        headlineLarge = base.headlineLarge.inter(),
+        headlineMedium = base.headlineMedium.inter(),
+        headlineSmall = base.headlineSmall.inter().copy(fontWeight = FontWeight.SemiBold),
+        titleLarge = base.titleLarge.inter().copy(fontSize = 20.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.sp),
+        titleMedium = base.titleMedium.inter().copy(fontWeight = FontWeight.SemiBold, letterSpacing = 0.sp),
+        titleSmall = base.titleSmall.inter(),
+        bodyLarge = base.bodyLarge.inter().copy(fontSize = 15.sp, lineHeight = 22.sp, letterSpacing = 0.sp),
+        bodyMedium = base.bodyMedium.inter().copy(fontSize = 13.sp, lineHeight = 18.sp, letterSpacing = 0.sp),
+        bodySmall = base.bodySmall.inter().copy(letterSpacing = 0.sp),
+        labelLarge = base.labelLarge.inter().copy(letterSpacing = 0.sp),
+        labelMedium = base.labelMedium.inter(),
+        labelSmall = base.labelSmall.inter(),
+    )
+}
 
 /** Consistent corners: 8dp small controls, 12dp menus / fields / cards, 16dp+ dialogs and sheets. */
 private val SkyShapes = Shapes(
@@ -95,10 +147,10 @@ private val SkyShapes = Shapes(
     small = RoundedCornerShape(10.dp),
     medium = RoundedCornerShape(12.dp),
     large = RoundedCornerShape(16.dp),
-    extraLarge = RoundedCornerShape(20.dp),
+    extraLarge = RoundedCornerShape(24.dp),
 )
 
 @Composable
 fun SkyPythonTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = SkyColors, shapes = SkyShapes, content = content)
+    MaterialTheme(colorScheme = SkyColors, typography = SkyTypography, shapes = SkyShapes, content = content)
 }

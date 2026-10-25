@@ -5,3 +5,8 @@ This product includes software from the Termux project's terminal-emulator and
 terminal-view libraries (https://github.com/termux/termux-app), Apache License 2.0,
 based on Android-Terminal-Emulator by Jack Palevich, Apache License 2.0.
 See terminal/NOTICE for what is included and what was changed.
+
+The interface font Inter (https://rsms.me/inter/) and the code font JetBrains Mono
+(https://www.jetbrains.com/lp/mono/) are bundled as subset static instances in
+app/src/main/res/font under the SIL Open Font License 1.1; the license texts ship in
+app/src/main/assets/licenses (OFL-Inter.txt, OFL-JetBrainsMono.txt).
