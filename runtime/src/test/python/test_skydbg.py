@@ -628,6 +628,34 @@ class DebuggerTest(unittest.TestCase):
         stop = s.stopped()
         self.assertEqual((stop["reason"], stop["frames"][0]["name"]), ("breakpoint", "work"))
 
+    def test_pause_and_breakpoints_hammered_while_running(self):
+        # Pauses and breakpoint updates arrive as signals at arbitrary points, also while the
+        # main thread is inside the driver's own locked sections (sending "continued", ...).
+        s = self.session("""
+            def work(i):
+                return i + 1
+
+            i = 0
+            while True:
+                i = work(i)
+        """)
+        s.start()
+        for _ in range(15):
+            for _ in range(3):
+                s.breakpoints()
+            s.request("pause")
+            self.assertEqual(s.stopped()["reason"], "pause")
+            s.request("continue")  # no wait for "continued": the next requests race with it
+        s.event("continued")
+        result = s.breakpoints(2)
+        self.assertTrue(result[0]["verified"])
+        while True:
+            stop = s.stopped()
+            if stop["reason"] == "breakpoint":
+                break
+            s.resume()  # a late pause from the loop above
+        self.assertEqual(stop["frames"][0]["name"], "work")
+
     def test_breakpoints_cleared_while_stopped(self):
         s = self.session("""
             for i in range(3):

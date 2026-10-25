@@ -250,6 +250,8 @@ class Debugger(bdb.Bdb):
         self.running = False  # user code started and not finished
         self.pending = []  # setBreakpoints received while running
         self.pause_requested = False
+        self._check_requests = False  # set by on_signal, served by the trace function
+        self.botframe = None  # bdb sets it when the program starts
         self.mode = "continue"
         self.entry_pending = False
         self.stop_on_entry = False
@@ -341,15 +343,40 @@ class Debugger(bdb.Bdb):
         sys.settrace(self.trace_dispatch)
 
     def on_signal(self, signum, frame):
+        """SIGUSR1 from the reader thread: a pause or new breakpoints are waiting.
+
+        Runs on the main thread between two bytecodes, possibly while the interrupted code holds
+        state_lock or the channel's lock (both non-reentrant): so no locks and no I/O here. The
+        requests are served by the trace function on the next traced event (_service_requests).
+        """
+        if self.stopped or not self.running or frame is None:
+            return
+        self._check_requests = True
+        if self.botframe is not None:  # else bdb.run() is about to install the trace function
+            self._retrace(frame)
+
+    def trace_dispatch(self, frame, event, arg):
+        if self._check_requests and not _internal(frame.f_code.co_filename):
+            self._service_requests(frame)
+        return super().trace_dispatch(frame, event, arg)
+
+    def set_continue(self):
+        super().set_continue()  # without breakpoints, this turns tracing off
+        if self._check_requests and self.botframe is not None:
+            # on_signal ran inside the trace function, just before: requests still wait.
+            self._retrace(sys._getframe())
+
+    def _service_requests(self, frame):
+        """Applies what on_signal announced; called from the trace function (never inside the
+        driver's own code, which is not traced, so taking the locks is safe here)."""
+        self._check_requests = False
         with self.state_lock:
             pending, self.pending = self.pending, []
             pause, self.pause_requested = self.pause_requested, False
         for message in pending:
             self.handle(message)
-        if self.stopped or not self.running or frame is None:
+        if self.stopped or not self.running:
             return
-        if pause or pending:
-            self._retrace(frame)
         if pause:
             self.mode = "pause"
             self.set_step()
@@ -396,7 +423,11 @@ class Debugger(bdb.Bdb):
                 except queue.Empty:
                     break
         for message in leftovers:
-            if message is not None:
+            if message is None:
+                continue
+            if message.get("method") == "setBreakpoints":
+                self.handle(message)  # valid while running too
+            else:
                 self.reply_error(message, "not stopped")
         self.frames = []
         self.refs = {}
@@ -541,7 +572,7 @@ class Debugger(bdb.Bdb):
         named = []
         if isinstance(value, dict):
             for i, (k, v) in enumerate(value.items()):
-                if i > MAX_CHILDREN:
+                if i >= MAX_CHILDREN:
                     break
                 named.append((safe_repr(k), v))
             more = max(0, len(value) - MAX_CHILDREN)
