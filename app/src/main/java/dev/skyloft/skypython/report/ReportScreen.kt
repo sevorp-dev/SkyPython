@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -37,6 +38,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -87,7 +92,8 @@ fun ReportScreen(
     val available by produceState(emptyList<ProblemReport>(), version) {
         value = withContext(Dispatchers.IO) { (store.list() + ErrorReporter.hub.recent()).sortedByDescending { it.timeMillis } }
     }
-    var selectedId by rememberSaveable { mutableStateOf(reportId) }
+    // Keyed on the report asked for: opening the screen again for another one must not keep the old choice.
+    var selectedId by rememberSaveable(reportId) { mutableStateOf(reportId) }
     val manual = remember { Reports.manual() }
     val selected = available.firstOrNull { it.id == selectedId } ?: ErrorReporter.hub.find(selectedId.orEmpty())
     val report = selected ?: manual
@@ -98,7 +104,19 @@ fun ReportScreen(
         value = withContext(Dispatchers.IO) { DeviceInfo.collect(context, settings) }
     }
     val ready = !includeDevice || info != null
-    val text = ReportFormatter.format(report, description, if (includeDevice) info.orEmpty() else null)
+    val deviceInfo = if (includeDevice) info.orEmpty() else null
+    // What is sent: always built from what is in the field right now.
+    val currentText = { ReportFormatter.format(report, description, deviceInfo) }
+    // The preview below follows the description once typing pauses: formatting the report and
+    // laying its long text out again on every keystroke made typing lag.
+    var previewDescription by remember { mutableStateOf(description) }
+    LaunchedEffect(Unit) {
+        snapshotFlow { description }.collectLatest {
+            if (it != previewDescription) delay(PREVIEW_DELAY_MS)
+            previewDescription = it
+        }
+    }
+    val text = remember(report, previewDescription, deviceInfo) { ReportFormatter.format(report, previewDescription, deviceInfo) }
 
     val subject = stringResource(R.string.report_share_subject)
     val chooserTitle = stringResource(R.string.report_share_chooser)
@@ -109,6 +127,7 @@ fun ReportScreen(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .consumeWindowInsets(padding)
                 .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
@@ -170,7 +189,7 @@ fun ReportScreen(
                             report = ReportFormatter.essentials(report),
                             device = if (includeDevice) ReportFormatter.deviceSummary(info.orEmpty()) else "",
                         )
-                        Reports.copy(context, text)
+                        Reports.copy(context, currentText())
                         if (launch(context, Reports.issueIntent(link.url))) {
                             toast(context, if (link.truncated) R.string.report_issue_truncated else R.string.report_issue_copied)
                         } else {
@@ -186,7 +205,7 @@ fun ReportScreen(
                 }
                 OutlinedButton(
                     onClick = {
-                        val intent = Reports.shareIntent(context, text, subject, summary, chooserTitle)
+                        val intent = Reports.shareIntent(context, currentText(), subject, summary, chooserTitle)
                         if (!launch(context, intent)) toast(context, R.string.share_no_app)
                     },
                     enabled = ready,
@@ -197,7 +216,7 @@ fun ReportScreen(
                 }
                 OutlinedButton(
                     onClick = {
-                        Reports.copy(context, text)
+                        Reports.copy(context, currentText())
                         toast(context, R.string.report_copied)
                     },
                     enabled = ready,
@@ -279,5 +298,8 @@ fun whereLabel(where: String?): String = stringResource(
         else -> R.string.report_where_app
     },
 )
+
+/** How long the preview waits for typing to pause. */
+private const val PREVIEW_DELAY_MS = 300L
 
 private fun toast(context: Context, res: Int) = Toast.makeText(context, res, Toast.LENGTH_LONG).show()
