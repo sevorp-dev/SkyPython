@@ -200,6 +200,8 @@ class NavigationStateDeviceTest {
             e.getLocationInWindow(at)
             at[1] + e.height
         }
+        // The notice is app-wide: put it away so it does not show again over the next test's screens.
+        ErrorReporter.hub.dismiss()
         assertTrue("banner bottom ${banner.bottom} over the symbol bar at $codeBottom", banner.bottom <= codeBottom)    }
 
     private companion object {
