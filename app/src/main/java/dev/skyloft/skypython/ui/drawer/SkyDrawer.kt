@@ -30,6 +30,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Settings
@@ -93,7 +94,7 @@ data class DrawerSection(val title: String, @StringRes val titleRes: Int, val ac
 val DRAWER_SECTIONS: List<DrawerSection> = listOf(
     DrawerSection("Run", R.string.drawer_section_run, listOf(DrawerAction.Debug, DrawerAction.Interpreter, DrawerAction.Terminal)),
     DrawerSection("Tools", R.string.drawer_section_tools, listOf(DrawerAction.Pip, DrawerAction.Share, DrawerAction.Samples)),
-    DrawerSection("Settings", R.string.drawer_section_settings, listOf(DrawerAction.Settings, DrawerAction.About)),
+    DrawerSection("Settings", R.string.drawer_section_settings, listOf(DrawerAction.Settings, DrawerAction.Report, DrawerAction.About)),
 )
 
 @StringRes
@@ -104,6 +105,7 @@ private fun DrawerAction.labelRes(): Int = when (this) {
     DrawerAction.Share -> R.string.title_share
     DrawerAction.Samples -> R.string.title_samples
     DrawerAction.Settings -> R.string.title_settings
+    DrawerAction.Report -> R.string.report_problem
     DrawerAction.About -> R.string.title_about
     DrawerAction.Debug -> R.string.title_debug
 }
@@ -129,6 +131,7 @@ private fun DrawerAction.icon(): ImageVector = when (this) {
     DrawerAction.Share -> Icons.Filled.Share
     DrawerAction.Samples -> Icons.Filled.School
     DrawerAction.Settings -> Icons.Filled.Settings
+    DrawerAction.Report -> Icons.Filled.Feedback
     DrawerAction.About -> Icons.Filled.Info
     DrawerAction.Debug -> Icons.Filled.BugReport
 }

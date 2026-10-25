@@ -22,3 +22,8 @@
 -keep class org.jcodings.specific.*Encoding { *; }
 -dontwarn org.jcodings.**
 -dontwarn org.joni.**
+
+# Saved crash reports (filesDir/crash/*.json) are read back with Gson, possibly by a newer
+# build: keep the field and enum names stable.
+-keepclassmembers class dev.skyloft.skypython.report.ProblemReport { <fields>; }
+-keep enum dev.skyloft.skypython.report.ReportKind { *; }

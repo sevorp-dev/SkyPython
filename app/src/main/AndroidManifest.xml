@@ -4,8 +4,17 @@
 
     <!-- pip downloads from PyPI; scripts run under the app uid and need it for sockets too. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Problem reports: the connection type (Wi-Fi / cellular / none). A normal permission. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Problem reports name the browser components' versions (package visibility, API 30+). -->
+    <queries>
+        <package android:name="com.android.chrome" />
+        <package android:name="com.google.android.webview" />
+    </queries>
 
     <application
+        android:name=".SkyPythonApplication"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"

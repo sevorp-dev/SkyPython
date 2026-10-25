@@ -370,4 +370,42 @@
     <string name="settings_keyboard_suggestions">Keyboard suggestions</string>
     <string name="settings_keyboard_suggestions_summary">Let the keyboard suggest and autocorrect words. Off keeps code from being changed.</string>
     <string name="settings_pinch_hint">Tip: pinch the editor with two fingers to zoom.</string>
+
+    <!-- Problem reports -->
+    <string name="report_problem">Report a problem</string>
+    <string name="about_report_summary">Send an error report to the developers</string>
+    <string name="report_privacy">Nothing is sent automatically. Review the report before sending: it has the error and device details, never your code or files.</string>
+    <string name="report_attach">Attached problem</string>
+    <string name="report_none">None</string>
+    <string name="report_kind_crash">Crash · %1$s</string>
+    <string name="report_kind_error">%1$s · %2$s</string>
+    <string name="report_description_label">What were you doing?</string>
+    <string name="report_description_hint">Steps, what you expected, what happened instead</string>
+    <string name="report_include_device">Include device info</string>
+    <string name="report_include_device_summary">Model, Android version, memory, network, mobile operator</string>
+    <string name="report_open_issue">Open GitHub issue</string>
+    <string name="report_share">Share</string>
+    <string name="report_copy">Copy</string>
+    <string name="report_copied">Report copied</string>
+    <string name="report_issue_copied">The full report is also on the clipboard</string>
+    <string name="report_issue_truncated">The report was too long for the link. The full report is on the clipboard: paste it into the issue.</string>
+    <string name="report_no_browser">No browser to open GitHub. The report is on the clipboard.</string>
+    <string name="report_delete">Delete this report</string>
+    <string name="report_deleted">Report deleted</string>
+    <string name="report_full_text">Full report</string>
+    <string name="report_share_subject">SkyPython problem report</string>
+    <string name="report_share_chooser">Send the report</string>
+    <string name="report_share_summary">SkyPython problem report: %1$s (full report attached)</string>
+    <string name="report_banner">%1$s: something went wrong</string>
+    <string name="report_banner_action">Report</string>
+    <string name="report_where_python">Python setup</string>
+    <string name="report_where_terminal">Terminal</string>
+    <string name="report_where_language_server">Code hints</string>
+    <string name="report_where_debugger">Debugger</string>
+    <string name="report_where_pip">pip setup</string>
+    <string name="report_where_app">SkyPython</string>
+    <string name="crash_dialog_title">SkyPython closed unexpectedly</string>
+    <string name="crash_dialog_text">Send a report to the developers? You will see the whole report before anything is sent.</string>
+    <string name="crash_dialog_send">Send report</string>
+    <string name="crash_dialog_later">Not now</string>
 </resources>

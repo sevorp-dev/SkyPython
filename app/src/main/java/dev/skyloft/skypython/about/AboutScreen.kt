@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -77,7 +78,7 @@ private val NOTICES = listOf(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AboutScreen(onBack: () -> Unit) {
+fun AboutScreen(onBack: () -> Unit, onReport: () -> Unit = {}) {
     val context = LocalContext.current
     val version = remember { appVersion(context) }
 
@@ -128,6 +129,12 @@ fun AboutScreen(onBack: () -> Unit) {
             SectionTitle(stringResource(R.string.about_links))
             LinkRow(Icons.Filled.Code, stringResource(R.string.about_source_code), GITHUB_URL) { openUrl(context, GITHUB_URL) }
             LinkRow(Icons.AutoMirrored.Filled.Send, stringResource(R.string.about_telegram), TELEGRAM_URL) { openUrl(context, TELEGRAM_URL) }
+            ListItem(
+                modifier = Modifier.clickable(onClick = onReport),
+                leadingContent = { IconTile(Icons.Filled.Feedback, size = 40.dp) },
+                headlineContent = { Text(stringResource(R.string.report_problem)) },
+                supportingContent = { Text(stringResource(R.string.about_report_summary), color = MaterialTheme.colorScheme.onSurfaceVariant) },
+            )
             Hairline()
             SectionTitle(stringResource(R.string.about_license))
             ListItem(
