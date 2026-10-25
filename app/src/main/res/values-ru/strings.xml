@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common actions -->
+    <string name="action_back">Назад</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="action_close">Закрыть</string>
+    <string name="action_create">Создать</string>
+    <string name="action_delete">Удалить</string>
+    <string name="action_interrupt">Прервать</string>
+    <string name="action_refresh">Обновить</string>
+    <string name="action_rename">Переименовать</string>
+    <string name="action_restart">Перезапустить</string>
+    <string name="action_retry">Повторить</string>
+    <string name="action_run">Запуск</string>
+    <string name="action_send">Отправить</string>
+    <string name="action_stop">Остановить</string>
+
+    <!-- Screen titles and drawer items -->
+    <string name="title_about">О программе</string>
+    <string name="title_console">Консоль</string>
+    <string name="title_files">Файлы</string>
+    <string name="title_interpreter">Интерпретатор</string>
+    <string name="title_pip">Pip</string>
+    <string name="title_samples">Примеры</string>
+    <string name="title_settings">Настройки</string>
+    <string name="title_share">Поделиться</string>
+    <string name="title_terminal">Терминал</string>
+
+    <!-- Drawer -->
+    <string name="drawer_section_run">Запуск</string>
+    <string name="drawer_section_tools">Инструменты</string>
+    <string name="drawer_section_settings">Настройки</string>
+    <string name="drawer_line">Строка: %1$d/%2$d</string>
+    <string name="drawer_line_offset">Позиция в строке: %1$d</string>
+    <string name="no_file_open">Нет открытого файла</string>
+
+    <!-- App root -->
+    <string name="share_save_to_projects_first">Сохраните файл в «Проекты», чтобы им поделиться</string>
+    <string name="script_still_running">Скрипт ещё выполняется</string>
+    <string name="restart_title">Ещё выполняется</string>
+    <string name="restart_text">Программа ещё выполняется. Остановить её и запустить %1$s?</string>
+    <string name="restart_confirm">Остановить и запустить</string>
+
+    <!-- Console -->
+    <string name="console_exit_footer">[Программа завершена, код выхода %1$d]</string>
+    <string name="console_cancelled">[Отменено]</string>
+    <string name="console_not_running">Не запущено</string>
+    <string name="console_preparing_python">Подготовка Python…</string>
+    <string name="console_setup_failed">Не удалось установить Python</string>
+
+    <!-- Terminal -->
+    <string name="terminal_open_failed">Не удалось открыть терминал</string>
+    <string name="terminal_use_simple_console">Открыть простую консоль</string>
+    <string name="key_escape">Escape</string>
+    <string name="key_tab">Tab</string>
+    <string name="key_control">Control</string>
+    <string name="key_alt">Alt</string>
+    <string name="key_minus">Минус</string>
+    <string name="key_slash">Косая черта</string>
+    <string name="key_pipe">Вертикальная черта</string>
+    <string name="key_left">Влево</string>
+    <string name="key_up">Вверх</string>
+    <string name="key_down">Вниз</string>
+    <string name="key_right">Вправо</string>
+
+    <!-- Editor -->
+    <string name="editor_menu">Меню</string>
+    <string name="editor_undo">Отменить</string>
+    <string name="editor_redo">Повторить</string>
+    <string name="editor_more">Ещё</string>
+    <string name="editor_save">Сохранить</string>
+    <string name="editor_save_as">Сохранить как…</string>
+    <string name="editor_no_open_files">Нет открытых файлов</string>
+    <string name="editor_open_files">Открыть «Файлы»</string>
+    <string name="editor_external_document">Внешний документ</string>
+    <string name="projects_label">Проекты</string>
+    <string name="editor_error_save">Не удалось сохранить %1$s: %2$s</string>
+    <string name="editor_error_open">Не удалось открыть %1$s: %2$s</string>
+    <string name="editor_error_open_file">Не удалось открыть файл: %1$s</string>
+    <string name="editor_error_prepare_run">Не удалось подготовить %1$s к запуску: %2$s</string>
+    <string name="editor_error_save_as">Не удалось сохранить как: %1$s</string>
+    <string name="editor_error_create_example">Не удалось создать файл-пример: %1$s</string>
+    <string name="editor_error_reopen">Не удалось снова открыть %1$s: %2$s</string>
+    <string name="editor_reason_permission_lost">доступ утерян</string>
+    <string name="editor_reason_unavailable">недоступен</string>
+    <string name="editor_error_too_large">файл больше %1$d МБ</string>
+
+    <!-- Files -->
+    <string name="files_open_external">Открыть внешний…</string>
+    <string name="files_empty_folder">Папка пуста</string>
+    <string name="files_up_one_folder">На уровень выше</string>
+    <string name="files_folder">Папка</string>
+    <string name="files_file">Файл</string>
+    <string name="files_more_options">Действия с %1$s</string>
+    <string name="files_new">Создать</string>
+    <string name="files_new_file">Новый файл</string>
+    <string name="files_new_folder">Новая папка</string>
+    <string name="files_rename_file">Переименовать файл</string>
+    <string name="files_rename_folder">Переименовать папку</string>
+    <string name="files_name">Имя</string>
+    <string name="files_delete_file_title">Удалить файл?</string>
+    <string name="files_delete_folder_title">Удалить папку?</string>
+    <string name="files_delete_file_text">Файл «%1$s» будет удалён безвозвратно.</string>
+    <string name="files_delete_folder_text">Папка «%1$s» и всё её содержимое будут удалены безвозвратно.</string>
+    <string name="name_error_empty">Имя не может быть пустым</string>
+    <string name="name_error_dots">Имя не может быть «.» или «..»</string>
+    <string name="name_error_separator">Имя не может содержать / или \\</string>
+    <string name="name_error_invalid_char">Имя содержит недопустимый символ</string>
+    <string name="name_error_too_long">Слишком длинное имя</string>
+    <string name="files_error_already_exists">«%1$s» уже существует</string>
+    <string name="files_error_create_folder">Не удалось создать папку «%1$s»</string>
+    <string name="files_error_folder_missing">Папка не существует</string>
+    <string name="files_error_does_not_exist">«%1$s» не существует</string>
+    <string name="files_error_rename">Не удалось переименовать «%1$s»</string>
+    <string name="files_error_delete">Не удалось удалить «%1$s»</string>
+    <string name="files_error_outside">Путь вне папки проектов</string>
+    <string name="files_error_root">Саму папку проектов изменить нельзя</string>
+    <string name="files_error_failed">Не удалось выполнить действие</string>
+
+    <!-- Pip -->
+    <string name="pip_tab_install">Установить</string>
+    <string name="pip_tab_installed">Установленные</string>
+    <string name="pip_package">Пакет</string>
+    <string name="pip_package_hint">например, requests или six==1.16.0</string>
+    <string name="pip_install">Установить</string>
+    <string name="pip_installed_spec">Установлен %1$s</string>
+    <string name="pip_install_failed">Установка не удалась</string>
+    <string name="pip_intro">Пакеты для ваших скриптов устанавливаются из PyPI.</string>
+    <string name="pip_pure_python_hint">Пока поддерживаются только пакеты на чистом Python.</string>
+    <string name="pip_no_packages">Установленных пакетов пока нет</string>
+    <string name="pip_uninstall">Удалить</string>
+    <string name="pip_uninstall_title">Удалить %1$s?</string>
+    <string name="pip_uninstall_text">Версия %1$s будет удалена.</string>
+    <string name="pip_setting_up">Настройка pip (первый запуск)…</string>
+    <string name="pip_spec_empty">Введите имя пакета</string>
+    <string name="pip_spec_spaces">Устанавливайте по одному пакету, без пробелов</string>
+    <string name="pip_spec_options">Параметры здесь не поддерживаются</string>
+    <string name="pip_spec_invalid">Введите имя пакета, например six или requests==2.32.3</string>
+
+    <!-- Samples -->
+    <string name="samples_open_failed">Не удалось открыть пример: %1$s</string>
+
+    <!-- Settings -->
+    <string name="settings_section_editor">Редактор</string>
+    <string name="settings_section_app">Приложение</string>
+    <string name="settings_font_size">Размер шрифта</string>
+    <string name="settings_font_size_range">%1$d–%2$d sp</string>
+    <string name="settings_smaller">Меньше</string>
+    <string name="settings_larger">Больше</string>
+    <string name="settings_word_wrap">Перенос строк</string>
+    <string name="settings_word_wrap_summary">Переносить длинные строки вместо прокрутки вбок</string>
+    <string name="settings_line_numbers">Номера строк</string>
+    <string name="settings_line_numbers_summary">Показывать номера строк в редакторе</string>
+    <string name="settings_keep_screen_on">Не выключать экран</string>
+    <string name="settings_keep_screen_on_summary">Экран не гаснет, пока вы редактируете</string>
+    <string name="settings_language">Язык</string>
+    <string name="language_system">Как в системе</string>
+
+    <!-- About -->
+    <string name="about_tagline_start">Python-разработка\u0020</string>
+    <string name="about_tagline_end">где угодно.</string>
+    <string name="about_version">Версия %1$s</string>
+    <string name="about_description">Бесплатная IDE для Python 3 на Android с открытым исходным кодом. Пишите и запускайте Python-скрипты на телефоне — полностью офлайн.</string>
+    <string name="about_links">Ссылки</string>
+    <string name="about_source_code">Исходный код на GitHub</string>
+    <string name="about_telegram">Канал в Telegram</string>
+    <string name="about_license">Лицензия</string>
+    <string name="about_license_text">SkyPython — свободное ПО; подробности в файле LICENSE в исходном коде.</string>
+    <string name="about_third_party">Сторонние компоненты</string>
+    <string name="about_notice_grammar">Грамматика MagicPython</string>
+    <string name="about_notice_theme">Тема VS Code Dark+</string>
+    <string name="about_notice_terminal">Termux terminal-emulator и terminal-view</string>
+    <string name="about_slogan">\u0020· Идеи. Код. Будущее.</string>
+    <string name="about_no_app_for_link">Нет приложения, чтобы открыть %1$s</string>
+
+    <!-- Share -->
+    <string name="share_cannot_share">Этим файлом нельзя поделиться</string>
+    <string name="share_chooser_title">Поделиться %1$s</string>
+    <string name="share_no_app">Нет приложения, чтобы поделиться файлом</string>
+</resources>

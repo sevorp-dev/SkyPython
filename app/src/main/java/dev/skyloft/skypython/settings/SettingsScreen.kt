@@ -54,6 +54,25 @@ import dev.skyloft.skypython.ui.theme.OutlinedIconTile
 import dev.skyloft.skypython.ui.theme.SectionLabel
 import dev.skyloft.skypython.ui.theme.brandSwitchColors
 import kotlinx.coroutines.launch
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import dev.skyloft.skypython.R
+import dev.skyloft.skypython.locale.AppLanguage
+import dev.skyloft.skypython.locale.AppLocale
+import dev.skyloft.skypython.ui.theme.ElectricBlue
 
 /** Settings list. Changes are saved immediately. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,7 +86,7 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
 
     Scaffold(
         topBar = {
-            SkyTopBar(title = "Settings", onBack = onBack)
+            SkyTopBar(title = stringResource(R.string.title_settings), onBack = onBack)
         },
     ) { padding ->
         val s = settings ?: return@Scaffold // wait for the first read so switches don't flicker
@@ -77,7 +96,7 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 .padding(padding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            SectionTitle("Editor")
+            SectionTitle(stringResource(R.string.settings_section_editor))
             FontSizeRow(
                 sizeSp = s.fontSizeSp,
                 onChange = { sp -> update { it.copy(fontSizeSp = clampFontSize(sp)) } },
@@ -86,15 +105,15 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
             HorizontalDivider(Modifier.padding(top = 12.dp), color = DividerNavy)
             SwitchRow(
                 icon = Icons.AutoMirrored.Filled.WrapText,
-                title = "Word wrap",
-                summary = "Wrap long lines instead of scrolling sideways",
+                title = stringResource(R.string.settings_word_wrap),
+                summary = stringResource(R.string.settings_word_wrap_summary),
                 checked = s.wordWrap,
                 onChange = { v -> update { it.copy(wordWrap = v) } },
             )
             SwitchRow(
                 icon = Icons.Filled.FormatListNumbered,
-                title = "Line numbers",
-                summary = "Show line numbers in the editor",
+                title = stringResource(R.string.settings_line_numbers),
+                summary = stringResource(R.string.settings_line_numbers_summary),
                 checked = s.lineNumbers,
                 onChange = { v -> update { it.copy(lineNumbers = v) } },
             )
@@ -107,11 +126,14 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
             )
             SwitchRow(
                 icon = Icons.Filled.LightMode,
-                title = "Keep screen on",
-                summary = "Don't let the screen turn off while editing",
+                title = stringResource(R.string.settings_keep_screen_on),
+                summary = stringResource(R.string.settings_keep_screen_on_summary),
                 checked = s.keepScreenOn,
                 onChange = { v -> update { it.copy(keepScreenOn = v) } },
             )
+            HorizontalDivider(color = DividerNavy)
+            SectionTitle(stringResource(R.string.settings_section_app))
+            LanguageRow()
         }
     }
 }
@@ -132,15 +154,15 @@ private fun FontSizeRow(sizeSp: Int, onChange: (Int) -> Unit) {
         OutlinedIconTile(Icons.Filled.TextFields, size = 40.dp)
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
-            Text("Font size", style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.settings_font_size), style = MaterialTheme.typography.bodyLarge)
             Text(
-                "$MIN_FONT_SIZE_SP–$MAX_FONT_SIZE_SP sp",
+                stringResource(R.string.settings_font_size_range, MIN_FONT_SIZE_SP, MAX_FONT_SIZE_SP),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         IconButton(onClick = { onChange(sizeSp - 1) }, enabled = sizeSp > MIN_FONT_SIZE_SP) {
-            Icon(Icons.Filled.Remove, contentDescription = "Smaller")
+            Icon(Icons.Filled.Remove, contentDescription = stringResource(R.string.settings_smaller))
         }
         Text(
             "$sizeSp",
@@ -149,7 +171,7 @@ private fun FontSizeRow(sizeSp: Int, onChange: (Int) -> Unit) {
             textAlign = TextAlign.Center,
         )
         IconButton(onClick = { onChange(sizeSp + 1) }, enabled = sizeSp < MAX_FONT_SIZE_SP) {
-            Icon(Icons.Filled.Add, contentDescription = "Larger")
+            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.settings_larger))
         }
     }
 }
@@ -202,4 +224,76 @@ private fun SwitchRow(
         }
         Switch(checked = checked, onCheckedChange = onChange, colors = brandSwitchColors())
     }
+}
+
+@Composable
+private fun AppLanguage.label(): String = when (this) {
+    AppLanguage.System -> stringResource(R.string.language_system)
+    AppLanguage.English -> stringResource(R.string.language_english)
+    AppLanguage.Russian -> stringResource(R.string.language_russian)
+}
+
+/** App language: System / English / Русский. Choosing one recreates the screen in it. */
+@Composable
+private fun LanguageRow() {
+    val context = LocalContext.current
+    val current = remember { AppLocale.current(context) }
+    var open by remember { mutableStateOf(false) }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable { open = true }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        OutlinedIconTile(Icons.Filled.Language, size = 40.dp)
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.bodyLarge)
+            Text(current.label(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+    if (!open) return
+    AlertDialog(
+        onDismissRequest = { open = false },
+        title = { Text(stringResource(R.string.settings_language)) },
+        text = {
+            Column(Modifier.selectableGroup()) {
+                AppLanguage.entries.forEach { language ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = language == current,
+                                role = Role.RadioButton,
+                                onClick = {
+                                    open = false
+                                    if (language != current) context.findActivity()?.let { AppLocale.set(it, language) }
+                                },
+                            )
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        RadioButton(
+                            selected = language == current,
+                            onClick = null,
+                            colors = RadioButtonDefaults.colors(selectedColor = ElectricBlue),
+                        )
+                        Text(language.label(), style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = { open = false }) { Text(stringResource(R.string.action_cancel)) }
+        },
+    )
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }

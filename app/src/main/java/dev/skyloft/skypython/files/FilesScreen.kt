@@ -83,6 +83,8 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import java.io.File
+import androidx.compose.ui.res.stringResource
+import dev.skyloft.skypython.R
 
 private val OPEN_MIME_TYPES = arrayOf("text/*", "application/octet-stream")
 
@@ -152,8 +154,8 @@ fun FilesScreen(
     when (val d = dialog) {
         null -> Unit
         FilesDialog.NewFile -> NameDialog(
-            title = "New file",
-            confirmLabel = "Create",
+            title = stringResource(R.string.files_new_file),
+            confirmLabel = stringResource(R.string.action_create),
             initial = "",
             serverError = dialogError,
             onClearServerError = { dialogError = null },
@@ -161,8 +163,8 @@ fun FilesScreen(
             onDismiss = ::closeDialog,
         )
         FilesDialog.NewFolder -> NameDialog(
-            title = "New folder",
-            confirmLabel = "Create",
+            title = stringResource(R.string.files_new_folder),
+            confirmLabel = stringResource(R.string.action_create),
             initial = "",
             serverError = dialogError,
             onClearServerError = { dialogError = null },
@@ -170,8 +172,8 @@ fun FilesScreen(
             onDismiss = ::closeDialog,
         )
         is FilesDialog.Rename -> NameDialog(
-            title = if (d.entry.isDirectory) "Rename folder" else "Rename file",
-            confirmLabel = "Rename",
+            title = stringResource(if (d.entry.isDirectory) R.string.files_rename_folder else R.string.files_rename_file),
+            confirmLabel = stringResource(R.string.action_rename),
             initial = d.entry.name,
             serverError = dialogError,
             onClearServerError = { dialogError = null },
@@ -238,12 +240,12 @@ private fun FilesContent(
         containerColor = EditorBackground,
         topBar = {
             SkyTopBar(
-                title = "Files",
+                title = stringResource(R.string.title_files),
                 onBack = onBack,
                 glow = false,
                 actions = {
                     IconButton(onClick = onOpenExternal) {
-                        Icon(Icons.Filled.FileOpen, contentDescription = "Open external…")
+                        Icon(Icons.Filled.FileOpen, contentDescription = stringResource(R.string.files_open_external))
                     }
                 },
             )
@@ -261,7 +263,7 @@ private fun FilesContent(
             if (state.entries.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        "This folder is empty",
+                        stringResource(R.string.files_empty_folder),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -298,7 +300,7 @@ private fun Breadcrumbs(state: FilesState, onUp: () -> Unit, onNavigate: (File) 
         IconButton(onClick = onUp, enabled = state.canGoUp) {
             Icon(
                 Icons.Filled.ArrowUpward,
-                contentDescription = "Up one folder",
+                contentDescription = stringResource(R.string.files_up_one_folder),
                 tint = if (state.canGoUp) Color.White else MutedText.copy(alpha = 0.4f),
             )
         }
@@ -321,7 +323,7 @@ private fun Breadcrumbs(state: FilesState, onUp: () -> Unit, onNavigate: (File) 
                 TextButton(onClick = { onNavigate(crumb.dir) }, enabled = !isLast) {
                     Text(
                         // The root is called "Projects" everywhere else (editor subtitle).
-                        if (index == 0) PROJECTS_LABEL else crumb.label,
+                        if (index == 0) stringResource(R.string.projects_label) else crumb.label,
                         maxLines = 1,
                         color = if (isLast) Color.White else MutedText,
                         fontWeight = if (isLast) FontWeight.Medium else FontWeight.Normal,
@@ -345,7 +347,7 @@ private fun EntryRow(entry: FileEntry, onClick: () -> Unit, onRename: () -> Unit
                     entry.name.endsWith(".py") -> Icons.Filled.Code
                     else -> Icons.Filled.Description
                 },
-                contentDescription = if (entry.isDirectory) "Folder" else "File",
+                contentDescription = stringResource(if (entry.isDirectory) R.string.files_folder else R.string.files_file),
                 tint = if (entry.isDirectory) SoftViolet else MaterialTheme.colorScheme.primary,
             )
         },
@@ -353,11 +355,11 @@ private fun EntryRow(entry: FileEntry, onClick: () -> Unit, onRename: () -> Unit
         trailingContent = {
             Box {
                 IconButton(onClick = { menuOpen = true }) {
-                    Icon(Icons.Filled.MoreVert, contentDescription = "More options for ${entry.name}")
+                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.files_more_options, entry.name))
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                     DropdownMenuItem(
-                        text = { Text("Rename") },
+                        text = { Text(stringResource(R.string.action_rename)) },
                         leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
                         onClick = {
                             menuOpen = false
@@ -365,7 +367,7 @@ private fun EntryRow(entry: FileEntry, onClick: () -> Unit, onRename: () -> Unit
                         },
                     )
                     DropdownMenuItem(
-                        text = { Text("Delete") },
+                        text = { Text(stringResource(R.string.action_delete)) },
                         leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null) },
                         onClick = {
                             menuOpen = false
@@ -382,10 +384,10 @@ private fun EntryRow(entry: FileEntry, onClick: () -> Unit, onRename: () -> Unit
 private fun NewItemFab(onNewFile: () -> Unit, onNewFolder: () -> Unit) {
     var menuOpen by remember { mutableStateOf(false) }
     Box {
-        GradientFab(onClick = { menuOpen = true }, icon = Icons.Filled.Add, contentDescription = "New")
+        GradientFab(onClick = { menuOpen = true }, icon = Icons.Filled.Add, contentDescription = stringResource(R.string.files_new))
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
             DropdownMenuItem(
-                text = { Text("New file") },
+                text = { Text(stringResource(R.string.files_new_file)) },
                 leadingIcon = { Icon(Icons.AutoMirrored.Filled.NoteAdd, contentDescription = null) },
                 onClick = {
                     menuOpen = false
@@ -393,7 +395,7 @@ private fun NewItemFab(onNewFile: () -> Unit, onNewFolder: () -> Unit) {
                 },
             )
             DropdownMenuItem(
-                text = { Text("New folder") },
+                text = { Text(stringResource(R.string.files_new_folder)) },
                 leadingIcon = { Icon(Icons.Filled.CreateNewFolder, contentDescription = null) },
                 onClick = {
                     menuOpen = false
@@ -428,7 +430,7 @@ private fun NameDialog(
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
     val trimmed = value.text.trim()
-    val localError = if (value.text.isEmpty()) null else nameError(trimmed)
+    val localError = if (value.text.isEmpty()) null else nameProblem(trimmed)?.let { stringResource(it.messageRes()) }
     val error = localError ?: serverError
     val canConfirm = trimmed.isNotEmpty() && localError == null
 
@@ -445,7 +447,7 @@ private fun NameDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester),
-                label = { Text("Name") },
+                label = { Text(stringResource(R.string.files_name)) },
                 singleLine = true,
                 isError = error != null,
                 supportingText = error?.let { { Text(it) } },
@@ -462,7 +464,7 @@ private fun NameDialog(
         confirmButton = {
             TextButton(onClick = { onConfirm(trimmed) }, enabled = canConfirm) { Text(confirmLabel) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
@@ -470,22 +472,21 @@ private fun NameDialog(
 private fun DeleteDialog(entry: FileEntry, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (entry.isDirectory) "Delete folder?" else "Delete file?") },
+        title = { Text(stringResource(if (entry.isDirectory) R.string.files_delete_folder_title else R.string.files_delete_file_title)) },
         text = {
             Text(
-                if (entry.isDirectory) {
-                    "\"${entry.name}\" and everything inside it will be permanently deleted."
-                } else {
-                    "\"${entry.name}\" will be permanently deleted."
-                },
+                stringResource(
+                    if (entry.isDirectory) R.string.files_delete_folder_text else R.string.files_delete_file_text,
+                    entry.name,
+                ),
             )
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("Delete", color = MaterialTheme.colorScheme.error)
+                Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 

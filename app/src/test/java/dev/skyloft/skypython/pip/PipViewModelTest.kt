@@ -133,7 +133,6 @@ class PipViewModelTest {
         val outcome = state.outcome as InstallOutcome.Failed
         assertTrue(outcome.buildFailure)
         assertTrue(state.log.contains("pip exited with code 1"))
-        assertEquals("Only pure-Python packages are supported for now.", PipViewModel.PURE_PYTHON_HINT)
     }
 
     @Test

@@ -1,6 +1,8 @@
 package dev.skyloft.skypython.pip
 
 import android.content.Context
+import dev.skyloft.skypython.R
+import dev.skyloft.skypython.locale.AppLocale
 import dev.skyloft.skypython.runtime.ConsoleEvent
 import dev.skyloft.skypython.runtime.PythonInstaller
 import dev.skyloft.skypython.runtime.PythonPaths
@@ -38,6 +40,8 @@ class PipFailedException(val exitCode: Int?, message: String) : Exception(messag
 class PipRepository(
     private val install: suspend () -> Result<PythonPaths>,
     private val runnerFor: (PythonPaths) -> PipRunner,
+    /** First line of the log while pip is bootstrapped. */
+    private val setupMessage: () -> String = { "Setting up pip (first run)…" },
 ) : PipManager {
 
     private val lock = Mutex()
@@ -94,7 +98,7 @@ class PipRepository(
     private suspend fun bootstrap(p: PythonPaths, log: suspend (String) -> Unit) {
         val marker = File(p.userBase, MARKER)
         if (withContext(Dispatchers.IO) { marker.isFile }) return
-        log("Setting up pip (first run)…\n")
+        log(setupMessage() + "\n")
         run(p, "ensurepip", listOf("--user", "--default-pip"), log).orThrow("ensurepip")
         withContext(Dispatchers.IO) {
             p.userBase.mkdirs()
@@ -164,6 +168,7 @@ class PipRepository(
             return PipRepository(
                 install = installer::ensureInstalled,
                 runnerFor = { PythonPipRunner(it, File(app.cacheDir, "pip")) },
+                setupMessage = { AppLocale.string(app, R.string.pip_setting_up) },
             )
         }
     }
