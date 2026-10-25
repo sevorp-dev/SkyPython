@@ -82,6 +82,7 @@ import dev.skyloft.skypython.ui.theme.Slate
 import dev.skyloft.skypython.ui.theme.SlateLine
 import dev.skyloft.skypython.ui.theme.SlatePanel
 import dev.skyloft.skypython.ui.theme.TextBright
+import dev.skyloft.skypython.update.UpdateDot
 
 /** Texts of the drawer header; [line] and [offset] are null when no file is open. */
 data class DrawerHeader(val title: String, val line: String?, val offset: String?)
@@ -176,6 +177,8 @@ fun SkyDrawer(
     symbol: String? = null,
     /** The open project's name, under the file card; null hides the line. */
     projectName: String? = null,
+    /** Rows that get an orange dot (About, when an update is waiting). */
+    badges: Set<DrawerAction> = emptySet(),
     onAction: (DrawerAction) -> Unit,
 ) {
     val context = LocalContext.current
@@ -256,7 +259,7 @@ fun SkyDrawer(
                                 Modifier.padding(start = 12.dp, top = 10.dp, bottom = 6.dp),
                             )
                             section.actions.forEach { action ->
-                                DrawerItem(action, selected = action == current) { onAction(action) }
+                                DrawerItem(action, selected = action == current, badge = action in badges) { onAction(action) }
                             }
                         }
                         Spacer(Modifier.height(8.dp))
@@ -323,7 +326,7 @@ private fun FileCard(header: DrawerHeader, symbol: String?) {
 }
 
 @Composable
-private fun DrawerItem(action: DrawerAction, selected: Boolean, onClick: () -> Unit) {
+private fun DrawerItem(action: DrawerAction, selected: Boolean, badge: Boolean = false, onClick: () -> Unit) {
     val shape = RoundedCornerShape(12.dp)
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -352,6 +355,10 @@ private fun DrawerItem(action: DrawerAction, selected: Boolean, onClick: () -> U
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
+        if (badge) {
+            UpdateDot()
+            Spacer(Modifier.width(8.dp))
+        }
         Chevron()
     }
 }

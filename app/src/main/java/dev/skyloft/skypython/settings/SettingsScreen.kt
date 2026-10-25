@@ -111,7 +111,12 @@ import dev.skyloft.skypython.ui.theme.Orange
 /** Settings list. Changes are saved immediately. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
+fun SettingsScreen(
+    store: SettingsStore,
+    onBack: () -> Unit,
+    /** The "Updates" section (the updater's own), at the end. */
+    updates: @Composable () -> Unit = {},
+) {
     val settings by store.settings.collectAsState(initial = null)
     // Not this screen's scope: a change made just before leaving must still be written.
     fun update(transform: (EditorSettings) -> EditorSettings) = store.launchUpdate(transform)
@@ -239,6 +244,7 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 onChange = { v -> update { it.copy(bottomNavBar = v) } },
             )
             }
+            updates()
         }
     }
 }

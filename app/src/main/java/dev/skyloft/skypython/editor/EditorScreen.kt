@@ -126,6 +126,8 @@ import androidx.compose.material.icons.automirrored.outlined.CallMade
 import dev.skyloft.skypython.settings.EditorSettings
 import dev.skyloft.skypython.ui.drawer.DrawerAction
 import dev.skyloft.skypython.ui.drawer.SkyDrawer
+import dev.skyloft.skypython.update.UpdateDot
+import androidx.compose.foundation.layout.offset
 import dev.skyloft.skypython.ui.theme.SlateBar
 import dev.skyloft.skypython.ui.theme.BrandText
 import dev.skyloft.skypython.ui.theme.Hairline
@@ -175,6 +177,10 @@ fun EditorScreen(
     onDrawerOpenChange: (Boolean) -> Unit = {},
     /** The open project's name, shown in the drawer (null: not shown). */
     projectName: String? = null,
+    /** Under the top bar, above the code (the update banner). */
+    notice: (@Composable () -> Unit)? = null,
+    /** Drawer rows with a dot (About, when an update is waiting); ☰ gets one too. */
+    drawerBadges: Set<DrawerAction> = emptySet(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
@@ -409,6 +415,7 @@ fun EditorScreen(
                 cursor = cursor.value,
                 symbol = drawerSymbol,
                 projectName = projectName,
+                badges = drawerBadges,
                 onClose = { scope.launch { drawerState.close() } },
             ) { action ->
                 scope.launch { drawerState.close() }
@@ -426,7 +433,10 @@ fun EditorScreen(
                         colors = skyTopBarColors(),
                         navigationIcon = {
                             IconButton(onClick = { controller.hideKeyboard(); scope.launch { drawerState.open() } }) {
-                                Icon(Icons.Outlined.Menu, contentDescription = stringResource(R.string.editor_menu))
+                                Box {
+                                    Icon(Icons.Outlined.Menu, contentDescription = stringResource(R.string.editor_menu))
+                                    if (drawerBadges.isNotEmpty()) UpdateDot(Modifier.align(Alignment.TopEnd).offset(x = 3.dp, y = (-2).dp))
+                                }
                             }
                         },
                         title = { EditorTitle(current, viewModel.projectsRoot) },
@@ -527,6 +537,7 @@ fun EditorScreen(
                         )
                     }
                     Hairline()
+                    notice?.invoke()
                     if (findOpen && current != null) {
                         FindBar(
                             controller = controller,

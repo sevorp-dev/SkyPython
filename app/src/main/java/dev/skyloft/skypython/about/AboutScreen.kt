@@ -84,7 +84,12 @@ private val NOTICES = listOf(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AboutScreen(onBack: () -> Unit, onReport: () -> Unit = {}) {
+fun AboutScreen(
+    onBack: () -> Unit,
+    onReport: () -> Unit = {},
+    /** "Check for updates" (the updater's own card), under the version. */
+    updates: @Composable () -> Unit = {},
+) {
     val context = LocalContext.current
     val version = remember { appVersion(context) }
 
@@ -131,6 +136,7 @@ fun AboutScreen(onBack: () -> Unit, onReport: () -> Unit = {}) {
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
+            updates()
             SectionTitle(stringResource(R.string.about_links))
             CardGroup {
                 LinkRow(Icons.Outlined.Code, stringResource(R.string.about_source_code), GITHUB_URL) { openUrl(context, GITHUB_URL) }
