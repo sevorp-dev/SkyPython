@@ -111,6 +111,18 @@ fun brandButtonColors() = ButtonDefaults.buttonColors(
 )
 
 /**
+ * Tonal buttons for actions repeated down a list (Install on each package): an orange wash with
+ * orange text, so a screen of them stays calm and the one filled button still leads.
+ */
+@Composable
+fun brandTonalButtonColors() = ButtonDefaults.buttonColors(
+    containerColor = Color(0x2EF28C38),
+    contentColor = OrangeSoft,
+    disabledContainerColor = SlateRaised,
+    disabledContentColor = MutedText,
+)
+
+/**
  * Icon on a quiet rounded square with a hairline border (list leading icons, settings rows).
  * Neutral by default so the orange accent stays rare; [accent] tints it for the selected row.
  */

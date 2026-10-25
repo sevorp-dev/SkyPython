@@ -113,6 +113,7 @@ import dev.skyloft.skypython.ui.theme.SlateRaised
 import dev.skyloft.skypython.ui.theme.StatusChip
 import dev.skyloft.skypython.ui.theme.SuccessGreen
 import dev.skyloft.skypython.ui.theme.brandButtonColors
+import dev.skyloft.skypython.ui.theme.brandTonalButtonColors
 import dev.skyloft.skypython.ui.theme.floatingOutline
 import dev.skyloft.skypython.ui.theme.skyFieldColors
 import kotlinx.coroutines.Dispatchers
@@ -581,7 +582,8 @@ private fun PopularCard(
                 else -> Button(
                     onClick = onInstall,
                     enabled = !busy,
-                    colors = brandButtonColors(),
+                    // Tonal down the list; the prebuilt highlight gets the filled one.
+                    colors = if (action == PopularAction.Prebuilt) brandButtonColors() else brandTonalButtonColors(),
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     modifier = Modifier.height(36.dp).testTag(popularInstallTag(pkg.name)),
                 ) { Text(stringResource(R.string.pip_install), fontSize = 14.sp) }
@@ -774,7 +776,7 @@ private fun PackageCard(
                     Button(
                         onClick = onUpgrade,
                         enabled = enabled,
-                        colors = brandButtonColors(),
+                        colors = brandTonalButtonColors(),
                         contentPadding = PaddingValues(horizontal = 14.dp),
                         modifier = Modifier.height(36.dp),
                     ) { Text(stringResource(R.string.pip_upgrade), fontSize = 14.sp) }
@@ -944,7 +946,7 @@ private fun FileCard(file: File, projectsRoot: File?, enabled: Boolean, onInstal
             Button(
                 onClick = onInstall,
                 enabled = enabled,
-                colors = brandButtonColors(),
+                colors = brandTonalButtonColors(),
                 contentPadding = PaddingValues(horizontal = 14.dp),
                 modifier = Modifier.height(36.dp),
             ) { Text(stringResource(R.string.pip_req_install), fontSize = 14.sp) }
