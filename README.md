@@ -39,6 +39,14 @@ Everything a mobile Python developer needs, in the open: a comfortable editor wi
 drawer, an interactive console, a terminal and a package manager — free of ads and premium
 walls, and built to work on as many phones as possible, including old and low-end ones.
 
+## 🆕 What's new in 0.0.2
+
+- 🌌 **Night-sky look** in the SkyPython colours, new app icon, round ▶ Run button
+- ☰ **Tool drawer** with Interpreter, Terminal, Pip, Samples, Settings and more
+- 📱 **Android 7.0+ and 32-bit phones**, ~14 MB download
+
+Full details for every version: [CHANGELOG.md](CHANGELOG.md).
+
 ## 🚀 Features
 
 | | |
@@ -53,6 +61,7 @@ walls, and built to work on as many phones as possible, including old and low-en
 | 🎓 **Samples** | Ready-to-run examples: input, loops, functions, classes, files, JSON, a small game. |
 | ⚙️ **Settings** | Font size, word wrap, line numbers, keep screen on. |
 | 🔗 **Share** | Send the current script to any app. |
+| 🌌 **Night-sky theme** | Deep navy, electric blue and violet — easy on the eyes, day and night. |
 
 Everything works **offline** except installing packages with pip.
 
