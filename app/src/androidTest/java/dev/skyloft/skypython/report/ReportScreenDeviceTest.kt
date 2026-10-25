@@ -4,7 +4,13 @@ import android.content.ClipboardManager
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.isFocused
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
@@ -12,8 +18,13 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.skyloft.skypython.R
 import dev.skyloft.skypython.settings.EditorSettings
@@ -59,6 +70,24 @@ class ReportScreenDeviceTest {
         rule.waitUntil(20_000) { Build.MODEL in rule.reportText() }
     }
 
+    /** What the screen looked like when an action had no effect, for the failure message. */
+    private fun diagnostics(): String = runCatching {
+        val button = rule.onNode(hasText(context.getString(R.string.report_share))).fetchSemanticsNode()
+        val root = rule.onRoot().fetchSemanticsNode()
+        val focused = rule.onAllNodes(isFocused()).fetchSemanticsNodes().map { it.config.getOrNull(SemanticsProperties.TestTag) }
+        val files = File(context.cacheDir, "reports").list()?.toList()
+        var window = ""
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val activity = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).firstOrNull()
+            val decor = activity?.window?.decorView
+            val insets = decor?.let { ViewCompat.getRootWindowInsets(it) }
+            window = "activity=${activity?.javaClass?.simpleName} windowFocus=${decor?.hasWindowFocus()}" +
+                " ime=${insets?.isVisible(WindowInsetsCompat.Type.ime())} imeBottom=${insets?.getInsets(WindowInsetsCompat.Type.ime())?.bottom}"
+        }
+        "button=${button.boundsInRoot} enabled=${SemanticsProperties.Disabled !in button.config} root=${root.boundsInRoot}" +
+            " focused=$focused $window share files=$files launched=${launched.size}"
+    }.getOrElse { "no diagnostics: $it" }
+
     @After fun cleanUp() {
         store.dir.deleteRecursively()
     }
@@ -67,10 +96,20 @@ class ReportScreenDeviceTest {
         store.add(crash)
         show(crash.id)
         rule.onNode(hasTestTag(REPORT_DESCRIPTION_TAG)).performTextInput("Tapped Run twice")
-        rule.onNode(hasText(context.getString(R.string.report_share))).performScrollTo().assertIsEnabled().performClick()
-        // The report file is written off the main thread, then the chooser starts.
-        // The share file is written off the main thread; slow emulators need a moment.
-        rule.waitUntil(20_000) { launched.isNotEmpty() }
+        // The button's own click action, not a synthetic tap: what is checked here is the intent.
+        // On CI's Android 16 emulator a tap now and then reached nothing (no file written, no
+        // intent) while the same tap worked everywhere else. The likely cause: a tap that lands
+        // while the scroll container is still moving (it keeps the focused field in view when
+        // its size changes) only stops the scroll, it does not click.
+        rule.onNode(hasText(context.getString(R.string.report_share))).performScrollTo().assertIsEnabled()
+            .performSemanticsAction(SemanticsActions.OnClick)
+        // The report file is written off the main thread, then the chooser starts: slow emulators
+        // need a moment. If nothing starts, the failure says what the screen looked like.
+        try {
+            rule.waitUntil(20_000) { launched.isNotEmpty() }
+        } catch (e: ComposeTimeoutException) {
+            throw AssertionError("share started nothing; ${diagnostics()}", e)
+        }
 
         val chooser = launched.single()
         assertEquals(Intent.ACTION_CHOOSER, chooser.action)

@@ -45,7 +45,8 @@ jobs:
         api-level: [24, 28, 30, 34, 36]
         arch: [x86_64]
         include:
-          # 32-bit Python (our own CPython build) on a 32-bit x86 emulator.
+          # 32-bit Python (our own CPython build) on a 32-bit x86 emulator. `arch` is also the
+          # only ABI the job builds (-Pskypython.abis), so it must be a real Android ABI name.
           - api-level: 28
             arch: x86
     steps:
@@ -72,14 +73,29 @@ jobs:
           # google_apis x86_64 images exist for every level in the matrix.
           target: google_apis
           disable-animations: true
-          script: ./gradlew connectedDebugAndroidTest --console=plain
+          # The default data partition is small: installing the APK with all four ABIs (~66 MB)
+          # next to the test APK and Python's files failed now and then on API 24
+          # ("Failed to install-write all apks").
+          disk-size: 4096M
+          # Only the emulator's own ABI (x86 or x86_64): a third of the APK to build and install.
+          # Also kept in a file: the summary below quotes its end when no test ran.
+          script: bash -o pipefail -c "./gradlew connectedDebugAndroidTest -Pskypython.abis=${{ matrix.arch }} --console=plain 2>&1 | tee instrumented.log"
 
       - name: Summarize instrumented tests
         if: always()
         run: |
           python3 - <<'PY'
           import glob, xml.etree.ElementTree as ET
-          for f in glob.glob('**/build/outputs/androidTest-results/connected/**/*.xml', recursive=True):
+          results = glob.glob('**/build/outputs/androidTest-results/connected/**/*.xml', recursive=True)
+          if not results:
+              # The emulator or Gradle stopped before any test ran: say where (logs need sign-in).
+              try:
+                  tail = ' | '.join(l.strip() for l in open('instrumented.log', errors='replace').read().splitlines()[-40:] if l.strip())
+                  detail = 'Gradle ended without results: ' + tail[-3000:]
+              except FileNotFoundError:
+                  detail = 'Gradle never started: the emulator setup failed'
+              print(f"::error title=API ${{ matrix.api-level }} ${{ matrix.arch }} no test results::{detail.replace('%', '%25')}")
+          for f in results:
               r = ET.parse(f).getroot()
               suites = [r] if r.tag == 'testsuite' else r.findall('testsuite')
               for s in suites:
@@ -96,6 +112,18 @@ jobs:
                           print(f"::error title=Failure detail {c.get('name')}::{detail}")
                           print(f"::error title=API ${{ matrix.api-level }} ${{ matrix.arch }} FAILED {c.get('classname')}.{c.get('name')}::failed")
           PY
+
+      # Step logs need a sign-in: when the emulator could not even be set up, put what the SDK
+      # tools say (and the free disk space) into annotations.
+      - name: Explain an emulator setup failure
+        if: failure() && hashFiles('instrumented.log') == ''
+        run: |
+          sdk="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          echo "::error title=disk::$(df -h / "$sdk" | tail -n +2 | tr '\n' ' ')"
+          echo "::error title=installed::$("$sdk/cmdline-tools/latest/bin/sdkmanager" --list_installed 2>&1 | grep -E 'system-images|emulator|platform-tools' | tr -s ' ' | tr '\n' ';' | cut -c1-2000)"
+          out=$(yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "system-images;android-${{ matrix.api-level }};google_apis;${{ matrix.arch }}" emulator platform-tools 2>&1 | grep -v '^\[' | tail -20 | tr '\n' ';')
+          echo "::error title=sdkmanager install::${out:0:3000}"
+          ls ~/.android/avd 2>&1 | tr '\n' ' ' | sed 's/^/::error title=avd::/'
 
       - uses: actions/upload-artifact@v5
         if: always()

@@ -44,6 +44,12 @@ public final class TerminalSession extends TerminalOutput {
      */
     private static final int MAX_BYTES_PER_MESSAGE = 64 * 1024;
     private static final long MAX_NANOS_PER_MESSAGE = 16_000_000L;
+    /**
+     * SkyPython: output given to the emulator at once, at most; the time budget is checked between
+     * slices. A few bytes can cost a whole screen (ESC # 8 fills it, a scroll region shifts it), so
+     * one 4 KiB read could take seconds on a slow phone before the budget was looked at again.
+     */
+    private static final int MAX_BYTES_PER_APPEND = 256;
 
     public final String mHandle = UUID.randomUUID().toString();
 
@@ -191,7 +197,11 @@ public final class TerminalSession extends TerminalOutput {
                         int read = termIn.read(buffer);
                         if (read == -1) return;
                         if (!mProcessToTerminalIOQueue.write(buffer, 0, read)) return;
-                        mMainThreadHandler.sendEmptyMessage(MSG_NEW_INPUT);
+                        // SkyPython: one wake-up at a time. A message per read piled up behind
+                        // a slow drain, and everything posted to the main thread (UI, Stop)
+                        // waited behind all of them. A queued message reads all that is there;
+                        // the one being handled is no longer queued, so nothing is missed.
+                        if (!mMainThreadHandler.hasMessages(MSG_NEW_INPUT)) mMainThreadHandler.sendEmptyMessage(MSG_NEW_INPUT);
                     }
                 } catch (Exception e) {
                     // Ignore, just shutting down.
@@ -425,7 +435,8 @@ public final class TerminalSession extends TerminalOutput {
     @SuppressLint("HandlerLeak")
     class MainThreadHandler extends Handler {
 
-        final byte[] mReceiveBuffer = new byte[4 * 1024];
+        /** SkyPython: one slice ({@link #MAX_BYTES_PER_APPEND}) per read, so the time budget holds. */
+        final byte[] mReceiveBuffer = new byte[MAX_BYTES_PER_APPEND];
 
         /**
          * SkyPython: passes queued output to the emulator, at most one budget's worth.
