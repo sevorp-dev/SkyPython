@@ -36,6 +36,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import dev.skyloft.skypython.share.shareFile
 import dev.skyloft.skypython.share.shareFolder
+import dev.skyloft.skypython.share.openWith
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.Image
 import kotlinx.coroutines.launch
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -101,12 +106,15 @@ private sealed interface FilesDialog {
     data object NewFolder : FilesDialog
     data class Rename(val entry: FileEntry) : FilesDialog
     data class Delete(val entry: FileEntry) : FilesDialog
+    /** A file the app can't show (not text, not a picture): Share or Open with…. */
+    data class Unsupported(val entry: FileEntry) : FilesDialog
 }
 
 /**
  * File manager for the workspace (`filesDir/projects`).
  *
- * @param onOpenFile a workspace file was tapped; the caller opens it and navigates back to the editor.
+ * @param onOpenFile a workspace text file was tapped; the caller opens it and navigates back to the editor.
+ * @param onOpenImage a picture was tapped; the caller shows it in the image viewer.
  * @param onOpenExternal a document was picked via SAF; a persistable permission has already been requested.
  * @param onDeleted a file or folder was deleted (folders recursively) so the editor can close affected tabs.
  * @param onBack leave the Files screen.
@@ -120,6 +128,7 @@ fun FilesScreen(
     onDeleted: (File) -> Unit,
     onBack: () -> Unit,
     onRenamed: (old: File, new: File) -> Unit = { _, _ -> },
+    onOpenImage: (File) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -151,7 +160,20 @@ fun FilesScreen(
         onBack = onBack,
         onUp = viewModel::up,
         onNavigate = viewModel::enter,
-        onEntryClick = { entry -> if (entry.isDirectory) viewModel.enter(entry.file) else onOpenFile(entry.file) },
+        onEntryClick = { entry ->
+            if (entry.isDirectory) {
+                viewModel.enter(entry.file)
+            } else {
+                // An unknown extension is told by the file's first bytes: read off the main thread.
+                shareScope.launch {
+                    when (withContext(Dispatchers.IO) { FileKind.of(entry.file) }) {
+                        FileKind.Text -> onOpenFile(entry.file)
+                        FileKind.Image -> onOpenImage(entry.file)
+                        FileKind.Binary -> dialog = FilesDialog.Unsupported(entry)
+                    }
+                }
+            }
+        },
         onOpenExternal = { openDocument.launch(OPEN_MIME_TYPES) },
         onNewFile = { dialog = FilesDialog.NewFile },
         onNewFolder = { dialog = FilesDialog.NewFolder },
@@ -163,6 +185,7 @@ fun FilesScreen(
             if (entry.isDirectory) shareScope.launch { shareFolder(shareContext, entry.file) }
             else shareFile(shareContext, entry.file)
         },
+        onOpenWith = { entry -> openWith(shareContext, entry.file) },
     )
 
     when (val d = dialog) {
@@ -197,6 +220,18 @@ fun FilesScreen(
                     onOpResult(error)
                     if (error == null) onRenamed(d.entry.file, File(d.entry.file.parentFile, name.trim()))
                 }
+            },
+            onDismiss = ::closeDialog,
+        )
+        is FilesDialog.Unsupported -> UnsupportedDialog(
+            entry = d.entry,
+            onShare = {
+                closeDialog()
+                shareFile(shareContext, d.entry.file)
+            },
+            onOpenWith = {
+                closeDialog()
+                openWith(shareContext, d.entry.file)
             },
             onDismiss = ::closeDialog,
         )
@@ -243,6 +278,7 @@ private fun FilesContent(
     onDelete: (FileEntry) -> Unit,
     onErrorShown: () -> Unit,
     onShare: (FileEntry) -> Unit = {},
+    onOpenWith: (FileEntry) -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(state.error) {
@@ -295,6 +331,7 @@ private fun FilesContent(
                             onRename = { onRename(entry) },
                             onDelete = { onDelete(entry) },
                             onShare = { onShare(entry) },
+                            onOpenWith = { onOpenWith(entry) },
                         )
                         HorizontalDivider(Modifier.padding(start = 72.dp), color = SlateLine)
                     }
@@ -357,6 +394,7 @@ private fun EntryRow(
     onRename: () -> Unit,
     onDelete: () -> Unit,
     onShare: () -> Unit = {},
+    onOpenWith: () -> Unit = {},
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     ListItem(
@@ -367,6 +405,7 @@ private fun EntryRow(
                 when {
                     entry.isDirectory -> Icons.Outlined.Folder
                     entry.name.endsWith(".py") -> Icons.Outlined.Code
+                    FileKind.byName(entry.name) == FileKind.Image -> Icons.Outlined.Image
                     else -> Icons.Outlined.Description
                 },
                 contentDescription = stringResource(if (entry.isDirectory) R.string.files_folder else R.string.files_file),
@@ -388,6 +427,16 @@ private fun EntryRow(
                             onShare()
                         },
                     )
+                    if (!entry.isDirectory) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.open_with)) },
+                            leadingIcon = { Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null) },
+                            onClick = {
+                                menuOpen = false
+                                onOpenWith()
+                            },
+                        )
+                    }
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.action_rename)) },
                         leadingIcon = { Icon(Icons.Outlined.Edit, contentDescription = null) },
@@ -493,6 +542,23 @@ private fun NameDialog(
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(trimmed) }, enabled = canConfirm) { Text(confirmLabel) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+    )
+}
+
+/** "Can't open this file type": the file can still go to another app. */
+@Composable
+private fun UnsupportedDialog(entry: FileEntry, onShare: () -> Unit, onOpenWith: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.files_unsupported_title)) },
+        text = { Text(stringResource(R.string.files_unsupported_text, entry.name)) },
+        confirmButton = {
+            Row {
+                TextButton(onClick = onShare) { Text(stringResource(R.string.title_share)) }
+                TextButton(onClick = onOpenWith) { Text(stringResource(R.string.open_with)) }
+            }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
