@@ -268,10 +268,15 @@ class DebugClient(
         }
     }
 
+    private val closing = java.util.concurrent.atomic.AtomicBoolean(false)
+
     private fun closed() {
-        if (isClosed) return
+        // The read loop and a failed write can both get here: only the first one cleans up.
+        if (!closing.compareAndSet(false, true)) return
         isClosed = true
-        for (id in pending.keys.toList()) pending.remove(id)?.complete(GONE)
+        // Iterate the live map: a snapshot via toList() can throw when a caller removes its
+        // entry between the size check and the copy.
+        for (id in pending.keys) pending.remove(id)?.complete(GONE)
         eventChannel.trySend(DebugEvent.Disconnected)
         eventChannel.close()
     }
