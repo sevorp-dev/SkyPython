@@ -33,6 +33,8 @@ data class FilesState(
 class FilesViewModel(
     private val workspace: Workspace,
     private val io: CoroutineDispatcher = Dispatchers.IO,
+    /** Turns a failed operation into a message for the user (localized in the app). */
+    private val describe: (Throwable) -> String = { it.message ?: "Operation failed" },
 ) : ViewModel() {
 
     private val root: File = workspace.root.absoluteFile
@@ -86,7 +88,7 @@ class FilesViewModel(
     ) {
         viewModelScope.launch {
             val result = withContext(io) { op() }
-            val error = result.exceptionOrNull()?.let { it.message ?: "Operation failed" }
+            val error = result.exceptionOrNull()?.let(describe)
             if (error != null && reportInState) _state.update { it.copy(error = error) }
             onResult(error)
             load(_state.value.currentDir)
@@ -98,7 +100,7 @@ class FilesViewModel(
         loadJob = viewModelScope.launch {
             val next = withContext(io) { runCatching { snapshot(requested) } }
             next.onSuccess { snap -> _state.update { snap.copy(error = it.error) } }
-                .onFailure { e -> _state.update { it.copy(error = e.message ?: "Could not list folder") } }
+                .onFailure { e -> _state.update { it.copy(error = describe(e)) } }
         }
     }
 
@@ -127,13 +129,16 @@ class FilesViewModel(
         )
     }
 
-    class Factory(private val workspace: Workspace) : ViewModelProvider.Factory {
+    class Factory(
+        private val workspace: Workspace,
+        private val describe: (Throwable) -> String,
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(FilesViewModel::class.java)) {
                 "Unknown ViewModel class: ${modelClass.name}"
             }
-            return FilesViewModel(workspace) as T
+            return FilesViewModel(workspace, describe = describe) as T
         }
     }
 }

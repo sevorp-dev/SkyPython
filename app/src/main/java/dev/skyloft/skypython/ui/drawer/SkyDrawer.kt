@@ -52,25 +52,50 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.res.painterResource
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
 
 /** Texts of the drawer header; [line] and [offset] are null when no file is open. */
 data class DrawerHeader(val title: String, val line: String?, val offset: String?)
 
+/** Texts of the drawer header; English by default, localized by [SkyDrawer]. */
+class DrawerHeaderStrings(
+    val noFile: String = "No file open",
+    val line: (line: Int, total: Int) -> String = { line, total -> "Line: $line/$total" },
+    val offset: (column: Int) -> String = { "Line offset: $it" },
+)
+
 /** Drawer header: `Line: L/N` (1-based line of total) and `Line offset: C` (0-based column). */
-fun drawerHeader(fileName: String?, cursor: CursorPosition): DrawerHeader {
-    if (fileName == null) return DrawerHeader("No file open", null, null)
+fun drawerHeader(
+    fileName: String?,
+    cursor: CursorPosition,
+    strings: DrawerHeaderStrings = DrawerHeaderStrings(),
+): DrawerHeader {
+    if (fileName == null) return DrawerHeader(strings.noFile, null, null)
     val total = cursor.lineCount.coerceAtLeast(1)
     val line = (cursor.line + 1).coerceIn(1, total)
-    return DrawerHeader(fileName, "Line: $line/$total", "Line offset: ${cursor.column.coerceAtLeast(0)}")
+    return DrawerHeader(fileName, strings.line(line, total), strings.offset(cursor.column.coerceAtLeast(0)))
 }
 
-data class DrawerSection(val title: String, val actions: List<DrawerAction>)
+/** [title] is the English name (tests); [titleRes] is what the drawer shows. */
+data class DrawerSection(val title: String, @StringRes val titleRes: Int, val actions: List<DrawerAction>)
 
 val DRAWER_SECTIONS: List<DrawerSection> = listOf(
-    DrawerSection("Run", listOf(DrawerAction.Interpreter, DrawerAction.Terminal)),
-    DrawerSection("Tools", listOf(DrawerAction.Pip, DrawerAction.Share, DrawerAction.Samples)),
-    DrawerSection("Settings", listOf(DrawerAction.Settings, DrawerAction.About)),
+    DrawerSection("Run", R.string.drawer_section_run, listOf(DrawerAction.Interpreter, DrawerAction.Terminal)),
+    DrawerSection("Tools", R.string.drawer_section_tools, listOf(DrawerAction.Pip, DrawerAction.Share, DrawerAction.Samples)),
+    DrawerSection("Settings", R.string.drawer_section_settings, listOf(DrawerAction.Settings, DrawerAction.About)),
 )
+
+@StringRes
+private fun DrawerAction.labelRes(): Int = when (this) {
+    DrawerAction.Interpreter -> R.string.title_interpreter
+    DrawerAction.Terminal -> R.string.title_terminal
+    DrawerAction.Pip -> R.string.title_pip
+    DrawerAction.Share -> R.string.title_share
+    DrawerAction.Samples -> R.string.title_samples
+    DrawerAction.Settings -> R.string.title_settings
+    DrawerAction.About -> R.string.title_about
+}
 
 private val SheetColor = Color(0xFF0D1536)
 private val ItemText = TextBright
@@ -97,7 +122,18 @@ private fun DrawerAction.icon(): ImageVector = when (this) {
 /** Content of the left tool drawer: file/cursor header, then the Run / Tools / Settings sections. */
 @Composable
 fun SkyDrawer(fileName: String?, cursor: CursorPosition, onAction: (DrawerAction) -> Unit) {
-    val header = drawerHeader(fileName, cursor)
+    val noFile = stringResource(R.string.no_file_open)
+    val lineFormat = stringResource(R.string.drawer_line)
+    val offsetFormat = stringResource(R.string.drawer_line_offset)
+    val header = drawerHeader(
+        fileName,
+        cursor,
+        DrawerHeaderStrings(
+            noFile = noFile,
+            line = { line, total -> String.format(lineFormat, line, total) },
+            offset = { String.format(offsetFormat, it) },
+        ),
+    )
     ModalDrawerSheet(
         modifier = Modifier.fillMaxWidth(0.85f).widthIn(max = 360.dp),
         drawerShape = RectangleShape,
@@ -122,7 +158,7 @@ fun SkyDrawer(fileName: String?, cursor: CursorPosition, onAction: (DrawerAction
                     contentDescription = null,
                     modifier = Modifier.size(52.dp),
                 )
-                BrandText("SkyPython", fontSize = 24.sp)
+                BrandText(stringResource(R.string.app_name), fontSize = 24.sp)
             }
             Spacer(Modifier.height(8.dp))
             Text(
@@ -144,7 +180,7 @@ fun SkyDrawer(fileName: String?, cursor: CursorPosition, onAction: (DrawerAction
         Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding()) {
             DRAWER_SECTIONS.forEachIndexed { index, section ->
                 if (index > 0) HorizontalDivider(color = DividerColor)
-                SectionLabel(section.title, Modifier.padding(start = 16.dp, top = 16.dp, bottom = 6.dp))
+                SectionLabel(stringResource(section.titleRes), Modifier.padding(start = 16.dp, top = 16.dp, bottom = 6.dp))
                 section.actions.forEach { action ->
                     DrawerItem(action, action.ordinal) { onAction(action) }
                 }
@@ -166,6 +202,13 @@ private fun DrawerItem(action: DrawerAction, index: Int, onClick: () -> Unit) {
     ) {
         OutlinedIconTile(action.icon(), size = 36.dp, tint = if (index % 2 == 0) SkyBlue else SoftViolet)
         Spacer(Modifier.width(20.dp))
-        Text(action.name, color = ItemText, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+        Text(
+            stringResource(action.labelRes()),
+            color = ItemText,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }

@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import dev.skyloft.skypython.R
 
 /** Text painted with the brand cyan → blue → violet gradient, like the banner's "SkyPython". */
 @Composable
@@ -71,7 +73,7 @@ fun GradientFab(
 /** The Run button: a round [GradientFab] with a white ▶. */
 @Composable
 fun RunButton(onClick: () -> Unit, modifier: Modifier = Modifier, size: Dp = 64.dp, iconSize: Dp = 36.dp) {
-    GradientFab(onClick, Icons.Filled.PlayArrow, "Run", modifier, size, iconSize)
+    GradientFab(onClick, Icons.Filled.PlayArrow, stringResource(R.string.action_run), modifier, size, iconSize)
 }
 
 /** Filled buttons in electric blue with white text (4.5:1), like the banner's accents. */

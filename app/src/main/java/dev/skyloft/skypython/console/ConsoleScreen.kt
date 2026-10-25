@@ -55,6 +55,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import dev.skyloft.skypython.R
+import dev.skyloft.skypython.runTargetTitle
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.skyloft.skypython.ui.theme.DividerNavy
@@ -95,18 +98,18 @@ fun ConsoleScreen(viewModel: ConsoleViewModel, onBack: () -> Unit) {
         contentColor = ConsoleText,
         topBar = {
             SkyTopBar(
-                title = state.title ?: "Console",
+                title = consoleTitle(state.title),
                 onBack = onBack,
                 actions = {
                     if (state.running) {
                         // Gentle first: KeyboardInterrupt lets the script clean up; Stop kills it.
                         if (state.acceptsInput) InterruptButton(onClick = viewModel::interrupt)
                         IconButton(onClick = viewModel::stop) {
-                            Icon(Icons.Filled.Stop, contentDescription = "Stop", tint = ErrorRed)
+                            Icon(Icons.Filled.Stop, contentDescription = stringResource(R.string.action_stop), tint = ErrorRed)
                         }
                     } else {
                         IconButton(onClick = viewModel::restart) {
-                            Icon(Icons.Filled.Refresh, contentDescription = "Restart")
+                            Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.action_restart))
                         }
                     }
                 },
@@ -125,7 +128,7 @@ fun ConsoleScreen(viewModel: ConsoleViewModel, onBack: () -> Unit) {
                 when {
                     state.installError != null -> InstallError(state.installError!!, viewModel::retryInstall)
                     state.installing -> Installing()
-                    else -> ConsoleOutput(state.lines, state.version)
+                    else -> ConsoleOutput(state.lines, state.version, statusLineRegex())
                 }
             }
             HorizontalDivider(color = DividerNavy)
@@ -148,7 +151,7 @@ internal fun isNearBottom(lastVisibleIndex: Int, totalItems: Int, slack: Int = 1
     totalItems == 0 || lastVisibleIndex >= totalItems - 1 - slack
 
 @Composable
-private fun ConsoleOutput(lines: List<ConsoleLine>, version: Long) {
+private fun ConsoleOutput(lines: List<ConsoleLine>, version: Long, statusLine: Regex) {
     val listState = rememberLazyListState()
     // Follow output until the user scrolls away from the bottom; resume when they return.
     var follow by remember { mutableStateOf(true) }
@@ -177,18 +180,49 @@ private fun ConsoleOutput(lines: List<ConsoleLine>, version: Long) {
             modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
         ) {
             itemsIndexed(lines) { _, line ->
-                Text(text = remember(line) { line.toAnnotated() }, style = ConsoleTextStyle)
+                Text(text = remember(line, statusLine) { line.toAnnotated(statusLine) }, style = ConsoleTextStyle)
             }
         }
     }
 }
 
-/** The console's own status lines (exit footer, "[Cancelled]"), dimmed so program output stands out. */
-private val STATUS_LINE = Regex("""\[(Program finished, exit code -?\d+|Cancelled)]""")
+/** The console title: the script name, or the localized program name. */
+@Composable
+private fun consoleTitle(title: String?): String = when (title) {
+    null -> stringResource(R.string.title_console)
+    RunTarget.Interpreter.title -> runTargetTitle(RunTarget.Interpreter)
+    RunTarget.Terminal.title -> runTargetTitle(RunTarget.Terminal)
+    else -> title
+}
 
-private fun ConsoleLine.toAnnotated(): AnnotatedString = buildAnnotatedString {
+/**
+ * The console's own status lines (exit footer, "[Cancelled]"), in English and in the current
+ * language, dimmed so program output stands out.
+ */
+@Composable
+private fun statusLineRegex(): Regex {
+    val footer = stringResource(R.string.console_exit_footer)
+    val cancelled = stringResource(R.string.console_cancelled)
+    return remember(footer, cancelled) {
+        statusLineRegex(
+            // English too: lines printed before a language switch stay dimmed.
+            footers = listOf(footer, "[Program finished, exit code %1\$d]"),
+            cancelled = listOf(cancelled, ConsoleStrings.English.cancelled),
+        )
+    }
+}
+
+/** Matches any of [footers] (`%1$d` standing for the exit code) or of [cancelled]. */
+internal fun statusLineRegex(footers: List<String>, cancelled: List<String>): Regex {
+    val alternatives = footers.distinct().map { f ->
+        f.split("%1\$d").joinToString("""-?\d+""") { Regex.escape(it) }
+    } + cancelled.distinct().map { Regex.escape(it) }
+    return Regex(alternatives.joinToString("|"))
+}
+
+private fun ConsoleLine.toAnnotated(statusLine: Regex): AnnotatedString = buildAnnotatedString {
     val only = pieces.singleOrNull()
-    if (only != null && !only.isError && STATUS_LINE.matches(only.text)) {
+    if (only != null && !only.isError && statusLine.matches(only.text)) {
         withStyle(SpanStyle(color = ConsoleDim)) { append(only.text) }
         return@buildAnnotatedString
     }
@@ -223,7 +257,7 @@ private fun InputRow(enabled: Boolean, autoFocus: Boolean, onSend: (String) -> U
         )
         Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
             if (!enabled && text.isEmpty()) {
-                Text("Not running", style = ConsoleTextStyle.copy(color = ConsoleDim))
+                Text(stringResource(R.string.console_not_running), style = ConsoleTextStyle.copy(color = ConsoleDim))
             }
             BasicTextField(
                 value = text,
@@ -246,7 +280,7 @@ private fun InputRow(enabled: Boolean, autoFocus: Boolean, onSend: (String) -> U
         IconButton(onClick = send, enabled = enabled) {
             Icon(
                 Icons.AutoMirrored.Filled.Send,
-                contentDescription = "Send",
+                contentDescription = stringResource(R.string.action_send),
                 modifier = Modifier.size(18.dp),
                 tint = if (enabled) ConsolePrompt else ConsoleDim,
             )
@@ -262,7 +296,7 @@ internal fun Installing() {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         CircularProgressIndicator()
-        Text("Preparing Python…", Modifier.padding(top = 16.dp))
+        Text(stringResource(R.string.console_preparing_python), Modifier.padding(top = 16.dp))
     }
 }
 
@@ -273,18 +307,19 @@ internal fun InstallError(message: String, onRetry: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Could not set up Python", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.console_setup_failed), style = MaterialTheme.typography.titleMedium)
         Text(message, Modifier.padding(vertical = 12.dp), color = ErrorRed)
-        Button(onClick = onRetry, colors = brandButtonColors()) { Text("Retry") }
+        Button(onClick = onRetry, colors = brandButtonColors()) { Text(stringResource(R.string.action_retry)) }
     }
 }
 
 /** "^C" in a top bar: sends Ctrl+C (SIGINT, KeyboardInterrupt in Python) to what is running. */
 @Composable
 internal fun InterruptButton(onClick: () -> Unit) {
+    val interrupt = stringResource(R.string.action_interrupt)
     IconButton(
         onClick = onClick,
-        modifier = Modifier.semantics { contentDescription = "Interrupt" },
+        modifier = Modifier.semantics { contentDescription = interrupt },
     ) {
         Text("^C", fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 16.sp)
     }

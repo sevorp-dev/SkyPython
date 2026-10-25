@@ -1,5 +1,6 @@
 package dev.skyloft.skypython
 
+import androidx.annotation.StringRes
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
@@ -20,19 +21,22 @@ class AppEndToEndTest {
     @get:Rule
     val rule = createAndroidComposeRule<MainActivity>()
 
+    /** UI text in the device's app language (the program's own output stays English). */
+    private fun str(@StringRes id: Int, vararg args: Any): String = rule.activity.getString(id, *args)
+
     @Test
     fun runHelloPyAndAnswerInput() {
         rule.waitUntilAtLeastOneExists(hasText("hello.py", substring = true), 20_000)
 
-        rule.onNode(hasContentDescription("Run")).performClick()
+        rule.onNode(hasContentDescription(str(R.string.action_run))).performClick()
 
         // First run unpacks the stdlib, so allow time.
         rule.waitUntilAtLeastOneExists(hasText("What's your name?", substring = true), 90_000)
 
         rule.onNode(hasSetTextAction()).performTextInput("Sky")
-        rule.onNode(hasContentDescription("Send")).performClick()
+        rule.onNode(hasContentDescription(str(R.string.action_send))).performClick()
 
         rule.waitUntilAtLeastOneExists(hasText("Hello, Sky!", substring = true), 20_000)
-        rule.waitUntilAtLeastOneExists(hasText("[Program finished, exit code 0]"), 20_000)
+        rule.waitUntilAtLeastOneExists(hasText(str(R.string.console_exit_footer, 0)), 20_000)
     }
 }
