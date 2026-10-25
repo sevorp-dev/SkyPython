@@ -82,6 +82,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -192,6 +193,14 @@ fun TerminalScreen(
         }
     }
 
+    // Shown after the process was restarted (a fresh view model): the interpreter / shell start
+    // here, not only from the click that opened the screen; ▶ Run has no script left, so it
+    // goes back to the editor.
+    val body = TerminalBody.of(state, kind)
+    val back by rememberUpdatedState(onBack)
+    LaunchedEffect(viewModel) { viewModel.onShown() }
+    LaunchedEffect(body) { if (body == TerminalBody.NoScript) back() }
+
     // A finished script reads no input: put the keyboard away so the footer's actions show.
     LaunchedEffect(state.running, view) {
         if (!state.running && kind == TerminalKind.Run) view?.let(::hideKeyboard)
@@ -221,11 +230,17 @@ fun TerminalScreen(
         ) {
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 val session = state.session
-                when {
-                    state.installError != null -> InstallError(state.installError!!, viewModel::restart)
-                    state.startError != null -> StartError(state.startError!!, kind, onUseSimpleConsole)
-                    session != null -> TerminalPane(session, viewModel, state.fontSp, settings, background) { view = it }
-                    else -> Installing()
+                when (body) {
+                    TerminalBody.InstallError -> InstallError(state.installError.orEmpty(), viewModel::restart)
+                    TerminalBody.StartError -> StartError(state.startError.orEmpty(), kind, onUseSimpleConsole)
+                    TerminalBody.Terminal -> if (session != null) {
+                        TerminalPane(session, viewModel, state.fontSp, settings, background) { view = it }
+                    }
+                    TerminalBody.Installing -> Installing()
+                    TerminalBody.Starting -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                    TerminalBody.NoScript -> Unit
                 }
                 if (!state.atBottom && state.session != null) {
                     SmallFloatingActionButton(

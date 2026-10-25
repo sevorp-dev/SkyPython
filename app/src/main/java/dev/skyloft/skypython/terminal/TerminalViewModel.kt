@@ -145,6 +145,11 @@ class TerminalViewModel(
         start()
     }
 
+    /** The screen is on view: starts the interpreter / shell if nothing is there yet ([TerminalBody.startsWhenShown]). */
+    fun onShown() {
+        if (TerminalBody.startsWhenShown(_state.value, kind, starting = startJob?.isActive == true)) start()
+    }
+
     /** Runs [script] now, ending whatever this terminal runs ([TerminalKind.Run] only). */
     fun run(script: File) {
         check(kind == TerminalKind.Run)
