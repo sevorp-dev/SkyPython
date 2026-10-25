@@ -1,5 +1,6 @@
 package dev.skyloft.skypython
 
+import android.os.SystemClock
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.StringRes
@@ -162,12 +163,10 @@ class NavigationStateDeviceTest {
         hideKeyboard()
 
         // Another tab and back.
-        rule.waitUntilAtLeastOneExists(hasTestTag(TopLevelDestination.Terminal.tag), 10_000)
-        rule.onNode(hasTestTag(TopLevelDestination.Terminal.tag)).performClick()
+        clickBottomBar(TopLevelDestination.Terminal.tag)
         rule.waitUntilAtLeastOneExists(hasTestTag(TERMINAL_TAG), TIMEOUT_MS)
         hideKeyboard()
-        rule.waitUntilAtLeastOneExists(hasTestTag(TopLevelDestination.Editor.tag), 10_000)
-        rule.onNode(hasTestTag(TopLevelDestination.Editor.tag)).performClick()
+        clickBottomBar(TopLevelDestination.Editor.tag)
         waitForEditor()
         rule.waitUntil(10_000) { onMain { editor().text.toString() == edited } }
         assertEquals("cursor line after a tab switch", LINE, onMain { editor().cursor.leftLine })
@@ -178,11 +177,30 @@ class NavigationStateDeviceTest {
         waitForEditor()
         rule.waitUntil(10_000) { onMain { editor().text.toString() == edited } }
         assertEquals("cursor line after a rotation", LINE, onMain { editor().cursor.leftLine })
-        assertTrue("line still in view", onMain { editor().firstVisibleLine } <= LINE && LINE <= onMain { editor().lastVisibleLine })
+        // The scroll position is restored after the recreated editor lays out.
+        rule.waitUntil(10_000) { onMain { editor().firstVisibleLine <= LINE && LINE <= editor().lastVisibleLine } }
 
         // The typing is still in the undo history.
         onMain { editor().undo() }
         rule.waitUntil(5_000) { onMain { editor().text.toString() == text } }
+    }
+
+    /**
+     * The bottom bar hides while the keyboard is up, and the terminal opens the keyboard by itself,
+     * so the bar can vanish between "it's there" and the click. Hide the keyboard and retry.
+     */
+    private fun clickBottomBar(tag: String) {
+        val deadline = SystemClock.elapsedRealtime() + 30_000
+        while (true) {
+            hideKeyboard()
+            try {
+                rule.waitUntilAtLeastOneExists(hasTestTag(tag), 5_000)
+                rule.onNode(hasTestTag(tag)).performClick()
+                return
+            } catch (e: Throwable) {
+                if (SystemClock.elapsedRealtime() > deadline) throw e
+            }
+        }
     }
 
     @Test

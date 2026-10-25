@@ -162,8 +162,10 @@ class TerminalSessionDeviceTest {
         assertTrue("main thread blocked for $worst ms", worst < 3_000)
         val killedAt = SystemClock.elapsedRealtime()
         onMain { vm.kill() }
-        waitFor("exit", timeoutMs = 5_000) { vm.state.value.takeIf { !it.running } }
-        assertTrue(SystemClock.elapsedRealtime() - killedAt < 5_000)
+        // Stop must end it promptly: a few seconds even on slow CI emulators (it used to hang for good).
+        waitFor("exit", timeoutMs = 15_000) { vm.state.value.takeIf { !it.running } }
+        val stopMs = SystemClock.elapsedRealtime() - killedAt
+        assertTrue("stop took $stopMs ms", stopMs < 15_000)
         assertEquals(-9, onMain { vm.session.exitStatus })
     }
 

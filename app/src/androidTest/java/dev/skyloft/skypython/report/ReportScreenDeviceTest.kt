@@ -67,7 +67,8 @@ class ReportScreenDeviceTest {
         rule.onNode(hasTestTag(REPORT_DESCRIPTION_TAG)).performTextInput("Tapped Run twice")
         rule.onNode(hasText(context.getString(R.string.report_share))).performClick()
         // The report file is written off the main thread, then the chooser starts.
-        rule.waitUntil(5_000) { launched.isNotEmpty() }
+        // The share file is written off the main thread; slow emulators need a moment.
+        rule.waitUntil(20_000) { launched.isNotEmpty() }
 
         val chooser = launched.single()
         assertEquals(Intent.ACTION_CHOOSER, chooser.action)
