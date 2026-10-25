@@ -27,7 +27,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Redo
 import androidx.compose.material.icons.automirrored.outlined.Undo
+import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Save
@@ -116,6 +118,11 @@ fun EditorScreen(
     onRun: (File) -> Unit,
     onOpenFiles: () -> Unit,
     onDrawerAction: (DrawerAction) -> Unit,
+    /** Debug the saved current file (long press on ▶, or the drawer). */
+    onDebug: (File) -> Unit = {},
+    debugMarks: EditorDebugMarks = EditorDebugMarks.None,
+    /** The debugger panel, shown under the code while a debug session is open (▶ is hidden then). */
+    debugPanel: (@Composable () -> Unit)? = null,
     /** The user pinch-zoomed the editor to this font size (sp); persist it. */
     onFontSizeChange: (Int) -> Unit = {},
 ) {
@@ -159,20 +166,22 @@ fun EditorScreen(
 
     val current = state.current
     val imeVisible = WindowInsets.isImeVisible
-    val runCurrent: () -> Unit = {
+    val startCurrent: ((File) -> Unit) -> Unit = { start ->
         if (!running) {
             running = true
             controller.flushPendingText()
             controller.hideKeyboard()
             scope.launch {
                 try {
-                    viewModel.runCurrent()?.let(onRun)
+                    viewModel.runCurrent()?.let(start)
                 } finally {
                     running = false
                 }
             }
         }
     }
+    val runCurrent: () -> Unit = { startCurrent(onRun) }
+    var runMenuOpen by remember { mutableStateOf(false) }
 
     val openFind = { replace: Boolean ->
         if (findOpen) runCatching { findFocus.requestFocus() }
@@ -343,8 +352,23 @@ fun EditorScreen(
             floatingActionButton = {
                 // With the keyboard up the FAB would sit on the lines being typed; Run moves
                 // into the symbol bar instead.
-                if (current != null && !imeVisible) {
-                    RunButton(onClick = runCurrent)
+                if (current != null && !imeVisible && debugPanel == null) {
+                    Box {
+                        // Long press: Run / Debug.
+                        RunButton(onClick = runCurrent, onLongClick = { runMenuOpen = true })
+                        DropdownMenu(expanded = runMenuOpen, onDismissRequest = { runMenuOpen = false }) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.debug_run_menu_run)) },
+                                leadingIcon = { Icon(Icons.Filled.PlayArrow, null) },
+                                onClick = { runMenuOpen = false; runCurrent() },
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.debug_run_menu_debug)) },
+                                leadingIcon = { Icon(Icons.Outlined.BugReport, null) },
+                                onClick = { runMenuOpen = false; startCurrent(onDebug) },
+                            )
+                        }
+                    }
                 }
             },
             bottomBar = {
@@ -365,30 +389,34 @@ fun EditorScreen(
             snackbarHost = { SnackbarHost(snackbar) },
         ) { padding ->
             Column(Modifier.padding(padding).fillMaxSize()) {
-                when {
-                    state.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+                Box(Modifier.fillMaxWidth().weight(1f)) {
+                    when {
+                        state.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                        current == null -> EmptyEditor(
+                            onOpenFiles = openFiles,
+                            onNewFile = { newFileOpen = true },
+                            recent = recentFiles,
+                            projectsRoot = viewModel.projectsRoot,
+                            onOpenRecent = viewModel::openRecent,
+                        )
+                        else -> CodeEditor(
+                            docId = current.id,
+                            docPath = (current.source as? DocSource.Local)?.file?.path,
+                            initialText = current.text,
+                            openIds = state.docs.mapTo(HashSet()) { it.id },
+                            controller = controller,
+                            config = config,
+                            onTextChanged = viewModel::onTextChanged,
+                            onCursorChanged = { cursor.value = it },
+                            onDiagnostics = { problems = it },
+                            modifier = Modifier.fillMaxSize(),
+                            debugMarks = debugMarks,
+                        )
                     }
-                    current == null -> EmptyEditor(
-                        onOpenFiles = openFiles,
-                        onNewFile = { newFileOpen = true },
-                        recent = recentFiles,
-                        projectsRoot = viewModel.projectsRoot,
-                        onOpenRecent = viewModel::openRecent,
-                    )
-                    else -> CodeEditor(
-                        docId = current.id,
-                        docPath = (current.source as? DocSource.Local)?.file?.path,
-                        initialText = current.text,
-                        openIds = state.docs.mapTo(HashSet()) { it.id },
-                        controller = controller,
-                        config = config,
-                        onTextChanged = viewModel::onTextChanged,
-                        onCursorChanged = { cursor.value = it },
-                        onDiagnostics = { problems = it },
-                        modifier = Modifier.fillMaxWidth().weight(1f),
-                    )
                 }
+                debugPanel?.invoke()
             }
         }
     }

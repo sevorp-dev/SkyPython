@@ -94,6 +94,7 @@ class PythonProcess(private val paths: PythonPaths) {
     private fun prepare(command: RunCommand): ProcessBuilder {
         when (command) {
             is RunCommand.Script -> Unit
+            is RunCommand.Debug -> command.channel.parentFile?.mkdirs()
             is RunCommand.Interpreter -> command.cwd.mkdirs()
             is RunCommand.Shell -> {
                 command.cwd.mkdirs()

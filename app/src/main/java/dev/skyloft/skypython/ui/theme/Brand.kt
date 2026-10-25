@@ -2,6 +2,10 @@ package dev.skyloft.skypython.ui.theme
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -51,7 +55,11 @@ fun BrandText(
     )
 }
 
-/** Round action button: solid [Orange], dark icon, a soft Material shadow; presses dim it a touch. */
+/**
+ * Round action button: solid [Orange], dark icon, a soft Material shadow.
+ * [onLongClick], if set, is offered on a long press.
+ */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BrandFab(
     onClick: () -> Unit,
@@ -61,14 +69,18 @@ fun BrandFab(
     size: Dp = 56.dp,
     iconSize: Dp = 24.dp,
     elevation: Dp = 3.dp,
+    onLongClick: (() -> Unit)? = null,
 ) {
+    // Surface(onClick) has no long press: clicks are handled by the modifier instead.
     Surface(
-        onClick = onClick,
         shape = CircleShape,
         color = Orange,
         contentColor = OnOrange,
         shadowElevation = elevation,
-        modifier = modifier.size(size),
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .combinedClickable(role = Role.Button, onClick = onClick, onLongClick = onLongClick),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(icon, contentDescription = contentDescription, modifier = Modifier.size(iconSize))
@@ -76,7 +88,7 @@ fun BrandFab(
     }
 }
 
-/** The Run button: a round [BrandFab] with a dark ▶. */
+/** The Run button: a round [BrandFab] with a dark ▶; [onLongClick] opens more ways to run. */
 @Composable
 fun RunButton(
     onClick: () -> Unit,
@@ -84,8 +96,9 @@ fun RunButton(
     size: Dp = 60.dp,
     iconSize: Dp = 32.dp,
     elevation: Dp = 3.dp,
+    onLongClick: (() -> Unit)? = null,
 ) {
-    BrandFab(onClick, Icons.Filled.PlayArrow, stringResource(R.string.action_run), modifier, size, iconSize, elevation)
+    BrandFab(onClick, Icons.Filled.PlayArrow, stringResource(R.string.action_run), modifier, size, iconSize, elevation, onLongClick)
 }
 
 /** Filled buttons: solid [Orange] with dark text (7.9:1); disabled stays visible. */
