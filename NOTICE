@@ -1,0 +1,7 @@
+SkyPython
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This product includes software from the Termux project's terminal-emulator and
+terminal-view libraries (https://github.com/termux/termux-app), Apache License 2.0,
+based on Android-Terminal-Emulator by Jack Palevich, Apache License 2.0.
+See terminal/NOTICE for what is included and what was changed.
