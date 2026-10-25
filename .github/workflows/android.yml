@@ -112,6 +112,18 @@ jobs:
                           print(f"::error title=API ${{ matrix.api-level }} ${{ matrix.arch }} FAILED {c.get('classname')}.{c.get('name')}::failed")
           PY
 
+      # Step logs need a sign-in: when the emulator could not even be set up, put what the SDK
+      # tools say (and the free disk space) into annotations.
+      - name: Explain an emulator setup failure
+        if: failure() && hashFiles('instrumented.log') == ''
+        run: |
+          sdk="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          echo "::error title=disk::$(df -h / "$sdk" | tail -n +2 | tr '\n' ' ')"
+          echo "::error title=installed::$("$sdk/cmdline-tools/latest/bin/sdkmanager" --list_installed 2>&1 | grep -E 'system-images|emulator|platform-tools' | tr -s ' ' | tr '\n' ';' | cut -c1-2000)"
+          out=$(yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "system-images;android-${{ matrix.api-level }};google_apis;${{ matrix.arch }}" emulator platform-tools 2>&1 | grep -v '^\[' | tail -20 | tr '\n' ';')
+          echo "::error title=sdkmanager install::${out:0:3000}"
+          ls ~/.android/avd 2>&1 | tr '\n' ' ' | sed 's/^/::error title=avd::/'
+
       - uses: actions/upload-artifact@v5
         if: always()
         with:
