@@ -35,6 +35,7 @@ import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
 import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.DataObject
+import androidx.compose.material.icons.outlined.Feedback
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Info
@@ -116,7 +117,7 @@ val DRAWER_SECTIONS: List<DrawerSection> = listOf(
         R.string.drawer_section_tools,
         listOf(DrawerAction.Interpreter, DrawerAction.Debug, DrawerAction.Pip, DrawerAction.Share, DrawerAction.Samples),
     ),
-    DrawerSection("Settings", R.string.drawer_section_settings, listOf(DrawerAction.Settings, DrawerAction.About)),
+    DrawerSection("Settings", R.string.drawer_section_settings, listOf(DrawerAction.Settings, DrawerAction.Report, DrawerAction.About)),
 )
 
 @StringRes
@@ -129,6 +130,7 @@ private fun DrawerAction.labelRes(): Int = when (this) {
     DrawerAction.Share -> R.string.title_share
     DrawerAction.Samples -> R.string.title_samples
     DrawerAction.Settings -> R.string.title_settings
+    DrawerAction.Report -> R.string.report_problem
     DrawerAction.About -> R.string.title_about
     DrawerAction.Debug -> R.string.title_debug
 }
@@ -151,6 +153,7 @@ private fun DrawerAction.icon(): ImageVector = when (this) {
     DrawerAction.Share -> Icons.Outlined.Share
     DrawerAction.Samples -> Icons.Outlined.School
     DrawerAction.Settings -> Icons.Outlined.Settings
+    DrawerAction.Report -> Icons.Outlined.Feedback
     DrawerAction.About -> Icons.Outlined.Info
     DrawerAction.Debug -> Icons.Outlined.BugReport
 }

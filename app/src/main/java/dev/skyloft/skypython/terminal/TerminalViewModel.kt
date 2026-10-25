@@ -20,6 +20,8 @@ import com.termux.terminal.TerminalEmulator
 import com.termux.terminal.TerminalSession
 import com.termux.terminal.TerminalSessionClient
 import com.termux.view.TerminalView
+import dev.skyloft.skypython.report.AppLog
+import dev.skyloft.skypython.report.ErrorReporter
 import dev.skyloft.skypython.runtime.PtyCommand
 import dev.skyloft.skypython.runtime.PythonInstaller
 import dev.skyloft.skypython.runtime.PythonPaths
@@ -427,6 +429,7 @@ class TerminalViewModel(
                 val result = install()
                 _state.update { it.copy(installing = false) }
                 result.getOrElse { e ->
+                    ErrorReporter.report(ErrorReporter.Where.PYTHON, e)
                     _state.update { it.copy(installError = e.message ?: e.toString()) }
                     return@launch
                 }.also { paths = it }
@@ -434,6 +437,7 @@ class TerminalViewModel(
             val command = try {
                 withContext(Dispatchers.IO) { PtyCommand.prepare(p, command()) }
             } catch (e: IOException) {
+                ErrorReporter.report(ErrorReporter.Where.TERMINAL, e)
                 _state.update { it.copy(startError = e.message ?: e.toString()) }
                 return@launch
             }
@@ -487,6 +491,7 @@ class TerminalViewModel(
 
         override fun onSessionFinished(finishedSession: TerminalSession) {
             if (finishedSession !== _state.value.session) return
+            finishedSession.startError?.let { ErrorReporter.report(ErrorReporter.Where.TERMINAL, "${kind.name} could not start: $it") }
             _state.update {
                 it.copy(
                     running = false,
@@ -524,15 +529,15 @@ class TerminalViewModel(
         override fun getTerminalCursorStyle(): Int = TerminalEmulator.DEFAULT_TERMINAL_CURSOR_STYLE
 
         override fun logError(tag: String?, message: String?) {
-            Log.e(tag, message.orEmpty())
+            AppLog.e(tag ?: TAG, message.orEmpty())
         }
 
         override fun logWarn(tag: String?, message: String?) {
-            Log.w(tag, message.orEmpty())
+            AppLog.w(tag ?: TAG, message.orEmpty())
         }
 
         override fun logInfo(tag: String?, message: String?) {
-            Log.i(tag, message.orEmpty())
+            AppLog.i(tag ?: TAG, message.orEmpty())
         }
 
         override fun logDebug(tag: String?, message: String?) {
@@ -544,17 +549,18 @@ class TerminalViewModel(
         }
 
         override fun logStackTraceWithMessage(tag: String?, message: String?, e: Exception?) {
-            Log.e(tag, message.orEmpty(), e)
+            AppLog.e(tag ?: TAG, message.orEmpty(), e)
         }
 
         override fun logStackTrace(tag: String?, e: Exception?) {
-            Log.e(tag, "", e)
+            AppLog.e(tag ?: TAG, "", e)
         }
     }
 
     companion object {
         /** Scrollback kept per session. */
         const val TRANSCRIPT_ROWS = 2000
+        private const val TAG = "Terminal"
 
         /** How often [screenText] may change. */
         private const val SCREEN_TEXT_MILLIS = 100L

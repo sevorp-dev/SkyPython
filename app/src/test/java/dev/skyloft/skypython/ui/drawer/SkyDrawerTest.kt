@@ -39,7 +39,7 @@ class SkyDrawerTest {
                 "Tools" to listOf(
                     DrawerAction.Interpreter, DrawerAction.Debug, DrawerAction.Pip, DrawerAction.Share, DrawerAction.Samples,
                 ),
-                "Settings" to listOf(DrawerAction.Settings, DrawerAction.About),
+                "Settings" to listOf(DrawerAction.Settings, DrawerAction.Report, DrawerAction.About),
             ),
             DRAWER_SECTIONS.map { it.title to it.actions },
         )

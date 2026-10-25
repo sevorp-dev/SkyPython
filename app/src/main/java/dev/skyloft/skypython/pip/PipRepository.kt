@@ -3,6 +3,7 @@ package dev.skyloft.skypython.pip
 import android.content.Context
 import dev.skyloft.skypython.R
 import dev.skyloft.skypython.locale.AppLocale
+import dev.skyloft.skypython.report.ErrorReporter
 import dev.skyloft.skypython.runtime.ConsoleEvent
 import dev.skyloft.skypython.runtime.PythonInstaller
 import dev.skyloft.skypython.runtime.PythonPaths
@@ -143,7 +144,13 @@ class PipRepository(
         val marker = File(p.userBase, MARKER)
         if (withContext(Dispatchers.IO) { marker.isFile }) return
         log(setupMessage() + "\n")
-        run(p, "ensurepip", listOf("--user", "--default-pip"), log).orThrow("ensurepip")
+        try {
+            run(p, "ensurepip", listOf("--user", "--default-pip"), log).orThrow("ensurepip")
+        } catch (e: PipFailedException) {
+            // ensurepip is offline and bundled: its failure is ours, not the user's network.
+            ErrorReporter.report(ErrorReporter.Where.PIP, e)
+            throw e
+        }
         withContext(Dispatchers.IO) {
             p.userBase.mkdirs()
             marker.writeText("ensurepip --user --default-pip\n")

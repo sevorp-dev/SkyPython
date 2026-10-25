@@ -7,6 +7,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.remember
 import dev.skyloft.skypython.locale.AppLocale
 import dev.skyloft.skypython.ui.theme.SkyPythonTheme
 
@@ -25,7 +27,9 @@ class MainActivity : ComponentActivity() {
         )
         setContent {
             SkyPythonTheme {
-                SkyPythonApp()
+                val snackbar = remember { SnackbarHostState() }
+                // The error banner floats above every screen (and above the bottom bar): SkyPythonApp draws it.
+                SkyPythonApp(snackbar)
             }
         }
     }

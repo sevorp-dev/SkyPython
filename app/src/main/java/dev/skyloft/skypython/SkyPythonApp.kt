@@ -3,9 +3,11 @@ package dev.skyloft.skypython
 import android.app.Application
 import android.widget.Toast
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,7 +19,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -34,6 +39,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import dev.skyloft.skypython.editor.EditorController
@@ -61,6 +70,10 @@ import dev.skyloft.skypython.files.describeFileError
 import dev.skyloft.skypython.locale.AppLocale
 import dev.skyloft.skypython.pip.PipScreen
 import dev.skyloft.skypython.pip.PipViewModel
+import dev.skyloft.skypython.report.CrashPrompt
+import dev.skyloft.skypython.report.ErrorBanner
+import dev.skyloft.skypython.report.ErrorReporter
+import dev.skyloft.skypython.report.ReportScreen
 import dev.skyloft.skypython.samples.SamplesScreen
 import dev.skyloft.skypython.settings.EditorSettings
 import dev.skyloft.skypython.settings.SettingsScreen
@@ -84,6 +97,11 @@ private object Routes {
     const val SETTINGS = "settings"
     const val SAMPLES = "samples"
     const val ABOUT = "about"
+    const val REPORT = "report"
+    const val REPORT_ID = "id"
+
+    /** The Report screen, with a saved crash or a recent error attached when [id] is given. */
+    fun report(id: String? = null) = if (id == null) REPORT else "$REPORT?$REPORT_ID=$id"
 }
 
 /**
@@ -92,7 +110,8 @@ private object Routes {
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SkyPythonApp() {
+// [snackbar]: where problems the app survived are announced; MainActivity draws it above every screen.
+fun SkyPythonApp(snackbar: SnackbarHostState) {
     val context = LocalContext.current
     val app = context.applicationContext as Application
     // Canonical: filesDir is reached via a symlink (/data/user/0 -> /data/data) and Files lists
@@ -155,6 +174,14 @@ fun SkyPythonApp() {
         }
     }
     var conditionFor by remember { mutableStateOf<Pair<String, Int>?>(null) }
+    // Problem reports name the screen the user was on.
+    DisposableEffect(nav) {
+        val listener = NavController.OnDestinationChangedListener { _, destination, _ -> ErrorReporter.onScreen(destination.route) }
+        nav.addOnDestinationChangedListener(listener)
+        onDispose { nav.removeOnDestinationChangedListener(listener) }
+    }
+    ErrorBanner(snackbar) { nav.go(Routes.report(it.id)) }
+    CrashPrompt { nav.go(Routes.report(it.id)) }
 
     // Bottom navigation (a setting; the ☰ drawer stays either way). Hidden until the setting is
     // read so it never flashes for someone who turned it off.
@@ -210,166 +237,179 @@ fun SkyPythonApp() {
     }
 
     Column(Modifier.fillMaxSize().background(Slate)) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .weight(1f)
-            // The bar below pads itself for the system navigation bar: the screens must not too.
-            .then(if (showBottomBar) Modifier.consumeWindowInsets(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)) else Modifier),
-    ) {
-    NavHost(navController = nav, startDestination = Routes.EDITOR) {
-        composable(Routes.EDITOR) {
-            val debugMarks = rememberDebugMarks(
-                debugVm,
-                currentPath,
-                onEditCondition = { path, line -> conditionFor = path to line },
-                onUnsupported = { Toast.makeText(context, R.string.debug_breakpoints_need_project_file, Toast.LENGTH_SHORT).show() },
-            )
-            EditorScreen(
-                viewModel = editorVm,
-                settings = settings,
-                onRun = { file ->
-                    // One script at a time: a running one makes this ask first (RunBusyDialog).
-                    if (runVm.requestRun(file)) openRun()
-                },
-                onOpenFiles = openFilesScreen,
-                onDebug = startDebug,
-                debugMarks = debugMarks,
-                debugPanel = if (debugState.phase == DebugPhase.Idle) null else { { DebugPanelHost(debugVm, consoleVm) } },
-                onFontSizeChange = { sp -> scope.launch { settingsStore.update { it.copy(fontSizeSp = sp) } } },
-                controller = editorController,
-                onDrawerOpenChange = { drawerOpen = it },
-                onDrawerAction = { action ->
-                    when (action) {
-                        DrawerAction.Projects -> openFilesScreen()
-                        // The drawer is only opened from the editor: closing it is all there is to do.
-                        DrawerAction.Editor -> Unit
-                        DrawerAction.Debug -> scope.launch { editorVm.runCurrent()?.let(startDebug) }
-                        DrawerAction.Interpreter -> {
-                            interpreterVm.open()
-                            nav.go(Routes.INTERPRETER)
-                        }
-                        DrawerAction.Terminal -> openTerminal()
-                        DrawerAction.Pip -> openPip()
-                        DrawerAction.Samples -> nav.go(Routes.SAMPLES)
-                        DrawerAction.Settings -> goTop(Routes.SETTINGS)
-                        DrawerAction.About -> nav.go(Routes.ABOUT)
-                        DrawerAction.Share -> scope.launch {
-                            editorVm.saveAll().join()
-                            when (val src = editorVm.state.value.current?.source) {
-                                is DocSource.Local -> shareFile(context, src.file)
-                                is DocSource.External ->
-                                    Toast.makeText(context, R.string.share_save_to_projects_first, Toast.LENGTH_SHORT).show()
-                                null -> Toast.makeText(context, R.string.no_file_open, Toast.LENGTH_SHORT).show()
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                // The bar below pads itself for the system navigation bar: the screens must not too.
+                .then(if (showBottomBar) Modifier.consumeWindowInsets(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)) else Modifier),
+        ) {
+            NavHost(navController = nav, startDestination = Routes.EDITOR) {
+                composable(Routes.EDITOR) {
+                    val debugMarks = rememberDebugMarks(
+                        debugVm,
+                        currentPath,
+                        onEditCondition = { path, line -> conditionFor = path to line },
+                        onUnsupported = { Toast.makeText(context, R.string.debug_breakpoints_need_project_file, Toast.LENGTH_SHORT).show() },
+                    )
+                    EditorScreen(
+                        viewModel = editorVm,
+                        settings = settings,
+                        onRun = { file ->
+                            // One script at a time: a running one makes this ask first (RunBusyDialog).
+                            if (runVm.requestRun(file)) openRun()
+                        },
+                        onOpenFiles = openFilesScreen,
+                        onDebug = startDebug,
+                        debugMarks = debugMarks,
+                        debugPanel = if (debugState.phase == DebugPhase.Idle) null else { { DebugPanelHost(debugVm, consoleVm) } },
+                        onFontSizeChange = { sp -> scope.launch { settingsStore.update { it.copy(fontSizeSp = sp) } } },
+                        controller = editorController,
+                        onDrawerOpenChange = { drawerOpen = it },
+                        onDrawerAction = { action ->
+                            when (action) {
+                                DrawerAction.Projects -> openFilesScreen()
+                                // The drawer is only opened from the editor: closing it is all there is to do.
+                                DrawerAction.Editor -> Unit
+                                DrawerAction.Debug -> scope.launch { editorVm.runCurrent()?.let(startDebug) }
+                                DrawerAction.Interpreter -> {
+                                    interpreterVm.open()
+                                    nav.go(Routes.INTERPRETER)
+                                }
+                                DrawerAction.Terminal -> openTerminal()
+                                DrawerAction.Pip -> openPip()
+                                DrawerAction.Samples -> nav.go(Routes.SAMPLES)
+                                DrawerAction.Settings -> goTop(Routes.SETTINGS)
+                                DrawerAction.Report -> nav.go(Routes.report())
+                                DrawerAction.About -> nav.go(Routes.ABOUT)
+                                DrawerAction.Share -> scope.launch {
+                                    editorVm.saveAll().join()
+                                    when (val src = editorVm.state.value.current?.source) {
+                                        is DocSource.Local -> shareFile(context, src.file)
+                                        is DocSource.External ->
+                                            Toast.makeText(context, R.string.share_save_to_projects_first, Toast.LENGTH_SHORT).show()
+                                        null -> Toast.makeText(context, R.string.no_file_open, Toast.LENGTH_SHORT).show()
+                                    }
+                                }
                             }
-                        }
+                        },
+                    )
+                    RunBusyDialog(runVm = runVm, onConfirmed = openRun)
+                    RestartDialog(consoleVm = consoleVm, onConfirmed = onTargetConfirmed)
+                    conditionFor?.let { (path, line) ->
+                        BreakpointConditionDialog(debugVm, path, line, onDismiss = { conditionFor = null })
                     }
-                },
-            )
-            RunBusyDialog(runVm = runVm, onConfirmed = openRun)
-            RestartDialog(consoleVm = consoleVm, onConfirmed = onTargetConfirmed)
-            conditionFor?.let { (path, line) ->
-                BreakpointConditionDialog(debugVm, path, line, onDismiss = { conditionFor = null })
+                }
+                composable(Routes.CONSOLE) {
+                    ConsoleScreen(viewModel = consoleVm, onBack = { nav.popBackStack() })
+                }
+                val saveTerminalFont: (Int) -> Unit = { sp -> scope.launch { settingsStore.update { it.copy(terminalFontSizeSp = sp) } } }
+                composable(Routes.RUN) {
+                    TerminalScreen(
+                        viewModel = runVm,
+                        onBack = { nav.popBackStack() },
+                        // No pseudo-terminal: the same script on the line-mode console over pipes.
+                        onUseSimpleConsole = onUseSimpleOutput@{
+                            val script = runVm.state.value.script ?: return@onUseSimpleOutput
+                            nav.popBackStack()
+                            if (consoleVm.requestRun(script)) openConsole()
+                        },
+                        onOpenInEditor = openInEditor,
+                        settings = settings,
+                        onFontSizeChange = saveTerminalFont,
+                    )
+                }
+                // Fallback if the pseudo-terminal can't be opened: the line-mode console over pipes.
+                val simpleConsole = { start: () -> Boolean ->
+                    nav.popBackStack()
+                    if (start()) openConsole()
+                    else Toast.makeText(context, R.string.script_still_running, Toast.LENGTH_SHORT).show()
+                }
+                composable(Routes.INTERPRETER) {
+                    TerminalScreen(
+                        viewModel = interpreterVm,
+                        onBack = { nav.popBackStack() },
+                        onUseSimpleConsole = { simpleConsole(consoleVm::startInterpreter) },
+                        settings = settings,
+                        onFontSizeChange = saveTerminalFont,
+                        onOpenInEditor = openInEditor,
+                    )
+                }
+                composable(Routes.TERMINAL) {
+                    TerminalScreen(
+                        viewModel = shellVm,
+                        onBack = { nav.popBackStack() },
+                        onUseSimpleConsole = { simpleConsole(consoleVm::startTerminal) },
+                        settings = settings,
+                        onFontSizeChange = saveTerminalFont,
+                        onOpenInEditor = openInEditor,
+                    )
+                }
+                composable(Routes.FILES) {
+                    FilesScreen(
+                        viewModel = filesVm,
+                        onOpenFile = { file ->
+                            editorVm.open(file)
+                            nav.popBackStack()
+                        },
+                        onOpenExternal = { uri ->
+                            editorVm.openExternal(uri)
+                            nav.popBackStack()
+                        },
+                        onDeleted = editorVm::closeFile,
+                        onRenamed = { old, new ->
+                            editorVm.onRenamed(old, new)
+                            debugVm.store.rename(old.path, new.path)
+                        },
+                        onBack = { nav.popBackStack() },
+                    )
+                }
+                composable(Routes.PIP) {
+                    val editorState by editorVm.state.collectAsStateWithLifecycle()
+                    PipScreen(
+                        viewModel = pipVm,
+                        onBack = { nav.popBackStack() },
+                        currentFile = (editorState.current?.source as? DocSource.Local)?.file,
+                        projectsRoot = workspace.root,
+                    )
+                }
+                composable(Routes.SETTINGS) {
+                    SettingsScreen(store = settingsStore, onBack = { nav.popBackStack() })
+                }
+                composable(Routes.SAMPLES) {
+                    SamplesScreen(
+                        projectsRoot = workspace.root,
+                        onOpen = { file ->
+                            editorVm.open(file)
+                            nav.popBackStack(Routes.EDITOR, inclusive = false)
+                        },
+                        onBack = { nav.popBackStack() },
+                    )
+                }
+                composable(Routes.ABOUT) {
+                    AboutScreen(onBack = { nav.popBackStack() }, onReport = { nav.go(Routes.report()) })
+                }
+                composable(
+                    "${Routes.REPORT}?${Routes.REPORT_ID}={${Routes.REPORT_ID}}",
+                    arguments = listOf(navArgument(Routes.REPORT_ID) { type = NavType.StringType; nullable = true; defaultValue = null }),
+                ) { entry ->
+                    ReportScreen(
+                        reportId = entry.arguments?.getString(Routes.REPORT_ID),
+                        settings = settings,
+                        onBack = { nav.popBackStack() },
+                    )
+                }
             }
+            // Snackbars sit above the bottom bar (and above the keyboard), over every screen.
+            SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().imePadding())
         }
-        composable(Routes.CONSOLE) {
-            ConsoleScreen(viewModel = consoleVm, onBack = { nav.popBackStack() })
-        }
-        val saveTerminalFont: (Int) -> Unit = { sp -> scope.launch { settingsStore.update { it.copy(terminalFontSizeSp = sp) } } }
-        composable(Routes.RUN) {
-            TerminalScreen(
-                viewModel = runVm,
-                onBack = { nav.popBackStack() },
-                // No pseudo-terminal: the same script on the line-mode console over pipes.
-                onUseSimpleConsole = onUseSimpleOutput@{
-                    val script = runVm.state.value.script ?: return@onUseSimpleOutput
-                    nav.popBackStack()
-                    if (consoleVm.requestRun(script)) openConsole()
-                },
-                onOpenInEditor = openInEditor,
-                settings = settings,
-                onFontSizeChange = saveTerminalFont,
+        if (showBottomBar) {
+            SkyBottomBar(
+                current = TopLevelDestination.fromRoute(route),
+                showLabels = barLabels,
+                onSelect = onBottomItem,
             )
         }
-        // Fallback if the pseudo-terminal can't be opened: the line-mode console over pipes.
-        val simpleConsole = { start: () -> Boolean ->
-            nav.popBackStack()
-            if (start()) openConsole()
-            else Toast.makeText(context, R.string.script_still_running, Toast.LENGTH_SHORT).show()
-        }
-        composable(Routes.INTERPRETER) {
-            TerminalScreen(
-                viewModel = interpreterVm,
-                onBack = { nav.popBackStack() },
-                onUseSimpleConsole = { simpleConsole(consoleVm::startInterpreter) },
-                settings = settings,
-                onFontSizeChange = saveTerminalFont,
-                onOpenInEditor = openInEditor,
-            )
-        }
-        composable(Routes.TERMINAL) {
-            TerminalScreen(
-                viewModel = shellVm,
-                onBack = { nav.popBackStack() },
-                onUseSimpleConsole = { simpleConsole(consoleVm::startTerminal) },
-                settings = settings,
-                onFontSizeChange = saveTerminalFont,
-                onOpenInEditor = openInEditor,
-            )
-        }
-        composable(Routes.FILES) {
-            FilesScreen(
-                viewModel = filesVm,
-                onOpenFile = { file ->
-                    editorVm.open(file)
-                    nav.popBackStack()
-                },
-                onOpenExternal = { uri ->
-                    editorVm.openExternal(uri)
-                    nav.popBackStack()
-                },
-                onDeleted = editorVm::closeFile,
-                onRenamed = { old, new ->
-                    editorVm.onRenamed(old, new)
-                    debugVm.store.rename(old.path, new.path)
-                },
-                onBack = { nav.popBackStack() },
-            )
-        }
-        composable(Routes.PIP) {
-            val editorState by editorVm.state.collectAsStateWithLifecycle()
-            PipScreen(
-                viewModel = pipVm,
-                onBack = { nav.popBackStack() },
-                currentFile = (editorState.current?.source as? DocSource.Local)?.file,
-                projectsRoot = workspace.root,
-            )
-        }
-        composable(Routes.SETTINGS) {
-            SettingsScreen(store = settingsStore, onBack = { nav.popBackStack() })
-        }
-        composable(Routes.SAMPLES) {
-            SamplesScreen(
-                projectsRoot = workspace.root,
-                onOpen = { file ->
-                    editorVm.open(file)
-                    nav.popBackStack(Routes.EDITOR, inclusive = false)
-                },
-                onBack = { nav.popBackStack() },
-            )
-        }
-        composable(Routes.ABOUT) {
-            AboutScreen(onBack = { nav.popBackStack() })
-        }
-    }
-    }
-    if (showBottomBar) {
-        SkyBottomBar(
-            current = TopLevelDestination.fromRoute(route),
-            showLabels = barLabels,
-            onSelect = onBottomItem,
-        )
-    }
     }
 }
 
