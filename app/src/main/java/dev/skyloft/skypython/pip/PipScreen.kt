@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -269,7 +270,14 @@ private fun SearchTab(state: PipState, viewModel: PipViewModel) {
         }
         if (state.searching) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp))
 
-        LazyColumn(Modifier.fillMaxSize()) {
+        // The result goes in above the popular rows, and a lazy list keeps its first visible row
+        // in place when items are inserted before it: without this the result would land above
+        // the viewport, out of sight (always so on a small screen with the keyboard up).
+        val listState = rememberLazyListState()
+        LaunchedEffect(state.lookup) {
+            if (state.lookup != null) listState.scrollToItem(0)
+        }
+        LazyColumn(Modifier.fillMaxSize(), state = listState) {
             state.lookup?.let { lookup ->
                 item(key = "result") {
                     LookupCard(lookup, state, onInstall = viewModel::installPackage)
