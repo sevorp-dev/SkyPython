@@ -20,8 +20,18 @@ class ShellShimsTest {
         val rc = ShellShims.rc(launcher)
         assertTrue(rc, rc.contains("python() { '$l' \"\$@\"; }\n"))
         assertTrue(rc, rc.contains("python3() { '$l' \"\$@\"; }\n"))
-        assertTrue(rc, rc.contains("pip() { '$l' -m pip \"\$@\"; }\n"))
-        assertTrue(rc, rc.contains("pip3() { '$l' -m pip \"\$@\"; }\n"))
+        assertTrue(rc, rc.contains("pip() { _sky_pip \"\$@\"; }\n"))
+        assertTrue(rc, rc.contains("pip3() { _sky_pip \"\$@\"; }\n"))
+    }
+
+    @Test
+    fun pipBootstrapsItselfOfflineOnFirstUse() {
+        // Until the Pip screen has run once, pip isn't installed: install it from the bundled wheel.
+        val l = launcher.path
+        val rc = ShellShims.rc(launcher)
+        val expected = "_sky_pip() { '$l' -c 'import pip' 2>/dev/null || " +
+            "'$l' -m ensurepip --user --default-pip >/dev/null || return; '$l' -m pip \"\$@\"; }\n"
+        assertTrue(rc, rc.contains(expected))
     }
 
     @Test

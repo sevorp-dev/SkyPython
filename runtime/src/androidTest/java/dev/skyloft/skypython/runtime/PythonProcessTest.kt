@@ -207,11 +207,11 @@ class PythonProcessTest {
 
     @Test
     fun terminalPipShimRunsPythonPip() {
-        // pip itself may not be installed yet (ensurepip is the Pip screen's job); either way the
-        // shim must reach Python: "pip X from ..." or "No module named pip", not "not found".
+        // pip may not be installed yet: the shell function bootstraps it offline on first use.
         val events = interact(RunCommand.Shell(scriptDir), "pip --version\nexit\n")
         val all = events.stdout() + events.stderr()
-        assertTrue(all, all.contains("pip ") || all.contains("No module named pip"))
+        assertTrue(all, Regex("""pip \d+\.\d+.* from """).containsMatchIn(all))
+        assertTrue(all, !all.contains("No module named pip"))
     }
 
     private companion object {

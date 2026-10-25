@@ -21,8 +21,11 @@ object ShellShims {
             append("# Written by SkyPython on every terminal start.\n")
             append("python() { $l \"\$@\"; }\n")
             append("python3() { $l \"\$@\"; }\n")
-            append("pip() { $l -m pip \"\$@\"; }\n")
-            append("pip3() { $l -m pip \"\$@\"; }\n")
+            // pip may not be installed yet (the Pip screen bootstraps it): do it here, offline.
+            append("_sky_pip() { $l -c 'import pip' 2>/dev/null || ")
+            append("$l -m ensurepip --user --default-pip >/dev/null || return; $l -m pip \"\$@\"; }\n")
+            append("pip() { _sky_pip \"\$@\"; }\n")
+            append("pip3() { _sky_pip \"\$@\"; }\n")
             append("PS1='\${PWD##*/} \$ '\n")
         }
     }
