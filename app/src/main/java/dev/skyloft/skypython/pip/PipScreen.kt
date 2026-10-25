@@ -83,7 +83,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.skyloft.skypython.R
-import dev.skyloft.skypython.ui.theme.GlowLine
+import dev.skyloft.skypython.ui.theme.BarNavy
+import dev.skyloft.skypython.ui.theme.Hairline
+import dev.skyloft.skypython.ui.theme.brandButtonColors
 import dev.skyloft.skypython.ui.theme.SkyTopBar
 import kotlinx.coroutines.launch
 import java.io.File
@@ -122,7 +124,7 @@ fun PipScreen(
             SkyTopBar(
                 title = stringResource(R.string.title_pip),
                 onBack = onBack,
-                glow = false,
+                divider = false,
                 actions = {
                     if (state.tab == PipTab.Installed) {
                         IconButton(onClick = viewModel::refresh, enabled = !state.loading) {
@@ -143,7 +145,7 @@ fun PipScreen(
         ) {
             PrimaryTabRow(
                 selectedTabIndex = state.tab.ordinal,
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                containerColor = BarNavy,
                 contentColor = MaterialTheme.colorScheme.onSurface,
                 divider = {},
             ) {
@@ -164,7 +166,7 @@ fun PipScreen(
                     )
                 }
             }
-            GlowLine()
+            Hairline()
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when (state.tab) {
                     PipTab.Search -> SearchTab(state, viewModel)
@@ -235,6 +237,7 @@ private fun SearchTab(state: PipState, viewModel: PipViewModel) {
             )
             Spacer(Modifier.width(8.dp))
             Button(
+                colors = brandButtonColors(),
                 onClick = viewModel::search,
                 enabled = !state.searching,
                 shape = RoundedCornerShape(8.dp),
@@ -370,6 +373,7 @@ private fun ColumnScope.FoundProject(project: PyPiProject, state: PipState, onIn
     Row(verticalAlignment = Alignment.CenterVertically) {
         when (project.wheel) {
             WheelSupport.Pure, WheelSupport.PrebuiltAndroid, WheelSupport.SourceOnly -> Button(
+                colors = brandButtonColors(),
                 onClick = { onInstall(project.name) },
                 enabled = !state.installing,
             ) { Text(stringResource(R.string.pip_install)) }
@@ -617,6 +621,7 @@ private fun DetailsSheet(details: DetailsState, state: PipState, viewModel: PipV
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (update != null) {
                     Button(
+                        colors = brandButtonColors(),
                         onClick = {
                             viewModel.closeDetails()
                             viewModel.upgrade(pkg)
@@ -803,7 +808,7 @@ private fun InstallLog(log: String, modifier: Modifier) {
     LaunchedEffect(log) { scroll.scrollTo(scroll.maxValue) }
     Box(
         modifier
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest, RoundedCornerShape(6.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest, RoundedCornerShape(12.dp))
             .padding(8.dp)
             .verticalScroll(scroll),
     ) {

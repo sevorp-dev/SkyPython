@@ -34,7 +34,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -48,6 +47,7 @@ import dev.skyloft.skypython.settings.DEFAULT_SYMBOL_KEYS
 import dev.skyloft.skypython.settings.SymbolKey
 import dev.skyloft.skypython.settings.parseSymbolKeys
 import dev.skyloft.skypython.ui.theme.BarNavy
+import dev.skyloft.skypython.ui.theme.DividerNavy
 import dev.skyloft.skypython.ui.theme.RunButton
 import dev.skyloft.skypython.ui.theme.TextBright
 
@@ -69,12 +69,12 @@ enum class EditAction(@StringRes val description: Int, val icon: ImageVector?, v
     GoToLine(R.string.go_to_line_title, Icons.Filled.FormatListNumbered),
 }
 
-private val KeyDivider = Color(0xFF34417A)
+private val KeyDivider = DividerNavy
 
 /**
  * Strip of quick-insert [keys], separated by thin dividers, above the keyboard. The first key
  * flips the strip to edit actions ([EditAction]: comment, indent, move line …) and back.
- * With [onRun] set (while the keyboard is up and the Run FAB is hidden) a round blue Run key
+ * With [onRun] set (while the keyboard is up and the Run FAB is hidden) a round solid-blue Run key
  * is pinned at the end.
  */
 @Composable
@@ -97,7 +97,7 @@ fun SymbolBar(
                 Icon(Icons.Filled.EditNote, contentDescription = null, tint = TextBright)
             }
         }
-        VerticalDivider(Modifier.height(28.dp), color = KeyDivider, thickness = 2.dp)
+        VerticalDivider(Modifier.height(28.dp), color = KeyDivider)
         Row(
             modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()).height(44.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -109,7 +109,7 @@ fun SymbolBar(
                         if (action.icon != null) {
                             Icon(action.icon, contentDescription = null, tint = TextBright, modifier = Modifier.size(22.dp))
                         } else {
-                            Text(action.label.orEmpty(), fontFamily = FontFamily.Monospace, fontSize = 17.sp, color = TextBright)
+                            Text(action.label.orEmpty(), fontFamily = FontFamily.Monospace, fontSize = 16.sp, color = TextBright)
                         }
                     }
                 }
@@ -117,7 +117,7 @@ fun SymbolBar(
                 keys.forEachIndexed { index, key ->
                     if (index > 0) VerticalDivider(Modifier.height(22.dp), color = KeyDivider)
                     BarKey(onClick = { onInsert(key.text) }, description = null) {
-                        Text(key.label, fontFamily = FontFamily.Monospace, fontSize = 17.sp, color = TextBright)
+                        Text(key.label, fontFamily = FontFamily.Monospace, fontSize = 16.sp, color = TextBright)
                     }
                 }
             }
@@ -126,7 +126,8 @@ fun SymbolBar(
             RunButton(
                 onClick = onRun,
                 size = 36.dp,
-                iconSize = 24.dp,
+                iconSize = 22.dp,
+                elevation = 0.dp,
                 modifier = Modifier.padding(horizontal = 10.dp),
             )
         }

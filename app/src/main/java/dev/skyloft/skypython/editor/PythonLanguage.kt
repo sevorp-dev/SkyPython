@@ -64,7 +64,7 @@ class PythonLanguage(
         }
         publisher.addItems(items.map { c ->
             val p = CompletionMapping.proposal(c)
-            SimpleCompletionItem(p.label, p.type, p.prefixLength, p.commitText).kind(p.kind)
+            SimpleCompletionItem(p.label, p.type, p.prefixLength, p.commitText).kind(p.kind).icon(CompletionBadge(p.kind))
         })
     }
 

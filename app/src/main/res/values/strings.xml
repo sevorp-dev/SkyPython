@@ -247,6 +247,11 @@
     <string name="share_cannot_share">This file can\'t be shared</string>
     <string name="share_chooser_title">Share %1$s</string>
     <string name="share_no_app">No app can share this file</string>
+    <!-- Drawer footer -->
+    <string name="drawer_footer_studio" translatable="false">SkyLoft Studio</string>
+    <string name="drawer_footer_github" translatable="false">GitHub</string>
+    <string name="drawer_footer_repo" translatable="false">sevorp-dev/SkyPython</string>
+    <string name="drawer_footer_developer">Developed by @Sevorp</string>
 
     <!-- Editor: find & replace -->
     <string name="find_hint">Find</string>

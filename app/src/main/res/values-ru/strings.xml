@@ -240,6 +240,8 @@
     <string name="share_cannot_share">Этим файлом нельзя поделиться</string>
     <string name="share_chooser_title">Поделиться %1$s</string>
     <string name="share_no_app">Нет приложения, чтобы поделиться файлом</string>
+    <!-- Drawer footer -->
+    <string name="drawer_footer_developer">Разработчик @Sevorp</string>
 
     <!-- Редактор: поиск и замена -->
     <string name="find_hint">Найти</string>

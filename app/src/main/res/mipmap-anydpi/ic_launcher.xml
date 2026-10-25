@@ -3,12 +3,8 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="oval">
-            <!-- Same night-sky fade as ic_launcher_background (top to bottom). -->
-            <gradient
-                android:angle="270"
-                android:centerColor="#FF0B1230"
-                android:endColor="#FF1A2470"
-                android:startColor="#FF070B1F" />
+            <!-- Same flat navy as ic_launcher_background. -->
+            <solid android:color="#FF151C2F" />
         </shape>
     </item>
     <!-- The foreground is drawn for a 108dp canvas; enlarge it so the 66dp safe zone fills the circle. -->

@@ -61,7 +61,7 @@ import dev.skyloft.skypython.runTargetTitle
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.skyloft.skypython.ui.theme.DividerNavy
-import dev.skyloft.skypython.ui.theme.EditorBackground
+import dev.skyloft.skypython.ui.theme.BarNavy
 import dev.skyloft.skypython.ui.theme.ErrorRed
 import androidx.compose.material3.HorizontalDivider
 import dev.skyloft.skypython.ui.theme.NightNavy
@@ -77,8 +77,8 @@ import androidx.compose.ui.text.input.KeyboardType
 
 /** Terminal-like colours for the output area, independent of the app theme. */
 private val ConsoleBackground = NightNavy
-private val ConsoleText = Color(0xFFDCE3F5)
-private val ConsoleDim = Color(0xFF7480AB)
+private val ConsoleText = Color(0xFFD8DEEA)
+private val ConsoleDim = Color(0xFF7D88A3)
 private val ConsolePrompt = SkyCyan
 
 private val ConsoleTextStyle = TextStyle(
@@ -246,7 +246,7 @@ private fun InputRow(enabled: Boolean, autoFocus: Boolean, onSend: (String) -> U
         Modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
-            .background(EditorBackground)
+            .background(BarNavy)
             .clickable(enabled = enabled, indication = null, interactionSource = null) { focus.requestFocus() }
             .padding(start = 8.dp),
         verticalAlignment = Alignment.CenterVertically,

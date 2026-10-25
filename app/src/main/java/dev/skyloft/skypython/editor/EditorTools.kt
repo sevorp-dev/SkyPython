@@ -65,6 +65,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.skyloft.skypython.R
+import dev.skyloft.skypython.ui.theme.BarNavy
 import kotlinx.coroutines.delay
 import java.io.File
 
@@ -126,7 +127,7 @@ fun FindBar(
     }
 
     val colors = MaterialTheme.colorScheme
-    Column(modifier.fillMaxWidth().background(colors.surface).padding(horizontal = 8.dp, vertical = 4.dp)) {
+    Column(modifier.fillMaxWidth().background(BarNavy).padding(horizontal = 8.dp, vertical = 4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             CompactField(
                 value = text,

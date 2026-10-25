@@ -65,7 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.skyloft.skypython.ui.theme.DividerNavy
 import dev.skyloft.skypython.ui.theme.EditorBackground
-import dev.skyloft.skypython.ui.theme.OutlinedIconTile
+import dev.skyloft.skypython.ui.theme.IconTile
 import dev.skyloft.skypython.ui.theme.SectionLabel
 import dev.skyloft.skypython.ui.theme.brandSwitchColors
 import kotlinx.coroutines.launch
@@ -183,7 +183,7 @@ private fun SymbolKeysRow(saved: String, onSave: (String) -> Unit) {
     }
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            OutlinedIconTile(Icons.Filled.SpaceBar, size = 40.dp)
+            IconTile(Icons.Filled.SpaceBar, size = 40.dp)
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.settings_symbol_keys), style = MaterialTheme.typography.bodyLarge)
                 Text(
@@ -228,7 +228,7 @@ private fun FontSizeRow(sizeSp: Int, onChange: (Int) -> Unit) {
             .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        OutlinedIconTile(Icons.Filled.TextFields, size = 40.dp)
+        IconTile(Icons.Filled.TextFields, size = 40.dp)
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
             Text(stringResource(R.string.settings_font_size), style = MaterialTheme.typography.bodyLarge)
@@ -258,23 +258,23 @@ private fun FontSizeRow(sizeSp: Int, onChange: (Int) -> Unit) {
 private fun CodePreview(sizeSp: Int) {
     val code = remember {
         buildAnnotatedString {
-            withStyle(SpanStyle(color = Color(0xFF6EA8FF))) { append("def ") }
-            withStyle(SpanStyle(color = Color(0xFF5ED3F7))) { append("greet") }
+            withStyle(SpanStyle(color = Color(0xFF82A8F0))) { append("def ") }
+            withStyle(SpanStyle(color = Color(0xFF72C6E4))) { append("greet") }
             append("(name):  ")
-            withStyle(SpanStyle(color = Color(0xFFC4A1FF))) { append("return ") }
-            withStyle(SpanStyle(color = Color(0xFFF5B97A))) { append("f\"Hi {name}\"") }
+            withStyle(SpanStyle(color = Color(0xFFB8A6EE))) { append("return ") }
+            withStyle(SpanStyle(color = Color(0xFFE2B48A))) { append("f\"Hi {name}\"") }
         }
     }
     Row(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .background(EditorBackground, RoundedCornerShape(6.dp))
-            .border(1.dp, DividerNavy, RoundedCornerShape(6.dp))
+            .background(EditorBackground, RoundedCornerShape(12.dp))
+            .border(1.dp, DividerNavy, RoundedCornerShape(12.dp))
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
-        Text(code, fontFamily = FontFamily.Monospace, fontSize = sizeSp.sp, color = Color(0xFFDCE3F5), softWrap = false)
+        Text(code, fontFamily = FontFamily.Monospace, fontSize = sizeSp.sp, color = Color(0xFFD8DEEA), softWrap = false)
     }
 }
 
@@ -294,7 +294,7 @@ private fun SwitchRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        OutlinedIconTile(icon, size = 40.dp)
+        IconTile(icon, size = 40.dp)
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
             Text(summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -324,7 +324,7 @@ private fun LanguageRow() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        OutlinedIconTile(Icons.Filled.Language, size = 40.dp)
+        IconTile(Icons.Filled.Language, size = 40.dp)
         Column(Modifier.weight(1f)) {
             Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.bodyLarge)
             Text(current.label(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

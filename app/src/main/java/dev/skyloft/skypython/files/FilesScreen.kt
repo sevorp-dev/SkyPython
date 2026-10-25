@@ -79,9 +79,10 @@ import dev.skyloft.skypython.ui.theme.BarNavy
 import dev.skyloft.skypython.ui.theme.DividerNavy
 import dev.skyloft.skypython.ui.theme.EditorBackground
 import dev.skyloft.skypython.ui.theme.MutedText
-import dev.skyloft.skypython.ui.theme.GlowLine
-import dev.skyloft.skypython.ui.theme.GradientFab
-import dev.skyloft.skypython.ui.theme.SoftViolet
+import dev.skyloft.skypython.ui.theme.BrandFab
+import dev.skyloft.skypython.ui.theme.Hairline
+import dev.skyloft.skypython.ui.theme.SkyBlue
+import dev.skyloft.skypython.ui.theme.TextBright
 import dev.skyloft.skypython.ui.theme.SkyPythonTheme
 import androidx.compose.foundation.background
 import androidx.compose.material.icons.filled.Code
@@ -256,7 +257,7 @@ private fun FilesContent(
             SkyTopBar(
                 title = stringResource(R.string.title_files),
                 onBack = onBack,
-                glow = false,
+                divider = false,
                 actions = {
                     IconButton(onClick = onOpenExternal) {
                         Icon(Icons.Filled.FileOpen, contentDescription = stringResource(R.string.files_open_external))
@@ -273,7 +274,7 @@ private fun FilesContent(
                 .padding(padding),
         ) {
             Breadcrumbs(state = state, onUp = onUp, onNavigate = onNavigate)
-            GlowLine()
+            Hairline()
             if (state.entries.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
@@ -316,7 +317,7 @@ private fun Breadcrumbs(state: FilesState, onUp: () -> Unit, onNavigate: (File) 
             Icon(
                 Icons.Filled.ArrowUpward,
                 contentDescription = stringResource(R.string.files_up_one_folder),
-                tint = if (state.canGoUp) Color.White else MutedText.copy(alpha = 0.4f),
+                tint = if (state.canGoUp) TextBright else MutedText.copy(alpha = 0.5f),
             )
         }
         Row(
@@ -340,7 +341,7 @@ private fun Breadcrumbs(state: FilesState, onUp: () -> Unit, onNavigate: (File) 
                         // The root is called "Projects" everywhere else (editor subtitle).
                         if (index == 0) stringResource(R.string.projects_label) else crumb.label,
                         maxLines = 1,
-                        color = if (isLast) Color.White else MutedText,
+                        color = if (isLast) TextBright else MutedText,
                         fontWeight = if (isLast) FontWeight.Medium else FontWeight.Normal,
                     )
                 }
@@ -369,7 +370,7 @@ private fun EntryRow(
                     else -> Icons.Filled.Description
                 },
                 contentDescription = stringResource(if (entry.isDirectory) R.string.files_folder else R.string.files_file),
-                tint = if (entry.isDirectory) SoftViolet else MaterialTheme.colorScheme.primary,
+                tint = if (entry.isDirectory) SkyBlue else MutedText,
             )
         },
         headlineContent = { Text(entry.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -413,7 +414,7 @@ private fun EntryRow(
 private fun NewItemFab(onNewFile: () -> Unit, onNewFolder: () -> Unit) {
     var menuOpen by remember { mutableStateOf(false) }
     Box {
-        GradientFab(onClick = { menuOpen = true }, icon = Icons.Filled.Add, contentDescription = stringResource(R.string.files_new))
+        BrandFab(onClick = { menuOpen = true }, icon = Icons.Filled.Add, contentDescription = stringResource(R.string.files_new))
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.files_new_file)) },
