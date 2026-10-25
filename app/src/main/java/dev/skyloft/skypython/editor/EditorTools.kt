@@ -38,7 +38,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
+import dev.skyloft.skypython.ui.rememberMainScope
 import androidx.compose.material3.CircularProgressIndicator
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.remember
@@ -103,7 +103,7 @@ fun FindBar(
     var index by remember { mutableIntStateOf(-1) }
     var count by remember { mutableIntStateOf(0) }
     // Replace all runs in the background; closing the bar (leaving this composition) stops it.
-    val replaceScope = rememberCoroutineScope()
+    val replaceScope = rememberMainScope() // touches the editor view after suspending
     var replacing by remember { mutableStateOf(false) }
     val query = FindQuery(text, matchCase, wholeWord, regex)
     val error = if (regex) query.error else null

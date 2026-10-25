@@ -3,6 +3,7 @@ package dev.skyloft.skypython.terminal
 import com.termux.terminal.TerminalBuffer
 import dev.skyloft.skypython.share.ShareDirs
 import java.io.File
+import java.io.IOException
 
 /** The line written under a script's output when it ends. */
 object RunFooter {
@@ -95,6 +96,24 @@ object OutputFiles {
             val candidate = File(dir, if (ext.isEmpty()) "$stem-$n" else "$stem-$n.$ext")
             if (!candidate.exists()) return candidate
             n++
+        }
+    }
+
+    /**
+     * Writes [text] to a new file [name] in [dir] ([unique]) all at once: it is written to a hidden
+     * temporary file first and renamed into place, so the file never shows half-written (to the
+     * Files screen, another app, or after the app is killed mid-write). Call off the main thread.
+     */
+    fun saveNew(dir: File, name: String, text: String): File {
+        dir.mkdirs()
+        val tmp = File.createTempFile(".$name.", ".tmp", dir)
+        try {
+            tmp.writeText(text)
+            val target = unique(dir, name)
+            if (!tmp.renameTo(target)) throw IOException("can't create $target")
+            return target
+        } finally {
+            tmp.delete() // only still there if the write or the rename failed
         }
     }
 

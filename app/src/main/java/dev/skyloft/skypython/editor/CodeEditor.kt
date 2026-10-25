@@ -17,7 +17,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -73,6 +72,8 @@ import io.github.rosemoe.sora.widget.component.EditorTextActionWindow
 import dev.skyloft.skypython.settings.MAX_FONT_SIZE_SP
 import dev.skyloft.skypython.settings.MIN_FONT_SIZE_SP
 import dev.skyloft.skypython.settings.symbolInsertion
+import dev.skyloft.skypython.ui.checkMainThread
+import dev.skyloft.skypython.ui.rememberMainScope
 import io.github.rosemoe.sora.widget.schemes.EditorColorScheme
 import org.eclipse.tm4e.core.registry.IThemeSource
 
@@ -369,6 +370,7 @@ class EditorController {
             return ReplaceAllResult.TimedOut
         }
         if (n == 0) return ReplaceAllResult.Replaced(0)
+        checkMainThread("replace all")
         if (view !== v || v.text !== content || content.toString() != before) return ReplaceAllResult.TextChanged
         val c = v.cursor
         val line = c.leftLine
@@ -466,6 +468,7 @@ class EditorController {
 
     /** Marks [usages] (server positions) in the shown document until the next edit. */
     fun highlightUsages(usages: List<Usage>) {
+        checkMainThread("usages")
         val v = view ?: return
         val t = v.text
         val fill = ConstColor(usageAccent.copy(alpha = 0.22f).toArgb())
@@ -607,7 +610,8 @@ fun CodeEditor(
     val onChange by rememberUpdatedState(onTextChanged)
     val onCursor by rememberUpdatedState(onCursorChanged)
     val onProblems by rememberUpdatedState(onDiagnostics)
-    val scope = rememberCoroutineScope()
+    // Main-confined: the results below touch the view after waiting on the language server.
+    val scope = rememberMainScope()
     val debouncer = remember { TextChangeDebouncer(scope) { id, text -> onChange(id, text) } }
     val service = remember { LanguageService.get(context) }
     // Last diagnostics per doc, so switching tabs shows them again at once.
@@ -617,6 +621,7 @@ fun CodeEditor(
             scope = scope,
             diagnose = { source, path -> service.diagnose(source, path) },
             onResult = { r ->
+                checkMainThread("diagnostics")
                 val view = controller.view
                 val content = contents[r.docId]
                 // Stale (the text changed since, or another doc is shown): a newer request follows.
@@ -670,6 +675,7 @@ fun CodeEditor(
         hintJob[0] = scope.launch {
             delay(HINT_DELAY_MS)
             val sig = service.signature(content.toString(), line + 1, column, currentPath)
+            checkMainThread("signature hint")
             val cur = v.cursor
             // Stale: another doc, more typing or the cursor moved meanwhile (a newer request follows).
             if (v.text !== content || content.documentVersion != version || cur.isSelected ||

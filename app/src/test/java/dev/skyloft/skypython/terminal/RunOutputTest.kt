@@ -163,6 +163,18 @@ class OutputFilesTest {
     }
 
     @Test
+    fun saveNewWritesTheWholeTextUnderAFreeNameAndLeavesNoTemporaryFile() {
+        val dir = File(tmp.root, "out") // created on demand
+        val first = OutputFiles.saveNew(dir, "a_output.txt", "one\n")
+        val second = OutputFiles.saveNew(dir, "a_output.txt", "two\n")
+        assertEquals(File(dir, "a_output.txt"), first)
+        assertEquals(File(dir, "a_output-2.txt"), second)
+        assertEquals("one\n", first.readText())
+        assertEquals("two\n", second.readText())
+        assertEquals(setOf("a_output.txt", "a_output-2.txt"), dir.list()!!.toSet())
+    }
+
+    @Test
     fun everyShareGetsItsOwnFileAndOnlyTheLastFewAreKept() {
         val share = tmp.newFolder("share")
         val files = (1..5).map { OutputFiles.shareFile(share, "a_output.txt").apply { writeText("run $it") } }

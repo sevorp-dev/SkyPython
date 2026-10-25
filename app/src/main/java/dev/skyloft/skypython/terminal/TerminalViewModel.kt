@@ -304,9 +304,7 @@ class TerminalViewModel(
         viewModelScope.launch {
             val result = runCatching {
                 withContext(Dispatchers.IO) {
-                    val dir = OutputFiles.saveDir(script, projectsRoot)
-                    dir.mkdirs()
-                    OutputFiles.unique(dir, OutputFiles.name(title)).apply { writeText(text + "\n") }
+                    OutputFiles.saveNew(OutputFiles.saveDir(script, projectsRoot), OutputFiles.name(title), text + "\n")
                 }
             }
             result.onSuccess { file ->
