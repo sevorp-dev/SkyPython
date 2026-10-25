@@ -3,6 +3,7 @@ package com.termux.terminal;
 import android.annotation.SuppressLint;
 import android.os.Handler;
 import android.os.Message;
+import android.os.ParcelFileDescriptor;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
@@ -13,7 +14,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
@@ -302,7 +302,7 @@ public final class TerminalSession extends TerminalOutput {
         // Stop the reader and writer threads, and close the I/O streams
         mTerminalToProcessIOQueue.close();
         mProcessToTerminalIOQueue.close();
-        JNI.close(mTerminalFileDescriptor);
+        closeTerminalFileDescriptor();
     }
 
     @Override
@@ -369,23 +369,37 @@ public final class TerminalSession extends TerminalOutput {
         return null;
     }
 
-    private static FileDescriptor wrapFileDescriptor(int fileDescriptor, TerminalSessionClient client) {
-        FileDescriptor result = new FileDescriptor();
-        try {
-            Field descriptorField;
-            try {
-                descriptorField = FileDescriptor.class.getDeclaredField("descriptor");
-            } catch (NoSuchFieldException e) {
-                // For desktop java:
-                descriptorField = FileDescriptor.class.getDeclaredField("fd");
-            }
-            descriptorField.setAccessible(true);
-            descriptorField.set(result, fileDescriptor);
-        } catch (NoSuchFieldException | IllegalAccessException | IllegalArgumentException e) {
-            Logger.logStackTraceWithMessage(client, LOG_TAG, "Error accessing FileDescriptor#descriptor private field", e);
-            System.exit(1);
+    /**
+     * SkyPython: owns the terminal's descriptor for the reader and writer streams. Held for as long
+     * as the session: a collected ParcelFileDescriptor would close the descriptor under them.
+     */
+    private ParcelFileDescriptor mTerminalPfd;
+
+    /**
+     * SkyPython: wraps the descriptor through the public ParcelFileDescriptor API, instead of
+     * setting FileDescriptor's private field by reflection (and exiting the whole app with
+     * System.exit when that failed).
+     */
+    private FileDescriptor wrapFileDescriptor(int fileDescriptor, TerminalSessionClient client) {
+        mTerminalPfd = ParcelFileDescriptor.adoptFd(fileDescriptor);
+        return mTerminalPfd.getFileDescriptor();
+    }
+
+    /**
+     * SkyPython: closes the terminal through its owner (fdsan aborts a raw close of a descriptor a
+     * ParcelFileDescriptor owns); this also wakes the reader thread blocked on it.
+     */
+    private void closeTerminalFileDescriptor() {
+        ParcelFileDescriptor pfd = mTerminalPfd;
+        if (pfd == null) {
+            JNI.close(mTerminalFileDescriptor);
+            return;
         }
-        return result;
+        try {
+            pfd.close();
+        } catch (IOException e) {
+            Logger.logStackTraceWithMessage(mClient, LOG_TAG, "Error closing the terminal", e);
+        }
     }
 
     @SuppressLint("HandlerLeak")
