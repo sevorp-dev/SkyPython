@@ -16,5 +16,6 @@ Changes made for SkyPython:
     (dev.skyloft.skypython.runtime.Pty, runtime/src/main/cpp/pty.c, libskypty.so).
     The original jni/termux.c is not included.
   - TerminalSession.java: a failure to start the process is shown on the screen and
-    reported through getStartError() instead of crashing.
+    reported through getStartError() instead of crashing; a finished session no longer
+    resizes its closed (possibly reused) file descriptor.
 All other files are unchanged.

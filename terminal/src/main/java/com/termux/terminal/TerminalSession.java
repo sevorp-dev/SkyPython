@@ -29,7 +29,8 @@ import java.util.UUID;
  * NOTE: The terminal session may outlive the EmulatorView, so be careful with callbacks!
  * <p>
  * Modified for SkyPython: a failure to start the process is shown on the screen and reported
- * through {@link #getStartError()} instead of crashing the app.
+ * through {@link #getStartError()} instead of crashing the app; a finished session no longer
+ * resizes its (closed, possibly reused) descriptor.
  */
 public final class TerminalSession extends TerminalOutput {
 
@@ -110,7 +111,8 @@ public final class TerminalSession extends TerminalOutput {
         if (mEmulator == null) {
             initializeEmulator(columns, rows, cellWidthPixels, cellHeightPixels);
         } else {
-            JNI.setPtyWindowSize(mTerminalFileDescriptor, rows, columns, cellWidthPixels, cellHeightPixels);
+            // SkyPython: once the process is gone its descriptor is closed and may be reused.
+            if (isRunning()) JNI.setPtyWindowSize(mTerminalFileDescriptor, rows, columns, cellWidthPixels, cellHeightPixels);
             mEmulator.resize(columns, rows, cellWidthPixels, cellHeightPixels);
         }
     }
