@@ -72,7 +72,12 @@ jobs:
           # google_apis x86_64 images exist for every level in the matrix.
           target: google_apis
           disable-animations: true
-          script: ./gradlew connectedDebugAndroidTest --console=plain
+          # The default data partition is small: installing the APK with all four ABIs (~66 MB)
+          # next to the test APK and Python's files failed now and then on API 24
+          # ("Failed to install-write all apks").
+          disk-size: 4096M
+          # Only the emulator's own ABI (x86 or x86_64): a third of the APK to build and install.
+          script: ./gradlew connectedDebugAndroidTest -Pskypython.abis=${{ matrix.arch }} --console=plain
 
       - name: Summarize instrumented tests
         if: always()
