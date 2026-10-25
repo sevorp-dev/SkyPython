@@ -157,14 +157,22 @@ class TerminalSessionDeviceTest {
         // One line: on a slow emulator a second line typed while the first runs can be lost.
         vm.type("import os; line = b'\\x1b#8' * 20 + b'0123456789' * 7 + b'\\r\\n'; chunk = line * 200; exec('while True: os.write(1, chunk)')\r")
         vm.awaitScreen(Regex("(0123456789){7}"), timeoutMs = 120_000)
-        var worst = 0L
+        // At least 3 s and 20 probes while the program floods.
+        val samples = mutableListOf<Long>()
         val until = SystemClock.elapsedRealtime() + 3_000
-        while (SystemClock.elapsedRealtime() < until) {
-            worst = maxOf(worst, mainThreadLatencyMs())
+        while (SystemClock.elapsedRealtime() < until || samples.size < 20) {
+            samples += mainThreadLatencyMs()
             Thread.sleep(50)
         }
-        // Before the fix the main thread was blocked for minutes; slow CI emulators show ~1.3 s hiccups.
-        assertTrue("main thread blocked for $worst ms", worst < 3_000)
+        samples.sort()
+        // Before the fix the main thread was blocked for minutes (later, for seconds at a time: a
+        // 4 KiB read of ESC # 8 went to the emulator in one go). On a shared CI emulator a single
+        // probe can still wait out a GC pause or a starved vCPU, so the bound is on the typical
+        // wait and on all probes but the worst; a real stall shows in many of them.
+        val median = samples[samples.size / 2]
+        val secondWorst = samples[samples.size - 2]
+        assertTrue("main thread typically blocked for $median ms; probes (ms): $samples", median < 500)
+        assertTrue("main thread blocked for $secondWorst ms more than once; probes (ms): $samples", secondWorst < 3_000)
         val killedAt = SystemClock.elapsedRealtime()
         onMain { vm.kill() }
         // Stop must end it promptly: a few seconds even on slow CI emulators (it used to hang for good).
