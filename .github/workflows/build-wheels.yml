@@ -209,7 +209,6 @@ jobs:
         run: |
           set -o pipefail
           cibuildwheel src \
-            --platform android \
             --only "cp314-android_$ABI" \
             --config-file "$RUNNER_TEMP/cibw.toml" \
             --output-dir wheelhouse 2>&1 | tee build.log
