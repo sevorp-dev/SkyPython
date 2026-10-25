@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.WrapText
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Remove
@@ -96,6 +97,13 @@ fun SettingsScreen(store: SettingsStore, onBack: () -> Unit) {
                 summary = "Show line numbers in the editor",
                 checked = s.lineNumbers,
                 onChange = { v -> update { it.copy(lineNumbers = v) } },
+            )
+            SwitchRow(
+                icon = Icons.Filled.AutoAwesome,
+                title = "Code completion",
+                summary = "Suggestions while typing and error underlines",
+                checked = s.codeCompletion,
+                onChange = { v -> update { it.copy(codeCompletion = v) } },
             )
             SwitchRow(
                 icon = Icons.Filled.LightMode,

@@ -22,6 +22,7 @@ object SettingsMapping {
     private val WORD_WRAP = booleanPreferencesKey("word_wrap")
     private val LINE_NUMBERS = booleanPreferencesKey("line_numbers")
     private val KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on")
+    private val CODE_COMPLETION = booleanPreferencesKey("code_completion")
 
     fun read(prefs: Preferences): EditorSettings {
         val d = EditorSettings()
@@ -30,6 +31,7 @@ object SettingsMapping {
             wordWrap = prefs[WORD_WRAP] ?: d.wordWrap,
             lineNumbers = prefs[LINE_NUMBERS] ?: d.lineNumbers,
             keepScreenOn = prefs[KEEP_SCREEN_ON] ?: d.keepScreenOn,
+            codeCompletion = prefs[CODE_COMPLETION] ?: d.codeCompletion,
         )
     }
 
@@ -38,6 +40,7 @@ object SettingsMapping {
         prefs[WORD_WRAP] = settings.wordWrap
         prefs[LINE_NUMBERS] = settings.lineNumbers
         prefs[KEEP_SCREEN_ON] = settings.keepScreenOn
+        prefs[CODE_COMPLETION] = settings.codeCompletion
     }
 }
 

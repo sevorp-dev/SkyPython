@@ -2,6 +2,7 @@ package dev.skyloft.skypython.editor
 
 import java.io.File
 
+import dev.skyloft.skypython.lang.Diagnostic
 import dev.skyloft.skypython.settings.EditorSettings
 
 /** Cursor of the live editor: 0-based [line] and [column], plus the document's [lineCount]. */
@@ -34,6 +35,7 @@ data class EditorViewConfig(
     val wordWrap: Boolean,
     val lineNumbers: Boolean,
     val keepScreenOn: Boolean,
+    val codeCompletion: Boolean = true,
 ) {
     companion object {
         const val MIN_FONT_SP = 12
@@ -44,6 +46,10 @@ data class EditorViewConfig(
             wordWrap = settings.wordWrap,
             lineNumbers = settings.lineNumbers,
             keepScreenOn = settings.keepScreenOn,
+            codeCompletion = settings.codeCompletion,
         )
     }
 }
+
+/** Status-line text for a problem: "Line 3: SyntaxError: '(' was never closed". */
+fun problemLabel(d: Diagnostic): String = "Line ${d.line}: ${d.message.lineSequence().first()}"

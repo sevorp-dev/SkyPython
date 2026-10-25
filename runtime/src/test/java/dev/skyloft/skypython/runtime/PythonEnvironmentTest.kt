@@ -51,4 +51,13 @@ class PythonEnvironmentTest {
             PythonEnvironment.command(paths, script),
         )
     }
+
+    @Test
+    fun languageServerIsNotIsolatedSoItSeesPythonHomeAndUserPackages() {
+        val script = File(files, "langserver/skylang_server.py")
+        val cmd = PythonEnvironment.languageServerCommand(paths, script)
+        assertEquals(launcher.path, cmd.first())
+        assertEquals(script.path, cmd.last())
+        assertEquals(emptyList<String>(), cmd.filter { it == "-I" || it == "-E" || it == "-s" })
+    }
 }

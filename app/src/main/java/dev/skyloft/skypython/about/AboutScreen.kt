@@ -64,6 +64,10 @@ private val NOTICES = listOf(
     Notice("MagicPython grammar", "MIT"),
     Notice("VS Code Dark+ theme", "MIT"),
     Notice("Termux terminal-emulator and terminal-view", "Apache-2.0"),
+    Notice("jedi", "MIT"),
+    Notice("parso", "MIT"),
+    Notice("pyflakes", "MIT"),
+    Notice("typeshed", "Apache-2.0"),
 )
 
 @OptIn(ExperimentalMaterial3Api::class)

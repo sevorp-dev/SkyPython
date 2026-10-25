@@ -12,3 +12,5 @@ build/
 /runtime/src/main/jniLibs/
 /runtime/src/main/assets/python/
 /.superpowers/
+/runtime/src/main/assets/langserver/
+__pycache__/

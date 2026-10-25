@@ -9,6 +9,7 @@ datastore = "1.1.7"
 coroutines = "1.10.2"
 desugarJdkLibs = "2.1.5"
 sora = "0.24.4"
+gson = "2.13.2"
 junit = "4.13.2"
 androidxAnnotation = "1.11.0"
 androidxTestRunner = "1.7.0"
@@ -34,6 +35,7 @@ sora-editor = { module = "io.github.rosemoe:editor", version.ref = "sora" }
 sora-textmate = { module = "io.github.rosemoe:language-textmate", version.ref = "sora" }
 junit = { module = "junit:junit", version.ref = "junit" }
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "androidxAnnotation" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugarJdkLibs" }
 androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidxTestRunner" }
 androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidxTestExt" }

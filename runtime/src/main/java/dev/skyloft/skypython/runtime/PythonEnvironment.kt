@@ -22,6 +22,13 @@ object PythonEnvironment {
     fun command(paths: PythonPaths, script: File): List<String> =
         listOf(paths.launcher.path, "-u", script.path)
 
+    /**
+     * The editor's language server. No `-I`/`-E`: PYTHONHOME must apply, and jedi must see the
+     * user's pip packages (PYTHONUSERBASE) to complete them. The bundle itself is on sys.path
+     * only as the script's own directory.
+     */
+    fun languageServerCommand(paths: PythonPaths, script: File): List<String> = command(paths, script)
+
     // --- Interpreter and terminal (area B) -------------------------------------------------
 
     /** Command line for [command]. */

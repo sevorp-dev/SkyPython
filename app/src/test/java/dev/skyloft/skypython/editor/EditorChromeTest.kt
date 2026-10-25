@@ -1,5 +1,7 @@
 package dev.skyloft.skypython.editor
 
+import dev.skyloft.skypython.lang.Diagnostic
+import dev.skyloft.skypython.lang.Severity
 import dev.skyloft.skypython.settings.EditorSettings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -47,6 +49,16 @@ class EditorChromeTest {
         assertTrue(config.wordWrap)
         assertTrue(config.lineNumbers)
         assertFalse(config.keepScreenOn)
+        assertTrue(config.codeCompletion)
+    }
+
+    @Test fun `problem label shows the 1-based line and the first message line`() {
+        val d = Diagnostic(3, 4, 3, 5, Severity.ERROR, "SyntaxError: '(' was never closed\nmore")
+        assertEquals("Line 3: SyntaxError: '(' was never closed", problemLabel(d))
+    }
+
+    @Test fun `code completion setting reaches the editor`() {
+        assertFalse(EditorViewConfig.from(EditorSettings(codeCompletion = false)).codeCompletion)
     }
 
     @Test fun `font size is clamped to the settings range`() {

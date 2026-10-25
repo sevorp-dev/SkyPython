@@ -52,6 +52,7 @@ Full details for every version: [CHANGELOG.md](CHANGELOG.md).
 | | |
 |---|---|
 | 📝 **Code editor** | Python syntax highlighting, line numbers, word wrap, tabs for several files (`*` marks unsaved ones), undo/redo and a symbol bar with `Tab : ; ' " # ( ) [ ] { } = …` above the keyboard. |
+| 💡 **Code hints** | Completion while typing (modules, methods, your own names, installed packages) and red/yellow underlines for syntax errors, undefined names and unused imports — tap one to read it. Works offline. |
 | ▶️ **Run** | One tap on the yellow ▶ runs the current file. Each run is a separate process, so **Stop** always works and a crashing script can't take the app down. |
 | 💻 **Console** | `print()` and `input()` just work; errors are shown in red with the exit code. **^C** sends Ctrl+C (`KeyboardInterrupt`) so a script can clean up; **Stop** ends it for sure. |
 | 🐍 **Interpreter** | The interactive Python shell (`>>>`) on a real terminal: line editing, history, colours, Ctrl+C interrupts without losing your session. |
@@ -59,7 +60,7 @@ Full details for every version: [CHANGELOG.md](CHANGELOG.md).
 | 📦 **Pip** | Install, list and remove pure-Python packages from PyPI (`requests`, `rich`, `six`, …). |
 | 📁 **Files** | Projects folder with create / rename / delete; open and save files from other apps. |
 | 🎓 **Samples** | Ready-to-run examples: input, loops, functions, classes, files, JSON, a small game. |
-| ⚙️ **Settings** | Font size, word wrap, line numbers, keep screen on. |
+| ⚙️ **Settings** | Font size, word wrap, line numbers, keep screen on, code completion. |
 | 🔗 **Share** | Send the current script to any app. |
 | 🌌 **Night-sky theme** | Deep navy, electric blue and violet — easy on the eyes, day and night. |
 
@@ -119,6 +120,7 @@ If Android says *"App not installed"*, you picked the wrong one — take `univer
 - The **standard library** is packed per CPU type and unpacked once into the app's private storage.
 - Each program runs as a **separate process**, exactly like on a desktop computer.
 - The **editor** is [Sora Editor](https://github.com/Rosemoe/sora-editor) with TextMate grammars (MagicPython).
+- **Code hints** come from a small language server in the same bundled Python: [jedi](https://github.com/davidhalter/jedi) for completions, [pyflakes](https://github.com/PyCQA/pyflakes) and `compile()` for errors. It is packed into the APK (~1 MB) and unpacked next to the stdlib, separate from your pip packages.
 
 ## 🛠️ Build from source
 
@@ -161,7 +163,10 @@ pinned hashes would stop matching (the workflow refuses unless you tick `replace
 ```sh
 ./gradlew testDebugUnitTest            # JVM unit tests
 ./gradlew connectedDebugAndroidTest    # on a device or emulator: runs real Python
+python -m unittest discover -s runtime/src/test/python   # language server, desktop Python 3.10+
 ```
+
+The language server tests use the bundle the build packs (`./gradlew :runtime:langServerBundle`).
 
 CI ([`android.yml`](.github/workflows/android.yml)) builds every push and runs the device tests
 on Android 7, 9, 11, 14 and 16. Pushing a `v*.*.*` tag publishes a release
