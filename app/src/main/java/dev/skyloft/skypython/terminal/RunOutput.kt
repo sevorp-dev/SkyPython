@@ -7,6 +7,7 @@ import java.io.File
 object RunFooter {
     private const val DIM = "\u001b[2m"
     private const val RESET = "\u001b[0m"
+    private const val HIDE_CURSOR = "\u001b[?25l"
 
     /** The session's exit status as a shell shows it: a signal `s` (status `-s`) is `128 + s`. */
     fun exitCode(status: Int): Int = if (status < 0) 128 - status else status
@@ -20,7 +21,8 @@ object RunFooter {
         atLineStart: Boolean,
         label: (Int) -> String = { "[Program finished, exit code $it]" },
     ): String {
-        val line = "$DIM${label(exitCode(status))}$RESET\r\n"
+        // The cursor goes too: nothing reads input any more.
+        val line = "$DIM${label(exitCode(status))}$RESET\r\n$HIDE_CURSOR"
         return if (atLineStart) line else "\r\n" + line
     }
 }

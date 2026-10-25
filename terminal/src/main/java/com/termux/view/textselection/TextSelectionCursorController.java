@@ -245,9 +245,11 @@ public class TextSelectionCursorController implements CursorController {
         while (bottom > top && screen.getSelectedText(0, bottom, columns - 1, bottom).trim().isEmpty()) {
             bottom--;
         }
+        // End on the last character, so the end handle stays on the screen.
+        int lastColumn = screen.getSelectedText(0, bottom, columns - 1, bottom).replaceAll("\\s+$", "").length() - 1;
         mSelX1 = 0;
         mSelY1 = top;
-        mSelX2 = columns - 1;
+        mSelX2 = Math.max(0, Math.min(columns - 1, lastColumn));
         mSelY2 = bottom;
         render();
         terminalView.invalidate();

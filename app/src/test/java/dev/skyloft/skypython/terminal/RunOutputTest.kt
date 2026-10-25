@@ -25,9 +25,10 @@ class RunFooterTest {
     @Test
     fun footerIsADimmedLineOfItsOwn() {
         val atStart = RunFooter.text(0, atLineStart = true)
-        assertEquals("\u001b[2m[Program finished, exit code 0]\u001b[0m\r\n", atStart)
+        // Dimmed, then the cursor is hidden: nothing reads input any more.
+        assertEquals("\u001b[2m[Program finished, exit code 0]\u001b[0m\r\n\u001b[?25l", atStart)
         val midLine = RunFooter.text(1, atLineStart = false)
-        assertEquals("\r\n\u001b[2m[Program finished, exit code 1]\u001b[0m\r\n", midLine)
+        assertEquals("\r\n\u001b[2m[Program finished, exit code 1]\u001b[0m\r\n\u001b[?25l", midLine)
     }
 
     @Test
