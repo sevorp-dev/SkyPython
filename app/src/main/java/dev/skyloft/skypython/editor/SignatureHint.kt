@@ -84,7 +84,7 @@ internal fun SignatureHintBubble(state: HintState) {
             }
             .testTag("signature_hint")
             .shadow(4.dp, shape)
-            .background(MaterialTheme.colorScheme.surfaceContainer, shape)
+            .background(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 1f), shape)
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
             .padding(horizontal = 10.dp, vertical = 6.dp),
     )
