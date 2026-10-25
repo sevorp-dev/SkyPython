@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.terminal
 
+import dev.skyloft.skypython.ui.theme.InkBlack
 import dev.skyloft.skypython.ui.rememberMainScope
 import dev.skyloft.skypython.ui.keepsSnackbarsAbove
 import dev.skyloft.skypython.ui.theme.TextBright
@@ -545,14 +546,14 @@ private fun shareOutput(context: Context, event: TerminalEvent.Share) {
     }
 }
 /**
- * The 16 ANSI colours, tuned to the slate background and the orange accent (the stock xterm
+ * The 16 ANSI colours, tuned to the near-black console and the orange accent (the stock xterm
  * ones are pure, saturated primaries). Order: black, red, green, yellow, blue, magenta, cyan,
  * white, then the bright eight. Magenta is the accent orange: Python 3.13+ paints its `>>>`
  * prompt with it.
  */
 private val ANSI_COLORS = longArrayOf(
-    0xFF2A3442, 0xFFFF7B72, 0xFFA8D48C, 0xFFF5C26B, 0xFF7AB8F5, 0xFFF5A962, 0xFF6CCFC0, 0xFFC8CEDD,
-    0xFF5C6B7C, 0xFFFF9B94, 0xFFBFE3A8, 0xFFFFD48F, 0xFF9CCBF8, 0xFFF7B474, 0xFF8EDCD0, 0xFFF2F4F8,
+    0xFF3C3E43, 0xFFF0726A, 0xFF7EC27F, 0xFFF0C26B, 0xFF56A8F5, 0xFFF5A962, 0xFF3FBFC9, 0xFFC7C9CF,
+    0xFF6F737A, 0xFFFF9B94, 0xFFA3D9A0, 0xFFFFD48F, 0xFF8CC4FA, 0xFFF7B474, 0xFF7ED8DF, 0xFFF2F3F5,
 ).let { argb -> IntArray(argb.size) { argb[it].toInt() } }
 
 /** The app theme's colours as the terminal's default foreground, background and cursor. */
@@ -734,10 +735,10 @@ private fun StartError(message: String, kind: TerminalKind, onUseSimpleConsole: 
     }
 }
 
-/** The terminal background for a theme: the app's deepest slate, or near-black. */
+/** The terminal background for a theme: the app's darkest surface, or near-black. */
 private fun terminalBackground(theme: TerminalTheme): Color = when (theme) {
     TerminalTheme.Dark -> Ink
-    TerminalTheme.Black -> Color(0xFF0B0E12)
+    TerminalTheme.Black -> InkBlack
 }
 
 /**

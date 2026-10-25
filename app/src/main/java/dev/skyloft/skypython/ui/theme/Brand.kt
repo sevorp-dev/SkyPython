@@ -157,7 +157,7 @@ fun Chevron(modifier: Modifier = Modifier) {
     )
 }
 
-/** Switches: dark thumb on the orange track when on, a visible outlined slate track when off. */
+/** Switches: dark thumb on the orange track when on, a visible outlined dark track when off. */
 @Composable
 fun brandSwitchColors() = SwitchDefaults.colors(
     checkedThumbColor = OnOrange,
@@ -166,5 +166,5 @@ fun brandSwitchColors() = SwitchDefaults.colors(
     checkedIconColor = Orange,
     uncheckedThumbColor = MutedText,
     uncheckedTrackColor = SlatePanel,
-    uncheckedBorderColor = Color(0xFF5C6B7C),
+    uncheckedBorderColor = SlateOutline,
 )

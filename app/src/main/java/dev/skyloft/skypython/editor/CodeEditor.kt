@@ -1,5 +1,20 @@
 package dev.skyloft.skypython.editor
 
+import dev.skyloft.skypython.ui.theme.Slate
+import dev.skyloft.skypython.ui.theme.SlateBar
+import dev.skyloft.skypython.ui.theme.SlatePanel
+import dev.skyloft.skypython.ui.theme.SlateLine
+import dev.skyloft.skypython.ui.theme.GLASS_ALPHA
+import dev.skyloft.skypython.ui.theme.CodeSelection
+import dev.skyloft.skypython.ui.theme.TextBright
+import dev.skyloft.skypython.ui.theme.MutedText
+import dev.skyloft.skypython.ui.theme.OrangeSoft
+import dev.skyloft.skypython.ui.theme.ErrorRed
+import dev.skyloft.skypython.ui.theme.Orange
+import dev.skyloft.skypython.ui.theme.WarningAmber
+import dev.skyloft.skypython.ui.theme.BadgeTint
+import dev.skyloft.skypython.ui.theme.OrangeTint
+import dev.skyloft.skypython.ui.theme.SlateOutline
 import io.github.rosemoe.sora.widget.SelectionMovement
 import dev.skyloft.skypython.settings.CodeFontChoice
 import dev.skyloft.skypython.R
@@ -77,8 +92,8 @@ import dev.skyloft.skypython.ui.rememberMainScope
 import io.github.rosemoe.sora.widget.schemes.EditorColorScheme
 import org.eclipse.tm4e.core.registry.IThemeSource
 
-private const val EDITOR_BG = 0xFF1C2530.toInt()
-private const val GUTTER_DIVIDER = 0xFF2A3644.toInt()
+private val EDITOR_BG = Slate.toArgb()
+private val GUTTER_DIVIDER = SlateBar.toArgb()
 private const val THEME_PATH = "textmate/skypython-dark.json"
 private const val THEME_NAME = "skypython-dark"
 private const val PYTHON_SCOPE = "source.python"
@@ -127,6 +142,16 @@ private class SkyColorScheme(registry: ThemeRegistry) :
         TEXT_ACTION_WINDOW_ICON_COLOR -> POPUP_TEXT
         // Selection handles: the accent, like the cursor (Sora's default is a stock blue).
         SELECTION_HANDLE -> ACCENT
+        // The bracket pair at the cursor: a warm box, not Sora's stock blue.
+        HIGHLIGHTED_DELIMITERS_BORDER -> BRACKET_BORDER
+        HIGHLIGHTED_DELIMITERS_BACKGROUND -> BRACKET_BG
+        HIGHLIGHTED_DELIMITERS_UNDERLINE -> TRANSPARENT
+        HOVER_BACKGROUND, SIGNATURE_BACKGROUND -> POPUP_BG
+        HOVER_BORDER, SIGNATURE_BORDER, STICKY_SCROLL_DIVIDER -> POPUP_BORDER
+        HOVER_TEXT_NORMAL, SIGNATURE_TEXT_NORMAL -> POPUP_TEXT
+        HOVER_TEXT_HIGHLIGHTED, SIGNATURE_TEXT_HIGHLIGHTED_PARAMETER -> POPUP_MATCHED
+        SCROLL_BAR_THUMB -> SCROLL_THUMB
+        SCROLL_BAR_THUMB_PRESSED -> POPUP_MATCHED
         PROBLEM_ERROR -> SQUIGGLE_ERROR
         PROBLEM_WARNING -> SQUIGGLE_WARNING
         else -> super.getColor(type)
@@ -135,16 +160,20 @@ private class SkyColorScheme(registry: ThemeRegistry) :
 
 private const val PINCH_SAVE_DELAY_MS = 600L
 private val JUMP_RESCROLL_MS = longArrayOf(150L, 500L, 1_200L)
-// Completion popup and problem tooltip: the app's raised panel (SlatePanel) and text colours.
-private const val POPUP_BG = 0xF5273240.toInt()
-private const val POPUP_BORDER = 0xFF334051.toInt()
-private const val POPUP_SELECTED = 0xFF4A3B2B.toInt()
-private const val POPUP_TEXT = 0xFFE8ECF1.toInt()
-private const val POPUP_TEXT_SECONDARY = 0xFF8C99A8.toInt()
-private const val POPUP_MATCHED = 0xFFF5A962.toInt()
-private const val SQUIGGLE_ERROR = 0xFFFF7B72.toInt()
-private const val ACCENT = 0xFFF28C38.toInt()
-private const val SQUIGGLE_WARNING = 0xFFE3B95C.toInt()
+// Completion popup and problem tooltip: the app's raised panel and text colours.
+private val POPUP_BG = SlatePanel.copy(alpha = GLASS_ALPHA).toArgb()
+private val POPUP_BORDER = SlateLine.toArgb()
+private val POPUP_SELECTED = CodeSelection.toArgb()
+private val POPUP_TEXT = TextBright.toArgb()
+private val POPUP_TEXT_SECONDARY = MutedText.toArgb()
+private val POPUP_MATCHED = OrangeSoft.toArgb()
+private val SQUIGGLE_ERROR = ErrorRed.toArgb()
+private val ACCENT = Orange.toArgb()
+private val SQUIGGLE_WARNING = WarningAmber.toArgb()
+private val BRACKET_BORDER = OrangeSoft.copy(alpha = 0.6f).toArgb()
+private val BRACKET_BG = OrangeTint.toArgb()
+private val SCROLL_THUMB = SlateOutline.copy(alpha = 0.8f).toArgb()
+private const val TRANSPARENT = 0
 
 /**
  * Completion-list badge: the kind's first letter on a soft tonal circle in the accent orange,
@@ -181,7 +210,7 @@ internal class CompletionBadge(kind: CompletionItemKind) : Drawable() {
     override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
 }
 
-private const val BADGE_BG = 0xFF3D3328.toInt()
+private val BADGE_BG = BadgeTint.toArgb()
 
 /** Text and a position in it, as the language server takes them: 1-based [line], UTF-16 [column]. */
 data class LookupPosition(val source: String, val line: Int, val column: Int)

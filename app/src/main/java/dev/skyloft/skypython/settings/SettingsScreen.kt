@@ -1,9 +1,13 @@
 package dev.skyloft.skypython.settings
 
+import dev.skyloft.skypython.ui.theme.CodeKeyword
+import dev.skyloft.skypython.ui.theme.CodeBlue
+import dev.skyloft.skypython.ui.theme.CodeControl
+import dev.skyloft.skypython.ui.theme.CodeString
+import dev.skyloft.skypython.ui.theme.CodeText
 import dev.skyloft.skypython.ui.theme.SlatePanel
 import dev.skyloft.skypython.ui.theme.OrangeSoft
 import dev.skyloft.skypython.ui.theme.MutedText
-import dev.skyloft.skypython.ui.theme.Ink
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material.icons.outlined.Palette
@@ -69,7 +73,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -392,18 +395,18 @@ private fun FontSizeRow(sizeSp: Int, min: Int, max: Int, onChange: (Int) -> Unit
 private fun CodePreview(sizeSp: Int, font: CodeFontChoice) {
     val code = remember {
         buildAnnotatedString {
-            withStyle(SpanStyle(color = Color(0xFFF7B474))) { append("def ") }
-            withStyle(SpanStyle(color = Color(0xFF7AB8F5))) { append("greet") }
+            withStyle(SpanStyle(color = CodeKeyword)) { append("def ") }
+            withStyle(SpanStyle(color = CodeBlue)) { append("greet") }
             append("(name):  ")
-            withStyle(SpanStyle(color = Color(0xFFF28C38))) { append("return ") }
-            withStyle(SpanStyle(color = Color(0xFFA8D48C))) { append("f\"Hi {name}\"") }
+            withStyle(SpanStyle(color = CodeControl)) { append("return ") }
+            withStyle(SpanStyle(color = CodeString)) { append("f\"Hi {name}\"") }
         }
     }
     Row(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
-            .background(Ink, RoundedCornerShape(12.dp))
+            .background(Slate, RoundedCornerShape(12.dp))
             .border(1.dp, SlateLine, RoundedCornerShape(12.dp))
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = 14.dp, vertical = 12.dp),
@@ -412,7 +415,7 @@ private fun CodePreview(sizeSp: Int, font: CodeFontChoice) {
             code,
             fontFamily = if (font == CodeFontChoice.SystemMono) FontFamily.Monospace else CodeFont,
             fontSize = sizeSp.sp,
-            color = Color(0xFFDCE2EA),
+            color = CodeText,
             softWrap = false,
         )
     }

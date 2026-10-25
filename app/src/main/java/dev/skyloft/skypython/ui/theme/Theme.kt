@@ -16,40 +16,67 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.skyloft.skypython.R
 
-// "Modern dark, minimal": cool slate surfaces in clear elevation steps and one warm orange
-// accent. Translucency is used sparingly — on floating layers (menus, sheets, snackbars, the
-// drawer scrim) — never on text-heavy panels. Text contrast is WCAG AA (≥ 4.5:1) on every surface.
+// "IDE dark": neutral near-black surfaces (no blue tint) in clear elevation steps, like the dark
+// themes of desktop code editors, and one warm orange accent. Translucency is used sparingly — on
+// floating layers (menus, sheets, snackbars, the drawer scrim) — never on text-heavy panels.
+// Text contrast is WCAG AA (≥ 4.5:1) on every surface. (The Slate* names are historical.)
 
-/** Deepest slate: console / terminal output and logs. */
-val Ink = Color(0xFF161E28)
+/** Darkest: console / terminal output and logs. */
+val Ink = Color(0xFF161616)
+/** The terminal's "Black" theme: near-black for OLED screens at night. */
+val InkBlack = Color(0xFF0A0A0A)
 /** Window and code-area background (also the Sora view's, see CodeEditor). */
-val Slate = Color(0xFF1C2530)
+val Slate = Color(0xFF1E1F22)
 /** Top bars, the tab strip, the status line, symbol bar and key rows: one step above [Slate]. */
-val SlateBar = Color(0xFF212B37)
+val SlateBar = Color(0xFF2B2D30)
 /** Raised panels: cards, fields, menus, the completion popup. */
-val SlatePanel = Color(0xFF273240)
+val SlatePanel = Color(0xFF313338)
 /** Dialogs and pressed / selected rows: above [SlatePanel]. */
-val SlateRaised = Color(0xFF2E3A49)
+val SlateRaised = Color(0xFF37393E)
 /** 1dp hairlines between rows and sections, and borders of floating layers. */
-val SlateLine = Color(0xFF334051)
+val SlateLine = Color(0xFF3C3E43)
+/** Outlines of controls (text fields, the off switch): stronger than [SlateLine]. */
+val SlateOutline = Color(0xFF5A5D63)
 
 /** The accent: solid fills (Run, FABs, filled buttons, switch tracks) under [OnOrange] content. */
 val Orange = Color(0xFFF28C38)
-/** Content on [Orange]: a deep brown-black (≈ 7.9:1), sharper than white on orange (2.4:1). */
+/** Content on [Orange]: a deep brown-black (≈ 7.4:1), sharper than white on orange (2.4:1). */
 val OnOrange = Color(0xFF221203)
-/** Accent as text / icons on slate (links, selected tabs, section labels) — ≥ 7:1 on [Slate]. */
+/** Accent as text / icons on dark surfaces (links, selected tabs, section labels) — ≥ 6:1 everywhere. */
 val OrangeSoft = Color(0xFFF5A962)
 /** A quiet orange wash behind selected rows and armed keys. */
 val OrangeTint = Color(0x1FF28C38)
 
 /** Primary text. */
-val TextBright = Color(0xFFE8ECF1)
-/** Secondary text (subtitles, hints) — 5.3:1 on [Slate], 4.6:1 on [SlatePanel]. */
-val MutedText = Color(0xFF8C99A8)
+val TextBright = Color(0xFFDFE1E5)
+/** Secondary text (subtitles, hints) — 6.5:1 on [Slate], 5.5:1 on [SlateBar], 5.0:1 on [SlatePanel], 4.6:1 on [SlateRaised]. */
+val MutedText = Color(0xFFA0A3AA)
 /** Code functions / links in code — the cool counterpart of the orange keywords. */
-val CodeBlue = Color(0xFF7AB8F5)
+val CodeBlue = Color(0xFF56A8F5)
 val ErrorRed = Color(0xFFFF7B72)
 val SuccessGreen = Color(0xFF7FD18B)
+/** Warning squiggles. */
+val WarningAmber = Color(0xFFE3B95C)
+/** A problem banner's background and text (the editor's error strip). */
+val ErrorSurface = Color(0xFF3A2B2D)
+val OnErrorSurface = Color(0xFFFFD9DE)
+
+// Code colours, shared by the editor theme (assets/textmate/skypython-dark.json) and previews.
+/** Plain code text. */
+val CodeText = Color(0xFFBCBEC4)
+/** Keywords (def, class, import, True …): a muted warm orange. */
+val CodeKeyword = Color(0xFFCF8E6D)
+/** Control-flow keywords (if, return, for …): the accent orange. */
+val CodeControl = Orange
+val CodeString = Color(0xFF6AAB73)
+/** The selected completion row and find matches: a warm, opaque take on the orange selection. */
+val CodeSelection = Color(0xFF4A3B2B)
+/** Completion-kind badges behind the orange letter. */
+val BadgeTint = Color(0xFF3D3328)
+
+/** Console text and its dim lines (prompts, notices). */
+val ConsoleText = Color(0xFFD5D7DC)
+val ConsoleDim = Color(0xFF85898F)
 
 /** Brand name in About: a soft orange → amber sweep (no glow). */
 val BrandTextBrush: Brush = Brush.linearGradient(listOf(Orange, Color(0xFFFFC27A)))
@@ -98,17 +125,17 @@ private val SkyColors = darkColorScheme(
     onSurfaceVariant = MutedText,
     // Flat: no orange tint added to raised surfaces.
     surfaceTint = Color.Transparent,
-    // Snackbars: a raised slate panel with orange actions, not a light slab.
+    // Snackbars: a raised dark panel with orange actions, not a light slab.
     inverseSurface = SlateRaised.copy(alpha = 0.97f),
     inverseOnSurface = TextBright,
     error = ErrorRed,
     onError = Color(0xFF410002),
     errorContainer = Color(0xFF4D1F1D),
     onErrorContainer = Color(0xFFFFDAD6),
-    outline = Color(0xFF5C6B7C),
+    outline = SlateOutline,
     outlineVariant = SlateLine,
-    scrim = Color(0xFF070A0E),
-    surfaceBright = Color(0xFF354253),
+    scrim = Color(0xFF000000),
+    surfaceBright = Color(0xFF3C3E43),
     surfaceDim = Ink,
     surfaceContainerLowest = Ink,
     // Bottom sheets.

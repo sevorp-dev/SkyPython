@@ -4,7 +4,7 @@
     <item>
         <shape android:shape="oval">
             <!-- Same dark colour as ic_launcher_background. -->
-            <solid android:color="#FF151A22" />
+            <solid android:color="#FF171717" />
         </shape>
     </item>
     <!-- The foreground is drawn for a 108dp canvas; enlarge it so the 66dp safe zone fills the circle. -->

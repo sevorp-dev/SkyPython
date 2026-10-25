@@ -34,7 +34,7 @@ enum class CodeFontChoice(val key: String) {
     }
 }
 
-/** Terminal colour themes: the app's slate, or near-black (easier on OLED screens at night). */
+/** Terminal colour themes: the app's dark console, or near-black (easier on OLED screens at night). */
 enum class TerminalTheme(val key: String) {
     Dark("dark"),
     Black("black");

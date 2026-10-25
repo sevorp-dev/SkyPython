@@ -1,5 +1,7 @@
 package dev.skyloft.skypython.console
 
+import dev.skyloft.skypython.ui.theme.ConsoleText
+import dev.skyloft.skypython.ui.theme.ConsoleDim
 import dev.skyloft.skypython.ui.theme.CodeFont
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
@@ -43,7 +45,6 @@ import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.flow.filter
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -78,8 +79,6 @@ import androidx.compose.ui.text.input.KeyboardType
 
 /** Terminal-like colours for the output area, independent of the app theme. */
 private val ConsoleBackground = Ink
-private val ConsoleText = Color(0xFFDCE2EA)
-private val ConsoleDim = Color(0xFF7A8797)
 private val ConsolePrompt = Orange
 
 private val ConsoleTextStyle = TextStyle(
