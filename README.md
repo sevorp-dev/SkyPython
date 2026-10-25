@@ -53,7 +53,7 @@ Full details for every version: [CHANGELOG.md](CHANGELOG.md).
 |---|---|
 | 📝 **Code editor** | Python syntax highlighting, line numbers, word wrap, tabs for several files (`*` marks unsaved ones), undo/redo and a symbol bar with `Tab : ; ' " # ( ) [ ] { } = …` above the keyboard. |
 | 💡 **Code hints** | Completion while typing (modules, methods, your own names, installed packages) and red/yellow underlines for syntax errors, undefined names and unused imports — tap one to read it. Works offline. |
-| ▶️ **Run** | One tap on the yellow ▶ runs the current file. Each run is a separate process, so **Stop** always works and a crashing script can't take the app down. |
+| ▶️ **Run** | One tap on the blue ▶ runs the current file. Each run is a separate process, so **Stop** always works and a crashing script can't take the app down. |
 | 💻 **Console** | `print()` and `input()` just work; errors are shown in red with the exit code. **^C** sends Ctrl+C (`KeyboardInterrupt`) so a script can clean up; **Stop** ends it for sure. |
 | 🐍 **Interpreter** | The interactive Python shell (`>>>`) on a real terminal: line editing, history, colours, Ctrl+C interrupts without losing your session. |
 | ⌨️ **Terminal** | A real terminal (colours, full-screen programs, Ctrl+C) with `python` and `pip` commands and a key row with Esc, Tab, Ctrl, Alt and arrows. |
@@ -62,7 +62,7 @@ Full details for every version: [CHANGELOG.md](CHANGELOG.md).
 | 🎓 **Samples** | Ready-to-run examples: input, loops, functions, classes, files, JSON, a small game. |
 | ⚙️ **Settings** | Font size, word wrap, line numbers, keep screen on, code completion. |
 | 🔗 **Share** | Send the current script to any app. |
-| 🌌 **Night-sky theme** | Deep navy, electric blue and violet — easy on the eyes, day and night. |
+| 🌙 **Calm dark theme** | Flat deep navy with one blue accent, no glare — easy on the eyes, day and night. |
 
 Everything works **offline** except installing packages with pip.
 
