@@ -25,8 +25,11 @@ object PythonAbis {
     /** ABIs that python.org publishes official builds for. */
     private val OFFICIAL = setOf("arm64-v8a", "x86_64")
 
-    /** Our own builds of the other ABIs (.github/workflows/build-python.yml). */
-    private const val OWN_RELEASES = "https://github.com/sevorp-dev/SkyPython/releases/download"
+    /**
+     * Our own builds of the other ABIs (.github/workflows/build-python.yml), stored in the
+     * `cpython-builds` branch so they don't clutter the app's Releases page.
+     */
+    private const val OWN_BUILDS = "https://raw.githubusercontent.com/sevorp-dev/SkyPython/cpython-builds"
 
     /** Parses a comma-separated ABI list; blank/null means [DEFAULT]. */
     fun parse(value: String?): List<String> {
@@ -50,7 +53,7 @@ object PythonAbis {
         return if (abi in OFFICIAL) {
             "https://www.python.org/ftp/python/$version/$name"
         } else {
-            "$OWN_RELEASES/python-android-$version/$name"
+            "$OWN_BUILDS/$name"
         }
     }
 
@@ -60,7 +63,7 @@ object PythonAbis {
         val value = props.getProperty(key)?.trim()
         require(value != PLACEHOLDER) {
             "CPython for $abi is not built yet ($key is a placeholder in runtime/python.properties). " +
-                "Run the GitHub workflow 'build-python' (Actions -> Build Python for Android -> Run workflow), " +
+                "Run the GitHub workflow 'build-python' (push the branch `build-python`), " +
                 "paste the sha256 lines it prints into runtime/python.properties, " +
                 "or remove $abi from $PROPERTY in gradle.properties."
         }

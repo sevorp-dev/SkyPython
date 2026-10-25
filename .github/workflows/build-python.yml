@@ -1,6 +1,6 @@
 # Builds CPython for the 32-bit Android ABIs (python.org publishes only 64-bit builds)
-# with CPython's own Android/android.py, and publishes the tarballs as the prerelease
-# `python-android-<version>` of this repo. runtime/build.gradle.kts downloads them from
+# with CPython's own Android/android.py, and stores the tarballs in the
+# `cpython-builds` branch of this repo. runtime/build.gradle.kts downloads them from
 # there, checked against the hashes pinned in runtime/python.properties: paste the
 # `sha256.*=` lines this workflow prints (job summary / annotations) into that file.
 name: Build Python for Android (32-bit)
@@ -151,28 +151,24 @@ jobs:
             echo "::notice title=runtime/python.properties::$line"
           done < python.properties.txt
 
-      - name: Publish release python-android-${{ inputs.python_version || '3.14.9' }}
+      - name: Store in the cpython-builds branch
         working-directory: dist
         run: |
           set -euo pipefail
-          TAG="python-android-$PYVER"
-          ASSETS=(python-*.tar.gz SHA256SUMS python.properties.txt)
-          if gh release view "$TAG" > /dev/null 2>&1; then
-            if [ "$REPLACE" != "true" ]; then
-              existing="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
-              for f in python-*.tar.gz; do
-                if grep -qxF "$f" <<< "$existing"; then
-                  echo "::error::$TAG already has $f. Builds are not bit-for-bit reproducible, so replacing it would break the hash pinned in runtime/python.properties. Re-run with 'replace' checked if you really mean it."
-                  exit 1
-                fi
-              done
-            fi
-            gh release upload "$TAG" "${ASSETS[@]}" --clobber
-          else
-            gh release create "$TAG" "${ASSETS[@]}" \
-              --target "$GITHUB_SHA" \
-              --title "CPython $PYVER for 32-bit Android" \
-              --notes "CPython $PYVER built with CPython's own Android/android.py for arm-linux-androideabi (armeabi-v7a) and i686-linux-android (x86), API level 24. Used by the SkyPython build; python.org publishes only the 64-bit builds. SHA-256: see SHA256SUMS." \
-              --prerelease \
-              --latest=false
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git clone --quiet --depth 1 --branch cpython-builds             "https://x-access-token:${GH_TOKEN}@github.com/${GH_REPO}.git" store
+          if [ "$REPLACE" != "true" ]; then
+            for f in python-*.tar.gz; do
+              if [ -e "store/$f" ]; then
+                echo "::error::cpython-builds already has $f. Builds are not bit-for-bit reproducible, so replacing it would break the hash pinned in runtime/python.properties. Re-run with 'replace' checked if you really mean it."
+                exit 1
+              fi
+            done
           fi
+          cp python-*.tar.gz store/
+          cd store
+          sha256sum python-*.tar.gz > SHA256SUMS
+          git add -A
+          git commit --quiet -m "CPython $PYVER for 32-bit Android"
+          git push --quiet origin cpython-builds

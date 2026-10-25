@@ -137,10 +137,9 @@ python.org publishes CPython for Android only for 64-bit devices (arm64-v8a, x86
 with CPython's own `Android/android.py`:
 
 1. Run the **Build Python for Android (32-bit)** workflow (*Actions → Run workflow*, or push the
-   `build-python` branch). It takes 30–60 minutes and publishes the prerelease
-   `python-android-<version>` with the two tarballs.
-2. Copy the two `sha256.…=…` lines from the run summary (or the release's `python.properties.txt`)
-   into `runtime/python.properties`.
+   `build-python` branch). It takes 30–60 minutes and stores the two tarballs in the
+   [`cpython-builds`](https://github.com/sevorp-dev/SkyPython/tree/cpython-builds) branch.
+2. Copy the two `sha256.…=…` lines from the run summary into `runtime/python.properties`.
 3. List the ABIs in `gradle.properties`: `skypython.abis=arm64-v8a,armeabi-v7a,x86,x86_64`.
 
 The build stops with an explanation if a 32-bit ABI is enabled before its hash is pinned.
@@ -167,6 +166,10 @@ on Android 7, 9, 11, 14 and 16. Pushing a `v*.*.*` tag publishes a release
 | `runtime/` | Python runtime: CPython download & packaging, installer, process runner, NDK launcher |
 | `buildSrc/` | Shared build logic (CPU types ↔ CPython builds) |
 | `.github/workflows/` | CI, releases, 32-bit CPython builds |
+
+## 📜 Changelog
+
+What's new in every version: [CHANGELOG.md](CHANGELOG.md) and the [Releases](https://github.com/sevorp-dev/SkyPython/releases) page.
 
 ## 🗺️ Roadmap
 

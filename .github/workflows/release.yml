@@ -49,4 +49,20 @@ jobs:
           gh release create "$GITHUB_REF_NAME" dist/*.apk dist/SHA256SUMS \
             --title "SkyPython ${VERSION}" \
             --notes-file .github/release-notes/${GITHUB_REF_NAME}.md \
-            --prerelease
+            --latest
+
+      - name: Sync notes of every version, remove build-only releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Every app release is "SkyPython X.Y.Z" with its notes from .github/release-notes/.
+          for f in .github/release-notes/v*.md; do
+            tag="$(basename "$f" .md)"
+            if gh release view "$tag" > /dev/null 2>&1; then
+              gh release edit "$tag" --title "SkyPython ${tag#v}" --notes-file "$f" --prerelease=false
+            fi
+          done
+          # CPython for 32-bit devices lives in the cpython-builds branch, not in Releases.
+          # (grep exits 1 when nothing matches; that's fine.)
+          { gh release list --limit 100 --json tagName --jq '.[].tagName' | grep '^python-android-' || true; } \
+            | while read -r tag; do gh release delete "$tag" --yes --cleanup-tag; done

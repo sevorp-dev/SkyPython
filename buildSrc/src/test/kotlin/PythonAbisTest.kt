@@ -52,12 +52,12 @@ class PythonAbisTest {
             PythonAbis.tarballUrl("x86_64", "3.14.9"),
         )
         assertEquals(
-            "https://github.com/sevorp-dev/SkyPython/releases/download/python-android-3.14.9/" +
+            "https://raw.githubusercontent.com/sevorp-dev/SkyPython/cpython-builds/" +
                 "python-3.14.9-arm-linux-androideabi.tar.gz",
             PythonAbis.tarballUrl("armeabi-v7a", "3.14.9"),
         )
         assertEquals(
-            "https://github.com/sevorp-dev/SkyPython/releases/download/python-android-3.14.9/" +
+            "https://raw.githubusercontent.com/sevorp-dev/SkyPython/cpython-builds/" +
                 "python-3.14.9-i686-linux-android.tar.gz",
             PythonAbis.tarballUrl("x86", "3.14.9"),
         )
