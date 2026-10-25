@@ -158,7 +158,8 @@ class TerminalSessionDeviceTest {
             worst = maxOf(worst, mainThreadLatencyMs())
             Thread.sleep(50)
         }
-        assertTrue("main thread blocked for $worst ms", worst < 500)
+        // Before the fix the main thread was blocked for minutes; slow CI emulators show ~1.3 s hiccups.
+        assertTrue("main thread blocked for $worst ms", worst < 3_000)
         val killedAt = SystemClock.elapsedRealtime()
         onMain { vm.kill() }
         waitFor("exit", timeoutMs = 5_000) { vm.state.value.takeIf { !it.running } }

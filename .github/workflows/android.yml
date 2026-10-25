@@ -84,6 +84,11 @@ jobs:
               suites = [r] if r.tag == 'testsuite' else r.findall('testsuite')
               for s in suites:
                   print(f"::notice title=API ${{ matrix.api-level }} ${{ matrix.arch }} {s.get('name')}::tests={s.get('tests')} failures={s.get('failures')} errors={s.get('errors')} skipped={s.get('skipped')}")
+                  # A run that crashed before any test leaves only system-err (with the crash logcat).
+                  err = s.find('system-err')
+                  if s.get('tests') == '0' and err is not None and (err.text or '').strip():
+                      detail = ' '.join(err.text.split())[:3000].replace('%', '%25')
+                      print(f"::error title=API ${{ matrix.api-level }} ${{ matrix.arch }} run crashed::{detail}")
                   for c in s.findall('testcase'):
                       bad = c.find('failure') if c.find('failure') is not None else c.find('error')
                       if bad is not None:
