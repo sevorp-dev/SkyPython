@@ -213,6 +213,28 @@ class RunTerminalDeviceTest {
         assertEquals("older output", File(dir, "save_output.txt").readText())
     }
 
+    @Test
+    fun picturesTheScriptSavesAreListedWhenItEnds() {
+        File(dir, "old.png").apply { writeBytes(byteArrayOf(1, 2, 3)); setLastModified(1_000_000L) }
+        // The bundled sample: a PNG written with zlib + struct only.
+        val sample = app.assets.open("samples/09_draw_image.py").bufferedReader().readText()
+        val vm = run("draw.py", sample)
+        vm.await("Saved mandelbrot.png")
+        vm.await(footer(0))
+        val images = waitFor("the new picture") { vm.state.value.images.takeIf { it.isNotEmpty() } }
+        assertEquals(listOf(File(dir, "mandelbrot.png").absoluteFile), images.map { it.absoluteFile })
+        // A real PNG Android can decode.
+        val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        android.graphics.BitmapFactory.decodeFile(images.single().path, bounds)
+        assertEquals(320, bounds.outWidth)
+        assertEquals(240, bounds.outHeight)
+        // Run again clears the list until the run is over.
+        val plain = run("plain.py", "print('no pictures')")
+        plain.await(footer(0))
+        Thread.sleep(500)
+        assertTrue(onMain { plain.state.value.images }.isEmpty())
+    }
+
     private companion object {
         const val TIMEOUT_MS = 90_000L
     }

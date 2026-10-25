@@ -77,6 +77,8 @@ data class TerminalState(
     val fontSp: Float = DEFAULT_FONT_SP,
     /** The finished script stopped on `No module named 'x'` that pip can install ([TerminalKind.Run]). */
     val missing: MissingPackage? = null,
+    /** Pictures the finished script saved or wrote over in its folder, newest first ([TerminalKind.Run]). */
+    val images: List<File> = emptyList(),
 ) {
     fun actions(kind: TerminalKind): OutputActions = OutputActions.of(kind, running, hasOutput)
 
@@ -127,6 +129,10 @@ class TerminalViewModel(
 
     private var paths: PythonPaths? = null
     private var startJob: Job? = null
+
+    /** The running script's folder, watched for pictures it saves ([TerminalKind.Run]). */
+    private var imageFolder: File? = null
+    private var imagesBefore: Map<File, RunImages.Stamp> = emptyMap()
 
     /** The view showing the session, if any; screen updates go to it. Weak: views die on rotation. */
     private var viewRef: WeakReference<TerminalView>? = null
@@ -438,7 +444,7 @@ class TerminalViewModel(
     private fun start() {
         if (kind == TerminalKind.Run && _state.value.script == null) return
         startJob = viewModelScope.launch {
-            _state.update { it.copy(installError = null, startError = null, exitCode = null, missing = null) }
+            _state.update { it.copy(installError = null, startError = null, exitCode = null, missing = null, images = emptyList()) }
             val p = paths ?: run {
                 _state.update { it.copy(installing = true) }
                 val result = install()
@@ -456,6 +462,9 @@ class TerminalViewModel(
                 _state.update { it.copy(startError = e.message ?: e.toString()) }
                 return@launch
             }
+            // The pictures already there, to tell the ones this run makes (shown when it ends).
+            imageFolder = if (kind == TerminalKind.Run) _state.value.script?.absoluteFile?.parentFile else null
+            imagesBefore = imageFolder?.let { dir -> withContext(Dispatchers.IO) { RunImages.snapshot(dir) } }.orEmpty()
             // The process itself starts when the view first lays the session out (it needs the size).
             val session = TerminalSession(
                 command.executable,
@@ -474,6 +483,17 @@ class TerminalViewModel(
                 it.copy(session = session, running = true, modifiers = Modifiers(), hasOutput = false, atBottom = true)
             }
             _screenText.value = ""
+        }
+    }
+
+    /** After a run: the pictures it saved in its folder ([TerminalState.images]). */
+    private fun findNewImages(session: TerminalSession) {
+        val dir = imageFolder ?: return
+        val before = imagesBefore
+        viewModelScope.launch {
+            val found = withContext(Dispatchers.IO) { RunImages.changed(before, RunImages.snapshot(dir)) }
+            // Not if another run started meanwhile.
+            if (session === _state.value.session && found.isNotEmpty()) _state.update { it.copy(images = found) }
         }
     }
 
@@ -520,6 +540,7 @@ class TerminalViewModel(
                 )
             }
             postScreenText()
+            findNewImages(finishedSession)
         }
 
         override fun onCopyTextToClipboard(session: TerminalSession, text: String?) {

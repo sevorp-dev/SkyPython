@@ -79,7 +79,10 @@ import androidx.compose.material.icons.outlined.TextDecrease
 import androidx.compose.material.icons.outlined.TextIncrease
 import androidx.compose.material.icons.outlined.VerticalAlignBottom
 import androidx.compose.material.icons.outlined.VerticalAlignTop
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -167,6 +170,8 @@ fun TerminalScreen(
     onFontSizeChange: (Int) -> Unit = {},
     /** The app's pip, for "Install x" after a run that stopped on a missing module (Run only). */
     pip: PipViewModel? = null,
+    /** A picture the finished script saved was tapped (Run only). */
+    onOpenImage: (File) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var installing by remember { mutableStateOf<MissingPackage?>(null) }
@@ -288,6 +293,7 @@ fun TerminalScreen(
                         }
                     }
                 }
+                if (state.images.isNotEmpty()) RunImagesRow(state.images, onOpenImage)
                 FinishedBar(
                     exitCode = state.exitCode!!,
                     onRunAgain = viewModel::restart,
@@ -385,6 +391,41 @@ private fun TopActions(
 
 private fun launchMessage(snackbar: SnackbarHostState, scope: kotlinx.coroutines.CoroutineScope, text: String) {
     scope.launch { snackbar.showSnackbar(text) }
+}
+
+/** Test tag of each picture chip above the finished bar. */
+const val RUN_IMAGE_CHIP_TAG = "run_image_chip"
+
+/** Above the finished bar: the pictures the script saved; a tap shows one in the viewer. */
+@Composable
+private fun RunImagesRow(images: List<File>, onOpen: (File) -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(SlateBar)
+            .horizontalScroll(rememberScrollState())
+            .padding(start = 12.dp, end = 12.dp, top = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            stringResource(R.string.run_images_label),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        for (image in images) {
+            val description = stringResource(R.string.run_image_open, image.name)
+            AssistChip(
+                onClick = { onOpen(image) },
+                label = { Text(image.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                leadingIcon = { Icon(Icons.Outlined.Image, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                modifier = Modifier
+                    .widthIn(max = 220.dp)
+                    .testTag(RUN_IMAGE_CHIP_TAG)
+                    .semantics { contentDescription = description },
+            )
+        }
+    }
 }
 
 /** Under a finished script: how it ended, Run again, Back to editor. */
