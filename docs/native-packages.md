@@ -22,7 +22,10 @@ it on the orphan branch **`wheels`** (one commit, force-pushed on every publish)
   `make_index.py` keeps one wheel per project × ABI and writes `index.json` + `SHA256SUMS`.
 - Trigger: push to `build-wheels` (paths `.github/wheels/**`, the workflow) or "Run
   workflow". The publish refuses to run unless both 64-bit wheels were built; failed
-  32-bit legs keep their previously published wheels.
+  32-bit legs keep their previously published wheels. A published file name is never
+  overwritten (raw.githubusercontent.com caches each file for ~5 minutes, so a rebuilt file
+  could be served next to a stale `index.json`); ship a new NumPy version, or run the
+  workflow with `replace`, to change a wheel.
 
 The rest of this document is the original research spike (October 2026).
 

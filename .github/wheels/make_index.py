@@ -9,6 +9,8 @@ the wheel files next to it. Layout of SITE_DIR (the branch root):
 
     python make_index.py --site SITE_DIR [--requires numpy=chaquopy-openblas ...] [new.whl ...]
 
+* a wheel whose file name is already in SITE_DIR is skipped (published files never change;
+  --replace overrides), so rebuild with a new version or a wheel build tag to update one;
 * each new wheel is copied into SITE_DIR; an older wheel of the same project and ABI (another
   version or build) is removed, so the branch holds one wheel per project x ABI;
 * index.json and SHA256SUMS are rewritten from all wheels in SITE_DIR, reading name, version
@@ -74,6 +76,8 @@ def main() -> int:
     ap.add_argument("--site", required=True)
     ap.add_argument("--requires", action="append", default=[], metavar="PROJECT=DEP[,DEP]",
                     help="runtime dependencies that are themselves in this index")
+    ap.add_argument("--replace", action="store_true",
+                    help="overwrite wheels whose file name is already published")
     ap.add_argument("wheels", nargs="*")
     args = ap.parse_args()
     requires = {}
@@ -85,6 +89,12 @@ def main() -> int:
     for w in args.wheels:
         fn = os.path.basename(w)
         m = parse(fn)
+        if os.path.exists(os.path.join(args.site, fn)) and not args.replace:
+            # Builds are not bit-for-bit reproducible, and raw.githubusercontent.com caches
+            # every file for minutes: a rebuilt file under a published name could briefly be
+            # served with the old index.json (hash mismatch). Published files never change.
+            print(f"keeping the published {fn}")
+            continue
         key = (normalize(m.group("name")), m.group("arch"))
         for old in os.listdir(args.site):
             if old.endswith(".whl") and old != fn:

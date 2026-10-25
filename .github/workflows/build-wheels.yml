@@ -27,6 +27,10 @@ on:
         description: Publish the wheels to the `wheels` branch
         type: boolean
         default: true
+      replace:
+        description: Overwrite already published wheels with the same file name (clients may see a stale index.json for a few minutes)
+        type: boolean
+        default: false
   # Pushing the branch `build-wheels` runs it with the defaults.
   push:
     branches: [ build-wheels ]
@@ -329,7 +333,10 @@ jobs:
             git fetch --depth=1 origin wheels
             git archive FETCH_HEAD | tar -x -C site
           fi
-          python .github/wheels/make_index.py --site site "${wheels[@]}"
+          before="$(cat site/index.json site/README.md 2>/dev/null | sha256sum)"
+          replace=()
+          [ "$REPLACE" = true ] && replace=(--replace)
+          python .github/wheels/make_index.py --site site "${replace[@]}" "${wheels[@]}"
 
           repo="${GITHUB_REPOSITORY}"
           {
@@ -368,6 +375,10 @@ jobs:
             echo "  statically on 32-bit) — Apache-2.0 WITH LLVM-exception: \`libc++-LICENSE.txt\`."
           } > site/README.md
 
+          if [ "$(cat site/index.json site/README.md | sha256sum)" = "$before" ]; then
+            echo "::notice title=Published::nothing new; the wheels branch is unchanged"
+            exit 0
+          fi
           cd site
           git init -q -b wheels
           git config user.name "github-actions[bot]"
@@ -385,3 +396,4 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
         env:
           GH_TOKEN: ${{ github.token }}
+          REPLACE: ${{ inputs.replace || false }}
