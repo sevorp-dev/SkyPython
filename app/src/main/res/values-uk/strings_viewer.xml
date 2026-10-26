@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The image viewer, "Open with…", and the pictures a run made. -->
+<resources>
+    <string name="open_with">Відкрити за допомогою…</string>
+    <string name="open_with_chooser_title">Відкрити %1$s за допомогою</string>
+    <string name="open_with_no_app">Немає застосунку, щоб відкрити цей файл</string>
+
+    <string name="viewer_info">%1$d × %2$d · %3$s</string>
+    <string name="viewer_fit">За розміром екрана</string>
+    <string name="viewer_error_title">Не вдалося показати зображення</string>
+    <string name="viewer_error_missing">Файлу більше не існує.</string>
+    <string name="viewer_error_unsupported">Файл пошкоджено або його формат не підтримується.</string>
+    <string name="viewer_error_memory">Зображення завелике для пам’яті цього пристрою.</string>
+    <string name="viewer_error_read">Не вдалося прочитати файл: %1$s</string>
+    <string name="viewer_delete_failed">Не вдалося видалити файл</string>
+
+    <string name="files_unsupported_title">Цей тип файлів не відкривається</string>
+    <string name="files_unsupported_text">SkyPython не може відкрити «%1$s». Ви можете поділитися ним або відкрити його в іншому застосунку.</string>
+
+    <string name="run_images_label">Нові зображення</string>
+    <string name="run_image_open">Відкрити зображення %1$s</string>
+</resources>

@@ -1,0 +1,548 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common actions -->
+    <string name="action_back">Zurück</string>
+    <string name="action_cancel">Abbrechen</string>
+    <string name="action_close">Schließen</string>
+    <string name="action_create">Erstellen</string>
+    <string name="action_delete">Löschen</string>
+    <string name="action_interrupt">Unterbrechen</string>
+    <string name="action_refresh">Aktualisieren</string>
+    <string name="action_rename">Umbenennen</string>
+    <string name="action_restart">Neustart</string>
+    <string name="action_retry">Wiederholen</string>
+    <string name="action_run">Ausführen</string>
+    <string name="action_send">Senden</string>
+    <string name="action_stop">Stopp</string>
+
+    <!-- Screen titles and drawer items -->
+    <string name="title_about">Über</string>
+    <string name="title_console">Konsole</string>
+    <string name="title_files">Dateien</string>
+    <string name="title_interpreter">Interpreter</string>
+    <string name="title_pip">Pip</string>
+    <string name="title_samples">Beispiele</string>
+    <string name="title_settings">Einstellungen</string>
+    <string name="title_share">Teilen</string>
+    <string name="title_terminal">Terminal</string>
+
+    <!-- Drawer -->
+    <string name="drawer_section_tools">Werkzeuge</string>
+    <string name="drawer_section_settings">Einstellungen</string>
+    <string name="drawer_line">Zeile: %1$d/%2$d</string>
+    <string name="drawer_line_offset">Zeilenversatz: %1$d</string>
+    <string name="no_file_open">Keine Datei geöffnet</string>
+
+    <!-- App root -->
+    <string name="share_save_to_projects_first">Speichere die Datei in Projekte, um sie zu teilen</string>
+    <string name="script_still_running">Ein Skript läuft noch</string>
+    <string name="restart_title">Läuft noch</string>
+    <string name="restart_text">Es läuft noch etwas. Beenden und %1$s starten?</string>
+    <string name="restart_confirm">Beenden &amp; starten</string>
+
+    <!-- Console -->
+    <!-- Keep the brackets: the console dims lines in this exact shape. -->
+    <string name="console_exit_footer">[Programm beendet, Exit-Code %1$d]</string>
+    <string name="console_cancelled">[Abgebrochen]</string>
+    <string name="console_not_running">Läuft nicht</string>
+    <string name="console_preparing_python">Python wird vorbereitet…</string>
+    <string name="console_setup_failed">Python konnte nicht eingerichtet werden</string>
+
+    <!-- Terminal -->
+    <string name="terminal_open_failed">Terminal konnte nicht geöffnet werden</string>
+    <string name="terminal_use_simple_console">Einfache Konsole verwenden</string>
+    <string name="key_escape">Esc</string>
+    <string name="key_tab">Tab</string>
+    <string name="key_control">Strg</string>
+    <string name="key_alt">Alt</string>
+    <string name="key_minus">Minus</string>
+    <string name="key_slash">Schrägstrich</string>
+    <string name="key_pipe">Pipe</string>
+    <string name="key_left">Links</string>
+    <string name="key_up">Hoch</string>
+    <string name="key_down">Runter</string>
+    <string name="key_right">Rechts</string>
+
+    <!-- Editor -->
+    <string name="editor_menu">Menü</string>
+    <string name="editor_undo">Rückgängig</string>
+    <string name="editor_redo">Wiederholen</string>
+    <string name="editor_more">Mehr</string>
+    <string name="editor_save">Speichern</string>
+    <string name="editor_save_as">Speichern unter…</string>
+    <string name="editor_no_open_files">Keine geöffneten Dateien</string>
+    <string name="editor_open_files">Geöffnete Dateien</string>
+    <string name="editor_external_document">Externes Dokument</string>
+    <!-- How the projects root folder is named in the UI. -->
+    <string name="projects_label">Projekte</string>
+    <string name="editor_error_save">%1$s kann nicht gespeichert werden: %2$s</string>
+    <string name="editor_error_open">%1$s kann nicht geöffnet werden: %2$s</string>
+    <string name="editor_error_open_file">Datei kann nicht geöffnet werden: %1$s</string>
+    <string name="editor_error_prepare_run">%1$s kann nicht zum Ausführen vorbereitet werden: %2$s</string>
+    <string name="editor_error_save_as">Speichern unter fehlgeschlagen: %1$s</string>
+    <string name="editor_error_create_example">Beispieldatei kann nicht erstellt werden: %1$s</string>
+    <string name="editor_error_reopen">%1$s konnte nicht erneut geöffnet werden: %2$s</string>
+    <string name="editor_reason_permission_lost">Berechtigung verloren</string>
+    <string name="editor_reason_unavailable">nicht verfügbar</string>
+    <string name="editor_error_too_large">Datei ist größer als %1$d MB</string>
+
+    <!-- Files -->
+    <string name="files_open_external">Extern öffnen…</string>
+    <string name="files_empty_folder">Dieser Ordner ist leer</string>
+    <string name="files_up_one_folder">Einen Ordner nach oben</string>
+    <string name="files_folder">Ordner</string>
+    <string name="files_file">Datei</string>
+    <string name="files_more_options">Weitere Optionen für %1$s</string>
+    <string name="files_new">Neu</string>
+    <string name="files_new_file">Neue Datei</string>
+    <string name="files_new_folder">Neuer Ordner</string>
+    <string name="files_rename_file">Datei umbenennen</string>
+    <string name="files_rename_folder">Ordner umbenennen</string>
+    <string name="files_name">Name</string>
+    <string name="files_delete_file_title">Datei löschen?</string>
+    <string name="files_delete_folder_title">Ordner löschen?</string>
+    <string name="files_delete_file_text">„%1$s“ wird endgültig gelöscht.</string>
+    <string name="files_delete_folder_text">„%1$s“ und sein gesamter Inhalt werden endgültig gelöscht.</string>
+    <string name="name_error_empty">Der Name darf nicht leer sein</string>
+    <string name="name_error_dots">Der Name darf nicht „.“ oder „..“ sein</string>
+    <string name="name_error_separator">Der Name darf kein / oder \\ enthalten</string>
+    <string name="name_error_invalid_char">Der Name enthält ein ungültiges Zeichen</string>
+    <string name="name_error_too_long">Der Name ist zu lang</string>
+    <string name="files_error_already_exists">„%1$s“ existiert bereits</string>
+    <string name="files_error_create_folder">Ordner „%1$s“ konnte nicht erstellt werden</string>
+    <string name="files_error_folder_missing">Ordner existiert nicht</string>
+    <string name="files_error_does_not_exist">„%1$s“ existiert nicht</string>
+    <string name="files_error_rename">„%1$s“ konnte nicht umbenannt werden</string>
+    <string name="files_error_delete">„%1$s“ konnte nicht gelöscht werden</string>
+    <string name="files_error_outside">Pfad liegt außerhalb des Arbeitsbereichs</string>
+    <string name="files_error_root">Der Projektordner selbst kann nicht geändert werden</string>
+    <string name="files_error_failed">Vorgang fehlgeschlagen</string>
+
+    <!-- Pip -->
+    <string name="pip_tab_installed">Installiert</string>
+    <string name="pip_package_hint">z. B. requests oder six==1.16.0</string>
+    <string name="pip_install">Installieren</string>
+    <string name="pip_installed_spec">%1$s installiert</string>
+    <string name="pip_intro">Pakete werden für deine Skripte aus PyPI installiert.</string>
+    <string name="pip_pure_python_hint">Vorerst werden nur reine Python-Pakete unterstützt.</string>
+    <string name="pip_no_packages">Noch keine Pakete installiert</string>
+    <string name="pip_uninstall">Deinstallieren</string>
+    <string name="pip_uninstall_title">%1$s deinstallieren?</string>
+    <string name="pip_uninstall_text">Version %1$s wird entfernt.</string>
+    <string name="pip_setting_up">pip wird eingerichtet (erster Start)…</string>
+    <string name="pip_spec_empty">Gib einen Paketnamen ein</string>
+    <string name="pip_spec_spaces">Installiere ein Paket nach dem anderen, ohne Leerzeichen</string>
+    <string name="pip_spec_options">Optionen werden hier nicht unterstützt</string>
+    <string name="pip_spec_invalid">Gib einen Paketnamen an, z. B. six oder requests==2.32.3</string>
+    <string name="pip_tab_search">Suche</string>
+    <string name="pip_tab_requirements">Aus Datei</string>
+    <string name="pip_search_label">PyPI durchsuchen</string>
+    <string name="pip_search_action">Suchen</string>
+    <string name="pip_clear">Leeren</string>
+    <string name="pip_result_not_found">Auf PyPI gibt es kein Paket namens „%1$s“</string>
+    <string name="pip_result_offline">Keine Internetverbindung. Prüfe das Netzwerk und versuche es erneut.</string>
+    <string name="pip_result_failed">PyPI nicht erreichbar: %1$s</string>
+    <string name="pip_latest_version">Neueste Version %1$s</string>
+    <string name="pip_version">Version %1$s</string>
+    <string name="pip_license">Lizenz: %1$s</string>
+    <string name="pip_home_page">Website</string>
+    <string name="pip_wheel_pure">Reines Python: bereit zur Installation</string>
+    <string name="pip_wheel_android">Vorkompiliert für Android (64-Bit-Geräte)</string>
+    <string name="pip_wheel_source">Kein fertiger Build: pip versucht, es selbst zu bauen – das klappt nur bei reinem Python-Code</string>
+    <string name="pip_wheel_native">Benötigt nativen Code, noch nicht unterstützt</string>
+    <string name="pip_wheel_none">Dieses Release enthält keine installierbaren Dateien</string>
+    <string name="pip_install_anyway">Trotzdem versuchen</string>
+    <string name="pip_popular_none">Kein beliebtes Paket passt. Tippe auf Suchen, um auf PyPI nachzusehen.</string>
+    <string name="pip_coming_later">Kommt später</string>
+    <string name="pip_needs_64bit">Nur 64-Bit</string>
+    <string name="pip_installed_badge">Installiert</string>
+    <string name="pip_prebuilt_badge">Für Android vorkompiliert</string>
+    <string name="pip_prebuilt_hint">Pakete mit nativem Code lassen sich installieren, wenn sie als „Für Android vorkompiliert“ markiert sind; alle anderen müssen vorerst reines Python sein.</string>
+    <string name="pip_prebuilt_line">SkyPython kompiliert %1$s %2$s für Android: kein Compiler nötig</string>
+    <string name="pip_prebuilt_32bit">Für 32-Bit-Geräte noch nicht verfügbar</string>
+    <string name="pip_prebuilt_other_abi">Für dieses Gerät noch nicht verfügbar</string>
+    <string name="pip_downloading_wheel">%1$s %2$s (%3$s) wird heruntergeladen, von SkyPython für Android vorkompiliert…</string>
+    <string name="pip_error_prebuilt_32bit">%1$s ist für 32-Bit-Geräte noch nicht verfügbar.</string>
+    <string name="pip_error_prebuilt_abi">%1$s ist für dieses Gerät (%2$s) noch nicht vorkompiliert.</string>
+    <string name="pip_error_prebuilt_version">%1$s%2$s ist nicht für Android vorkompiliert. Verfügbar: %3$s</string>
+    <string name="pip_error_wheel_checksum">Der Download von %1$s ist beschädigt (Prüfsumme stimmt nicht). Versuche es erneut.</string>
+    <string name="pip_upgrade">Upgrade</string>
+    <string name="pip_update_available">Update verfügbar: %1$s</string>
+    <string name="pip_checking_updates">Suche nach Updates…</string>
+    <string name="pip_updates_failed">Updates konnten nicht geprüft werden (kein Internet?)</string>
+    <string name="pip_details_requires">Benötigt: %1$s</string>
+    <string name="pip_details_required_by">Benötigt von: %1$s</string>
+    <string name="pip_details_none">nichts</string>
+    <string name="pip_req_intro">Installiert alle Pakete aus einer Requirements-Datei (pip install -r), ein Paket pro Zeile.</string>
+    <string name="pip_req_open_file">Im Editor öffnen</string>
+    <string name="pip_req_project_files">Textdateien in Projekte</string>
+    <string name="pip_req_none">Noch keine .txt-Dateien in Projekte. Erstelle eine requirements.txt mit einem Paket pro Zeile, z. B. requests==2.32.3.</string>
+    <string name="pip_req_install">Alle installieren</string>
+    <string name="pip_running_install">%1$s wird installiert…</string>
+    <string name="pip_running_upgrade">%1$s wird aktualisiert…</string>
+    <string name="pip_running_requirements">Pakete aus %1$s werden installiert…</string>
+    <string name="pip_done_upgrade">%1$s aktualisiert</string>
+    <string name="pip_done_requirements">Pakete aus %1$s installiert</string>
+    <string name="pip_failed_install">%1$s konnte nicht installiert werden</string>
+    <string name="pip_failed_upgrade">%1$s konnte nicht aktualisiert werden</string>
+    <string name="pip_failed_requirements">Pakete aus %1$s konnten nicht installiert werden</string>
+    <string name="pip_uninstalled">%1$s entfernt</string>
+    <string name="pip_show_log">Log anzeigen</string>
+    <string name="pip_hide_log">Log ausblenden</string>
+    <string name="pip_section_prebuilt">Für Android vorkompiliert</string>
+    <string name="pip_section_popular">Beliebt</string>
+    <string name="pip_section_data">Daten &amp; Wissenschaft</string>
+    <string name="pip_section_web">Web &amp; Netzwerk</string>
+    <string name="pip_section_text">Text &amp; Terminal</string>
+    <string name="pip_searching">PyPI wird durchsucht…</string>
+    <string name="pip_loading_packages">Installierte Pakete werden gelesen…</string>
+    <string name="pip_no_packages_hint">Suche ein Paket im Tab „Suche“ und tippe auf Installieren.</string>
+    <string name="pip_pkg_requests">Einfache HTTP-Anfragen</string>
+    <string name="pip_pkg_rich">Farben, Tabellen und Fortschrittsbalken im Terminal</string>
+    <string name="pip_pkg_colorama">Farbiger Terminaltext</string>
+    <string name="pip_pkg_beautifulsoup4">Daten aus HTML-Seiten auslesen</string>
+    <string name="pip_pkg_dateutil">Datumsangaben parsen und damit rechnen</string>
+    <string name="pip_pkg_tabulate">Schöne Texttabellen</string>
+    <string name="pip_pkg_tqdm">Fortschrittsbalken für Schleifen</string>
+    <string name="pip_pkg_httpx">Moderner HTTP-Client, synchron und asynchron</string>
+    <string name="pip_pkg_click">Kommandozeilen-Oberflächen</string>
+    <string name="pip_pkg_art">ASCII-Art und Textschriften</string>
+    <string name="pip_pkg_pyfiglet">Große ASCII-Banner</string>
+    <string name="pip_pkg_termcolor">Farbiger Text im Terminal</string>
+    <string name="pip_pkg_emoji">Emojis nach Namen</string>
+    <string name="pip_pkg_faker">Fake-Namen, -Adressen und -Texte zum Testen</string>
+    <string name="pip_pkg_sympy">Symbolische Mathematik</string>
+    <string name="pip_pkg_mpmath">Mathematik mit beliebiger Genauigkeit</string>
+    <string name="pip_pkg_networkx">Graphen und Netzwerke</string>
+    <string name="pip_pkg_prompt_toolkit">Interaktive Kommandozeilen-Eingabe</string>
+    <string name="pip_pkg_jinja2">Text- und HTML-Vorlagen</string>
+    <string name="pip_pkg_pillow">Bilder (benötigt nativen Code)</string>
+    <string name="pip_pkg_numpy">Schnelle Arrays und Mathematik (nativer Code)</string>
+
+    <!-- Samples -->
+    <string name="samples_open_failed">Beispiel konnte nicht geöffnet werden: %1$s</string>
+
+    <!-- Settings -->
+    <string name="settings_section_editor">Editor</string>
+    <string name="settings_section_editing">Bearbeiten</string>
+    <string name="settings_section_app">App</string>
+    <string name="settings_font_size">Schriftgröße</string>
+    <string name="settings_font_size_range">%1$d–%2$d sp</string>
+    <string name="settings_smaller">Kleiner</string>
+    <string name="settings_larger">Größer</string>
+    <string name="settings_word_wrap">Zeilenumbruch</string>
+    <string name="settings_word_wrap_summary">Lange Zeilen umbrechen statt seitlich zu scrollen</string>
+    <string name="settings_line_numbers">Zeilennummern</string>
+    <string name="settings_line_numbers_summary">Zeilennummern im Editor anzeigen</string>
+    <string name="settings_keep_screen_on">Bildschirm anlassen</string>
+    <string name="settings_keep_screen_on_summary">Bildschirm beim Bearbeiten nicht ausschalten</string>
+    <string name="settings_language">Sprache</string>
+    <string name="language_system">Systemstandard</string>
+
+    <!-- About -->
+    <string name="about_tagline_start">Python-Entwicklung, </string>
+    <string name="about_tagline_end">überall.</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_description">Eine kostenlose Open-Source-IDE für Python 3 auf Android. Schreibe und starte Python-Skripte auf deinem Handy, komplett offline.</string>
+    <string name="about_links">Links</string>
+    <string name="about_source_code">Quellcode auf GitHub</string>
+    <string name="about_telegram">Telegram-Kanal</string>
+    <string name="about_license">Lizenz</string>
+    <string name="about_license_text">SkyPython ist freie Software; siehe LICENSE im Quellcode.</string>
+    <string name="about_third_party">Software von Drittanbietern</string>
+    <string name="about_notice_grammar">MagicPython-Grammatik</string>
+    <string name="about_notice_theme">VS Code Dark+ Theme</string>
+    <string name="about_notice_terminal">Termux terminal-emulator und terminal-view</string>
+    <string name="about_slogan"> · Ideen. Code. Zukunft.</string>
+    <string name="about_no_app_for_link">Keine App kann %1$s öffnen</string>
+
+    <!-- Share -->
+    <string name="share_cannot_share">Diese Datei kann nicht geteilt werden</string>
+    <string name="share_chooser_title">%1$s teilen</string>
+    <string name="share_no_app">Keine App kann diese Datei teilen</string>
+
+    <!-- ▶ Run on a terminal: output actions -->
+    <string name="use_simple_output">Einfache Ausgabe verwenden</string>
+    <string name="run_again">Erneut ausführen</string>
+    <string name="back_to_editor">Zurück zum Editor</string>
+    <string name="run_exit_code">Exit-Code %1$d</string>
+    <string name="output_more">Weitere Optionen</string>
+    <string name="output_copy_all">Alles kopieren</string>
+    <string name="output_share">Ausgabe teilen</string>
+    <string name="output_save">Ausgabe speichern</string>
+    <string name="output_save_as">Speichern unter…</string>
+    <string name="output_clear">Leeren</string>
+    <string name="output_scroll_top">Nach oben scrollen</string>
+    <string name="output_scroll_bottom">Nach unten scrollen</string>
+    <string name="output_font_smaller">Kleinerer Text</string>
+    <string name="output_font_bigger">Größerer Text</string>
+    <string name="output_font_size">Text %1$d sp</string>
+    <string name="output_copied">Ausgabe kopiert</string>
+    <string name="output_nothing">Noch keine Ausgabe</string>
+    <string name="output_saved">Gespeichert in %1$s</string>
+    <string name="output_save_failed">Speichern fehlgeschlagen: %1$s</string>
+    <!-- Debugger -->
+    <string name="title_debug">Debuggen</string>
+    <string name="debug_run_menu_run">Ausführen</string>
+    <string name="debug_run_menu_debug">Debuggen</string>
+    <string name="debug_tab_variables">Variablen</string>
+    <string name="debug_tab_watches">Watches</string>
+    <string name="debug_tab_stack">Aufrufe</string>
+    <string name="debug_tab_console">Konsole</string>
+    <string name="debug_continue">Fortsetzen</string>
+    <string name="debug_pause">Pause</string>
+    <string name="debug_step_over">Überspringen</string>
+    <string name="debug_step_into">Hineinspringen</string>
+    <string name="debug_step_out">Herausspringen</string>
+    <string name="debug_collapse">Debugger einklappen</string>
+    <string name="debug_expand">Debugger ausklappen</string>
+    <string name="debug_close">Debugger schließen</string>
+    <string name="debug_status_starting">Debugger wird gestartet…</string>
+    <string name="debug_status_running">Läuft…</string>
+    <string name="debug_status_breakpoint">Breakpoint: %1$s, Zeile %2$d</string>
+    <string name="debug_status_paused">Pausiert: %1$s, Zeile %2$d</string>
+    <string name="debug_status_exception">Nicht abgefangene Exception: %1$s</string>
+    <string name="debug_status_finished">Programm beendet, Exit-Code %1$d</string>
+    <string name="debug_status_ended">Debuggen beendet</string>
+    <string name="debug_error_start">Der Debugger konnte nicht starten: %1$s</string>
+    <string name="debug_locals">Lokal</string>
+    <string name="debug_globals">Global</string>
+    <string name="debug_more">…und %1$d weitere</string>
+    <string name="debug_no_variables">Hier ist nichts</string>
+    <string name="debug_variables_when_paused">Variablen werden angezeigt, während das Programm pausiert ist</string>
+    <string name="debug_stack_when_paused">Der Call-Stack wird angezeigt, während das Programm pausiert ist</string>
+    <string name="debug_watch_hint">Ausdruck, z. B. len(items)</string>
+    <string name="debug_watch_add">Watch hinzufügen</string>
+    <string name="debug_watch_remove">Watch entfernen</string>
+    <string name="debug_no_watches">Noch keine Watches: Füge unten einen Ausdruck hinzu, um seinen Wert bei jedem Halt zu sehen</string>
+    <string name="debug_frame_library">Bibliothek</string>
+    <string name="debug_condition_title">Breakpoint in Zeile %1$d</string>
+    <string name="debug_condition_hint">Nur anhalten, wenn dies wahr ist, z. B. i == 10. Leer lassen, um immer anzuhalten.</string>
+    <string name="debug_condition_label">Bedingung</string>
+    <string name="debug_condition_remove">Entfernen</string>
+    <string name="debug_condition_save">Speichern</string>
+    <string name="debug_breakpoints_need_project_file">Breakpoints funktionieren in Dateien, die in SkyPython-Projekten gespeichert sind</string>
+    <!-- Drawer footer -->
+    <string name="drawer_footer_developer">Entwickelt von @Sevorp</string>
+
+    <!-- Editor: find & replace -->
+    <string name="find_hint">Suchen</string>
+    <string name="replace_hint">Ersetzen durch</string>
+    <string name="find_match_case">Groß-/Kleinschreibung</string>
+    <string name="find_whole_word">Ganzes Wort</string>
+    <string name="find_regex">Regulärer Ausdruck</string>
+    <string name="find_previous">Vorheriger Treffer</string>
+    <string name="find_next">Nächster Treffer</string>
+    <string name="find_toggle_replace">Ersetzen anzeigen</string>
+    <string name="find_close">Suche schließen</string>
+    <string name="find_replace_one">Ersetzen</string>
+    <string name="find_replace_all">Alle</string>
+    <string name="find_replaced_count">%1$d ersetzt</string>
+    <string name="find_no_matches">Keine Treffer</string>
+    <string name="find_invalid_regex">Ungültiges Muster</string>
+
+    <!-- Editor: go to line -->
+    <string name="go_to_line">Gehe zu Zeile…</string>
+    <string name="go_to_line_title">Gehe zu Zeile</string>
+    <string name="go_to_line_label">Zeile (1–%1$d)</string>
+    <string name="go_to_line_go">Los</string>
+
+    <!-- Editor: code navigation -->
+    <string name="editor_action_go_to_definition">Zur Definition</string>
+    <string name="editor_action_find_usages">Verwendungen</string>
+    <string name="editor_outline">Gliederung</string>
+    <string name="editor_outline_empty">Noch keine Klassen oder Funktionen in dieser Datei.</string>
+    <string name="editor_outline_loading">Datei wird gelesen…</string>
+    <string name="editor_outline_line">Zeile %1$d</string>
+    <string name="editor_read_only">Schreibgeschützt</string>
+    <string name="nav_no_definition">Keine Definition für „%1$s“ gefunden</string>
+    <string name="nav_not_on_a_name">Setze den Cursor zuerst auf einen Namen</string>
+    <string name="nav_unavailable">Code-Hinweise sind noch nicht bereit. Versuche es gleich noch einmal.</string>
+    <string name="nav_hints_off">Aktiviere Code-Vervollständigung in den Einstellungen, um die Code-Navigation zu nutzen</string>
+    <string name="nav_usages_count">Verwendungen von „%1$s“ in dieser Datei: %2$d</string>
+    <string name="drawer_in_symbol">In %1$s</string>
+
+    <!-- Editor: line commands -->
+    <string name="editor_action_comment">Kommentar ein/aus</string>
+    <string name="editor_action_indent">Einrücken</string>
+    <string name="editor_action_outdent">Ausrücken</string>
+    <string name="editor_action_duplicate">Zeile duplizieren</string>
+    <string name="editor_action_delete_line">Zeile löschen</string>
+    <string name="editor_action_move_up">Zeile nach oben</string>
+    <string name="editor_action_move_down">Zeile nach unten</string>
+    <string name="editor_actions_show">Aktionen</string>
+    <string name="editor_actions_hide">Symbole</string>
+    <string name="editor_menu_edit">Zeilen bearbeiten</string>
+    <string name="editor_menu_back">Zurück</string>
+
+    <!-- Editor: files -->
+    <string name="find_and_replace">Suchen &amp; ersetzen</string>
+    <string name="new_file">Neue Datei…</string>
+    <string name="new_file_title">Neue Datei</string>
+    <string name="new_file_name">Dateiname</string>
+    <string name="new_file_create">Erstellen</string>
+    <string name="open_file">Öffnen…</string>
+    <string name="recent_files">Zuletzt geöffnet</string>
+    <string name="recent_files_empty">Noch keine zuletzt geöffneten Dateien</string>
+    <string name="file_missing">%1$s existiert nicht mehr</string>
+
+    <!-- Settings -->
+    <string name="settings_auto_close">Klammern automatisch schließen</string>
+    <string name="settings_auto_close_summary">Beim Tippen von ( [ { \" oder \' wird auch das schließende Zeichen eingefügt</string>
+    <string name="settings_symbol_keys">Tasten der Symbolleiste</string>
+    <string name="settings_symbol_keys_summary">Tasten durch Leerzeichen getrennt. „Tab“ fügt 4 Leerzeichen ein.</string>
+    <string name="settings_symbol_keys_reset">Auf Standard zurücksetzen</string>
+    <string name="settings_keyboard_suggestions">Tastaturvorschläge</string>
+    <string name="settings_keyboard_suggestions_summary">Die Tastatur darf Wörter vorschlagen und autokorrigieren. Aus verhindert, dass Code verändert wird.</string>
+    <string name="settings_pinch_hint">Tipp: Zieh den Editor mit zwei Fingern auseinander, um zu zoomen.</string>
+    <!-- Orange theme: status line, drawer, settings, terminal, samples -->
+    <string name="editor_status_python">Python %1$s</string>
+    <string name="editor_status_cursor">Z. %1$d, Sp. %2$d</string>
+    <string name="editor_keyboard_show">Tastatur einblenden</string>
+    <string name="editor_keyboard_hide">Tastatur ausblenden</string>
+    <string name="editor_cursor_left">Cursor nach links</string>
+    <string name="editor_cursor_right">Cursor nach rechts</string>
+    <string name="editor_close_tab">%1$s schließen</string>
+    <string name="editor_go_to_error">Zum Fehler</string>
+    <string name="editor_empty_hint">Erstelle eine Datei oder öffne eine aus deinen Projekten, um loszulegen.</string>
+    <string name="drawer_section_workspace">Arbeitsbereich</string>
+    <string name="drawer_projects">Projekte</string>
+    <string name="drawer_editor">Editor</string>
+    <string name="settings_font_family">Schriftart</string>
+    <string name="settings_font_system_mono">System-Monospace</string>
+    <string name="settings_code_completion">Code-Vervollständigung</string>
+    <string name="settings_code_completion_summary">Vorschläge beim Tippen und Unterstreichung von Fehlern</string>
+    <string name="settings_section_terminal">Terminal</string>
+    <string name="settings_terminal_theme">Design</string>
+    <string name="settings_terminal_theme_dark">Dunkel</string>
+    <string name="settings_terminal_theme_black">Schwarz</string>
+    <string name="terminal_command_hint">Befehl eingeben…</string>
+    <string name="samples_search">Beispiele durchsuchen</string>
+    <string name="samples_search_hint">Suchen…</string>
+    <string name="samples_no_match">Keine Beispiele passen zu „%1$s“</string>
+    <string name="action_clear_search">Suche leeren</string>
+    <!-- Bottom navigation bar -->
+    <string name="nav_editor">Editor</string>
+    <string name="nav_terminal">Terminal</string>
+    <string name="nav_packages">Pakete</string>
+    <string name="nav_projects">Projekte</string>
+    <string name="nav_settings">Optionen</string>
+    <string name="settings_bottom_nav">Untere Navigationsleiste</string>
+    <string name="settings_bottom_nav_summary">Editor, Terminal, Pakete, Projekte und Optionen mit einem Tipp erreichbar. Das ☰-Menü bleibt in jedem Fall.</string>
+
+    <!-- Problem reports -->
+    <string name="report_problem">Problem melden</string>
+    <string name="about_report_summary">Einen Fehlerbericht an die Entwickler senden</string>
+    <string name="report_privacy">Es wird nichts automatisch gesendet. Prüfe den Bericht vor dem Senden: Er enthält den Fehler und Gerätedaten, niemals deinen Code oder deine Dateien.</string>
+    <string name="report_attach">Angehängtes Problem</string>
+    <string name="report_none">Keins</string>
+    <string name="report_kind_crash">Absturz · %1$s</string>
+    <string name="report_kind_error">%1$s · %2$s</string>
+    <string name="report_description_label">Was hast du gerade gemacht?</string>
+    <string name="report_description_hint">Schritte, was du erwartet hast, was stattdessen passiert ist</string>
+    <string name="report_include_device">Geräteinfos anhängen</string>
+    <string name="report_include_device_summary">Modell, Android-Version, Speicher, Netzwerk, Mobilfunkanbieter</string>
+    <string name="report_open_issue">GitHub-Issue öffnen</string>
+    <string name="report_share">Teilen</string>
+    <string name="report_copy">Kopieren</string>
+    <string name="report_copied">Bericht kopiert</string>
+    <string name="report_issue_copied">Der vollständige Bericht ist auch in der Zwischenablage</string>
+    <string name="report_issue_truncated">Der Bericht war zu lang für den Link. Der vollständige Bericht ist in der Zwischenablage: Füge ihn in das Issue ein.</string>
+    <string name="report_no_browser">Kein Browser zum Öffnen von GitHub. Der Bericht ist in der Zwischenablage.</string>
+    <string name="report_delete">Diesen Bericht löschen</string>
+    <string name="report_deleted">Bericht gelöscht</string>
+    <string name="report_full_text">Vollständiger Bericht</string>
+    <string name="report_share_subject">SkyPython-Problembericht</string>
+    <string name="report_share_chooser">Bericht senden</string>
+    <string name="report_share_summary">SkyPython-Problembericht: %1$s (vollständiger Bericht angehängt)</string>
+    <string name="report_banner">%1$s: Etwas ist schiefgelaufen</string>
+    <string name="report_banner_action">Melden</string>
+    <string name="report_where_python">Python-Einrichtung</string>
+    <string name="report_where_terminal">Terminal</string>
+    <string name="report_where_language_server">Code-Hinweise</string>
+    <string name="report_where_debugger">Debugger</string>
+    <string name="report_where_pip">pip-Einrichtung</string>
+    <string name="report_where_app">SkyPython</string>
+    <string name="crash_dialog_title">SkyPython wurde unerwartet beendet</string>
+    <string name="crash_dialog_text">Einen Bericht an die Entwickler senden? Du siehst den ganzen Bericht, bevor etwas gesendet wird.</string>
+    <string name="crash_dialog_send">Bericht senden</string>
+    <string name="crash_dialog_later">Nicht jetzt</string>
+    <!-- Open project: folders in the phone's storage -->
+    <string name="projects_open_project">Projekt öffnen</string>
+    <string name="projects_current">Aktuelles Projekt</string>
+    <string name="projects_section_app">SkyPython-Projekte</string>
+    <string name="projects_app_desc">In der App gespeichert</string>
+    <string name="projects_section_recent">Letzte Projekte</string>
+    <string name="projects_no_recent">Ordner, die du öffnest, erscheinen hier.</string>
+    <string name="projects_section_storage">Telefonspeicher</string>
+    <string name="projects_root_internal">Interner Speicher</string>
+    <string name="projects_root_sd">SD-Karte</string>
+    <string name="projects_root_desc">Ordner durchsuchen und einen als Projekt öffnen</string>
+    <string name="projects_opened_at">Geöffnet %1$s</string>
+    <string name="projects_just_now">gerade eben</string>
+    <string name="projects_remove_recent">%1$s aus den letzten Projekten entfernen</string>
+    <string name="projects_use_folder">Diesen Ordner verwenden</string>
+    <string name="projects_show_hidden">Versteckte zeigen</string>
+    <string name="projects_no_folders">Hier gibt es keine Ordner. Erstelle einen mit der +-Schaltfläche oben oder verwende diesen Ordner.</string>
+    <string name="projects_browse_title">Ordner auswählen</string>
+    <string name="projects_unavailable">Dieser Projektordner ist gerade nicht verfügbar.</string>
+    <string name="projects_back_to_app">SkyPython-Projekte</string>
+    <string name="project_missing">Der Ordner „%1$s“ existiert nicht mehr</string>
+    <string name="project_not_folder">„%1$s“ ist kein Ordner</string>
+    <string name="project_no_permission">Kein Zugriff auf „%1$s“: Erlaube SkyPython den Dateizugriff</string>
+    <string name="project_unreadable">Der Ordner „%1$s“ kann nicht gelesen werden</string>
+    <string name="project_fallback">%1$s. SkyPython-Projekte werden angezeigt.</string>
+    <string name="storage_title">Zugriff auf Dateien erlauben</string>
+    <string name="storage_text">Um Projekte aus dem Telefonspeicher zu öffnen und auszuführen – Documents, Download, eine SD-Karte –, braucht SkyPython Zugriff auf Dateien.</string>
+    <string name="storage_point_run">Skripte laufen direkt im Projektordner, also funktioniert open(\"data.csv\") einfach.</string>
+    <string name="storage_point_private">Deine Dateien verlassen nie das Handy: SkyPython hat keine Server und kein Tracking.</string>
+    <string name="storage_point_optional">Ohne Zugriff funktioniert die App weiter mit SkyPython-Projekten.</string>
+    <string name="storage_steps_all_files">Aktiviere auf dem nächsten Bildschirm „Zugriff zum Verwalten aller Dateien zulassen“ für SkyPython und komm dann zurück.</string>
+    <string name="storage_steps_runtime">Tippe im nächsten Dialog auf „Zulassen“.</string>
+    <string name="storage_allow">Zugriff erlauben</string>
+    <string name="storage_open_settings">Einstellungen öffnen</string>
+    <string name="storage_denied">Zugriff wurde nicht gewährt. Aktiviere ihn in den App-Einstellungen, um Ordner aus dem Telefonspeicher zu nutzen.</string>
+    <string name="drawer_project">Projekt: %1$s</string>
+    <!-- In-app updates -->
+    <string name="title_update">Update</string>
+    <string name="update_banner_title">SkyPython %1$s ist verfügbar</string>
+    <string name="update_banner_text">Eine neue Version ist auf GitHub erschienen</string>
+    <string name="update_banner_update">Updaten</string>
+    <string name="update_banner_hide">Ausblenden</string>
+    <string name="update_whats_new">Neuerungen</string>
+    <string name="update_new">Neu</string>
+    <string name="update_installed_version">Du hast %1$s</string>
+    <string name="update_notes_unavailable">Die Versionshinweise konnten nicht geladen werden. Du kannst sie auf GitHub lesen.</string>
+    <string name="update_open_github">Auf GitHub öffnen</string>
+    <string name="update_install">Installieren</string>
+    <string name="update_install_hint">Lädt die %1$s-APK für dein Handy herunter, prüft sie und installiert sie über diese Version. Deine Projekte und Einstellungen bleiben erhalten.</string>
+    <string name="update_variant_universal">universal</string>
+    <string name="update_skip">Diese Version überspringen</string>
+    <string name="update_downloading">Update wird heruntergeladen…</string>
+    <string name="update_progress">%1$s von %2$s · %3$d%%</string>
+    <string name="update_progress_unknown">%1$s heruntergeladen</string>
+    <string name="update_megabytes">%1$s MB</string>
+    <string name="update_installing">Wird installiert…</string>
+    <string name="update_installing_hint">Bestätige das Update im Android-Dialog. Öffne SkyPython danach erneut: Dann läuft die neue Version.</string>
+    <string name="update_failed_title">Das Update wurde nicht abgeschlossen</string>
+    <string name="update_failed_network">Keine Verbindung zu GitHub. Prüfe das Internet und versuche es erneut – der Download wird dort fortgesetzt, wo er aufgehört hat.</string>
+    <string name="update_failed_http">GitHub hat die Datei dieses Releases nicht geliefert. Versuche es später erneut.</string>
+    <string name="update_failed_no_checksum">Das Release enthält keine Prüfsumme für diese APK, daher wurde sie nicht installiert.</string>
+    <string name="update_failed_checksum">Die heruntergeladene Datei passte nicht zu ihrer Prüfsumme und wurde gelöscht. Versuche es erneut.</string>
+    <string name="update_failed_storage">Das Update konnte nicht gespeichert werden. Gib etwas Speicherplatz frei und versuche es erneut.</string>
+    <string name="update_failed_install">Android hat das Update nicht installiert: %1$s</string>
+    <string name="update_failed_incompatible">Dieses SkyPython ist mit einem anderen Schlüssel signiert (zum Beispiel eine von jemand anderem gebaute Kopie), daher kann Android es nicht direkt aktualisieren. Deinstalliere SkyPython einmal – sichere vorher deine Projekte – und installiere dann die neue Version.</string>
+    <string name="update_retry">Erneut versuchen</string>
+    <string name="update_permission_title">Updates erlauben</string>
+    <string name="update_permission_text">Um sich selbst zu aktualisieren, braucht SkyPython die Berechtigung, Apps zu installieren. Aktiviere „Aus dieser Quelle zulassen“ für SkyPython und komm dann zurück – das Update wird fortgesetzt.</string>
+    <string name="update_permission_open">Einstellungen öffnen</string>
+    <string name="update_up_to_date">SkyPython %1$s ist die neueste Version</string>
+    <string name="update_check_failed">Updates konnten nicht geprüft werden. Prüfe deine Internetverbindung.</string>
+    <string name="update_check">Nach Updates suchen</string>
+    <string name="update_checking">Suche nach Updates…</string>
+    <string name="update_check_summary_available">Version %1$s ist verfügbar</string>
+    <string name="update_none_title">Du bist auf dem neuesten Stand</string>
+    <string name="settings_section_updates">Updates</string>
+    <string name="settings_auto_update">Automatisch nach Updates suchen</string>
+    <string name="settings_auto_update_summary">Sucht beim App-Start auf GitHub nach einem neuen Release, höchstens zweimal am Tag</string>
+</resources>

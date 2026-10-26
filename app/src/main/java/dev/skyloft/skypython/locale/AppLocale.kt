@@ -15,13 +15,23 @@ enum class AppLanguage(val tag: String) {
     System(""),
     English("en"),
     Russian("ru"),
+    Ukrainian("uk"),
+    Spanish("es"),
+    German("de"),
+    PortugueseBrazil("pt-BR"),
+    Turkish("tr"),
+    ChineseSimplified("zh-CN"),
     ;
 
     companion object {
+        /** Matches by language only ("pt-PT" → Portuguese, "zh-Hans-CN" → Chinese); unknown → [System]. */
         fun fromTag(tag: String?): AppLanguage {
-            val language = tag.orEmpty().substringBefore(',').substringBefore('-').substringBefore('_')
-            return entries.firstOrNull { it != System && it.tag.equals(language, ignoreCase = true) } ?: System
+            val language = tag.orEmpty().substringBefore(',').languagePart()
+            if (language.isEmpty()) return System
+            return entries.firstOrNull { it != System && it.tag.languagePart().equals(language, ignoreCase = true) } ?: System
         }
+
+        private fun String.languagePart(): String = trim().substringBefore('-').substringBefore('_')
     }
 }
 

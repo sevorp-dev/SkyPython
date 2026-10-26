@@ -475,9 +475,15 @@ private fun AppLanguage.label(): String = when (this) {
     AppLanguage.System -> stringResource(R.string.language_system)
     AppLanguage.English -> stringResource(R.string.language_english)
     AppLanguage.Russian -> stringResource(R.string.language_russian)
+    AppLanguage.Ukrainian -> stringResource(R.string.language_ukrainian)
+    AppLanguage.Spanish -> stringResource(R.string.language_spanish)
+    AppLanguage.German -> stringResource(R.string.language_german)
+    AppLanguage.PortugueseBrazil -> stringResource(R.string.language_portuguese_brazil)
+    AppLanguage.Turkish -> stringResource(R.string.language_turkish)
+    AppLanguage.ChineseSimplified -> stringResource(R.string.language_chinese_simplified)
 }
 
-/** App language: System / English / Русский. Choosing one recreates the screen in it. */
+/** App language: System or one of the translations. Choosing one recreates the screen in it. */
 @Composable
 private fun LanguageRow() {
     val context = LocalContext.current
@@ -502,7 +508,7 @@ private fun LanguageRow() {
         onDismissRequest = { open = false },
         title = { Text(stringResource(R.string.settings_language)) },
         text = {
-            Column(Modifier.selectableGroup()) {
+            Column(Modifier.selectableGroup().verticalScroll(rememberScrollState())) {
                 AppLanguage.entries.forEach { language ->
                     Row(
                         Modifier

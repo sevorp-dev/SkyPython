@@ -1,0 +1,548 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common actions -->
+    <string name="action_back">Geri</string>
+    <string name="action_cancel">İptal</string>
+    <string name="action_close">Kapat</string>
+    <string name="action_create">Oluştur</string>
+    <string name="action_delete">Sil</string>
+    <string name="action_interrupt">Kes</string>
+    <string name="action_refresh">Yenile</string>
+    <string name="action_rename">Yeniden adlandır</string>
+    <string name="action_restart">Yeniden başlat</string>
+    <string name="action_retry">Tekrar dene</string>
+    <string name="action_run">Çalıştır</string>
+    <string name="action_send">Gönder</string>
+    <string name="action_stop">Durdur</string>
+
+    <!-- Screen titles and drawer items -->
+    <string name="title_about">Hakkında</string>
+    <string name="title_console">Konsol</string>
+    <string name="title_files">Dosyalar</string>
+    <string name="title_interpreter">Yorumlayıcı</string>
+    <string name="title_pip">Pip</string>
+    <string name="title_samples">Örnekler</string>
+    <string name="title_settings">Ayarlar</string>
+    <string name="title_share">Paylaş</string>
+    <string name="title_terminal">Terminal</string>
+
+    <!-- Drawer -->
+    <string name="drawer_section_tools">Araçlar</string>
+    <string name="drawer_section_settings">Ayarlar</string>
+    <string name="drawer_line">Satır: %1$d/%2$d</string>
+    <string name="drawer_line_offset">Satır kayması: %1$d</string>
+    <string name="no_file_open">Açık dosya yok</string>
+
+    <!-- App root -->
+    <string name="share_save_to_projects_first">Paylaşmak için dosyayı Projeler’e kaydedin</string>
+    <string name="script_still_running">Bir betik hâlâ çalışıyor</string>
+    <string name="restart_title">Hâlâ çalışıyor</string>
+    <string name="restart_text">Bir şey hâlâ çalışıyor. Durdurup %1$s başlatılsın mı?</string>
+    <string name="restart_confirm">Durdur ve başlat</string>
+
+    <!-- Console -->
+    <!-- Keep the brackets: the console dims lines in this exact shape. -->
+    <string name="console_exit_footer">[Program bitti, çıkış kodu %1$d]</string>
+    <string name="console_cancelled">[İptal edildi]</string>
+    <string name="console_not_running">Çalışmıyor</string>
+    <string name="console_preparing_python">Python hazırlanıyor…</string>
+    <string name="console_setup_failed">Python kurulamadı</string>
+
+    <!-- Terminal -->
+    <string name="terminal_open_failed">Terminal açılamadı</string>
+    <string name="terminal_use_simple_console">Basit konsolu kullan</string>
+    <string name="key_escape">Esc</string>
+    <string name="key_tab">Tab</string>
+    <string name="key_control">Ctrl</string>
+    <string name="key_alt">Alt</string>
+    <string name="key_minus">Eksi</string>
+    <string name="key_slash">Eğik çizgi</string>
+    <string name="key_pipe">Dikey çizgi</string>
+    <string name="key_left">Sol</string>
+    <string name="key_up">Yukarı</string>
+    <string name="key_down">Aşağı</string>
+    <string name="key_right">Sağ</string>
+
+    <!-- Editor -->
+    <string name="editor_menu">Menü</string>
+    <string name="editor_undo">Geri al</string>
+    <string name="editor_redo">Yinele</string>
+    <string name="editor_more">Daha fazla</string>
+    <string name="editor_save">Kaydet</string>
+    <string name="editor_save_as">Farklı kaydet…</string>
+    <string name="editor_no_open_files">Açık dosya yok</string>
+    <string name="editor_open_files">Açık dosyalar</string>
+    <string name="editor_external_document">Harici belge</string>
+    <!-- How the projects root folder is named in the UI. -->
+    <string name="projects_label">Projeler</string>
+    <string name="editor_error_save">Kaydedilemedi: %1$s: %2$s</string>
+    <string name="editor_error_open">Açılamadı: %1$s: %2$s</string>
+    <string name="editor_error_open_file">Dosya açılamadı: %1$s</string>
+    <string name="editor_error_prepare_run">Çalıştırmaya hazırlanamadı: %1$s: %2$s</string>
+    <string name="editor_error_save_as">Farklı kaydetme başarısız: %1$s</string>
+    <string name="editor_error_create_example">Örnek dosya oluşturulamadı: %1$s</string>
+    <string name="editor_error_reopen">Yeniden açılamadı: %1$s: %2$s</string>
+    <string name="editor_reason_permission_lost">izin kaybedildi</string>
+    <string name="editor_reason_unavailable">kullanılamıyor</string>
+    <string name="editor_error_too_large">dosya %1$d MB’tan büyük</string>
+
+    <!-- Files -->
+    <string name="files_open_external">Harici dosya aç…</string>
+    <string name="files_empty_folder">Bu klasör boş</string>
+    <string name="files_up_one_folder">Üst klasör</string>
+    <string name="files_folder">Klasör</string>
+    <string name="files_file">Dosya</string>
+    <string name="files_more_options">Diğer seçenekler: %1$s</string>
+    <string name="files_new">Yeni</string>
+    <string name="files_new_file">Yeni dosya</string>
+    <string name="files_new_folder">Yeni klasör</string>
+    <string name="files_rename_file">Dosyayı yeniden adlandır</string>
+    <string name="files_rename_folder">Klasörü yeniden adlandır</string>
+    <string name="files_name">Ad</string>
+    <string name="files_delete_file_title">Dosya silinsin mi?</string>
+    <string name="files_delete_folder_title">Klasör silinsin mi?</string>
+    <string name="files_delete_file_text">“%1$s” kalıcı olarak silinecek.</string>
+    <string name="files_delete_folder_text">“%1$s” ve içindeki her şey kalıcı olarak silinecek.</string>
+    <string name="name_error_empty">Ad boş olamaz</string>
+    <string name="name_error_dots">Ad “.” veya “..” olamaz</string>
+    <string name="name_error_separator">Ad / veya \\ içeremez</string>
+    <string name="name_error_invalid_char">Ad geçersiz bir karakter içeriyor</string>
+    <string name="name_error_too_long">Ad çok uzun</string>
+    <string name="files_error_already_exists">“%1$s” zaten var</string>
+    <string name="files_error_create_folder">“%1$s” klasörü oluşturulamadı</string>
+    <string name="files_error_folder_missing">Klasör mevcut değil</string>
+    <string name="files_error_does_not_exist">“%1$s” mevcut değil</string>
+    <string name="files_error_rename">“%1$s” yeniden adlandırılamadı</string>
+    <string name="files_error_delete">“%1$s” silinemedi</string>
+    <string name="files_error_outside">Yol çalışma alanının dışında</string>
+    <string name="files_error_root">Projeler klasörünün kendisi değiştirilemez</string>
+    <string name="files_error_failed">İşlem başarısız</string>
+
+    <!-- Pip -->
+    <string name="pip_tab_installed">Kurulu</string>
+    <string name="pip_package_hint">ör. requests veya six==1.16.0</string>
+    <string name="pip_install">Kur</string>
+    <string name="pip_installed_spec">Kuruldu: %1$s</string>
+    <string name="pip_intro">Paketler betikleriniz için PyPI üzerinden kurulur.</string>
+    <string name="pip_pure_python_hint">Şimdilik yalnızca saf Python paketleri destekleniyor.</string>
+    <string name="pip_no_packages">Henüz kurulu paket yok</string>
+    <string name="pip_uninstall">Kaldır</string>
+    <string name="pip_uninstall_title">%1$s kaldırılsın mı?</string>
+    <string name="pip_uninstall_text">%1$s sürümü kaldırılacak.</string>
+    <string name="pip_setting_up">pip hazırlanıyor (ilk çalıştırma)…</string>
+    <string name="pip_spec_empty">Bir paket adı girin</string>
+    <string name="pip_spec_spaces">Her seferinde tek paket kurun, boşluk kullanmadan</string>
+    <string name="pip_spec_options">Burada seçenekler desteklenmiyor</string>
+    <string name="pip_spec_invalid">Paket adı girin, ör. six veya requests==2.32.3</string>
+    <string name="pip_tab_search">Ara</string>
+    <string name="pip_tab_requirements">Dosyadan</string>
+    <string name="pip_search_label">PyPI’da ara</string>
+    <string name="pip_search_action">Bul</string>
+    <string name="pip_clear">Temizle</string>
+    <string name="pip_result_not_found">PyPI’da “%1$s” adlı paket yok</string>
+    <string name="pip_result_offline">İnternet bağlantısı yok. Ağı kontrol edip tekrar deneyin.</string>
+    <string name="pip_result_failed">PyPI’a ulaşılamadı: %1$s</string>
+    <string name="pip_latest_version">En son sürüm %1$s</string>
+    <string name="pip_version">Sürüm %1$s</string>
+    <string name="pip_license">Lisans: %1$s</string>
+    <string name="pip_home_page">Ana sayfa</string>
+    <string name="pip_wheel_pure">Saf Python: kurulmaya hazır</string>
+    <string name="pip_wheel_android">Android için hazır derlenmiş (64 bit cihazlar)</string>
+    <string name="pip_wheel_source">Hazır derleme yok: pip derlemeyi deneyecek, bu yalnızca saf Python kodunda işe yarar</string>
+    <string name="pip_wheel_native">Yerel kod gerektiriyor, henüz desteklenmiyor</string>
+    <string name="pip_wheel_none">Bu sürümde kurulacak dosya yok</string>
+    <string name="pip_install_anyway">Yine de dene</string>
+    <string name="pip_popular_none">Eşleşen popüler paket yok. PyPI’da aramak için Bul’a dokunun.</string>
+    <string name="pip_coming_later">Yakında</string>
+    <string name="pip_needs_64bit">Yalnızca 64 bit</string>
+    <string name="pip_installed_badge">Kurulu</string>
+    <string name="pip_prebuilt_badge">Android için hazır</string>
+    <string name="pip_prebuilt_hint">Yerel kod içeren paketler “Android için hazır” olarak işaretliyse kurulur; diğerleri şimdilik saf Python olmalı.</string>
+    <string name="pip_prebuilt_line">SkyPython, %1$s %2$s paketini Android için derler: derleyici gerekmez</string>
+    <string name="pip_prebuilt_32bit">32 bit cihazlar için henüz mevcut değil</string>
+    <string name="pip_prebuilt_other_abi">Bu cihaz için henüz mevcut değil</string>
+    <string name="pip_downloading_wheel">%1$s %2$s (%3$s) indiriliyor, SkyPython tarafından Android için derlendi…</string>
+    <string name="pip_error_prebuilt_32bit">%1$s henüz 32 bit cihazlar için mevcut değil.</string>
+    <string name="pip_error_prebuilt_abi">%1$s henüz bu cihaz (%2$s) için derlenmedi.</string>
+    <string name="pip_error_prebuilt_version">%1$s%2$s Android için derlenmiş değil. Mevcut: %3$s</string>
+    <string name="pip_error_wheel_checksum">%1$s indirmesi bozuk (sağlama toplamı uyuşmuyor). Tekrar deneyin.</string>
+    <string name="pip_upgrade">Yükselt</string>
+    <string name="pip_update_available">Güncelleme var: %1$s</string>
+    <string name="pip_checking_updates">Güncellemeler denetleniyor…</string>
+    <string name="pip_updates_failed">Güncellemeler denetlenemedi (internet yok mu?)</string>
+    <string name="pip_details_requires">Gerektirdikleri: %1$s</string>
+    <string name="pip_details_required_by">Gerektirenler: %1$s</string>
+    <string name="pip_details_none">hiçbiri</string>
+    <string name="pip_req_intro">Bir gereksinim dosyasındaki tüm paketleri kurun (pip install -r), her satıra bir paket.</string>
+    <string name="pip_req_open_file">Düzenleyicide aç</string>
+    <string name="pip_req_project_files">Projeler’deki metin dosyaları</string>
+    <string name="pip_req_none">Projeler’de henüz .txt dosyası yok. Her satıra bir paket yazarak requirements.txt oluşturun, ör. requests==2.32.3.</string>
+    <string name="pip_req_install">Tümünü kur</string>
+    <string name="pip_running_install">Kuruluyor: %1$s…</string>
+    <string name="pip_running_upgrade">Yükseltiliyor: %1$s…</string>
+    <string name="pip_running_requirements">Paketler kuruluyor: %1$s…</string>
+    <string name="pip_done_upgrade">Yükseltildi: %1$s</string>
+    <string name="pip_done_requirements">Paketler kuruldu: %1$s</string>
+    <string name="pip_failed_install">Kurulamadı: %1$s</string>
+    <string name="pip_failed_upgrade">Yükseltilemedi: %1$s</string>
+    <string name="pip_failed_requirements">Paketler kurulamadı: %1$s</string>
+    <string name="pip_uninstalled">Kaldırıldı: %1$s</string>
+    <string name="pip_show_log">Günlüğü göster</string>
+    <string name="pip_hide_log">Günlüğü gizle</string>
+    <string name="pip_section_prebuilt">Android için hazır</string>
+    <string name="pip_section_popular">Popüler</string>
+    <string name="pip_section_data">Veri ve bilim</string>
+    <string name="pip_section_web">Web ve ağ</string>
+    <string name="pip_section_text">Metin ve terminal</string>
+    <string name="pip_searching">PyPI’da aranıyor…</string>
+    <string name="pip_loading_packages">Kurulu paketler okunuyor…</string>
+    <string name="pip_no_packages_hint">Ara sekmesinde bir paket bulun ve Kur’a dokunun.</string>
+    <string name="pip_pkg_requests">Basit HTTP istekleri</string>
+    <string name="pip_pkg_rich">Terminalde renkler, tablolar ve ilerleme çubukları</string>
+    <string name="pip_pkg_colorama">Renkli terminal metni</string>
+    <string name="pip_pkg_beautifulsoup4">HTML sayfalarından veri okuma</string>
+    <string name="pip_pkg_dateutil">Tarih ayrıştırma ve tarih hesaplama</string>
+    <string name="pip_pkg_tabulate">Şık metin tabloları</string>
+    <string name="pip_pkg_tqdm">Döngüler için ilerleme çubukları</string>
+    <string name="pip_pkg_httpx">Modern HTTP istemcisi, senkron ve asenkron</string>
+    <string name="pip_pkg_click">Komut satırı arayüzleri</string>
+    <string name="pip_pkg_art">ASCII sanatı ve metin yazı tipleri</string>
+    <string name="pip_pkg_pyfiglet">Büyük ASCII başlıklar</string>
+    <string name="pip_pkg_termcolor">Terminalde renkli metin</string>
+    <string name="pip_pkg_emoji">Adıyla emoji</string>
+    <string name="pip_pkg_faker">Test için sahte adlar, adresler ve metinler</string>
+    <string name="pip_pkg_sympy">Sembolik matematik</string>
+    <string name="pip_pkg_mpmath">İsteğe bağlı hassasiyetli matematik</string>
+    <string name="pip_pkg_networkx">Graflar ve ağlar</string>
+    <string name="pip_pkg_prompt_toolkit">Etkileşimli komut satırı girişi</string>
+    <string name="pip_pkg_jinja2">Metin ve HTML şablonları</string>
+    <string name="pip_pkg_pillow">Görüntüler (yerel kod gerekir)</string>
+    <string name="pip_pkg_numpy">Hızlı diziler ve matematik (yerel kod)</string>
+
+    <!-- Samples -->
+    <string name="samples_open_failed">Örnek açılamadı: %1$s</string>
+
+    <!-- Settings -->
+    <string name="settings_section_editor">Düzenleyici</string>
+    <string name="settings_section_editing">Düzenleme</string>
+    <string name="settings_section_app">Uygulama</string>
+    <string name="settings_font_size">Yazı boyutu</string>
+    <string name="settings_font_size_range">%1$d–%2$d sp</string>
+    <string name="settings_smaller">Küçült</string>
+    <string name="settings_larger">Büyüt</string>
+    <string name="settings_word_wrap">Satır kaydırma</string>
+    <string name="settings_word_wrap_summary">Yana kaydırmak yerine uzun satırları alta kaydır</string>
+    <string name="settings_line_numbers">Satır numaraları</string>
+    <string name="settings_line_numbers_summary">Düzenleyicide satır numaralarını göster</string>
+    <string name="settings_keep_screen_on">Ekranı açık tut</string>
+    <string name="settings_keep_screen_on_summary">Düzenleme sırasında ekranın kapanmasını engelle</string>
+    <string name="settings_language">Dil</string>
+    <string name="language_system">Sistem varsayılanı</string>
+
+    <!-- About -->
+    <string name="about_tagline_start">Python geliştirme, </string>
+    <string name="about_tagline_end">her yerde.</string>
+    <string name="about_version">Sürüm %1$s</string>
+    <string name="about_description">Android için ücretsiz, açık kaynaklı bir Python 3 IDE’si. Python betiklerini telefonunuzda tamamen çevrimdışı yazın ve çalıştırın.</string>
+    <string name="about_links">Bağlantılar</string>
+    <string name="about_source_code">GitHub’da kaynak kodu</string>
+    <string name="about_telegram">Telegram kanalı</string>
+    <string name="about_license">Lisans</string>
+    <string name="about_license_text">SkyPython özgür bir yazılımdır; kaynak koddaki LICENSE dosyasına bakın.</string>
+    <string name="about_third_party">Üçüncü taraf yazılımlar</string>
+    <string name="about_notice_grammar">MagicPython dilbilgisi</string>
+    <string name="about_notice_theme">VS Code Dark+ teması</string>
+    <string name="about_notice_terminal">Termux terminal-emulator ve terminal-view</string>
+    <string name="about_slogan"> · Fikirler. Kod. Gelecek.</string>
+    <string name="about_no_app_for_link">%1$s adresini açabilecek uygulama yok</string>
+
+    <!-- Share -->
+    <string name="share_cannot_share">Bu dosya paylaşılamaz</string>
+    <string name="share_chooser_title">Paylaş: %1$s</string>
+    <string name="share_no_app">Bu dosyayı paylaşabilecek uygulama yok</string>
+
+    <!-- ▶ Run on a terminal: output actions -->
+    <string name="use_simple_output">Basit çıktıyı kullan</string>
+    <string name="run_again">Tekrar çalıştır</string>
+    <string name="back_to_editor">Düzenleyiciye dön</string>
+    <string name="run_exit_code">Çıkış kodu %1$d</string>
+    <string name="output_more">Diğer seçenekler</string>
+    <string name="output_copy_all">Tümünü kopyala</string>
+    <string name="output_share">Çıktıyı paylaş</string>
+    <string name="output_save">Çıktıyı kaydet</string>
+    <string name="output_save_as">Farklı kaydet…</string>
+    <string name="output_clear">Temizle</string>
+    <string name="output_scroll_top">En üste kaydır</string>
+    <string name="output_scroll_bottom">En alta kaydır</string>
+    <string name="output_font_smaller">Daha küçük metin</string>
+    <string name="output_font_bigger">Daha büyük metin</string>
+    <string name="output_font_size">Metin %1$d sp</string>
+    <string name="output_copied">Çıktı kopyalandı</string>
+    <string name="output_nothing">Henüz çıktı yok</string>
+    <string name="output_saved">Kaydedildi: %1$s</string>
+    <string name="output_save_failed">Kaydedilemedi: %1$s</string>
+    <!-- Debugger -->
+    <string name="title_debug">Hata ayıkla</string>
+    <string name="debug_run_menu_run">Çalıştır</string>
+    <string name="debug_run_menu_debug">Hata ayıkla</string>
+    <string name="debug_tab_variables">Değişkenler</string>
+    <string name="debug_tab_watches">İzleme</string>
+    <string name="debug_tab_stack">Çağrı yığını</string>
+    <string name="debug_tab_console">Konsol</string>
+    <string name="debug_continue">Devam et</string>
+    <string name="debug_pause">Duraklat</string>
+    <string name="debug_step_over">Üzerinden geç</string>
+    <string name="debug_step_into">İçine gir</string>
+    <string name="debug_step_out">Dışına çık</string>
+    <string name="debug_collapse">Hata ayıklayıcıyı daralt</string>
+    <string name="debug_expand">Hata ayıklayıcıyı genişlet</string>
+    <string name="debug_close">Hata ayıklayıcıyı kapat</string>
+    <string name="debug_status_starting">Hata ayıklayıcı başlatılıyor…</string>
+    <string name="debug_status_running">Çalışıyor…</string>
+    <string name="debug_status_breakpoint">Kesme noktası: %1$s, satır %2$d</string>
+    <string name="debug_status_paused">Duraklatıldı: %1$s, satır %2$d</string>
+    <string name="debug_status_exception">Yakalanmamış istisna: %1$s</string>
+    <string name="debug_status_finished">Program bitti, çıkış kodu %1$d</string>
+    <string name="debug_status_ended">Hata ayıklama sona erdi</string>
+    <string name="debug_error_start">Hata ayıklayıcı başlatılamadı: %1$s</string>
+    <string name="debug_locals">Yereller</string>
+    <string name="debug_globals">Globaller</string>
+    <string name="debug_more">…ve %1$d tane daha</string>
+    <string name="debug_no_variables">Burada bir şey yok</string>
+    <string name="debug_variables_when_paused">Değişkenler program duraklatıldığında görünür</string>
+    <string name="debug_stack_when_paused">Çağrı yığını program duraklatıldığında görünür</string>
+    <string name="debug_watch_hint">İfade, ör. len(items)</string>
+    <string name="debug_watch_add">İzleme ekle</string>
+    <string name="debug_watch_remove">İzlemeyi kaldır</string>
+    <string name="debug_no_watches">Henüz izleme yok: her duraklamada değerini görmek için aşağıya bir ifade ekleyin</string>
+    <string name="debug_frame_library">kütüphane</string>
+    <string name="debug_condition_title">%1$d. satırdaki kesme noktası</string>
+    <string name="debug_condition_hint">Yalnızca bu doğru olduğunda dur, ör. i == 10. Her zaman durmak için boş bırakın.</string>
+    <string name="debug_condition_label">Koşul</string>
+    <string name="debug_condition_remove">Kaldır</string>
+    <string name="debug_condition_save">Kaydet</string>
+    <string name="debug_breakpoints_need_project_file">Kesme noktaları, SkyPython projelerine kaydedilmiş dosyalarda çalışır</string>
+    <!-- Drawer footer -->
+    <string name="drawer_footer_developer">Geliştiren: @Sevorp</string>
+
+    <!-- Editor: find & replace -->
+    <string name="find_hint">Bul</string>
+    <string name="replace_hint">Şununla değiştir</string>
+    <string name="find_match_case">Büyük/küçük harf</string>
+    <string name="find_whole_word">Tam sözcük</string>
+    <string name="find_regex">Düzenli ifade</string>
+    <string name="find_previous">Önceki eşleşme</string>
+    <string name="find_next">Sonraki eşleşme</string>
+    <string name="find_toggle_replace">Değiştirmeyi göster</string>
+    <string name="find_close">Aramayı kapat</string>
+    <string name="find_replace_one">Değiştir</string>
+    <string name="find_replace_all">Tümü</string>
+    <string name="find_replaced_count">Değiştirilen: %1$d</string>
+    <string name="find_no_matches">Eşleşme yok</string>
+    <string name="find_invalid_regex">Geçersiz desen</string>
+
+    <!-- Editor: go to line -->
+    <string name="go_to_line">Satıra git…</string>
+    <string name="go_to_line_title">Satıra git</string>
+    <string name="go_to_line_label">Satır (1–%1$d)</string>
+    <string name="go_to_line_go">Git</string>
+
+    <!-- Editor: code navigation -->
+    <string name="editor_action_go_to_definition">Tanıma git</string>
+    <string name="editor_action_find_usages">Kullanımlar</string>
+    <string name="editor_outline">Ana hat</string>
+    <string name="editor_outline_empty">Bu dosyada henüz sınıf veya fonksiyon yok.</string>
+    <string name="editor_outline_loading">Dosya okunuyor…</string>
+    <string name="editor_outline_line">satır %1$d</string>
+    <string name="editor_read_only">Salt okunur</string>
+    <string name="nav_no_definition">“%1$s” için tanım bulunamadı</string>
+    <string name="nav_not_on_a_name">Önce imleci bir adın üzerine getirin</string>
+    <string name="nav_unavailable">Kod ipuçları henüz hazır değil. Birazdan tekrar deneyin.</string>
+    <string name="nav_hints_off">Kod gezinmesini kullanmak için Ayarlar’dan Kod tamamlamayı açın</string>
+    <string name="nav_usages_count">Bu dosyada “%1$s” kullanımları: %2$d</string>
+    <string name="drawer_in_symbol">İçinde: %1$s</string>
+
+    <!-- Editor: line commands -->
+    <string name="editor_action_comment">Yorum yap / kaldır</string>
+    <string name="editor_action_indent">Girinti ekle</string>
+    <string name="editor_action_outdent">Girintiyi azalt</string>
+    <string name="editor_action_duplicate">Satırı çoğalt</string>
+    <string name="editor_action_delete_line">Satırı sil</string>
+    <string name="editor_action_move_up">Satırı yukarı taşı</string>
+    <string name="editor_action_move_down">Satırı aşağı taşı</string>
+    <string name="editor_actions_show">Düzenleme eylemleri</string>
+    <string name="editor_actions_hide">Semboller</string>
+    <string name="editor_menu_edit">Satırları düzenle</string>
+    <string name="editor_menu_back">Geri</string>
+
+    <!-- Editor: files -->
+    <string name="find_and_replace">Bul ve değiştir</string>
+    <string name="new_file">Yeni dosya…</string>
+    <string name="new_file_title">Yeni dosya</string>
+    <string name="new_file_name">Dosya adı</string>
+    <string name="new_file_create">Oluştur</string>
+    <string name="open_file">Aç…</string>
+    <string name="recent_files">Son dosyalar</string>
+    <string name="recent_files_empty">Henüz son dosya yok</string>
+    <string name="file_missing">%1$s artık mevcut değil</string>
+
+    <!-- Settings -->
+    <string name="settings_auto_close">Parantezleri otomatik kapat</string>
+    <string name="settings_auto_close_summary">( [ { \" veya \' yazınca kapanışı da eklenir</string>
+    <string name="settings_symbol_keys">Sembol çubuğu tuşları</string>
+    <string name="settings_symbol_keys_summary">Tuşlar boşlukla ayrılır. “Tab” 4 boşluk ekler.</string>
+    <string name="settings_symbol_keys_reset">Varsayılana sıfırla</string>
+    <string name="settings_keyboard_suggestions">Klavye önerileri</string>
+    <string name="settings_keyboard_suggestions_summary">Klavyenin sözcük önermesine ve otomatik düzeltmesine izin ver. Kapalıyken kod değiştirilmez.</string>
+    <string name="settings_pinch_hint">İpucu: yakınlaştırmak için düzenleyicide iki parmakla sıkıştırın.</string>
+    <!-- Orange theme: status line, drawer, settings, terminal, samples -->
+    <string name="editor_status_python">Python %1$s</string>
+    <string name="editor_status_cursor">Sat %1$d, Süt %2$d</string>
+    <string name="editor_keyboard_show">Klavyeyi göster</string>
+    <string name="editor_keyboard_hide">Klavyeyi gizle</string>
+    <string name="editor_cursor_left">İmleç sola</string>
+    <string name="editor_cursor_right">İmleç sağa</string>
+    <string name="editor_close_tab">Kapat: %1$s</string>
+    <string name="editor_go_to_error">Hataya git</string>
+    <string name="editor_empty_hint">Kodlamaya başlamak için bir dosya oluşturun veya projelerinizden birini açın.</string>
+    <string name="drawer_section_workspace">Çalışma alanı</string>
+    <string name="drawer_projects">Projeler</string>
+    <string name="drawer_editor">Düzenleyici</string>
+    <string name="settings_font_family">Yazı tipi</string>
+    <string name="settings_font_system_mono">Sistem eş aralıklı</string>
+    <string name="settings_code_completion">Kod tamamlama</string>
+    <string name="settings_code_completion_summary">Yazarken öneriler ve hataların altını çizme</string>
+    <string name="settings_section_terminal">Terminal</string>
+    <string name="settings_terminal_theme">Tema</string>
+    <string name="settings_terminal_theme_dark">Koyu</string>
+    <string name="settings_terminal_theme_black">Siyah</string>
+    <string name="terminal_command_hint">Bir komut yazın…</string>
+    <string name="samples_search">Örneklerde ara</string>
+    <string name="samples_search_hint">Ara…</string>
+    <string name="samples_no_match">“%1$s” ile eşleşen örnek yok</string>
+    <string name="action_clear_search">Aramayı temizle</string>
+    <!-- Bottom navigation bar -->
+    <string name="nav_editor">Editör</string>
+    <string name="nav_terminal">Terminal</string>
+    <string name="nav_packages">Paketler</string>
+    <string name="nav_projects">Projeler</string>
+    <string name="nav_settings">Ayarlar</string>
+    <string name="settings_bottom_nav">Alt gezinme çubuğu</string>
+    <string name="settings_bottom_nav_summary">Editör, Terminal, Paketler, Projeler ve Ayarlar tek dokunuş uzakta. ☰ menüsü her durumda kalır.</string>
+
+    <!-- Problem reports -->
+    <string name="report_problem">Sorun bildir</string>
+    <string name="about_report_summary">Geliştiricilere hata raporu gönderin</string>
+    <string name="report_privacy">Hiçbir şey otomatik gönderilmez. Göndermeden önce raporu inceleyin: hata ve cihaz bilgilerini içerir, asla kodunuzu veya dosyalarınızı içermez.</string>
+    <string name="report_attach">Ekli sorun</string>
+    <string name="report_none">Yok</string>
+    <string name="report_kind_crash">Çökme · %1$s</string>
+    <string name="report_kind_error">%1$s · %2$s</string>
+    <string name="report_description_label">Ne yapıyordunuz?</string>
+    <string name="report_description_hint">Adımlar, ne beklediğiniz, bunun yerine ne olduğu</string>
+    <string name="report_include_device">Cihaz bilgilerini ekle</string>
+    <string name="report_include_device_summary">Model, Android sürümü, bellek, ağ, mobil operatör</string>
+    <string name="report_open_issue">GitHub issue aç</string>
+    <string name="report_share">Paylaş</string>
+    <string name="report_copy">Kopyala</string>
+    <string name="report_copied">Rapor kopyalandı</string>
+    <string name="report_issue_copied">Tam rapor ayrıca panoda</string>
+    <string name="report_issue_truncated">Rapor bağlantı için çok uzundu. Tam rapor panoda: issue içine yapıştırın.</string>
+    <string name="report_no_browser">GitHub’ı açacak tarayıcı yok. Rapor panoda.</string>
+    <string name="report_delete">Bu raporu sil</string>
+    <string name="report_deleted">Rapor silindi</string>
+    <string name="report_full_text">Tam rapor</string>
+    <string name="report_share_subject">SkyPython sorun raporu</string>
+    <string name="report_share_chooser">Raporu gönder</string>
+    <string name="report_share_summary">SkyPython sorun raporu: %1$s (tam rapor ekte)</string>
+    <string name="report_banner">%1$s: bir şeyler ters gitti</string>
+    <string name="report_banner_action">Bildir</string>
+    <string name="report_where_python">Python kurulumu</string>
+    <string name="report_where_terminal">Terminal</string>
+    <string name="report_where_language_server">Kod ipuçları</string>
+    <string name="report_where_debugger">Hata ayıklayıcı</string>
+    <string name="report_where_pip">pip kurulumu</string>
+    <string name="report_where_app">SkyPython</string>
+    <string name="crash_dialog_title">SkyPython beklenmedik şekilde kapandı</string>
+    <string name="crash_dialog_text">Geliştiricilere rapor gönderilsin mi? Herhangi bir şey gönderilmeden önce raporun tamamını göreceksiniz.</string>
+    <string name="crash_dialog_send">Rapor gönder</string>
+    <string name="crash_dialog_later">Şimdi değil</string>
+    <!-- Open project: folders in the phone's storage -->
+    <string name="projects_open_project">Proje aç</string>
+    <string name="projects_current">Geçerli proje</string>
+    <string name="projects_section_app">SkyPython projeleri</string>
+    <string name="projects_app_desc">Uygulamanın içinde saklanır</string>
+    <string name="projects_section_recent">Son projeler</string>
+    <string name="projects_no_recent">Açtığınız klasörler burada görünür.</string>
+    <string name="projects_section_storage">Telefon depolama alanı</string>
+    <string name="projects_root_internal">Dahili depolama</string>
+    <string name="projects_root_sd">SD kart</string>
+    <string name="projects_root_desc">Klasörlere göz atın ve birini proje olarak açın</string>
+    <string name="projects_opened_at">Açıldı: %1$s</string>
+    <string name="projects_just_now">az önce</string>
+    <string name="projects_remove_recent">Son projelerden kaldır: %1$s</string>
+    <string name="projects_use_folder">Bu klasörü kullan</string>
+    <string name="projects_show_hidden">Gizlileri göster</string>
+    <string name="projects_no_folders">Burada klasör yok. Yukarıdaki + düğmesiyle bir tane oluşturun veya bu klasörü kullanın.</string>
+    <string name="projects_browse_title">Bir klasör seçin</string>
+    <string name="projects_unavailable">Bu proje klasörü şu anda kullanılamıyor.</string>
+    <string name="projects_back_to_app">SkyPython projeleri</string>
+    <string name="project_missing">“%1$s” klasörü artık mevcut değil</string>
+    <string name="project_not_folder">“%1$s” bir klasör değil</string>
+    <string name="project_no_permission">“%1$s” klasörüne erişim yok: SkyPython’ın dosyaları kullanmasına izin verin</string>
+    <string name="project_unreadable">“%1$s” klasörü okunamıyor</string>
+    <string name="project_fallback">%1$s. SkyPython projeleri gösteriliyor.</string>
+    <string name="storage_title">Dosyalara erişime izin verin</string>
+    <string name="storage_text">Telefonun depolama alanındaki (Documents, Download, SD kart) projeleri açıp çalıştırmak için SkyPython’ın dosyalara erişmesi gerekir.</string>
+    <string name="storage_point_run">Betikler doğrudan proje klasöründe çalışır, böylece open(\"data.csv\") sorunsuz çalışır.</string>
+    <string name="storage_point_private">Dosyalarınız telefondan asla çıkmaz: SkyPython’ın sunucusu ve izleme sistemi yoktur.</string>
+    <string name="storage_point_optional">Erişim olmadan da uygulama SkyPython projeleriyle çalışmaya devam eder.</string>
+    <string name="storage_steps_all_files">Sonraki ekranda SkyPython için “Tüm dosyaları yönetmek için erişime izin ver” seçeneğini açın, sonra geri dönün.</string>
+    <string name="storage_steps_runtime">Sonraki iletişim kutusunda “İzin ver”e dokunun.</string>
+    <string name="storage_allow">Erişime izin ver</string>
+    <string name="storage_open_settings">Ayarları aç</string>
+    <string name="storage_denied">Erişim verilmedi. Telefon depolama alanındaki klasörleri kullanmak için uygulama ayarlarından açın.</string>
+    <string name="drawer_project">Proje: %1$s</string>
+    <!-- In-app updates -->
+    <string name="title_update">Güncelleme</string>
+    <string name="update_banner_title">SkyPython %1$s yayınlandı</string>
+    <string name="update_banner_text">GitHub’da yeni bir sürüm var</string>
+    <string name="update_banner_update">Güncelle</string>
+    <string name="update_banner_hide">Gizle</string>
+    <string name="update_whats_new">Yenilikler</string>
+    <string name="update_new">Yeni</string>
+    <string name="update_installed_version">Kurulu sürüm: %1$s</string>
+    <string name="update_notes_unavailable">Sürüm notları yüklenemedi. Bunları GitHub’da okuyabilirsiniz.</string>
+    <string name="update_open_github">GitHub’da aç</string>
+    <string name="update_install">Kur</string>
+    <string name="update_install_hint">Telefonunuz için %1$s APK dosyasını indirir, doğrular ve bu sürümün üzerine kurar. Projeleriniz ve ayarlarınız korunur.</string>
+    <string name="update_variant_universal">evrensel</string>
+    <string name="update_skip">Bu sürümü atla</string>
+    <string name="update_downloading">Güncelleme indiriliyor…</string>
+    <string name="update_progress">%1$s / %2$s · %%%3$d</string>
+    <string name="update_progress_unknown">%1$s indirildi</string>
+    <string name="update_megabytes">%1$s MB</string>
+    <string name="update_installing">Kuruluyor…</string>
+    <string name="update_installing_hint">Güncellemeyi Android iletişim kutusunda onaylayın. Ardından SkyPython’ı yeniden açın: yeni sürüm açılacak.</string>
+    <string name="update_failed_title">Güncelleme tamamlanmadı</string>
+    <string name="update_failed_network">GitHub bağlantısı yok. İnterneti kontrol edip tekrar deneyin — indirme kaldığı yerden devam eder.</string>
+    <string name="update_failed_http">GitHub bu sürümün dosyasını göndermedi. Daha sonra tekrar deneyin.</string>
+    <string name="update_failed_no_checksum">Sürümde bu APK için sağlama toplamı yok, bu yüzden kurulmadı.</string>
+    <string name="update_failed_checksum">İndirilen dosya sağlama toplamıyla eşleşmedi ve silindi. Tekrar deneyin.</string>
+    <string name="update_failed_storage">Güncelleme kaydedilemedi. Biraz yer açıp tekrar deneyin.</string>
+    <string name="update_failed_install">Android güncellemeyi kurmadı: %1$s</string>
+    <string name="update_failed_incompatible">Bu SkyPython farklı bir anahtarla imzalanmış (örneğin başkası tarafından derlenmiş bir kopya), bu yüzden Android onu yerinde güncelleyemiyor. SkyPython’ı bir kez kaldırın — önce projelerinizi yedekleyin — sonra yeni sürümü kurun.</string>
+    <string name="update_retry">Tekrar dene</string>
+    <string name="update_permission_title">Güncellemelere izin verin</string>
+    <string name="update_permission_text">SkyPython’ın kendini güncellemesi için uygulama yükleme izni gerekir. SkyPython için “Bu kaynaktan izin ver” seçeneğini açın, sonra geri dönün — güncelleme devam eder.</string>
+    <string name="update_permission_open">Ayarları aç</string>
+    <string name="update_up_to_date">SkyPython %1$s en son sürüm</string>
+    <string name="update_check_failed">Güncellemeler denetlenemedi. İnternet bağlantınızı kontrol edin.</string>
+    <string name="update_check">Güncellemeleri denetle</string>
+    <string name="update_checking">Güncellemeler denetleniyor…</string>
+    <string name="update_check_summary_available">%1$s sürümü yayınlandı</string>
+    <string name="update_none_title">Güncelsiniz</string>
+    <string name="settings_section_updates">Güncellemeler</string>
+    <string name="settings_auto_update">Güncellemeleri otomatik denetle</string>
+    <string name="settings_auto_update_summary">Uygulama açılırken GitHub’da yeni sürüm arar, günde en fazla iki kez</string>
+</resources>

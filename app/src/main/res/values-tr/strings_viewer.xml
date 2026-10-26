@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The image viewer, "Open with…", and the pictures a run made. -->
+<resources>
+    <string name="open_with">Birlikte aç…</string>
+    <string name="open_with_chooser_title">Şununla aç: %1$s</string>
+    <string name="open_with_no_app">Bu dosyayı açabilecek uygulama yok</string>
+
+    <string name="viewer_info">%1$d × %2$d · %3$s</string>
+    <string name="viewer_fit">Ekrana sığdır</string>
+    <string name="viewer_error_title">Bu görüntü gösterilemiyor</string>
+    <string name="viewer_error_missing">Dosya artık mevcut değil.</string>
+    <string name="viewer_error_unsupported">Dosya bozuk veya biçimi desteklenmiyor.</string>
+    <string name="viewer_error_memory">Görüntü bu cihazın belleği için çok büyük.</string>
+    <string name="viewer_error_read">Dosya okunamadı: %1$s</string>
+    <string name="viewer_delete_failed">Dosya silinemedi</string>
+
+    <string name="files_unsupported_title">Bu dosya türü açılamıyor</string>
+    <string name="files_unsupported_text">SkyPython “%1$s” dosyasını açamıyor. Paylaşabilir veya başka bir uygulamada açabilirsiniz.</string>
+
+    <string name="run_images_label">Yeni görüntüler</string>
+    <string name="run_image_open">Görüntüyü aç: %1$s</string>
+</resources>

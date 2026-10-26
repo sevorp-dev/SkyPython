@@ -1,0 +1,548 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common actions -->
+    <string name="action_back">Назад</string>
+    <string name="action_cancel">Скасувати</string>
+    <string name="action_close">Закрити</string>
+    <string name="action_create">Створити</string>
+    <string name="action_delete">Видалити</string>
+    <string name="action_interrupt">Перервати</string>
+    <string name="action_refresh">Оновити</string>
+    <string name="action_rename">Перейменувати</string>
+    <string name="action_restart">Перезапустити</string>
+    <string name="action_retry">Повторити</string>
+    <string name="action_run">Запустити</string>
+    <string name="action_send">Надіслати</string>
+    <string name="action_stop">Зупинити</string>
+
+    <!-- Screen titles and drawer items -->
+    <string name="title_about">Про застосунок</string>
+    <string name="title_console">Консоль</string>
+    <string name="title_files">Файли</string>
+    <string name="title_interpreter">Інтерпретатор</string>
+    <string name="title_pip">Pip</string>
+    <string name="title_samples">Приклади</string>
+    <string name="title_settings">Налаштування</string>
+    <string name="title_share">Поділитися</string>
+    <string name="title_terminal">Термінал</string>
+
+    <!-- Drawer -->
+    <string name="drawer_section_tools">Інструменти</string>
+    <string name="drawer_section_settings">Налаштування</string>
+    <string name="drawer_line">Рядок: %1$d/%2$d</string>
+    <string name="drawer_line_offset">Зсув рядка: %1$d</string>
+    <string name="no_file_open">Файл не відкрито</string>
+
+    <!-- App root -->
+    <string name="share_save_to_projects_first">Щоб поділитися файлом, збережіть його в Проєкти</string>
+    <string name="script_still_running">Скрипт ще виконується</string>
+    <string name="restart_title">Ще виконується</string>
+    <string name="restart_text">Щось ще виконується. Зупинити й запустити %1$s?</string>
+    <string name="restart_confirm">Зупинити й запустити</string>
+
+    <!-- Console -->
+    <!-- Keep the brackets: the console dims lines in this exact shape. -->
+    <string name="console_exit_footer">[Програму завершено, код виходу %1$d]</string>
+    <string name="console_cancelled">[Скасовано]</string>
+    <string name="console_not_running">Не запущено</string>
+    <string name="console_preparing_python">Підготовка Python…</string>
+    <string name="console_setup_failed">Не вдалося налаштувати Python</string>
+
+    <!-- Terminal -->
+    <string name="terminal_open_failed">Не вдалося відкрити термінал</string>
+    <string name="terminal_use_simple_console">Використати просту консоль</string>
+    <string name="key_escape">Escape</string>
+    <string name="key_tab">Tab</string>
+    <string name="key_control">Control</string>
+    <string name="key_alt">Alt</string>
+    <string name="key_minus">Мінус</string>
+    <string name="key_slash">Скісна риска</string>
+    <string name="key_pipe">Вертикальна риска</string>
+    <string name="key_left">Ліворуч</string>
+    <string name="key_up">Вгору</string>
+    <string name="key_down">Вниз</string>
+    <string name="key_right">Праворуч</string>
+
+    <!-- Editor -->
+    <string name="editor_menu">Меню</string>
+    <string name="editor_undo">Скасувати</string>
+    <string name="editor_redo">Повторити</string>
+    <string name="editor_more">Більше</string>
+    <string name="editor_save">Зберегти</string>
+    <string name="editor_save_as">Зберегти як…</string>
+    <string name="editor_no_open_files">Немає відкритих файлів</string>
+    <string name="editor_open_files">Відкриті файли</string>
+    <string name="editor_external_document">Зовнішній документ</string>
+    <!-- How the projects root folder is named in the UI. -->
+    <string name="projects_label">Проєкти</string>
+    <string name="editor_error_save">Не вдалося зберегти %1$s: %2$s</string>
+    <string name="editor_error_open">Не вдалося відкрити %1$s: %2$s</string>
+    <string name="editor_error_open_file">Не вдалося відкрити файл: %1$s</string>
+    <string name="editor_error_prepare_run">Не вдалося підготувати %1$s до запуску: %2$s</string>
+    <string name="editor_error_save_as">Не вдалося зберегти як: %1$s</string>
+    <string name="editor_error_create_example">Не вдалося створити файл прикладу: %1$s</string>
+    <string name="editor_error_reopen">Не вдалося знову відкрити %1$s: %2$s</string>
+    <string name="editor_reason_permission_lost">дозвіл втрачено</string>
+    <string name="editor_reason_unavailable">недоступний</string>
+    <string name="editor_error_too_large">файл більший за %1$d МБ</string>
+
+    <!-- Files -->
+    <string name="files_open_external">Відкрити зовнішній…</string>
+    <string name="files_empty_folder">Ця папка порожня</string>
+    <string name="files_up_one_folder">На рівень вище</string>
+    <string name="files_folder">Папка</string>
+    <string name="files_file">Файл</string>
+    <string name="files_more_options">Інші дії для %1$s</string>
+    <string name="files_new">Створити</string>
+    <string name="files_new_file">Новий файл</string>
+    <string name="files_new_folder">Нова папка</string>
+    <string name="files_rename_file">Перейменувати файл</string>
+    <string name="files_rename_folder">Перейменувати папку</string>
+    <string name="files_name">Назва</string>
+    <string name="files_delete_file_title">Видалити файл?</string>
+    <string name="files_delete_folder_title">Видалити папку?</string>
+    <string name="files_delete_file_text">«%1$s» буде видалено назавжди.</string>
+    <string name="files_delete_folder_text">«%1$s» і весь її вміст буде видалено назавжди.</string>
+    <string name="name_error_empty">Назва не може бути порожньою</string>
+    <string name="name_error_dots">Назва не може бути «.» або «..»</string>
+    <string name="name_error_separator">Назва не може містити / або \\</string>
+    <string name="name_error_invalid_char">Назва містить недопустимий символ</string>
+    <string name="name_error_too_long">Назва задовга</string>
+    <string name="files_error_already_exists">«%1$s» уже існує</string>
+    <string name="files_error_create_folder">Не вдалося створити папку «%1$s»</string>
+    <string name="files_error_folder_missing">Папка не існує</string>
+    <string name="files_error_does_not_exist">«%1$s» не існує</string>
+    <string name="files_error_rename">Не вдалося перейменувати «%1$s»</string>
+    <string name="files_error_delete">Не вдалося видалити «%1$s»</string>
+    <string name="files_error_outside">Шлях поза робочою областю</string>
+    <string name="files_error_root">Не можна змінювати саму папку проєктів</string>
+    <string name="files_error_failed">Операція не вдалася</string>
+
+    <!-- Pip -->
+    <string name="pip_tab_installed">Встановлені</string>
+    <string name="pip_package_hint">напр. requests або six==1.16.0</string>
+    <string name="pip_install">Встановити</string>
+    <string name="pip_installed_spec">Встановлено %1$s</string>
+    <string name="pip_intro">Пакети встановлюються з PyPI для ваших скриптів.</string>
+    <string name="pip_pure_python_hint">Поки що підтримуються лише пакети на чистому Python.</string>
+    <string name="pip_no_packages">Ще немає встановлених пакетів</string>
+    <string name="pip_uninstall">Видалити</string>
+    <string name="pip_uninstall_title">Видалити %1$s?</string>
+    <string name="pip_uninstall_text">Версію %1$s буде видалено.</string>
+    <string name="pip_setting_up">Налаштування pip (перший запуск)…</string>
+    <string name="pip_spec_empty">Введіть назву пакета</string>
+    <string name="pip_spec_spaces">Встановлюйте по одному пакету, без пробілів</string>
+    <string name="pip_spec_options">Параметри тут не підтримуються</string>
+    <string name="pip_spec_invalid">Вкажіть назву пакета, напр. six або requests==2.32.3</string>
+    <string name="pip_tab_search">Пошук</string>
+    <string name="pip_tab_requirements">З файлу</string>
+    <string name="pip_search_label">Пошук на PyPI</string>
+    <string name="pip_search_action">Знайти</string>
+    <string name="pip_clear">Очистити</string>
+    <string name="pip_result_not_found">На PyPI немає пакета «%1$s»</string>
+    <string name="pip_result_offline">Немає з’єднання з інтернетом. Перевірте мережу й спробуйте ще раз.</string>
+    <string name="pip_result_failed">Не вдалося зв’язатися з PyPI: %1$s</string>
+    <string name="pip_latest_version">Остання версія %1$s</string>
+    <string name="pip_version">Версія %1$s</string>
+    <string name="pip_license">Ліцензія: %1$s</string>
+    <string name="pip_home_page">Домашня сторінка</string>
+    <string name="pip_wheel_pure">Чистий Python: готово до встановлення</string>
+    <string name="pip_wheel_android">Зібрано для Android (64-бітні пристрої)</string>
+    <string name="pip_wheel_source">Немає готової збірки: pip спробує зібрати пакет, але це працює лише для коду на чистому Python</string>
+    <string name="pip_wheel_native">Потрібен нативний код, поки не підтримується</string>
+    <string name="pip_wheel_none">У цьому релізі немає файлів для встановлення</string>
+    <string name="pip_install_anyway">Все одно спробувати</string>
+    <string name="pip_popular_none">Серед популярних пакетів збігів немає. Натисніть «Знайти», щоб пошукати на PyPI.</string>
+    <string name="pip_coming_later">Згодом</string>
+    <string name="pip_needs_64bit">Лише 64-біт</string>
+    <string name="pip_installed_badge">Встановлено</string>
+    <string name="pip_prebuilt_badge">Зібрано для Android</string>
+    <string name="pip_prebuilt_hint">Пакети з нативним кодом встановлюються, якщо позначені «Зібрано для Android»; інші поки мають бути на чистому Python.</string>
+    <string name="pip_prebuilt_line">SkyPython збирає %1$s %2$s для Android: компілятор не потрібен</string>
+    <string name="pip_prebuilt_32bit">Поки недоступно для 32-бітних пристроїв</string>
+    <string name="pip_prebuilt_other_abi">Поки недоступно для цього пристрою</string>
+    <string name="pip_downloading_wheel">Завантаження %1$s %2$s (%3$s), зібраного SkyPython для Android…</string>
+    <string name="pip_error_prebuilt_32bit">%1$s поки недоступний для 32-бітних пристроїв.</string>
+    <string name="pip_error_prebuilt_abi">%1$s поки не зібрано для цього пристрою (%2$s).</string>
+    <string name="pip_error_prebuilt_version">%1$s%2$s не зібрано для Android. Доступні: %3$s</string>
+    <string name="pip_error_wheel_checksum">Завантажений %1$s пошкоджено (контрольна сума не збігається). Спробуйте ще раз.</string>
+    <string name="pip_upgrade">Оновити</string>
+    <string name="pip_update_available">Доступне оновлення: %1$s</string>
+    <string name="pip_checking_updates">Перевірка оновлень…</string>
+    <string name="pip_updates_failed">Не вдалося перевірити оновлення (немає інтернету?)</string>
+    <string name="pip_details_requires">Залежить від: %1$s</string>
+    <string name="pip_details_required_by">Потрібен для: %1$s</string>
+    <string name="pip_details_none">нічого</string>
+    <string name="pip_req_intro">Встановіть усі пакети з файлу залежностей (pip install -r), по одному пакету в рядку.</string>
+    <string name="pip_req_open_file">Відкрити в редакторі</string>
+    <string name="pip_req_project_files">Текстові файли в Проєктах</string>
+    <string name="pip_req_none">У Проєктах ще немає файлів .txt. Створіть requirements.txt з одним пакетом у рядку, напр. requests==2.32.3.</string>
+    <string name="pip_req_install">Встановити всі</string>
+    <string name="pip_running_install">Встановлення %1$s…</string>
+    <string name="pip_running_upgrade">Оновлення %1$s…</string>
+    <string name="pip_running_requirements">Встановлення пакетів з %1$s…</string>
+    <string name="pip_done_upgrade">Оновлено %1$s</string>
+    <string name="pip_done_requirements">Встановлено пакети з %1$s</string>
+    <string name="pip_failed_install">Не вдалося встановити %1$s</string>
+    <string name="pip_failed_upgrade">Не вдалося оновити %1$s</string>
+    <string name="pip_failed_requirements">Не вдалося встановити пакети з %1$s</string>
+    <string name="pip_uninstalled">Видалено %1$s</string>
+    <string name="pip_show_log">Показати журнал</string>
+    <string name="pip_hide_log">Сховати журнал</string>
+    <string name="pip_section_prebuilt">Зібрано для Android</string>
+    <string name="pip_section_popular">Популярні</string>
+    <string name="pip_section_data">Дані й наука</string>
+    <string name="pip_section_web">Веб і мережа</string>
+    <string name="pip_section_text">Текст і термінал</string>
+    <string name="pip_searching">Пошук на PyPI…</string>
+    <string name="pip_loading_packages">Читання встановлених пакетів…</string>
+    <string name="pip_no_packages_hint">Знайдіть пакет на вкладці «Пошук» і натисніть «Встановити».</string>
+    <string name="pip_pkg_requests">Прості HTTP-запити</string>
+    <string name="pip_pkg_rich">Кольори, таблиці й індикатори прогресу в терміналі</string>
+    <string name="pip_pkg_colorama">Кольоровий текст у терміналі</string>
+    <string name="pip_pkg_beautifulsoup4">Отримання даних з HTML-сторінок</string>
+    <string name="pip_pkg_dateutil">Розбір дат і операції з датами</string>
+    <string name="pip_pkg_tabulate">Гарні текстові таблиці</string>
+    <string name="pip_pkg_tqdm">Індикатори прогресу для циклів</string>
+    <string name="pip_pkg_httpx">Сучасний HTTP-клієнт, синхронний і асинхронний</string>
+    <string name="pip_pkg_click">Інтерфейси командного рядка</string>
+    <string name="pip_pkg_art">ASCII-арт і текстові шрифти</string>
+    <string name="pip_pkg_pyfiglet">Великі ASCII-банери</string>
+    <string name="pip_pkg_termcolor">Кольоровий текст у терміналі</string>
+    <string name="pip_pkg_emoji">Емодзі за назвою</string>
+    <string name="pip_pkg_faker">Вигадані імена, адреси й текст для тестів</string>
+    <string name="pip_pkg_sympy">Символьна математика</string>
+    <string name="pip_pkg_mpmath">Математика з довільною точністю</string>
+    <string name="pip_pkg_networkx">Графи й мережі</string>
+    <string name="pip_pkg_prompt_toolkit">Інтерактивне введення в командному рядку</string>
+    <string name="pip_pkg_jinja2">Текстові й HTML-шаблони</string>
+    <string name="pip_pkg_pillow">Зображення (потрібен нативний код)</string>
+    <string name="pip_pkg_numpy">Швидкі масиви й математика (нативний код)</string>
+
+    <!-- Samples -->
+    <string name="samples_open_failed">Не вдалося відкрити приклад: %1$s</string>
+
+    <!-- Settings -->
+    <string name="settings_section_editor">Редактор</string>
+    <string name="settings_section_editing">Редагування</string>
+    <string name="settings_section_app">Застосунок</string>
+    <string name="settings_font_size">Розмір шрифту</string>
+    <string name="settings_font_size_range">%1$d–%2$d sp</string>
+    <string name="settings_smaller">Менше</string>
+    <string name="settings_larger">Більше</string>
+    <string name="settings_word_wrap">Перенесення рядків</string>
+    <string name="settings_word_wrap_summary">Переносити довгі рядки замість горизонтальної прокрутки</string>
+    <string name="settings_line_numbers">Номери рядків</string>
+    <string name="settings_line_numbers_summary">Показувати номери рядків у редакторі</string>
+    <string name="settings_keep_screen_on">Не вимикати екран</string>
+    <string name="settings_keep_screen_on_summary">Екран не вимикатиметься під час редагування</string>
+    <string name="settings_language">Мова</string>
+    <string name="language_system">Як у системі</string>
+
+    <!-- About -->
+    <string name="about_tagline_start">Розробка на Python\u0020</string>
+    <string name="about_tagline_end">будь-де.</string>
+    <string name="about_version">Версія %1$s</string>
+    <string name="about_description">Безкоштовне IDE для Python 3 з відкритим кодом для Android. Пишіть і запускайте Python-скрипти на телефоні повністю офлайн.</string>
+    <string name="about_links">Посилання</string>
+    <string name="about_source_code">Вихідний код на GitHub</string>
+    <string name="about_telegram">Telegram-канал</string>
+    <string name="about_license">Ліцензія</string>
+    <string name="about_license_text">SkyPython — вільне програмне забезпечення; див. LICENSE у вихідному коді.</string>
+    <string name="about_third_party">Стороннє програмне забезпечення</string>
+    <string name="about_notice_grammar">Граматика MagicPython</string>
+    <string name="about_notice_theme">Тема VS Code Dark+</string>
+    <string name="about_notice_terminal">Termux terminal-emulator і terminal-view</string>
+    <string name="about_slogan">\u0020· Ідеї. Код. Майбутнє.</string>
+    <string name="about_no_app_for_link">Немає застосунку, щоб відкрити %1$s</string>
+
+    <!-- Share -->
+    <string name="share_cannot_share">Цим файлом не можна поділитися</string>
+    <string name="share_chooser_title">Поділитися %1$s</string>
+    <string name="share_no_app">Немає застосунку, щоб поділитися цим файлом</string>
+
+    <!-- ▶ Run on a terminal: output actions -->
+    <string name="use_simple_output">Простий вивід</string>
+    <string name="run_again">Запустити знову</string>
+    <string name="back_to_editor">До редактора</string>
+    <string name="run_exit_code">Код виходу %1$d</string>
+    <string name="output_more">Інші дії</string>
+    <string name="output_copy_all">Копіювати все</string>
+    <string name="output_share">Поділитися виводом</string>
+    <string name="output_save">Зберегти вивід</string>
+    <string name="output_save_as">Зберегти як…</string>
+    <string name="output_clear">Очистити</string>
+    <string name="output_scroll_top">На початок</string>
+    <string name="output_scroll_bottom">У кінець</string>
+    <string name="output_font_smaller">Менший текст</string>
+    <string name="output_font_bigger">Більший текст</string>
+    <string name="output_font_size">Текст %1$d sp</string>
+    <string name="output_copied">Вивід скопійовано</string>
+    <string name="output_nothing">Виводу ще немає</string>
+    <string name="output_saved">Збережено в %1$s</string>
+    <string name="output_save_failed">Не вдалося зберегти: %1$s</string>
+    <!-- Debugger -->
+    <string name="title_debug">Налагодження</string>
+    <string name="debug_run_menu_run">Запустити</string>
+    <string name="debug_run_menu_debug">Налагодити</string>
+    <string name="debug_tab_variables">Змінні</string>
+    <string name="debug_tab_watches">Вирази</string>
+    <string name="debug_tab_stack">Стек</string>
+    <string name="debug_tab_console">Консоль</string>
+    <string name="debug_continue">Продовжити</string>
+    <string name="debug_pause">Пауза</string>
+    <string name="debug_step_over">Крок з обходом</string>
+    <string name="debug_step_into">Крок із заходом</string>
+    <string name="debug_step_out">Крок із виходом</string>
+    <string name="debug_collapse">Згорнути налагоджувач</string>
+    <string name="debug_expand">Розгорнути налагоджувач</string>
+    <string name="debug_close">Закрити налагоджувач</string>
+    <string name="debug_status_starting">Запуск налагоджувача…</string>
+    <string name="debug_status_running">Виконується…</string>
+    <string name="debug_status_breakpoint">Точка зупинки: %1$s, рядок %2$d</string>
+    <string name="debug_status_paused">Призупинено: %1$s, рядок %2$d</string>
+    <string name="debug_status_exception">Неперехоплений виняток: %1$s</string>
+    <string name="debug_status_finished">Програму завершено, код виходу %1$d</string>
+    <string name="debug_status_ended">Налагодження завершено</string>
+    <string name="debug_error_start">Не вдалося запустити налагоджувач: %1$s</string>
+    <string name="debug_locals">Локальні</string>
+    <string name="debug_globals">Глобальні</string>
+    <string name="debug_more">…і ще %1$d</string>
+    <string name="debug_no_variables">Тут порожньо</string>
+    <string name="debug_variables_when_paused">Змінні з’являються, коли програму призупинено</string>
+    <string name="debug_stack_when_paused">Стек викликів з’являється, коли програму призупинено</string>
+    <string name="debug_watch_hint">Вираз, напр. len(items)</string>
+    <string name="debug_watch_add">Додати вираз</string>
+    <string name="debug_watch_remove">Видалити вираз</string>
+    <string name="debug_no_watches">Виразів ще немає: додайте вираз нижче, щоб бачити його значення на кожній зупинці</string>
+    <string name="debug_frame_library">бібліотека</string>
+    <string name="debug_condition_title">Точка зупинки в рядку %1$d</string>
+    <string name="debug_condition_hint">Зупинятися, лише коли умова істинна, напр. i == 10. Залиште порожнім, щоб зупинятися завжди.</string>
+    <string name="debug_condition_label">Умова</string>
+    <string name="debug_condition_remove">Видалити</string>
+    <string name="debug_condition_save">Зберегти</string>
+    <string name="debug_breakpoints_need_project_file">Точки зупинки працюють у файлах, збережених у проєктах SkyPython</string>
+    <!-- Drawer footer -->
+    <string name="drawer_footer_developer">Розробник: @Sevorp</string>
+
+    <!-- Editor: find & replace -->
+    <string name="find_hint">Знайти</string>
+    <string name="replace_hint">Замінити на</string>
+    <string name="find_match_case">З урахуванням регістру</string>
+    <string name="find_whole_word">Ціле слово</string>
+    <string name="find_regex">Регулярний вираз</string>
+    <string name="find_previous">Попередній збіг</string>
+    <string name="find_next">Наступний збіг</string>
+    <string name="find_toggle_replace">Показати заміну</string>
+    <string name="find_close">Закрити пошук</string>
+    <string name="find_replace_one">Замінити</string>
+    <string name="find_replace_all">Усі</string>
+    <string name="find_replaced_count">Замінено: %1$d</string>
+    <string name="find_no_matches">Немає збігів</string>
+    <string name="find_invalid_regex">Неправильний шаблон</string>
+
+    <!-- Editor: go to line -->
+    <string name="go_to_line">Перейти до рядка…</string>
+    <string name="go_to_line_title">Перейти до рядка</string>
+    <string name="go_to_line_label">Рядок (1–%1$d)</string>
+    <string name="go_to_line_go">Перейти</string>
+
+    <!-- Editor: code navigation -->
+    <string name="editor_action_go_to_definition">До визначення</string>
+    <string name="editor_action_find_usages">Використання</string>
+    <string name="editor_outline">Структура</string>
+    <string name="editor_outline_empty">У цьому файлі ще немає класів чи функцій.</string>
+    <string name="editor_outline_loading">Читання файлу…</string>
+    <string name="editor_outline_line">рядок %1$d</string>
+    <string name="editor_read_only">Лише читання</string>
+    <string name="nav_no_definition">Визначення «%1$s» не знайдено</string>
+    <string name="nav_not_on_a_name">Спершу поставте курсор на ім’я</string>
+    <string name="nav_unavailable">Підказки коду ще не готові. Спробуйте за мить.</string>
+    <string name="nav_hints_off">Увімкніть «Автодоповнення коду» в Налаштуваннях, щоб користуватися навігацією по коду</string>
+    <string name="nav_usages_count">Використань «%1$s» у цьому файлі: %2$d</string>
+    <string name="drawer_in_symbol">У %1$s</string>
+
+    <!-- Editor: line commands -->
+    <string name="editor_action_comment">Закоментувати / розкоментувати</string>
+    <string name="editor_action_indent">Збільшити відступ</string>
+    <string name="editor_action_outdent">Зменшити відступ</string>
+    <string name="editor_action_duplicate">Дублювати рядок</string>
+    <string name="editor_action_delete_line">Видалити рядок</string>
+    <string name="editor_action_move_up">Рядок вгору</string>
+    <string name="editor_action_move_down">Рядок вниз</string>
+    <string name="editor_actions_show">Дії редагування</string>
+    <string name="editor_actions_hide">Символи</string>
+    <string name="editor_menu_edit">Редагувати рядки</string>
+    <string name="editor_menu_back">Назад</string>
+
+    <!-- Editor: files -->
+    <string name="find_and_replace">Знайти й замінити</string>
+    <string name="new_file">Новий файл…</string>
+    <string name="new_file_title">Новий файл</string>
+    <string name="new_file_name">Назва файлу</string>
+    <string name="new_file_create">Створити</string>
+    <string name="open_file">Відкрити…</string>
+    <string name="recent_files">Нещодавні файли</string>
+    <string name="recent_files_empty">Нещодавніх файлів ще немає</string>
+    <string name="file_missing">%1$s більше не існує</string>
+
+    <!-- Settings -->
+    <string name="settings_auto_close">Автозакриття дужок</string>
+    <string name="settings_auto_close_summary">Введення ( [ { \" або \' одразу додає закривний символ</string>
+    <string name="settings_symbol_keys">Клавіші панелі символів</string>
+    <string name="settings_symbol_keys_summary">Клавіші через пробіл. «Tab» вставляє 4 пробіли.</string>
+    <string name="settings_symbol_keys_reset">Скинути до типових</string>
+    <string name="settings_keyboard_suggestions">Підказки клавіатури</string>
+    <string name="settings_keyboard_suggestions_summary">Дозволити клавіатурі пропонувати й автовиправляти слова. Якщо вимкнено, код не змінюватиметься.</string>
+    <string name="settings_pinch_hint">Порада: зведіть або розведіть два пальці в редакторі, щоб змінити масштаб.</string>
+    <!-- Orange theme: status line, drawer, settings, terminal, samples -->
+    <string name="editor_status_python">Python %1$s</string>
+    <string name="editor_status_cursor">Рядок %1$d, ст. %2$d</string>
+    <string name="editor_keyboard_show">Показати клавіатуру</string>
+    <string name="editor_keyboard_hide">Сховати клавіатуру</string>
+    <string name="editor_cursor_left">Курсор ліворуч</string>
+    <string name="editor_cursor_right">Курсор праворуч</string>
+    <string name="editor_close_tab">Закрити %1$s</string>
+    <string name="editor_go_to_error">Перейти до помилки</string>
+    <string name="editor_empty_hint">Створіть файл або відкрийте наявний із проєктів, щоб почати писати код.</string>
+    <string name="drawer_section_workspace">Робоча область</string>
+    <string name="drawer_projects">Проєкти</string>
+    <string name="drawer_editor">Редактор</string>
+    <string name="settings_font_family">Шрифт</string>
+    <string name="settings_font_system_mono">Системний моноширинний</string>
+    <string name="settings_code_completion">Автодоповнення коду</string>
+    <string name="settings_code_completion_summary">Підказки під час введення й підкреслення помилок</string>
+    <string name="settings_section_terminal">Термінал</string>
+    <string name="settings_terminal_theme">Тема</string>
+    <string name="settings_terminal_theme_dark">Темна</string>
+    <string name="settings_terminal_theme_black">Чорна</string>
+    <string name="terminal_command_hint">Введіть команду…</string>
+    <string name="samples_search">Пошук прикладів</string>
+    <string name="samples_search_hint">Пошук…</string>
+    <string name="samples_no_match">Немає прикладів за запитом «%1$s»</string>
+    <string name="action_clear_search">Очистити пошук</string>
+    <!-- Bottom navigation bar -->
+    <string name="nav_editor">Редактор</string>
+    <string name="nav_terminal">Термінал</string>
+    <string name="nav_packages">Пакети</string>
+    <string name="nav_projects">Проєкти</string>
+    <string name="nav_settings">Опції</string>
+    <string name="settings_bottom_nav">Нижня панель навігації</string>
+    <string name="settings_bottom_nav_summary">Редактор, Термінал, Пакети, Проєкти й Налаштування за один дотик. Меню ☰ лишається в будь-якому разі.</string>
+
+    <!-- Problem reports -->
+    <string name="report_problem">Повідомити про проблему</string>
+    <string name="about_report_summary">Надіслати звіт про помилку розробникам</string>
+    <string name="report_privacy">Нічого не надсилається автоматично. Перегляньте звіт перед надсиланням: у ньому є помилка й дані пристрою, але ніколи — ваш код чи файли.</string>
+    <string name="report_attach">Прикріплена проблема</string>
+    <string name="report_none">Немає</string>
+    <string name="report_kind_crash">Збій · %1$s</string>
+    <string name="report_kind_error">%1$s · %2$s</string>
+    <string name="report_description_label">Що ви робили?</string>
+    <string name="report_description_hint">Кроки, що очікували, що сталося натомість</string>
+    <string name="report_include_device">Додати дані пристрою</string>
+    <string name="report_include_device_summary">Модель, версія Android, пам’ять, мережа, мобільний оператор</string>
+    <string name="report_open_issue">Відкрити issue на GitHub</string>
+    <string name="report_share">Поділитися</string>
+    <string name="report_copy">Копіювати</string>
+    <string name="report_copied">Звіт скопійовано</string>
+    <string name="report_issue_copied">Повний звіт також у буфері обміну</string>
+    <string name="report_issue_truncated">Звіт задовгий для посилання. Повний звіт у буфері обміну: вставте його в issue.</string>
+    <string name="report_no_browser">Немає браузера, щоб відкрити GitHub. Звіт у буфері обміну.</string>
+    <string name="report_delete">Видалити цей звіт</string>
+    <string name="report_deleted">Звіт видалено</string>
+    <string name="report_full_text">Повний звіт</string>
+    <string name="report_share_subject">Звіт про проблему SkyPython</string>
+    <string name="report_share_chooser">Надіслати звіт</string>
+    <string name="report_share_summary">Звіт про проблему SkyPython: %1$s (повний звіт додано)</string>
+    <string name="report_banner">%1$s: щось пішло не так</string>
+    <string name="report_banner_action">Звіт</string>
+    <string name="report_where_python">Налаштування Python</string>
+    <string name="report_where_terminal">Термінал</string>
+    <string name="report_where_language_server">Підказки коду</string>
+    <string name="report_where_debugger">Налагоджувач</string>
+    <string name="report_where_pip">Налаштування pip</string>
+    <string name="report_where_app">SkyPython</string>
+    <string name="crash_dialog_title">SkyPython неочікувано закрився</string>
+    <string name="crash_dialog_text">Надіслати звіт розробникам? Ви побачите весь звіт, перш ніж щось буде надіслано.</string>
+    <string name="crash_dialog_send">Надіслати звіт</string>
+    <string name="crash_dialog_later">Не зараз</string>
+    <!-- Open project: folders in the phone's storage -->
+    <string name="projects_open_project">Відкрити проєкт</string>
+    <string name="projects_current">Поточний проєкт</string>
+    <string name="projects_section_app">Проєкти SkyPython</string>
+    <string name="projects_app_desc">Зберігаються в застосунку</string>
+    <string name="projects_section_recent">Нещодавні проєкти</string>
+    <string name="projects_no_recent">Тут з’являться папки, які ви відкриєте.</string>
+    <string name="projects_section_storage">Пам’ять телефона</string>
+    <string name="projects_root_internal">Внутрішня пам’ять</string>
+    <string name="projects_root_sd">SD-карта</string>
+    <string name="projects_root_desc">Перегляньте папки й відкрийте одну як проєкт</string>
+    <string name="projects_opened_at">Відкрито %1$s</string>
+    <string name="projects_just_now">щойно</string>
+    <string name="projects_remove_recent">Прибрати %1$s з нещодавніх проєктів</string>
+    <string name="projects_use_folder">Вибрати цю папку</string>
+    <string name="projects_show_hidden">Показати приховані</string>
+    <string name="projects_no_folders">Тут немає папок. Створіть нову кнопкою + угорі або виберіть цю папку.</string>
+    <string name="projects_browse_title">Виберіть папку</string>
+    <string name="projects_unavailable">Ця папка проєкту зараз недоступна.</string>
+    <string name="projects_back_to_app">Проєкти SkyPython</string>
+    <string name="project_missing">Папки «%1$s» більше не існує</string>
+    <string name="project_not_folder">«%1$s» — не папка</string>
+    <string name="project_no_permission">Немає доступу до «%1$s»: дозвольте SkyPython користуватися файлами</string>
+    <string name="project_unreadable">Не вдалося прочитати папку «%1$s»</string>
+    <string name="project_fallback">%1$s. Показано проєкти SkyPython.</string>
+    <string name="storage_title">Дозвольте доступ до файлів</string>
+    <string name="storage_text">Щоб відкривати й запускати проєкти з пам’яті телефона — Documents, Download, SD-карти, — SkyPython потрібен доступ до файлів.</string>
+    <string name="storage_point_run">Скрипти запускаються прямо в папці проєкту, тож open(\"data.csv\") просто працює.</string>
+    <string name="storage_point_private">Ваші файли не залишають телефон: у SkyPython немає серверів і стеження.</string>
+    <string name="storage_point_optional">Без доступу застосунок працюватиме з проєктами SkyPython.</string>
+    <string name="storage_steps_all_files">На наступному екрані увімкніть для SkyPython «Дозволити доступ до керування всіма файлами» і поверніться.</string>
+    <string name="storage_steps_runtime">Натисніть «Дозволити» в наступному діалозі.</string>
+    <string name="storage_allow">Дозволити доступ</string>
+    <string name="storage_open_settings">Відкрити налаштування</string>
+    <string name="storage_denied">Доступ не надано. Увімкніть його в налаштуваннях застосунку, щоб користуватися папками з пам’яті телефона.</string>
+    <string name="drawer_project">Проєкт: %1$s</string>
+    <!-- In-app updates -->
+    <string name="title_update">Оновлення</string>
+    <string name="update_banner_title">Доступний SkyPython %1$s</string>
+    <string name="update_banner_text">На GitHub вийшла нова версія</string>
+    <string name="update_banner_update">Оновити</string>
+    <string name="update_banner_hide">Сховати</string>
+    <string name="update_whats_new">Що нового</string>
+    <string name="update_new">Нова</string>
+    <string name="update_installed_version">У вас %1$s</string>
+    <string name="update_notes_unavailable">Не вдалося завантажити примітки до випуску. Їх можна прочитати на GitHub.</string>
+    <string name="update_open_github">Відкрити на GitHub</string>
+    <string name="update_install">Встановити</string>
+    <string name="update_install_hint">Завантажує APK %1$s для вашого телефона, перевіряє його й встановлює поверх цієї версії. Ваші проєкти й налаштування збережуться.</string>
+    <string name="update_variant_universal">універсальний</string>
+    <string name="update_skip">Пропустити цю версію</string>
+    <string name="update_downloading">Завантаження оновлення…</string>
+    <string name="update_progress">%1$s з %2$s · %3$d%%</string>
+    <string name="update_progress_unknown">Завантажено %1$s</string>
+    <string name="update_megabytes">%1$s МБ</string>
+    <string name="update_installing">Встановлення…</string>
+    <string name="update_installing_hint">Підтвердьте оновлення в діалозі Android. Потім знову відкрийте SkyPython — це вже буде нова версія.</string>
+    <string name="update_failed_title">Оновлення не завершилося</string>
+    <string name="update_failed_network">Немає з’єднання з GitHub. Перевірте інтернет і спробуйте ще раз — завантаження продовжиться з місця зупинки.</string>
+    <string name="update_failed_http">GitHub не надіслав файл цього релізу. Спробуйте пізніше.</string>
+    <string name="update_failed_no_checksum">У релізі немає контрольної суми для цього APK, тому його не встановлено.</string>
+    <string name="update_failed_checksum">Завантажений файл не збігся з контрольною сумою й був видалений. Спробуйте ще раз.</string>
+    <string name="update_failed_storage">Не вдалося зберегти оновлення. Звільніть трохи місця й спробуйте ще раз.</string>
+    <string name="update_failed_install">Android не встановив оновлення: %1$s</string>
+    <string name="update_failed_incompatible">Цей SkyPython підписано іншим ключем (наприклад, це збірка від когось іншого), тому Android не може оновити його поверх. Видаліть SkyPython один раз — спершу зробіть резервну копію проєктів, — а потім встановіть нову версію.</string>
+    <string name="update_retry">Спробувати ще раз</string>
+    <string name="update_permission_title">Дозвольте оновлення</string>
+    <string name="update_permission_text">Щоб оновлюватися, SkyPython потрібен дозвіл на встановлення застосунків. Увімкніть для SkyPython «Дозволити з цього джерела» й поверніться — оновлення продовжиться.</string>
+    <string name="update_permission_open">Відкрити налаштування</string>
+    <string name="update_up_to_date">SkyPython %1$s — остання версія</string>
+    <string name="update_check_failed">Не вдалося перевірити оновлення. Перевірте з’єднання з інтернетом.</string>
+    <string name="update_check">Перевірити оновлення</string>
+    <string name="update_checking">Перевірка оновлень…</string>
+    <string name="update_check_summary_available">Доступна версія %1$s</string>
+    <string name="update_none_title">У вас остання версія</string>
+    <string name="settings_section_updates">Оновлення</string>
+    <string name="settings_auto_update">Автоматично перевіряти оновлення</string>
+    <string name="settings_auto_update_summary">Шукає новий реліз на GitHub під час запуску застосунку, не частіше двох разів на день</string>
+</resources>
