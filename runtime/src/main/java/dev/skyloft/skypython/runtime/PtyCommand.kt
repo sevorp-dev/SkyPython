@@ -43,7 +43,7 @@ data class PtyCommand(
             val line = PythonEnvironment.command(paths, command)
             val env = LinkedHashMap(appEnv)
             env.keys.removeAll(COLOUR_BLOCKERS)
-            env.putAll(PythonEnvironment.environment(paths, command))
+            PythonEnvironment.applyTo(env, PythonEnvironment.environment(paths, command))
             env.putAll(TERMINAL_ENV)
             return PtyCommand(
                 executable = line[0],

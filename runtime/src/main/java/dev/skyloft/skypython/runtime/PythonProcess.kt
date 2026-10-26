@@ -103,7 +103,7 @@ class PythonProcess(private val paths: PythonPaths) {
         }
         val builder = ProcessBuilder(PythonEnvironment.command(paths, command))
             .directory(command.workingDir)
-        builder.environment().putAll(PythonEnvironment.environment(paths, command))
+        PythonEnvironment.applyTo(builder.environment(), PythonEnvironment.environment(paths, command))
         return builder
     }
 

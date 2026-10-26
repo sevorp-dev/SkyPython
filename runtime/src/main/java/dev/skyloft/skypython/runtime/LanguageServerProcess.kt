@@ -84,7 +84,7 @@ class LanguageServerProcess private constructor(private val process: Process) : 
         fun start(paths: PythonPaths, script: File): LanguageServerProcess {
             val builder = ProcessBuilder(PythonEnvironment.languageServerCommand(paths, script))
                 .directory(paths.homeDir.apply { mkdirs() })
-            builder.environment().putAll(PythonEnvironment.build(paths))
+            PythonEnvironment.applyTo(builder.environment(), PythonEnvironment.build(paths))
             return LanguageServerProcess(builder.start())
         }
     }

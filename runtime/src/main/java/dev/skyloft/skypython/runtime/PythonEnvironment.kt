@@ -17,7 +17,30 @@ object PythonEnvironment {
         "PYTHONUSERBASE" to paths.userBase.path,
         // No network round-trip (and nag) on every pip call.
         "PIP_DISABLE_PIP_VERSION_CHECK" to "1",
+        // plt.show() opens the figures in the app (PlotBackend).
+        "PYTHONPATH" to paths.plotBackendDir.path,
+        "MPLBACKEND" to PlotBackend.MPLBACKEND,
+        "SKYPYTHON_PLOT_DIR" to paths.plotDir.path,
     )
+
+    /** Variables of [build] that the user's own setting (in the app's environment) overrides. */
+    val USER_OVERRIDABLE: Set<String> = setOf("MPLBACKEND")
+
+    /**
+     * Adds [vars] to [env] (a child's environment, starting as the app's): ours win, except the
+     * [USER_OVERRIDABLE] ones already set, and PYTHONPATH, which goes in front of an existing one.
+     */
+    fun applyTo(env: MutableMap<String, String>, vars: Map<String, String>) {
+        for ((k, v) in vars) {
+            val old = env[k]
+            env[k] = when {
+                old.isNullOrEmpty() -> v
+                k in USER_OVERRIDABLE -> old
+                k == "PYTHONPATH" && old != v -> v + File.pathSeparator + old
+                else -> v
+            }
+        }
+    }
 
     fun command(paths: PythonPaths, script: File): List<String> =
         listOf(paths.launcher.path, "-u", script.path)

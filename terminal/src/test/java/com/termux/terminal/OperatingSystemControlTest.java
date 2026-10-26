@@ -193,4 +193,25 @@ public class OperatingSystemControlTest extends TerminalTestCase {
 		assertEnteringStringGivesResponse("\033]10;?\033\\", "\033]10;rgb:abab/cdcd/0000\033\\");
 	}
 
+	/** SkyPython: "ESC ] 7777 ; text" goes to the app and draws nothing, with BEL or ST, even split. */
+	public void testAppCommand() {
+		withTerminalSized(10, 3).enterString("a\033]7777;plot;/x/figure-1.png\007b");
+		assertLinesAre("ab        ", "          ", "          ");
+		assertEquals(List.of("plot;/x/figure-1.png"), mOutput.appCommands);
+
+		enterString("\033]7777;plot;/y/f\u00e9.png\033\\");
+		assertEquals("plot;/y/f\u00e9.png", mOutput.appCommands.get(1));
+
+		// Arrives in pieces, as PTY output does.
+		enterString("\033]77");
+		enterString("77;plot;/z.");
+		enterString("png\007c");
+		assertEquals("plot;/z.png", mOutput.appCommands.get(2));
+		assertLinesAre("abc       ", "          ", "          ");
+
+		// Other OSC numbers are not app commands.
+		enterString("\033]0;Title\007");
+		assertEquals(3, mOutput.appCommands.size());
+	}
+
 }

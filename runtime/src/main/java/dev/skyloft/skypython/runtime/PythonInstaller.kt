@@ -62,7 +62,7 @@ class PythonInstaller(context: Context) {
 
         val homeDir = File(context.filesDir, "home").apply { mkdirs() }
         val tmpDir = context.cacheDir.apply { mkdirs() }
-        return PythonPaths(
+        val paths = PythonPaths(
             home = home,
             nativeLibDir = nativeLibDir,
             launcher = launcher,
@@ -70,6 +70,10 @@ class PythonInstaller(context: Context) {
             tmpDir = tmpDir,
             abi = abi,
         )
+        // plt.show() in the app (PYTHONPATH and MPLBACKEND point here, see PythonEnvironment).
+        PlotBackend.ensureInstalled(paths.plotBackendDir) { context.assets.open(PlotBackend.ASSET) }
+        PlotBackend.deleteOld(paths.plotDir)
+        return paths
     }
 
     private companion object {
