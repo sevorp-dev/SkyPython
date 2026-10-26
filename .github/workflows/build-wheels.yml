@@ -19,13 +19,17 @@
 #   by auditwheel together with libc++_shared; no BLAS and static libc++ on 32-bit.
 # Pillow: libjpeg-turbo, libpng, FreeType, libwebp, libtiff and Little CMS built from source
 #   (.github/wheels/build_pillow_deps.sh) and linked statically; zlib is Android's libz.so.
+# pandas: built against this index's own NumPy wheel (its Android numpy headers via
+#   cibuildwheel's xbuild-files; the host gets the same NumPy version from PyPI); C++ runtime
+#   vendored by auditwheel on 64-bit, linked statically on 32-bit. Published with
+#   requires = ["numpy"].
 name: Build Android wheels
 
 on:
   workflow_dispatch:
     inputs:
       packages:
-        description: Packages to build (space-separated; numpy, pillow)
+        description: Packages to build (space-separated; numpy, pillow, pandas)
         required: true
         default: numpy pillow
       numpy_version:
@@ -36,6 +40,10 @@ on:
         description: Pillow version (PyPI sdist)
         required: true
         default: 13.0.0
+      pandas_version:
+        description: pandas version (PyPI sdist)
+        required: true
+        default: 3.1.0
       publish:
         description: Publish the wheels to the `wheels` branch
         type: boolean
@@ -45,7 +53,8 @@ on:
         type: boolean
         default: false
   # Pushing the branch `build-wheels` runs it with the defaults; "[skip publish]" in the
-  # commit message builds and tests without publishing.
+  # commit message builds and tests without publishing, "[packages: pandas]" (any list of
+  # packages) builds only those.
   push:
     branches: [ build-wheels ]
     paths:
@@ -62,6 +71,7 @@ env:
   PACKAGES: ${{ inputs.packages || 'numpy pillow' }}
   NUMPY_VERSION: ${{ inputs.numpy_version || '2.5.4' }}
   PILLOW_VERSION: ${{ inputs.pillow_version || '13.0.0' }}
+  PANDAS_VERSION: ${{ inputs.pandas_version || '3.1.0' }}
   CIBW_VERSION: 4.3.4
   OPENBLAS_VERSION: 0.3.33
   # CPython for the 32-bit ABIs: our own build (build-python.yml), hashes pinned in
@@ -79,8 +89,13 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, os, re
-          known = ["numpy", "pillow"]
-          wanted = [p.lower() for p in re.split(r"[\s,]+", os.environ["PACKAGES"]) if p]
+          known = ["numpy", "pillow", "pandas"]
+          packages = os.environ["PACKAGES"]
+          # On push, "[packages: a b]" in the commit message overrides the default list.
+          m = re.search(r"\[packages?:\s*([^\]]+)\]", os.environ.get("HEAD_MSG") or "")
+          if os.environ["GITHUB_EVENT_NAME"] == "push" and m:
+              packages = m.group(1)
+          wanted = [p.lower() for p in re.split(r"[\s,]+", packages) if p]
           bad = [p for p in wanted if p not in known]
           if bad or not wanted:
               raise SystemExit(f"::error::unknown packages {bad}; choose from {known}")
@@ -97,6 +112,8 @@ jobs:
               f.write(f"packages={' '.join(p for p in known if p in wanted)}\n")
           print(json.dumps(include, indent=1))
           PY
+        env:
+          HEAD_MSG: ${{ github.event.head_commit.message }}
 
   build:
     needs: plan
@@ -206,6 +223,30 @@ jobs:
           nasm -v
           mkdir -p "$RUNNER_TEMP/pillow-deps"
 
+      # pandas compiles against NumPy's headers. The build machine gets NumPy from PyPI (the
+      # version this index publishes, pinned with PIP_CONSTRAINT); cibuildwheel's default
+      # xbuild-files then copy the target's _numpyconfig.h etc. from the Android wheel, which
+      # pip finds in PIP_FIND_LINKS: our own published wheel for this ABI. The emulator test
+      # installs the same wheel (python-dateutil and six come from PyPI).
+      - name: Fetch this index's NumPy wheel (pandas)
+        if: matrix.package == 'pandas'
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os, urllib.request
+          base = "https://raw.githubusercontent.com/${{ github.repository }}/wheels/"
+          abi = {"arm64_v8a": "arm64-v8a", "armeabi_v7a": "armeabi-v7a"}.get(os.environ["ABI"], os.environ["ABI"])
+          index = json.load(urllib.request.urlopen(base + "index.json"))
+          e = next(e for e in index["packages"]["numpy"] if e["abi"] == abi)
+          data = urllib.request.urlopen(base + e["file"]).read()
+          assert hashlib.sha256(data).hexdigest() == e["sha256"], "numpy wheel hash mismatch"
+          d = os.path.join(os.environ["RUNNER_TEMP"], "numpy-wheels")
+          os.makedirs(d, exist_ok=True)
+          open(os.path.join(d, e["file"]), "wb").write(data)
+          open(os.path.join(os.environ["RUNNER_TEMP"], "numpy-constraint.txt"), "w").write(f"numpy=={e['version']}\n")
+          print(f"::notice title=numpy for pandas {abi}::{e['file']} sha256 {e['sha256']}")
+          PY
+
       # Our own cibuildwheel config (replaces the one in the package's pyproject.toml).
       - name: Write the cibuildwheel config
         run: |
@@ -241,6 +282,32 @@ jobs:
               config_settings = "{ setup-args = %s, build-dir = \"build\" }" % json.dumps(setup_args)
               smoke = ("import numpy; print('SMOKE', numpy.__version__, numpy.arange(10).sum(), "
                        "numpy.linalg.inv([[1,2],[3,4]])); numpy.show_config()")
+          elif package == "pandas":
+              env = {"PIP_FIND_LINKS": f"{tmp}/numpy-wheels",
+                     "PIP_CONSTRAINT": f"{tmp}/numpy-constraint.txt",
+                     # not setup-python's (the runner's python3.pc instead of the target's)
+                     "PKG_CONFIG_PATH": ""}
+              if bits == "64":
+                  # cibuildwheel's default: vendors libc++_shared into pandas.libs/.
+                  setup_args = []
+                  repair = "auditwheel repair --ldpaths {ldpaths} -w {dest_dir} {wheel}"
+              else:
+                  # auditwheel does not know 32-bit Android: static libc++, with the 16 KB
+                  # page flags repeated (cpp_link_args replaces $LDFLAGS for C++ targets).
+                  cpp_link = ["-static-libstdc++", "-Wl,--build-id=sha1", "-Wl,--no-rosegment",
+                              "-Wl,-z,max-page-size=16384", "-Wl,--no-undefined", "-lm"]
+                  setup_args = ["-Dcpp_link_args=" + repr(cpp_link)]
+                  repair = ""
+              config_settings = "{ setup-args = %s, build-dir = \"build\" }" % json.dumps(setup_args)
+              smoke = (
+                  "import pandas as pd, numpy as np, io; "
+                  "df = pd.DataFrame({'city': ['Oslo', 'Rome', 'Oslo'], 't': [3.5, 18.2, 4.1]}); "
+                  "print('SMOKE', pd.__version__, np.__version__, df.groupby('city').t.mean().round(2).to_dict()); "
+                  "print('SMOKE', pd.read_csv(io.StringIO('a,b\\n1,2\\n3,4')).sum().to_dict(), "
+                  "pd.Timestamp('2026-10-26').day_name(), "
+                  "pd.Series([1.0, 2.0, 3.0, 4.0]).rolling(2).mean().tolist(), "
+                  "pd.to_datetime(['2026-01-31', '2026-02-28']).month.tolist())"
+              )
           else:  # pillow
               deps = f"{tmp}/pillow-deps"
               before_build = f"bash {os.environ['GITHUB_WORKSPACE']}/.github/wheels/build_pillow_deps.sh"
@@ -338,7 +405,7 @@ jobs:
               blas = [l for l in lines if re.search(r"openblas|lapack|blas", l, re.I)][-12:]
               if blas:
                   emit("BLAS lines", blas)
-          else:
+          elif os.environ["PACKAGE"] == "pillow":
               for i, l in enumerate(lines):
                   if "PIL SETUP SUMMARY" in l:
                       emit("Pillow setup summary", lines[i:i + 20])
@@ -368,6 +435,10 @@ jobs:
             lic=(--license "libc++-LICENSE.txt=$libcxx@libc++_shared"
                  --license "OpenBLAS-LICENSE.txt=$RUNNER_TEMP/OpenBLAS-LICENSE.txt@libopenblas")
           elif [ "$PACKAGE" = numpy ]; then
+            lic=(--license "libc++-LICENSE.txt=$libcxx")  # linked statically
+          elif [ "$PACKAGE" = pandas ] && [ "$BITS" = 64 ]; then
+            lic=(--license "libc++-LICENSE.txt=$libcxx@libc++_shared")  # vendored by auditwheel
+          elif [ "$PACKAGE" = pandas ]; then
             lic=(--license "libc++-LICENSE.txt=$libcxx")  # linked statically
           else
             # Pillow: every library built by build_pillow_deps.sh is linked statically.
@@ -437,7 +508,9 @@ jobs:
           before="$(cat site/index.json site/README.md 2>/dev/null | sha256sum)"
           replace=()
           [ "$REPLACE" = true ] && replace=(--replace)
-          python .github/wheels/make_index.py --site site "${replace[@]}" "${wheels[@]}"
+          # The index is rewritten from every published wheel, so list all `requires` here.
+          python .github/wheels/make_index.py --site site "${replace[@]}" \
+            --requires pandas=numpy "${wheels[@]}"
 
           repo="${GITHUB_REPOSITORY}"
           {
@@ -498,6 +571,16 @@ jobs:
             echo "- **libtiff** — libtiff License (https://libtiff.gitlab.io/libtiff/):"
             echo "  \`libtiff-LICENSE.md\`."
             echo "- **Little CMS 2** — MIT (https://www.littlecms.com): \`lcms2-LICENSE.txt\`."
+            echo
+            echo "### pandas"
+            echo
+            echo "Needs this index's \`numpy\` (\`requires\`); python-dateutil and six come from PyPI."
+            echo
+            echo "- **pandas** — BSD-3-Clause (https://github.com/pandas-dev/pandas): \`LICENSE\`,"
+            echo "  plus the bundled code listed in its \`LICENSES/\` (klib, ultrajson, musl, xsimd,"
+            echo "  fast_float, NumPy datetime code and others), all in \`*.dist-info/licenses/\`."
+            echo "- **LLVM libc++** (vendored as \`pandas.libs/libc++_shared-*.so\` on 64-bit, linked"
+            echo "  statically on 32-bit) — Apache-2.0 WITH LLVM-exception: \`libc++-LICENSE.txt\`."
           } > site/README.md
 
           if [ "$(cat site/index.json site/README.md | sha256sum)" = "$before" ]; then
