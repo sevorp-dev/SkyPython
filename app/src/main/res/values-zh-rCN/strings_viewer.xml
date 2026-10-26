@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The image viewer, "Open with…", and the pictures a run made. -->
+<resources>
+    <string name="open_with">打开方式…</string>
+    <string name="open_with_chooser_title">选择打开 %1$s 的方式</string>
+    <string name="open_with_no_app">没有可以打开此文件的应用</string>
+
+    <string name="viewer_info">%1$d × %2$d · %3$s</string>
+    <string name="viewer_fit">适应屏幕</string>
+    <string name="viewer_error_title">无法显示此图像</string>
+    <string name="viewer_error_missing">该文件已不存在。</string>
+    <string name="viewer_error_unsupported">文件已损坏或格式不受支持。</string>
+    <string name="viewer_error_memory">图像过大，超出此设备的内存容量。</string>
+    <string name="viewer_error_read">无法读取文件：%1$s</string>
+    <string name="viewer_delete_failed">无法删除文件</string>
+
+    <string name="files_unsupported_title">无法打开此类型的文件</string>
+    <string name="files_unsupported_text">SkyPython 无法打开“%1$s”。你可以分享它，或在其他应用中打开。</string>
+
+    <string name="run_images_label">新图像</string>
+    <string name="run_image_open">打开图像 %1$s</string>
+</resources>

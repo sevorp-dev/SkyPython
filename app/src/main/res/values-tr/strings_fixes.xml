@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Messages added with the 0.0.3 review fixes (kept apart from strings.xml to keep merges simple). -->
+<resources>
+    <!-- Sharing a project folder -->
+    <string name="share_folder_too_large">Bu klasör %1$d MB’tan büyük, tek arşiv olarak paylaşılamaz</string>
+    <string name="share_folder_failed">Klasör paylaşım için paketlenemedi (%1$s)</string>
+    <!-- Debugger -->
+    <string name="debug_error_connect">Hata ayıklayıcı programa bağlanamadı (%1$s)</string>
+    <!-- Find & replace -->
+    <string name="find_replace_timeout">Desen %1$d sn’yi aştı ve durduruldu; hiçbir şey değiştirilmedi</string>
+    <string name="find_replace_changed">Değiştirme sırasında metin değişti; hiçbir şey değiştirilmedi</string>
+    <!-- A run that stopped on a missing module -->
+    <string name="run_missing_module">%1$s adlı modül yok</string>
+    <string name="run_install_missing">Kur: %1$s</string>
+    <string name="run_install_missing_as">Kur: %1$s (%2$s)</string>
+    <string name="run_install_busy">pip başka bir paketle meşgul; bittiğinde tekrar deneyin</string>
+    <string name="run_install_retry">Tekrar dene</string>
+    <!-- pip errors: the sentence, then pip's own last lines -->
+    <string name="pip_error_exit">%1$s hatayla durdu (çıkış kodu %2$d)</string>
+    <string name="pip_error_unfinished">%1$s tamamlanmadı</string>
+    <string name="pip_error_start">Python pip için başlatılamadı (%1$s)</string>
+    <string name="pip_error_other">pip başarısız oldu (%1$s)</string>
+    <!-- Saving output -->
+    <string name="io_reason_no_space">yeterli boş alan yok</string>
+    <string name="io_reason_denied">oraya yazma izni yok</string>
+    <string name="io_reason_read_only">depolama salt okunur</string>
+    <string name="io_reason_other">bir depolama hatası</string>
+</resources>

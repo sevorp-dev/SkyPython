@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Messages added with the 0.0.3 review fixes (kept apart from strings.xml to keep merges simple). -->
+<resources>
+    <!-- Sharing a project folder -->
+    <string name="share_folder_too_large">Ця папка більша за %1$d МБ — завелика, щоб поділитися нею одним архівом</string>
+    <string name="share_folder_failed">Не вдалося запакувати папку, щоб поділитися (%1$s)</string>
+    <!-- Debugger -->
+    <string name="debug_error_connect">Налагоджувачу не вдалося під’єднатися до програми (%1$s)</string>
+    <!-- Find & replace -->
+    <string name="find_replace_timeout">Шаблон виконувався понад %1$d с і був зупинений; нічого не замінено</string>
+    <string name="find_replace_changed">Текст змінився під час заміни; нічого не замінено</string>
+    <!-- A run that stopped on a missing module -->
+    <string name="run_missing_module">Немає модуля %1$s</string>
+    <string name="run_install_missing">Встановити %1$s</string>
+    <string name="run_install_missing_as">Встановити %1$s (%2$s)</string>
+    <string name="run_install_busy">pip зайнятий іншим пакетом; спробуйте, коли він завершить</string>
+    <string name="run_install_retry">Спробувати ще</string>
+    <!-- pip errors: the sentence, then pip's own last lines -->
+    <string name="pip_error_exit">%1$s зупинився з помилкою (код виходу %2$d)</string>
+    <string name="pip_error_unfinished">%1$s не завершився</string>
+    <string name="pip_error_start">Не вдалося запустити Python для pip (%1$s)</string>
+    <string name="pip_error_other">Помилка pip (%1$s)</string>
+    <!-- Saving output -->
+    <string name="io_reason_no_space">недостатньо вільного місця</string>
+    <string name="io_reason_denied">немає дозволу на запис туди</string>
+    <string name="io_reason_read_only">сховище доступне лише для читання</string>
+    <string name="io_reason_other">помилка сховища</string>
+</resources>

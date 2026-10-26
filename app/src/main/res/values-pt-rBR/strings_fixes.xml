@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Messages added with the 0.0.3 review fixes (kept apart from strings.xml to keep merges simple). -->
+<resources>
+    <!-- Compartilhar uma pasta de projeto -->
+    <string name="share_folder_too_large">Esta pasta tem mais de %1$d MB, grande demais para compartilhar como um único arquivo compactado</string>
+    <string name="share_folder_failed">Não foi possível compactar a pasta para compartilhar (%1$s)</string>
+    <!-- Depurador -->
+    <string name="debug_error_connect">O depurador não conseguiu se conectar ao programa (%1$s)</string>
+    <!-- Localizar e substituir -->
+    <string name="find_replace_timeout">O padrão passou de %1$d s e foi interrompido; nada foi substituído</string>
+    <string name="find_replace_changed">O texto mudou durante a substituição; nada foi substituído</string>
+    <!-- Execução que parou por falta de um módulo -->
+    <string name="run_missing_module">Nenhum módulo chamado %1$s</string>
+    <string name="run_install_missing">Instalar %1$s</string>
+    <string name="run_install_missing_as">Instalar %1$s (%2$s)</string>
+    <string name="run_install_busy">O pip está ocupado com outro pacote; tente novamente quando ele terminar</string>
+    <string name="run_install_retry">Tentar novamente</string>
+    <!-- Erros do pip: a frase, depois as últimas linhas do próprio pip -->
+    <string name="pip_error_exit">%1$s parou com um erro (código de saída %2$d)</string>
+    <string name="pip_error_unfinished">%1$s não terminou</string>
+    <string name="pip_error_start">Não foi possível iniciar o Python para o pip (%1$s)</string>
+    <string name="pip_error_other">O pip falhou (%1$s)</string>
+    <!-- Salvar a saída -->
+    <string name="io_reason_no_space">espaço livre insuficiente</string>
+    <string name="io_reason_denied">sem permissão para gravar ali</string>
+    <string name="io_reason_read_only">o armazenamento é somente leitura</string>
+    <string name="io_reason_other">um erro de armazenamento</string>
+</resources>

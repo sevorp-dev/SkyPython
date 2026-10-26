@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Messages added with the 0.0.3 review fixes (kept apart from strings.xml to keep merges simple). -->
+<resources>
+    <!-- Sharing a project folder -->
+    <string name="share_folder_too_large">Dieser Ordner ist größer als %1$d MB und zu groß, um ihn als ein Archiv zu teilen</string>
+    <string name="share_folder_failed">Der Ordner konnte nicht zum Teilen gepackt werden (%1$s)</string>
+    <!-- Debugger -->
+    <string name="debug_error_connect">Der Debugger konnte sich nicht mit dem Programm verbinden (%1$s)</string>
+    <!-- Find & replace -->
+    <string name="find_replace_timeout">Das Muster lief länger als %1$d s und wurde gestoppt; nichts wurde ersetzt</string>
+    <string name="find_replace_changed">Der Text hat sich beim Ersetzen geändert; nichts wurde ersetzt</string>
+    <!-- A run that stopped on a missing module -->
+    <string name="run_missing_module">Kein Modul namens %1$s</string>
+    <string name="run_install_missing">%1$s installieren</string>
+    <string name="run_install_missing_as">%1$s installieren (%2$s)</string>
+    <string name="run_install_busy">pip ist mit einem anderen Paket beschäftigt; versuche es erneut, wenn es fertig ist</string>
+    <string name="run_install_retry">Erneut versuchen</string>
+    <!-- pip errors: the sentence, then pip's own last lines -->
+    <string name="pip_error_exit">%1$s wurde mit einem Fehler beendet (Exit-Code %2$d)</string>
+    <string name="pip_error_unfinished">%1$s wurde nicht abgeschlossen</string>
+    <string name="pip_error_start">Python konnte für pip nicht starten (%1$s)</string>
+    <string name="pip_error_other">pip ist fehlgeschlagen (%1$s)</string>
+    <!-- Saving output -->
+    <string name="io_reason_no_space">nicht genug freier Speicherplatz</string>
+    <string name="io_reason_denied">keine Schreibberechtigung für diesen Ort</string>
+    <string name="io_reason_read_only">der Speicher ist schreibgeschützt</string>
+    <string name="io_reason_other">ein Speicherfehler</string>
+</resources>

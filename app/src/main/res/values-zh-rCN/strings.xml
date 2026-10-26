@@ -1,0 +1,548 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common actions -->
+    <string name="action_back">返回</string>
+    <string name="action_cancel">取消</string>
+    <string name="action_close">关闭</string>
+    <string name="action_create">创建</string>
+    <string name="action_delete">删除</string>
+    <string name="action_interrupt">中断</string>
+    <string name="action_refresh">刷新</string>
+    <string name="action_rename">重命名</string>
+    <string name="action_restart">重启</string>
+    <string name="action_retry">重试</string>
+    <string name="action_run">运行</string>
+    <string name="action_send">发送</string>
+    <string name="action_stop">停止</string>
+
+    <!-- Screen titles and drawer items -->
+    <string name="title_about">关于</string>
+    <string name="title_console">控制台</string>
+    <string name="title_files">文件</string>
+    <string name="title_interpreter">解释器</string>
+    <string name="title_pip">Pip</string>
+    <string name="title_samples">示例</string>
+    <string name="title_settings">设置</string>
+    <string name="title_share">分享</string>
+    <string name="title_terminal">终端</string>
+
+    <!-- Drawer -->
+    <string name="drawer_section_tools">工具</string>
+    <string name="drawer_section_settings">设置</string>
+    <string name="drawer_line">行：%1$d/%2$d</string>
+    <string name="drawer_line_offset">行偏移：%1$d</string>
+    <string name="no_file_open">未打开文件</string>
+
+    <!-- App root -->
+    <string name="share_save_to_projects_first">请先将文件保存到“项目”中再分享</string>
+    <string name="script_still_running">脚本仍在运行</string>
+    <string name="restart_title">仍在运行</string>
+    <string name="restart_text">有任务仍在运行。是否停止并启动 %1$s？</string>
+    <string name="restart_confirm">停止并启动</string>
+
+    <!-- Console -->
+    <!-- Keep the brackets: the console dims lines in this exact shape. -->
+    <string name="console_exit_footer">[程序已结束，退出代码 %1$d]</string>
+    <string name="console_cancelled">[已取消]</string>
+    <string name="console_not_running">未运行</string>
+    <string name="console_preparing_python">正在准备 Python…</string>
+    <string name="console_setup_failed">无法配置 Python</string>
+
+    <!-- Terminal -->
+    <string name="terminal_open_failed">无法打开终端</string>
+    <string name="terminal_use_simple_console">使用简易控制台</string>
+    <string name="key_escape">Esc</string>
+    <string name="key_tab">Tab</string>
+    <string name="key_control">Ctrl</string>
+    <string name="key_alt">Alt</string>
+    <string name="key_minus">减号</string>
+    <string name="key_slash">斜杠</string>
+    <string name="key_pipe">竖线</string>
+    <string name="key_left">左</string>
+    <string name="key_up">上</string>
+    <string name="key_down">下</string>
+    <string name="key_right">右</string>
+
+    <!-- Editor -->
+    <string name="editor_menu">菜单</string>
+    <string name="editor_undo">撤销</string>
+    <string name="editor_redo">重做</string>
+    <string name="editor_more">更多</string>
+    <string name="editor_save">保存</string>
+    <string name="editor_save_as">另存为…</string>
+    <string name="editor_no_open_files">没有打开的文件</string>
+    <string name="editor_open_files">打开的文件</string>
+    <string name="editor_external_document">外部文档</string>
+    <!-- How the projects root folder is named in the UI. -->
+    <string name="projects_label">项目</string>
+    <string name="editor_error_save">无法保存 %1$s：%2$s</string>
+    <string name="editor_error_open">无法打开 %1$s：%2$s</string>
+    <string name="editor_error_open_file">无法打开文件：%1$s</string>
+    <string name="editor_error_prepare_run">无法准备运行 %1$s：%2$s</string>
+    <string name="editor_error_save_as">另存为失败：%1$s</string>
+    <string name="editor_error_create_example">无法创建示例文件：%1$s</string>
+    <string name="editor_error_reopen">无法重新打开 %1$s：%2$s</string>
+    <string name="editor_reason_permission_lost">权限已丢失</string>
+    <string name="editor_reason_unavailable">不可用</string>
+    <string name="editor_error_too_large">文件大于 %1$d MB</string>
+
+    <!-- Files -->
+    <string name="files_open_external">打开外部文件…</string>
+    <string name="files_empty_folder">此文件夹为空</string>
+    <string name="files_up_one_folder">上一级文件夹</string>
+    <string name="files_folder">文件夹</string>
+    <string name="files_file">文件</string>
+    <string name="files_more_options">%1$s 的更多选项</string>
+    <string name="files_new">新建</string>
+    <string name="files_new_file">新建文件</string>
+    <string name="files_new_folder">新建文件夹</string>
+    <string name="files_rename_file">重命名文件</string>
+    <string name="files_rename_folder">重命名文件夹</string>
+    <string name="files_name">名称</string>
+    <string name="files_delete_file_title">删除文件？</string>
+    <string name="files_delete_folder_title">删除文件夹？</string>
+    <string name="files_delete_file_text">“%1$s”将被永久删除。</string>
+    <string name="files_delete_folder_text">“%1$s”及其中的所有内容将被永久删除。</string>
+    <string name="name_error_empty">名称不能为空</string>
+    <string name="name_error_dots">名称不能为“.”或“..”</string>
+    <string name="name_error_separator">名称不能包含 / 或 \\</string>
+    <string name="name_error_invalid_char">名称包含无效字符</string>
+    <string name="name_error_too_long">名称过长</string>
+    <string name="files_error_already_exists">“%1$s”已存在</string>
+    <string name="files_error_create_folder">无法创建文件夹“%1$s”</string>
+    <string name="files_error_folder_missing">文件夹不存在</string>
+    <string name="files_error_does_not_exist">“%1$s”不存在</string>
+    <string name="files_error_rename">无法重命名“%1$s”</string>
+    <string name="files_error_delete">无法删除“%1$s”</string>
+    <string name="files_error_outside">路径不在工作区内</string>
+    <string name="files_error_root">不能修改项目文件夹本身</string>
+    <string name="files_error_failed">操作失败</string>
+
+    <!-- Pip -->
+    <string name="pip_tab_installed">已安装</string>
+    <string name="pip_package_hint">例如 requests 或 six==1.16.0</string>
+    <string name="pip_install">安装</string>
+    <string name="pip_installed_spec">已安装 %1$s</string>
+    <string name="pip_intro">从 PyPI 安装包，供你的脚本使用。</string>
+    <string name="pip_pure_python_hint">目前仅支持纯 Python 包。</string>
+    <string name="pip_no_packages">尚未安装任何包</string>
+    <string name="pip_uninstall">卸载</string>
+    <string name="pip_uninstall_title">卸载 %1$s？</string>
+    <string name="pip_uninstall_text">将移除版本 %1$s。</string>
+    <string name="pip_setting_up">正在配置 pip（首次运行）…</string>
+    <string name="pip_spec_empty">请输入包名</string>
+    <string name="pip_spec_spaces">一次只能安装一个包，且不能包含空格</string>
+    <string name="pip_spec_options">此处不支持选项</string>
+    <string name="pip_spec_invalid">请输入包名，例如 six 或 requests==2.32.3</string>
+    <string name="pip_tab_search">搜索</string>
+    <string name="pip_tab_requirements">从文件</string>
+    <string name="pip_search_label">搜索 PyPI</string>
+    <string name="pip_search_action">查找</string>
+    <string name="pip_clear">清除</string>
+    <string name="pip_result_not_found">PyPI 上没有名为“%1$s”的包</string>
+    <string name="pip_result_offline">无网络连接。请检查网络后重试。</string>
+    <string name="pip_result_failed">无法连接 PyPI：%1$s</string>
+    <string name="pip_latest_version">最新版本 %1$s</string>
+    <string name="pip_version">版本 %1$s</string>
+    <string name="pip_license">许可证：%1$s</string>
+    <string name="pip_home_page">主页</string>
+    <string name="pip_wheel_pure">纯 Python：可直接安装</string>
+    <string name="pip_wheel_android">已为 Android 预编译（64 位设备）</string>
+    <string name="pip_wheel_source">没有现成的构建：pip 将尝试自行构建，仅适用于纯 Python 代码</string>
+    <string name="pip_wheel_native">需要原生代码，暂不支持</string>
+    <string name="pip_wheel_none">此版本没有可安装的文件</string>
+    <string name="pip_install_anyway">仍然尝试</string>
+    <string name="pip_popular_none">没有匹配的热门包。点按“查找”在 PyPI 上搜索。</string>
+    <string name="pip_coming_later">即将支持</string>
+    <string name="pip_needs_64bit">仅限 64 位</string>
+    <string name="pip_installed_badge">已安装</string>
+    <string name="pip_prebuilt_badge">Android 预编译</string>
+    <string name="pip_prebuilt_hint">含原生代码的包需标有“Android 预编译”才能安装；其他包目前必须是纯 Python。</string>
+    <string name="pip_prebuilt_line">SkyPython 已为 Android 构建 %1$s %2$s：无需编译器</string>
+    <string name="pip_prebuilt_32bit">暂不支持 32 位设备</string>
+    <string name="pip_prebuilt_other_abi">暂不支持此设备</string>
+    <string name="pip_downloading_wheel">正在下载 %1$s %2$s（%3$s），由 SkyPython 为 Android 预编译…</string>
+    <string name="pip_error_prebuilt_32bit">%1$s 暂不支持 32 位设备。</string>
+    <string name="pip_error_prebuilt_abi">%1$s 暂无适用于此设备（%2$s）的预编译版本。</string>
+    <string name="pip_error_prebuilt_version">%1$s%2$s 暂无 Android 预编译版本。可用版本：%3$s</string>
+    <string name="pip_error_wheel_checksum">%1$s 的下载文件已损坏（校验和不匹配）。请重试。</string>
+    <string name="pip_upgrade">升级</string>
+    <string name="pip_update_available">有可用更新：%1$s</string>
+    <string name="pip_checking_updates">正在检查更新…</string>
+    <string name="pip_updates_failed">无法检查更新（未联网？）</string>
+    <string name="pip_details_requires">依赖：%1$s</string>
+    <string name="pip_details_required_by">被依赖：%1$s</string>
+    <string name="pip_details_none">无</string>
+    <string name="pip_req_intro">安装 requirements 文件中列出的所有包（pip install -r），每行一个包。</string>
+    <string name="pip_req_open_file">在编辑器中打开</string>
+    <string name="pip_req_project_files">“项目”中的文本文件</string>
+    <string name="pip_req_none">“项目”中还没有 .txt 文件。请创建 requirements.txt，每行写一个包，例如 requests==2.32.3。</string>
+    <string name="pip_req_install">全部安装</string>
+    <string name="pip_running_install">正在安装 %1$s…</string>
+    <string name="pip_running_upgrade">正在升级 %1$s…</string>
+    <string name="pip_running_requirements">正在从 %1$s 安装包…</string>
+    <string name="pip_done_upgrade">已升级 %1$s</string>
+    <string name="pip_done_requirements">已从 %1$s 安装包</string>
+    <string name="pip_failed_install">无法安装 %1$s</string>
+    <string name="pip_failed_upgrade">无法升级 %1$s</string>
+    <string name="pip_failed_requirements">无法从 %1$s 安装包</string>
+    <string name="pip_uninstalled">已移除 %1$s</string>
+    <string name="pip_show_log">显示日志</string>
+    <string name="pip_hide_log">隐藏日志</string>
+    <string name="pip_section_prebuilt">Android 预编译</string>
+    <string name="pip_section_popular">热门</string>
+    <string name="pip_section_data">数据与科学</string>
+    <string name="pip_section_web">Web 与网络</string>
+    <string name="pip_section_text">文本与终端</string>
+    <string name="pip_searching">正在搜索 PyPI…</string>
+    <string name="pip_loading_packages">正在读取已安装的包…</string>
+    <string name="pip_no_packages_hint">在“搜索”标签页中找到包，然后点按“安装”。</string>
+    <string name="pip_pkg_requests">简单易用的 HTTP 请求</string>
+    <string name="pip_pkg_rich">终端中的颜色、表格和进度条</string>
+    <string name="pip_pkg_colorama">彩色终端文本</string>
+    <string name="pip_pkg_beautifulsoup4">从 HTML 页面提取数据</string>
+    <string name="pip_pkg_dateutil">日期解析与日期运算</string>
+    <string name="pip_pkg_tabulate">美观的文本表格</string>
+    <string name="pip_pkg_tqdm">循环进度条</string>
+    <string name="pip_pkg_httpx">现代 HTTP 客户端，支持同步和异步</string>
+    <string name="pip_pkg_click">命令行界面</string>
+    <string name="pip_pkg_art">ASCII 艺术与文字字体</string>
+    <string name="pip_pkg_pyfiglet">大号 ASCII 横幅</string>
+    <string name="pip_pkg_termcolor">终端彩色文本</string>
+    <string name="pip_pkg_emoji">按名称使用表情符号</string>
+    <string name="pip_pkg_faker">生成用于测试的假姓名、地址和文本</string>
+    <string name="pip_pkg_sympy">符号数学</string>
+    <string name="pip_pkg_mpmath">任意精度数学</string>
+    <string name="pip_pkg_networkx">图与网络</string>
+    <string name="pip_pkg_prompt_toolkit">交互式命令行输入</string>
+    <string name="pip_pkg_jinja2">文本与 HTML 模板</string>
+    <string name="pip_pkg_pillow">图像处理（需要原生代码）</string>
+    <string name="pip_pkg_numpy">高速数组与数学运算（原生代码）</string>
+
+    <!-- Samples -->
+    <string name="samples_open_failed">无法打开示例：%1$s</string>
+
+    <!-- Settings -->
+    <string name="settings_section_editor">编辑器</string>
+    <string name="settings_section_editing">编辑</string>
+    <string name="settings_section_app">应用</string>
+    <string name="settings_font_size">字号</string>
+    <string name="settings_font_size_range">%1$d–%2$d sp</string>
+    <string name="settings_smaller">减小</string>
+    <string name="settings_larger">增大</string>
+    <string name="settings_word_wrap">自动换行</string>
+    <string name="settings_word_wrap_summary">长行自动换行，无需横向滚动</string>
+    <string name="settings_line_numbers">行号</string>
+    <string name="settings_line_numbers_summary">在编辑器中显示行号</string>
+    <string name="settings_keep_screen_on">保持屏幕常亮</string>
+    <string name="settings_keep_screen_on_summary">编辑时不让屏幕熄灭</string>
+    <string name="settings_language">语言</string>
+    <string name="language_system">跟随系统</string>
+
+    <!-- About -->
+    <string name="about_tagline_start">Python 开发，</string>
+    <string name="about_tagline_end">随时随地。</string>
+    <string name="about_version">版本 %1$s</string>
+    <string name="about_description">一款免费、开源的 Android 版 Python 3 IDE。在手机上编写并运行 Python 脚本，完全离线可用。</string>
+    <string name="about_links">链接</string>
+    <string name="about_source_code">GitHub 上的源代码</string>
+    <string name="about_telegram">Telegram 频道</string>
+    <string name="about_license">许可证</string>
+    <string name="about_license_text">SkyPython 是自由软件；详见源代码中的 LICENSE。</string>
+    <string name="about_third_party">第三方软件</string>
+    <string name="about_notice_grammar">MagicPython 语法</string>
+    <string name="about_notice_theme">VS Code Dark+ 主题</string>
+    <string name="about_notice_terminal">Termux terminal-emulator 和 terminal-view</string>
+    <string name="about_slogan">\u0020· 创意。代码。未来。</string>
+    <string name="about_no_app_for_link">没有可以打开 %1$s 的应用</string>
+
+    <!-- Share -->
+    <string name="share_cannot_share">无法分享此文件</string>
+    <string name="share_chooser_title">分享 %1$s</string>
+    <string name="share_no_app">没有可以分享此文件的应用</string>
+
+    <!-- ▶ Run on a terminal: output actions -->
+    <string name="use_simple_output">使用简易输出</string>
+    <string name="run_again">再次运行</string>
+    <string name="back_to_editor">返回编辑器</string>
+    <string name="run_exit_code">退出代码 %1$d</string>
+    <string name="output_more">更多选项</string>
+    <string name="output_copy_all">全部复制</string>
+    <string name="output_share">分享输出</string>
+    <string name="output_save">保存输出</string>
+    <string name="output_save_as">另存为…</string>
+    <string name="output_clear">清除</string>
+    <string name="output_scroll_top">滚动到顶部</string>
+    <string name="output_scroll_bottom">滚动到底部</string>
+    <string name="output_font_smaller">缩小文字</string>
+    <string name="output_font_bigger">放大文字</string>
+    <string name="output_font_size">文字 %1$d sp</string>
+    <string name="output_copied">已复制输出</string>
+    <string name="output_nothing">暂无输出</string>
+    <string name="output_saved">已保存到 %1$s</string>
+    <string name="output_save_failed">无法保存：%1$s</string>
+    <!-- Debugger -->
+    <string name="title_debug">调试</string>
+    <string name="debug_run_menu_run">运行</string>
+    <string name="debug_run_menu_debug">调试</string>
+    <string name="debug_tab_variables">变量</string>
+    <string name="debug_tab_watches">监视</string>
+    <string name="debug_tab_stack">调用栈</string>
+    <string name="debug_tab_console">控制台</string>
+    <string name="debug_continue">继续</string>
+    <string name="debug_pause">暂停</string>
+    <string name="debug_step_over">单步跳过</string>
+    <string name="debug_step_into">单步进入</string>
+    <string name="debug_step_out">单步跳出</string>
+    <string name="debug_collapse">折叠调试器</string>
+    <string name="debug_expand">展开调试器</string>
+    <string name="debug_close">关闭调试器</string>
+    <string name="debug_status_starting">正在启动调试器…</string>
+    <string name="debug_status_running">正在运行…</string>
+    <string name="debug_status_breakpoint">断点：%1$s，第 %2$d 行</string>
+    <string name="debug_status_paused">已暂停：%1$s，第 %2$d 行</string>
+    <string name="debug_status_exception">未捕获的异常：%1$s</string>
+    <string name="debug_status_finished">程序已结束，退出代码 %1$d</string>
+    <string name="debug_status_ended">调试已结束</string>
+    <string name="debug_error_start">调试器无法启动：%1$s</string>
+    <string name="debug_locals">局部变量</string>
+    <string name="debug_globals">全局变量</string>
+    <string name="debug_more">…还有 %1$d 项</string>
+    <string name="debug_no_variables">这里什么都没有</string>
+    <string name="debug_variables_when_paused">程序暂停时会显示变量</string>
+    <string name="debug_stack_when_paused">程序暂停时会显示调用栈</string>
+    <string name="debug_watch_hint">表达式，例如 len(items)</string>
+    <string name="debug_watch_add">添加监视</string>
+    <string name="debug_watch_remove">移除监视</string>
+    <string name="debug_no_watches">暂无监视：在下方添加表达式，即可在每次停止时查看它的值</string>
+    <string name="debug_frame_library">库</string>
+    <string name="debug_condition_title">第 %1$d 行的断点</string>
+    <string name="debug_condition_hint">仅当条件为真时停止，例如 i == 10。留空则始终停止。</string>
+    <string name="debug_condition_label">条件</string>
+    <string name="debug_condition_remove">移除</string>
+    <string name="debug_condition_save">保存</string>
+    <string name="debug_breakpoints_need_project_file">断点仅适用于保存在 SkyPython 项目中的文件</string>
+    <!-- Drawer footer -->
+    <string name="drawer_footer_developer">开发者：@Sevorp</string>
+
+    <!-- Editor: find & replace -->
+    <string name="find_hint">查找</string>
+    <string name="replace_hint">替换为</string>
+    <string name="find_match_case">区分大小写</string>
+    <string name="find_whole_word">全字匹配</string>
+    <string name="find_regex">正则表达式</string>
+    <string name="find_previous">上一个匹配项</string>
+    <string name="find_next">下一个匹配项</string>
+    <string name="find_toggle_replace">显示替换</string>
+    <string name="find_close">关闭搜索</string>
+    <string name="find_replace_one">替换</string>
+    <string name="find_replace_all">全部</string>
+    <string name="find_replaced_count">已替换 %1$d 处</string>
+    <string name="find_no_matches">无匹配项</string>
+    <string name="find_invalid_regex">无效的模式</string>
+
+    <!-- Editor: go to line -->
+    <string name="go_to_line">转到行…</string>
+    <string name="go_to_line_title">转到行</string>
+    <string name="go_to_line_label">行号（1–%1$d）</string>
+    <string name="go_to_line_go">转到</string>
+
+    <!-- Editor: code navigation -->
+    <string name="editor_action_go_to_definition">转到定义</string>
+    <string name="editor_action_find_usages">用法</string>
+    <string name="editor_outline">大纲</string>
+    <string name="editor_outline_empty">此文件中还没有类或函数。</string>
+    <string name="editor_outline_loading">正在读取文件…</string>
+    <string name="editor_outline_line">第 %1$d 行</string>
+    <string name="editor_read_only">只读</string>
+    <string name="nav_no_definition">未找到“%1$s”的定义</string>
+    <string name="nav_not_on_a_name">请先将光标放在名称上</string>
+    <string name="nav_unavailable">代码提示尚未就绪，请稍后重试。</string>
+    <string name="nav_hints_off">请在设置中开启“代码补全”以使用代码导航</string>
+    <string name="nav_usages_count">“%1$s”在此文件中的用法：%2$d</string>
+    <string name="drawer_in_symbol">位于 %1$s</string>
+
+    <!-- Editor: line commands -->
+    <string name="editor_action_comment">注释 / 取消注释</string>
+    <string name="editor_action_indent">缩进</string>
+    <string name="editor_action_outdent">减少缩进</string>
+    <string name="editor_action_duplicate">复制行</string>
+    <string name="editor_action_delete_line">删除行</string>
+    <string name="editor_action_move_up">上移行</string>
+    <string name="editor_action_move_down">下移行</string>
+    <string name="editor_actions_show">编辑操作</string>
+    <string name="editor_actions_hide">符号</string>
+    <string name="editor_menu_edit">编辑行</string>
+    <string name="editor_menu_back">返回</string>
+
+    <!-- Editor: files -->
+    <string name="find_and_replace">查找和替换</string>
+    <string name="new_file">新建文件…</string>
+    <string name="new_file_title">新建文件</string>
+    <string name="new_file_name">文件名</string>
+    <string name="new_file_create">创建</string>
+    <string name="open_file">打开…</string>
+    <string name="recent_files">最近的文件</string>
+    <string name="recent_files_empty">暂无最近的文件</string>
+    <string name="file_missing">%1$s 已不存在</string>
+
+    <!-- Settings -->
+    <string name="settings_auto_close">自动闭合括号</string>
+    <string name="settings_auto_close_summary">输入 ( [ { \" 或 \' 时自动插入对应的闭合符号</string>
+    <string name="settings_symbol_keys">符号栏按键</string>
+    <string name="settings_symbol_keys_summary">按键之间用空格分隔。“Tab”会插入 4 个空格。</string>
+    <string name="settings_symbol_keys_reset">恢复默认</string>
+    <string name="settings_keyboard_suggestions">键盘建议</string>
+    <string name="settings_keyboard_suggestions_summary">允许键盘建议和自动更正单词。关闭可避免代码被修改。</string>
+    <string name="settings_pinch_hint">提示：在编辑器中双指捏合即可缩放。</string>
+    <!-- Orange theme: status line, drawer, settings, terminal, samples -->
+    <string name="editor_status_python">Python %1$s</string>
+    <string name="editor_status_cursor">行 %1$d，列 %2$d</string>
+    <string name="editor_keyboard_show">显示键盘</string>
+    <string name="editor_keyboard_hide">隐藏键盘</string>
+    <string name="editor_cursor_left">光标左移</string>
+    <string name="editor_cursor_right">光标右移</string>
+    <string name="editor_close_tab">关闭 %1$s</string>
+    <string name="editor_go_to_error">转到错误</string>
+    <string name="editor_empty_hint">新建文件，或从项目中打开文件，开始编写代码。</string>
+    <string name="drawer_section_workspace">工作区</string>
+    <string name="drawer_projects">项目</string>
+    <string name="drawer_editor">编辑器</string>
+    <string name="settings_font_family">字体</string>
+    <string name="settings_font_system_mono">系统等宽字体</string>
+    <string name="settings_code_completion">代码补全</string>
+    <string name="settings_code_completion_summary">输入时显示建议，并用下划线标出错误</string>
+    <string name="settings_section_terminal">终端</string>
+    <string name="settings_terminal_theme">主题</string>
+    <string name="settings_terminal_theme_dark">深色</string>
+    <string name="settings_terminal_theme_black">纯黑</string>
+    <string name="terminal_command_hint">输入命令…</string>
+    <string name="samples_search">搜索示例</string>
+    <string name="samples_search_hint">搜索…</string>
+    <string name="samples_no_match">没有与“%1$s”匹配的示例</string>
+    <string name="action_clear_search">清除搜索</string>
+    <!-- Bottom navigation bar -->
+    <string name="nav_editor">编辑器</string>
+    <string name="nav_terminal">终端</string>
+    <string name="nav_packages">包</string>
+    <string name="nav_projects">项目</string>
+    <string name="nav_settings">设置</string>
+    <string name="settings_bottom_nav">底部导航栏</string>
+    <string name="settings_bottom_nav_summary">一键直达编辑器、终端、包、项目和设置。☰ 菜单始终保留。</string>
+
+    <!-- Problem reports -->
+    <string name="report_problem">报告问题</string>
+    <string name="about_report_summary">向开发者发送错误报告</string>
+    <string name="report_privacy">不会自动发送任何内容。发送前请检查报告：其中包含错误和设备信息，绝不包含你的代码或文件。</string>
+    <string name="report_attach">附带的问题</string>
+    <string name="report_none">无</string>
+    <string name="report_kind_crash">崩溃 · %1$s</string>
+    <string name="report_kind_error">%1$s · %2$s</string>
+    <string name="report_description_label">你当时在做什么？</string>
+    <string name="report_description_hint">操作步骤、预期结果、实际发生的情况</string>
+    <string name="report_include_device">包含设备信息</string>
+    <string name="report_include_device_summary">型号、Android 版本、内存、网络、移动运营商</string>
+    <string name="report_open_issue">创建 GitHub issue</string>
+    <string name="report_share">分享</string>
+    <string name="report_copy">复制</string>
+    <string name="report_copied">已复制报告</string>
+    <string name="report_issue_copied">完整报告也已复制到剪贴板</string>
+    <string name="report_issue_truncated">报告太长，无法放入链接。完整报告已复制到剪贴板：请将其粘贴到 issue 中。</string>
+    <string name="report_no_browser">没有可打开 GitHub 的浏览器。报告已复制到剪贴板。</string>
+    <string name="report_delete">删除此报告</string>
+    <string name="report_deleted">报告已删除</string>
+    <string name="report_full_text">完整报告</string>
+    <string name="report_share_subject">SkyPython 问题报告</string>
+    <string name="report_share_chooser">发送报告</string>
+    <string name="report_share_summary">SkyPython 问题报告：%1$s（已附完整报告）</string>
+    <string name="report_banner">%1$s：出现问题</string>
+    <string name="report_banner_action">报告</string>
+    <string name="report_where_python">Python 配置</string>
+    <string name="report_where_terminal">终端</string>
+    <string name="report_where_language_server">代码提示</string>
+    <string name="report_where_debugger">调试器</string>
+    <string name="report_where_pip">pip 配置</string>
+    <string name="report_where_app">SkyPython</string>
+    <string name="crash_dialog_title">SkyPython 意外关闭</string>
+    <string name="crash_dialog_text">要向开发者发送报告吗？发送前你可以查看完整报告。</string>
+    <string name="crash_dialog_send">发送报告</string>
+    <string name="crash_dialog_later">以后再说</string>
+    <!-- Open project: folders in the phone's storage -->
+    <string name="projects_open_project">打开项目</string>
+    <string name="projects_current">当前项目</string>
+    <string name="projects_section_app">SkyPython 项目</string>
+    <string name="projects_app_desc">保存在应用内部</string>
+    <string name="projects_section_recent">最近的项目</string>
+    <string name="projects_no_recent">你打开过的文件夹会显示在这里。</string>
+    <string name="projects_section_storage">手机存储</string>
+    <string name="projects_root_internal">内部存储</string>
+    <string name="projects_root_sd">SD 卡</string>
+    <string name="projects_root_desc">浏览文件夹并将其作为项目打开</string>
+    <string name="projects_opened_at">打开于 %1$s</string>
+    <string name="projects_just_now">刚刚</string>
+    <string name="projects_remove_recent">从最近的项目中移除 %1$s</string>
+    <string name="projects_use_folder">使用此文件夹</string>
+    <string name="projects_show_hidden">显示隐藏项</string>
+    <string name="projects_no_folders">这里没有文件夹。使用上方的 + 按钮新建一个，或直接使用此文件夹。</string>
+    <string name="projects_browse_title">选择文件夹</string>
+    <string name="projects_unavailable">此项目文件夹当前不可用。</string>
+    <string name="projects_back_to_app">SkyPython 项目</string>
+    <string name="project_missing">文件夹“%1$s”已不存在</string>
+    <string name="project_not_folder">“%1$s”不是文件夹</string>
+    <string name="project_no_permission">无法访问“%1$s”：请允许 SkyPython 使用文件</string>
+    <string name="project_unreadable">无法读取文件夹“%1$s”</string>
+    <string name="project_fallback">%1$s。正在显示 SkyPython 项目。</string>
+    <string name="storage_title">允许访问文件</string>
+    <string name="storage_text">要打开并运行手机存储（Documents、Download、SD 卡）中的项目，SkyPython 需要文件访问权限。</string>
+    <string name="storage_point_run">脚本直接在项目文件夹中运行，因此 open(\"data.csv\") 可以直接使用。</string>
+    <string name="storage_point_private">你的文件绝不会离开手机：SkyPython 没有服务器，也没有任何跟踪。</string>
+    <string name="storage_point_optional">即使不授予权限，应用仍可继续使用 SkyPython 项目。</string>
+    <string name="storage_steps_all_files">在下一个页面中为 SkyPython 开启“允许管理所有文件”，然后返回。</string>
+    <string name="storage_steps_runtime">在接下来的对话框中点按“允许”。</string>
+    <string name="storage_allow">允许访问</string>
+    <string name="storage_open_settings">打开设置</string>
+    <string name="storage_denied">未授予访问权限。请在应用设置中开启，以使用手机存储中的文件夹。</string>
+    <string name="drawer_project">项目：%1$s</string>
+    <!-- In-app updates -->
+    <string name="title_update">更新</string>
+    <string name="update_banner_title">SkyPython %1$s 现已推出</string>
+    <string name="update_banner_text">GitHub 上已发布新版本</string>
+    <string name="update_banner_update">更新</string>
+    <string name="update_banner_hide">隐藏</string>
+    <string name="update_whats_new">新功能</string>
+    <string name="update_new">新版本</string>
+    <string name="update_installed_version">当前版本 %1$s</string>
+    <string name="update_notes_unavailable">无法加载发行说明。你可以在 GitHub 上查看。</string>
+    <string name="update_open_github">在 GitHub 上打开</string>
+    <string name="update_install">安装</string>
+    <string name="update_install_hint">下载适用于你手机的 %1$s APK，校验后覆盖安装当前版本。你的项目和设置都会保留。</string>
+    <string name="update_variant_universal">通用版</string>
+    <string name="update_skip">跳过此版本</string>
+    <string name="update_downloading">正在下载更新…</string>
+    <string name="update_progress">%1$s / %2$s · %3$d%%</string>
+    <string name="update_progress_unknown">已下载 %1$s</string>
+    <string name="update_megabytes">%1$s MB</string>
+    <string name="update_installing">正在安装…</string>
+    <string name="update_installing_hint">请在 Android 对话框中确认更新。然后重新打开 SkyPython，即为新版本。</string>
+    <string name="update_failed_title">更新未完成</string>
+    <string name="update_failed_network">无法连接 GitHub。请检查网络后重试，下载会从中断处继续。</string>
+    <string name="update_failed_http">GitHub 未返回此版本的文件。请稍后重试。</string>
+    <string name="update_failed_no_checksum">此版本没有该 APK 的校验和，因此未安装。</string>
+    <string name="update_failed_checksum">下载的文件与校验和不符，已被删除。请重试。</string>
+    <string name="update_failed_storage">无法保存更新。请释放一些空间后重试。</string>
+    <string name="update_failed_install">Android 未安装此更新：%1$s</string>
+    <string name="update_failed_incompatible">此 SkyPython 使用了不同的密钥签名（例如由他人构建的副本），因此 Android 无法直接覆盖更新。请先卸载一次 SkyPython（务必先备份项目），然后安装新版本。</string>
+    <string name="update_retry">重试</string>
+    <string name="update_permission_title">允许更新</string>
+    <string name="update_permission_text">SkyPython 需要安装应用的权限才能自我更新。请为 SkyPython 开启“允许来自此来源的应用”，然后返回，更新将继续进行。</string>
+    <string name="update_permission_open">打开设置</string>
+    <string name="update_up_to_date">SkyPython %1$s 已是最新版本</string>
+    <string name="update_check_failed">无法检查更新。请检查网络连接。</string>
+    <string name="update_check">检查更新</string>
+    <string name="update_checking">正在检查更新…</string>
+    <string name="update_check_summary_available">版本 %1$s 现已推出</string>
+    <string name="update_none_title">已是最新版本</string>
+    <string name="settings_section_updates">更新</string>
+    <string name="settings_auto_update">自动检查更新</string>
+    <string name="settings_auto_update_summary">应用启动时在 GitHub 上检查新版本，每天最多两次</string>
+</resources>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The image viewer, "Open with…", and the pictures a run made. -->
+<resources>
+    <string name="open_with">Öffnen mit…</string>
+    <string name="open_with_chooser_title">%1$s öffnen mit</string>
+    <string name="open_with_no_app">Keine App kann diese Datei öffnen</string>
+
+    <string name="viewer_info">%1$d × %2$d · %3$s</string>
+    <string name="viewer_fit">An Bildschirm anpassen</string>
+    <string name="viewer_error_title">Dieses Bild kann nicht angezeigt werden</string>
+    <string name="viewer_error_missing">Die Datei existiert nicht mehr.</string>
+    <string name="viewer_error_unsupported">Die Datei ist beschädigt oder ihr Format wird nicht unterstützt.</string>
+    <string name="viewer_error_memory">Das Bild ist zu groß für den Speicher dieses Geräts.</string>
+    <string name="viewer_error_read">Die Datei konnte nicht gelesen werden: %1$s</string>
+    <string name="viewer_delete_failed">Die Datei konnte nicht gelöscht werden</string>
+
+    <string name="files_unsupported_title">Dieser Dateityp kann nicht geöffnet werden</string>
+    <string name="files_unsupported_text">SkyPython kann „%1$s“ nicht öffnen. Du kannst die Datei teilen oder in einer anderen App öffnen.</string>
+
+    <string name="run_images_label">Neue Bilder</string>
+    <string name="run_image_open">Bild %1$s öffnen</string>
+</resources>

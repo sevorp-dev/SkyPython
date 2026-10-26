@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Messages added with the 0.0.3 review fixes (kept apart from strings.xml to keep merges simple). -->
+<resources>
+    <!-- Sharing a project folder -->
+    <string name="share_folder_too_large">Esta carpeta supera los %1$d MB, es demasiado grande para compartirla en un solo archivo comprimido</string>
+    <string name="share_folder_failed">No se pudo comprimir la carpeta para compartirla (%1$s)</string>
+    <!-- Debugger -->
+    <string name="debug_error_connect">El depurador no pudo conectarse al programa (%1$s)</string>
+    <!-- Find & replace -->
+    <string name="find_replace_timeout">El patrón tardó más de %1$d s y se detuvo; no se reemplazó nada</string>
+    <string name="find_replace_changed">El texto cambió durante el reemplazo; no se reemplazó nada</string>
+    <!-- A run that stopped on a missing module -->
+    <string name="run_missing_module">No existe el módulo %1$s</string>
+    <string name="run_install_missing">Instalar %1$s</string>
+    <string name="run_install_missing_as">Instalar %1$s (%2$s)</string>
+    <string name="run_install_busy">pip está ocupado con otro paquete; inténtalo de nuevo cuando termine</string>
+    <string name="run_install_retry">Reintentar</string>
+    <!-- pip errors: the sentence, then pip's own last lines -->
+    <string name="pip_error_exit">%1$s se detuvo con un error (código de salida %2$d)</string>
+    <string name="pip_error_unfinished">%1$s no terminó</string>
+    <string name="pip_error_start">No se pudo iniciar Python para pip (%1$s)</string>
+    <string name="pip_error_other">pip falló (%1$s)</string>
+    <!-- Saving output -->
+    <string name="io_reason_no_space">no hay suficiente espacio libre</string>
+    <string name="io_reason_denied">no hay permiso para escribir ahí</string>
+    <string name="io_reason_read_only">el almacenamiento es de solo lectura</string>
+    <string name="io_reason_other">un error de almacenamiento</string>
+</resources>
