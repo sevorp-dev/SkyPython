@@ -53,21 +53,7 @@ internal object DebuggerBundle {
     const val SCRIPT = "skydbg.py"
     private val counter = AtomicLong()
 
-    fun ensureInstalled(dir: File, open: () -> InputStream): File {
-        val bundled = open().use { it.readBytes() }
-        val script = File(dir, SCRIPT)
-        if (script.isFile && script.length() == bundled.size.toLong() && script.readBytes().contentEquals(bundled)) {
-            return script
-        }
-        dir.mkdirs()
-        val part = File(dir, "$SCRIPT.part")
-        part.writeBytes(bundled)
-        if (!part.renameTo(script)) {
-            script.delete()
-            if (!part.renameTo(script)) throw IOException("Cannot install $script")
-        }
-        return script
-    }
+    fun ensureInstalled(dir: File, open: () -> InputStream): File = InstallSupport.copyIfChanged(dir, SCRIPT, open)
 
     /** The driver removes its socket once connected; one left by a killed driver is this old. */
     private const val STALE_CHANNEL_MS = 3 * 60_000L

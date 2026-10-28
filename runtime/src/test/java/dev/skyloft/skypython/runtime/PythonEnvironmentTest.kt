@@ -33,6 +33,9 @@ class PythonEnvironmentTest {
                 "TMPDIR" to cacheDir.path,
                 "PYTHONUSERBASE" to File(homeDir, ".local").path,
                 "PIP_DISABLE_PIP_VERSION_CHECK" to "1",
+                "PYTHONPATH" to File(files, "plot").path,
+                "MPLBACKEND" to "module://skypython_plot",
+                "SKYPYTHON_PLOT_DIR" to File(cacheDir, "plots").path,
             ),
             PythonEnvironment.build(paths),
         )

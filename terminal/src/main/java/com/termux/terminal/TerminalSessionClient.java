@@ -23,6 +23,10 @@ public interface TerminalSessionClient {
 
     void onTerminalCursorStateChange(boolean state);
 
+    /** SkyPython: the program sent the app a command over the terminal ({@link TerminalOutput#onAppCommand(String)}). */
+    default void onAppCommand(TerminalSession session, String text) {
+    }
+
 
 
     Integer getTerminalCursorStyle();

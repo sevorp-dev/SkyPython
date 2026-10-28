@@ -94,6 +94,12 @@ public final class TerminalEmulator {
     /** Needs to be large enough to contain reasonable OSC 52 pastes. */
     private static final int MAX_OSC_STRING_LENGTH = 8192;
 
+    /**
+     * SkyPython: the private OSC number a program uses to talk to the app ("ESC ] 7777 ; text BEL"
+     * or ST). Nothing is drawn; the text goes to {@link TerminalOutput#onAppCommand(String)}.
+     */
+    public static final int APP_OSC = 7777;
+
     /** DECSET 1 - application cursor keys. */
     private static final int DECSET_BIT_APPLICATION_CURSOR_KEYS = 1;
     private static final int DECSET_BIT_REVERSE_VIDEO = 1 << 1;
@@ -2144,6 +2150,9 @@ public final class TerminalEmulator {
                 mSession.onColorsChanged();
                 break;
             case 119: // Reset highlight color.
+                break;
+            case APP_OSC: // SkyPython: "ESC ] 7777 ; text BEL" from a program to the app (a plot to show).
+                mSession.onAppCommand(textParameter);
                 break;
             default:
                 unknownParameter(value);

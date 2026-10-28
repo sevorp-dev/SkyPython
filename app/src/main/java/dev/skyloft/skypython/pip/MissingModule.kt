@@ -64,6 +64,9 @@ val MODULE_TO_PIP: Map<String, String> = mapOf(
     "ldap" to "python-ldap",
     "googleapiclient" to "google-api-python-client",
     "pkg_resources" to "setuptools",
+    // matplotlib ships mpl_toolkits (mplot3d, axes_grid1) and pylab.
+    "mpl_toolkits" to "matplotlib",
+    "pylab" to "matplotlib",
 )
 
 /** The `pip install` name for an import name (see [MODULE_TO_PIP]); `x.y` uses `x`. */

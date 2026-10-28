@@ -79,6 +79,10 @@ data class TerminalState(
     val missing: MissingPackage? = null,
     /** Pictures the finished script saved or wrote over in its folder, newest first ([TerminalKind.Run]). */
     val images: List<File> = emptyList(),
+    /** The figures the program showed with `plt.show()` ([RunPlots]), oldest first. */
+    val plots: List<File> = emptyList(),
+    /** New figures arrived: the viewer should open (or move) to this index of [plots]; see [TerminalViewModel.plotOpened]. */
+    val showPlot: Int? = null,
 ) {
     fun actions(kind: TerminalKind): OutputActions = OutputActions.of(kind, running, hasOutput)
 
@@ -447,7 +451,9 @@ class TerminalViewModel(
     private fun start() {
         if (kind == TerminalKind.Run && _state.value.script == null) return
         startJob = viewModelScope.launch {
-            _state.update { it.copy(installError = null, startError = null, exitCode = null, missing = null, images = emptyList()) }
+            _state.update {
+                it.copy(installError = null, startError = null, exitCode = null, missing = null, images = emptyList(), plots = emptyList(), showPlot = null)
+            }
             val p = paths ?: run {
                 _state.update { it.copy(installing = true) }
                 val result = install()
@@ -488,6 +494,28 @@ class TerminalViewModel(
             _screenText.value = ""
         }
     }
+
+    /** The program sent "ESC ] 7777 ; [text]" from [session]: figures to show ([RunPlots]). */
+    internal fun onAppCommand(session: TerminalSession?, text: String) {
+        if (session != null && session !== _state.value.session) return
+        _state.update { RunPlots.received(it, text) ?: return }
+    }
+
+    /** The viewer opened (or moved to) [TerminalState.showPlot]. */
+    fun plotOpened() {
+        if (_state.value.showPlot != null) _state.update { it.copy(showPlot = null) }
+    }
+
+    /**
+     * Save to project: a copy of [plot] next to the script (the interpreter's and the shell's go to
+     * the project folder). @return the new file, or the error, for the viewer to report.
+     */
+    suspend fun savePlot(plot: File): Result<File> = runCatching {
+        withContext(Dispatchers.IO) { RunPlots.saveCopy(plot, OutputFiles.saveDir(_state.value.script, projectsRoot)) }
+    }
+
+    /** [file] as the user knows it: relative to the projects' parent, like [saveOutput]'s message. */
+    fun displayPath(file: File): String = file.relativeToOrSelf(projectsRoot.parentFile ?: projectsRoot).path
 
     /** After a run: the pictures it saved in its folder ([TerminalState.images]). */
     private fun findNewImages(session: TerminalSession) {
@@ -562,6 +590,10 @@ class TerminalViewModel(
         }
 
         override fun onBell(session: TerminalSession) = Unit
+
+        override fun onAppCommand(session: TerminalSession, text: String) {
+            this@TerminalViewModel.onAppCommand(session, text)
+        }
 
         override fun onColorsChanged(session: TerminalSession) {
             view?.invalidate()

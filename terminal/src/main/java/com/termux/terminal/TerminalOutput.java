@@ -29,4 +29,11 @@ public abstract class TerminalOutput {
 
     public abstract void onColorsChanged();
 
+    /**
+     * SkyPython: a program sent "ESC ] {@value TerminalEmulator#APP_OSC} ; text" (for example a plot
+     * it rendered). Called on the thread that feeds the emulator; nothing is drawn for it.
+     */
+    public void onAppCommand(String text) {
+    }
+
 }

@@ -84,6 +84,7 @@ import androidx.compose.material.icons.outlined.VerticalAlignTop
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.InsertChart
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -174,6 +175,8 @@ fun TerminalScreen(
     pip: PipViewModel? = null,
     /** A picture the finished script saved was tapped (Run only). */
     onOpenImage: (File) -> Unit = {},
+    /** Show [TerminalState.plots] from this index: new figures arrived, or one of their chips was tapped. */
+    onOpenPlots: (Int) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var installing by remember { mutableStateOf<MissingPackage?>(null) }
@@ -193,6 +196,14 @@ fun TerminalScreen(
 
     val saveAs = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
         if (uri != null) viewModel.saveOutputTo(uri)
+    }
+
+    // plt.show(): the figures open at once, like windows on a computer; Back returns here.
+    val openPlots by rememberUpdatedState(onOpenPlots)
+    LaunchedEffect(state.showPlot) {
+        val index = state.showPlot ?: return@LaunchedEffect
+        viewModel.plotOpened()
+        openPlots(index)
     }
 
     val currentOpenInEditor by rememberUpdatedState(onOpenInEditor)
@@ -284,6 +295,7 @@ fun TerminalScreen(
                     }
                 }
             }
+            if (state.plots.isNotEmpty()) PlotsRow(state.plots, onOpenPlots)
             if (kind == TerminalKind.Run && !state.running && state.exitCode != null) {
                 val missing = state.missing
                 if (missing != null && pip != null) {
@@ -424,6 +436,45 @@ private fun RunImagesRow(images: List<File>, onOpen: (File) -> Unit) {
                 modifier = Modifier
                     .widthIn(max = 220.dp)
                     .testTag(RUN_IMAGE_CHIP_TAG)
+                    .semantics { contentDescription = description },
+            )
+        }
+    }
+}
+
+/** Test tag of a figure's chip under the output. */
+const val PLOT_CHIP_TAG = "plot_chip"
+
+/** Under the output: the figures the program showed; a tap opens the plot viewer at that one. */
+@Composable
+private fun PlotsRow(plots: List<File>, onOpen: (Int) -> Unit) {
+    val scroll = rememberScrollState()
+    // The newest figure in view.
+    LaunchedEffect(plots.size) { scroll.animateScrollTo(scroll.maxValue) }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(SlateBar)
+            .horizontalScroll(scroll)
+            .padding(start = 12.dp, end = 12.dp, top = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            stringResource(R.string.plot_figures_label),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        plots.forEachIndexed { index, plot ->
+            val label = RunPlots.label(plot)
+            val description = stringResource(R.string.plot_open, label)
+            AssistChip(
+                onClick = { onOpen(index) },
+                label = { Text(stringResource(R.string.plot_figure, label), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                leadingIcon = { Icon(Icons.Outlined.InsertChart, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                modifier = Modifier
+                    .widthIn(max = 220.dp)
+                    .testTag(PLOT_CHIP_TAG)
                     .semantics { contentDescription = description },
             )
         }

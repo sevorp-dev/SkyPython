@@ -4,6 +4,8 @@
     <files-path name="projects" path="projects/" />
     <cache-path name="run" path="run/" />
     <cache-path name="share" path="share/" />
+    <!-- Figures plt.show() saved (the matplotlib backend, runtime PlotBackend). -->
+    <cache-path name="plots" path="plots/" />
     <cache-path name="reports" path="reports/" />
     <!-- Downloaded updates, for the system installer when a session can't be used. -->
     <cache-path name="updates" path="updates/" />

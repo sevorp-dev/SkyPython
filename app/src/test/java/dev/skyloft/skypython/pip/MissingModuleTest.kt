@@ -75,6 +75,10 @@ class MissingModuleTest {
             "magic" to "python-magic",
             "usb" to "pyusb",
             "win32api" to "pywin32",
+            "mpl_toolkits" to "matplotlib",
+            "mpl_toolkits.mplot3d" to "matplotlib",
+            "pylab" to "matplotlib",
+            "matplotlib" to "matplotlib",
         )
         for ((module, pip) in expected) assertEquals(module, pip, pipNameForModule(module))
     }
