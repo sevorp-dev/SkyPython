@@ -216,7 +216,7 @@
     <string name="pip_pkg_networkx">Графи й мережі</string>
     <string name="pip_pkg_prompt_toolkit">Інтерактивне введення в командному рядку</string>
     <string name="pip_pkg_jinja2">Текстові й HTML-шаблони</string>
-    <string name="pip_pkg_pillow">Зображення (потрібен нативний код)</string>
+    <string name="pip_pkg_pillow">Зображення та фото (нативний код)</string>
     <string name="pip_pkg_numpy">Швидкі масиви й математика (нативний код)</string>
 
     <!-- Samples -->

@@ -1,5 +1,7 @@
 package dev.skyloft.skypython.viewer
 
+import android.view.inputmethod.InputMethodManager
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -76,6 +78,11 @@ fun PlotViewerScreen(
     val pager = rememberPagerState(initialPage = initialPage.coerceIn(0, (plots.size - 1).coerceAtLeast(0))) { plots.size }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    // The terminal underneath keeps the keyboard open; a figure needs the whole screen.
+    val view = LocalView.current
+    LaunchedEffect(Unit) {
+        context.getSystemService(InputMethodManager::class.java)?.hideSoftInputFromWindow(view.windowToken, 0)
+    }
     LaunchedEffect(jumpTo) {
         val page = jumpTo ?: return@LaunchedEffect
         onJumped()

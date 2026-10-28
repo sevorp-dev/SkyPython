@@ -216,7 +216,7 @@
     <string name="pip_pkg_networkx">Graflar ve ağlar</string>
     <string name="pip_pkg_prompt_toolkit">Etkileşimli komut satırı girişi</string>
     <string name="pip_pkg_jinja2">Metin ve HTML şablonları</string>
-    <string name="pip_pkg_pillow">Görüntüler (yerel kod gerekir)</string>
+    <string name="pip_pkg_pillow">Görüntüler ve fotoğraflar (yerel kod)</string>
     <string name="pip_pkg_numpy">Hızlı diziler ve matematik (yerel kod)</string>
 
     <!-- Samples -->

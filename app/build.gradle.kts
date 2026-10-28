@@ -33,7 +33,7 @@ val skyApkVariant: String = skyAbis.singleOrNull() ?: "universal"
  *  - The last digit stays 0; a rebuilt APK of the same release could use 1-9 if ever needed.
  * Per-ABI codes only matter to stores that serve several APKs of one release (Play multi-APK).
  */
-val skyRelease = 5
+val skyRelease = 6
 
 android {
     namespace = "dev.skyloft.skypython"
@@ -45,7 +45,7 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = skyRelease * 10
-        versionName = "0.0.5"
+        versionName = "0.0.6"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             abiFilters += skyAbis

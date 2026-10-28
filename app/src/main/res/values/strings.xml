@@ -227,7 +227,7 @@
     <string name="pip_pkg_networkx">Graphs and networks</string>
     <string name="pip_pkg_prompt_toolkit">Interactive command-line input</string>
     <string name="pip_pkg_jinja2">Text and HTML templates</string>
-    <string name="pip_pkg_pillow">Images (needs native code)</string>
+    <string name="pip_pkg_pillow">Images and photos (native code)</string>
     <string name="pip_pkg_numpy">Fast arrays and math (native code)</string>
 
     <!-- Samples -->

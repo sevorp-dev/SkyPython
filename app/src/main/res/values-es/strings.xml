@@ -216,7 +216,7 @@
     <string name="pip_pkg_networkx">Grafos y redes</string>
     <string name="pip_pkg_prompt_toolkit">Entrada interactiva en línea de comandos</string>
     <string name="pip_pkg_jinja2">Plantillas de texto y HTML</string>
-    <string name="pip_pkg_pillow">Imágenes (requiere código nativo)</string>
+    <string name="pip_pkg_pillow">Imágenes y fotos (código nativo)</string>
     <string name="pip_pkg_numpy">Arreglos y matemática rápidos (código nativo)</string>
 
     <!-- Samples -->

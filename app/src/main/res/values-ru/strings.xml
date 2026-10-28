@@ -214,7 +214,7 @@
     <string name="pip_pkg_networkx">Графы и сети</string>
     <string name="pip_pkg_prompt_toolkit">Интерактивный ввод в командной строке</string>
     <string name="pip_pkg_jinja2">Шаблоны текста и HTML</string>
-    <string name="pip_pkg_pillow">Изображения (нужен нативный код)</string>
+    <string name="pip_pkg_pillow">Изображения и фото (нативный код)</string>
     <string name="pip_pkg_numpy">Быстрые массивы и математика (нативный код)</string>
 
     <!-- Samples -->
