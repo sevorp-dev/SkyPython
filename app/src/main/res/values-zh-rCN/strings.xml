@@ -545,4 +545,11 @@
     <string name="settings_section_updates">更新</string>
     <string name="settings_auto_update">自动检查更新</string>
     <string name="settings_auto_update_summary">应用启动时在 GitHub 上检查新版本，每天最多两次</string>
+    <string name="settings_terminal_theme_auto">跟随应用</string>
+    <string name="settings_terminal_theme_light">浅色</string>
+    <string name="settings_section_appearance">外观</string>
+    <string name="settings_theme">主题</string>
+    <string name="settings_theme_system">跟随系统</string>
+    <string name="settings_theme_dark">深色</string>
+    <string name="settings_theme_light">浅色</string>
 </resources>

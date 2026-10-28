@@ -545,4 +545,11 @@
     <string name="settings_section_updates">Güncellemeler</string>
     <string name="settings_auto_update">Güncellemeleri otomatik denetle</string>
     <string name="settings_auto_update_summary">Uygulama açılırken GitHub’da yeni sürüm arar, günde en fazla iki kez</string>
+    <string name="settings_terminal_theme_auto">Uygulamayla aynı</string>
+    <string name="settings_terminal_theme_light">Açık</string>
+    <string name="settings_section_appearance">Görünüm</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system">Sistem</string>
+    <string name="settings_theme_dark">Koyu</string>
+    <string name="settings_theme_light">Açık</string>
 </resources>

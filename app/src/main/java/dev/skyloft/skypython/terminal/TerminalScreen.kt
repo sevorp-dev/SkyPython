@@ -446,7 +446,7 @@ private fun PlotsRow(plots: List<File>, onOpen: (Int) -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
-            .background(SlateBar)
+            .background(SkyTheme.colors.bar)
             .horizontalScroll(scroll)
             .padding(start = 12.dp, end = 12.dp, top = 4.dp),
         verticalAlignment = Alignment.CenterVertically,

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plot_figures_label">Diagramme</string>
+    <string name="plot_figure">Diagramm %1$s</string>
+    <string name="plot_open">Diagramm %1$s anzeigen</string>
+    <string name="plot_position">%1$d von %2$d</string>
+    <string name="plot_save">Im Projekt speichern</string>
+    <string name="plot_save_failed">Diagramm konnte nicht gespeichert werden: %1$s</string>
+</resources>

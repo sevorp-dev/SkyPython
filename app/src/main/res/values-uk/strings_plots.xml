@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plot_figures_label">Графіки</string>
+    <string name="plot_figure">Графік %1$s</string>
+    <string name="plot_open">Показати графік %1$s</string>
+    <string name="plot_position">%1$d з %2$d</string>
+    <string name="plot_save">Зберегти в проєкт</string>
+    <string name="plot_save_failed">Не вдалося зберегти графік: %1$s</string>
+</resources>

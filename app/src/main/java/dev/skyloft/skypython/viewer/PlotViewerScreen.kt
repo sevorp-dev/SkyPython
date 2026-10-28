@@ -42,8 +42,7 @@ import dev.skyloft.skypython.share.openWith
 import dev.skyloft.skypython.share.shareFile
 import dev.skyloft.skypython.terminal.RunPlots
 import dev.skyloft.skypython.ui.theme.Hairline
-import dev.skyloft.skypython.ui.theme.Ink
-import dev.skyloft.skypython.ui.theme.MutedText
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import dev.skyloft.skypython.ui.theme.skyTopBarColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -85,7 +84,7 @@ fun PlotViewerScreen(
     val current = plots.getOrNull(pager.currentPage)
 
     Scaffold(
-        containerColor = Ink,
+        containerColor = SkyTheme.colors.console,
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             Column {
@@ -103,7 +102,7 @@ fun PlotViewerScreen(
                                 Text(
                                     stringResource(R.string.plot_position, pager.currentPage + 1, plots.size),
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MutedText,
+                                    color = SkyTheme.colors.mutedText,
                                     maxLines = 1,
                                 )
                             }

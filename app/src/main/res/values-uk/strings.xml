@@ -545,4 +545,11 @@
     <string name="settings_section_updates">Оновлення</string>
     <string name="settings_auto_update">Автоматично перевіряти оновлення</string>
     <string name="settings_auto_update_summary">Шукає новий реліз на GitHub під час запуску застосунку, не частіше двох разів на день</string>
+    <string name="settings_terminal_theme_auto">Як у застосунку</string>
+    <string name="settings_terminal_theme_light">Світла</string>
+    <string name="settings_section_appearance">Оформлення</string>
+    <string name="settings_theme">Тема</string>
+    <string name="settings_theme_system">Системна</string>
+    <string name="settings_theme_dark">Темна</string>
+    <string name="settings_theme_light">Світла</string>
 </resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plot_figures_label">图表</string>
+    <string name="plot_figure">图表 %1$s</string>
+    <string name="plot_open">显示图表 %1$s</string>
+    <string name="plot_position">第 %1$d 张，共 %2$d 张</string>
+    <string name="plot_save">保存到项目</string>
+    <string name="plot_save_failed">无法保存图表：%1$s</string>
+</resources>

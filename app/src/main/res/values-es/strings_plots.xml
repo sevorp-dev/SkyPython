@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plot_figures_label">Gráficos</string>
+    <string name="plot_figure">Gráfico %1$s</string>
+    <string name="plot_open">Mostrar gráfico %1$s</string>
+    <string name="plot_position">%1$d de %2$d</string>
+    <string name="plot_save">Guardar en el proyecto</string>
+    <string name="plot_save_failed">No se pudo guardar el gráfico: %1$s</string>
+</resources>

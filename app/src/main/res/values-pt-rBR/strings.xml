@@ -545,4 +545,11 @@
     <string name="settings_section_updates">Atualizações</string>
     <string name="settings_auto_update">Verificar atualizações automaticamente</string>
     <string name="settings_auto_update_summary">Procura uma nova versão no GitHub quando o app inicia, no máximo duas vezes por dia</string>
+    <string name="settings_terminal_theme_auto">Igual ao app</string>
+    <string name="settings_terminal_theme_light">Claro</string>
+    <string name="settings_section_appearance">Aparência</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system">Sistema</string>
+    <string name="settings_theme_dark">Escuro</string>
+    <string name="settings_theme_light">Claro</string>
 </resources>
