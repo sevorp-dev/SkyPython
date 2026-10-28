@@ -72,7 +72,7 @@ on:
   # Pushing the branch `build-wheels` runs it with the defaults; "[skip publish]" in the
   # commit message builds and tests without publishing, "[packages: pandas]" (any list of
   # packages) builds only those. Matplotlib is tested against the PUBLISHED kiwisolver and
-  # contourpy wheels, so publish those first ("[packages: kiwisolver contourpy]"), then matplotlib.
+  # contourpy wheels, so publish those first ("[packages: kiwisolver contourpy]"), then matplotlib (it requires numpy, pillow, kiwisolver, contourpy).
   push:
     branches: [ build-wheels ]
     paths:
