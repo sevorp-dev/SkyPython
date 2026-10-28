@@ -1,0 +1,270 @@
+{
+  "schema": 1,
+  "python": "cp314",
+  "packages": {
+    "contourpy": [
+      {
+        "version": "1.4.0",
+        "abi": "arm64-v8a",
+        "file": "contourpy-1.4.0-cp314-cp314-android_24_arm64_v8a.whl",
+        "sha256": "925cd6bb9abfed11bcfaa999b53a4c1c38af9bd8198cb37020ad8bec97fb8478",
+        "size": 829331,
+        "requires": [
+          "numpy"
+        ],
+        "summary": "Python library for calculating contours of 2D quadrilateral grids"
+      },
+      {
+        "version": "1.4.0",
+        "abi": "x86_64",
+        "file": "contourpy-1.4.0-cp314-cp314-android_24_x86_64.whl",
+        "sha256": "feeeaebe374658c208a5710de55d09640530e0cbced62b093347e65a9665a7ea",
+        "size": 808067,
+        "requires": [
+          "numpy"
+        ],
+        "summary": "Python library for calculating contours of 2D quadrilateral grids"
+      },
+      {
+        "version": "1.4.0",
+        "abi": "armeabi-v7a",
+        "file": "contourpy-1.4.0-cp314-cp314-android_24_armeabi_v7a.whl",
+        "sha256": "8a499849897d3ce148ce848bf487878f78a6c175a492c01d1abe172256e3241e",
+        "size": 577075,
+        "requires": [
+          "numpy"
+        ],
+        "summary": "Python library for calculating contours of 2D quadrilateral grids"
+      },
+      {
+        "version": "1.4.0",
+        "abi": "x86",
+        "file": "contourpy-1.4.0-cp314-cp314-android_24_x86.whl",
+        "sha256": "eaccbc7f36fc79e3b45313bdfc003e0eda429a79774c6d8a9ee6ceee6143bf39",
+        "size": 663682,
+        "requires": [
+          "numpy"
+        ],
+        "summary": "Python library for calculating contours of 2D quadrilateral grids"
+      }
+    ],
+    "kiwisolver": [
+      {
+        "version": "1.5.1",
+        "abi": "arm64-v8a",
+        "file": "kiwisolver-1.5.1-cp314-cp314-android_24_arm64_v8a.whl",
+        "sha256": "f9174e30a3c473d7b79fea35c18f0659bdc3cf42cf151c71ea3cca219941f8a8",
+        "size": 596110,
+        "requires": [],
+        "summary": "A fast implementation of the Cassowary constraint solver"
+      },
+      {
+        "version": "1.5.1",
+        "abi": "x86_64",
+        "file": "kiwisolver-1.5.1-cp314-cp314-android_24_x86_64.whl",
+        "sha256": "5fd5fbf28916e78b3b54d6a282965f23f6dbf9f84c8d0c1c8e832a55f19d788e",
+        "size": 570683,
+        "requires": [],
+        "summary": "A fast implementation of the Cassowary constraint solver"
+      },
+      {
+        "version": "1.5.1",
+        "abi": "armeabi-v7a",
+        "file": "kiwisolver-1.5.1-cp314-cp314-android_24_armeabi_v7a.whl",
+        "sha256": "4d3e6bea8c305beaf1849375264760b8ac894603e0f04f93a9c9616480d6e9b8",
+        "size": 374534,
+        "requires": [],
+        "summary": "A fast implementation of the Cassowary constraint solver"
+      },
+      {
+        "version": "1.5.1",
+        "abi": "x86",
+        "file": "kiwisolver-1.5.1-cp314-cp314-android_24_x86.whl",
+        "sha256": "cd5d4e98a00d1d112d6e24dd94d6c50f4003c5f56a246a83e7a72a1550d9c634",
+        "size": 427622,
+        "requires": [],
+        "summary": "A fast implementation of the Cassowary constraint solver"
+      }
+    ],
+    "matplotlib": [
+      {
+        "version": "3.11.2",
+        "abi": "arm64-v8a",
+        "file": "matplotlib-3.11.2-cp314-cp314-android_24_arm64_v8a.whl",
+        "sha256": "d0441512fe942ffceeb75a1962d53123a5b2c3ebca35d0470584d85cc603f07a",
+        "size": 10004158,
+        "requires": [
+          "numpy",
+          "pillow",
+          "kiwisolver",
+          "contourpy"
+        ],
+        "summary": "Python plotting package"
+      },
+      {
+        "version": "3.11.2",
+        "abi": "x86_64",
+        "file": "matplotlib-3.11.2-cp314-cp314-android_24_x86_64.whl",
+        "sha256": "707228f6dcb68247de7c8c3198fd2e17a0bfe5f1f4e10c815448261284ea7871",
+        "size": 10022451,
+        "requires": [
+          "numpy",
+          "pillow",
+          "kiwisolver",
+          "contourpy"
+        ],
+        "summary": "Python plotting package"
+      },
+      {
+        "version": "3.11.2",
+        "abi": "armeabi-v7a",
+        "file": "matplotlib-3.11.2-cp314-cp314-android_24_armeabi_v7a.whl",
+        "sha256": "f606734faa4cf90b213f7ec7f6c73b2ff682327a8ed8d667de54f2a39578bfaa",
+        "size": 10429521,
+        "requires": [
+          "numpy",
+          "pillow",
+          "kiwisolver",
+          "contourpy"
+        ],
+        "summary": "Python plotting package"
+      },
+      {
+        "version": "3.11.2",
+        "abi": "x86",
+        "file": "matplotlib-3.11.2-cp314-cp314-android_24_x86.whl",
+        "sha256": "eb79110d59c8e6d6ee8b59250fed8049002ed2026586d3bf047b110a97f06ed4",
+        "size": 10979002,
+        "requires": [
+          "numpy",
+          "pillow",
+          "kiwisolver",
+          "contourpy"
+        ],
+        "summary": "Python plotting package"
+      }
+    ],
+    "numpy": [
+      {
+        "version": "2.5.4",
+        "abi": "arm64-v8a",
+        "file": "numpy-2.5.4-cp314-cp314-android_24_arm64_v8a.whl",
+        "sha256": "275915f9351babb7feef83e200ba5d30fb7fade31d64537791b4bb7a755a849e",
+        "size": 10941828,
+        "requires": [],
+        "summary": "Fundamental package for array computing in Python"
+      },
+      {
+        "version": "2.5.4",
+        "abi": "x86_64",
+        "file": "numpy-2.5.4-cp314-cp314-android_24_x86_64.whl",
+        "sha256": "5d8dc2a2bdcf8569cdd288430553776d0660a5fca7749f78f6bcd0909dcce37e",
+        "size": 13233673,
+        "requires": [],
+        "summary": "Fundamental package for array computing in Python"
+      },
+      {
+        "version": "2.5.4",
+        "abi": "armeabi-v7a",
+        "file": "numpy-2.5.4-cp314-cp314-android_24_armeabi_v7a.whl",
+        "sha256": "ec3f69c2eb049ec3387233ef38380e5b3a1b52811f9e90ce6a99bc6312882efd",
+        "size": 7223735,
+        "requires": [],
+        "summary": "Fundamental package for array computing in Python"
+      },
+      {
+        "version": "2.5.4",
+        "abi": "x86",
+        "file": "numpy-2.5.4-cp314-cp314-android_24_x86.whl",
+        "sha256": "b06ae43f7e6491a87484515ba95f956f757ed8afb479e7d8042b99ba1325fed9",
+        "size": 8564331,
+        "requires": [],
+        "summary": "Fundamental package for array computing in Python"
+      }
+    ],
+    "pandas": [
+      {
+        "version": "3.1.0",
+        "abi": "arm64-v8a",
+        "file": "pandas-3.1.0-cp314-cp314-android_24_arm64_v8a.whl",
+        "sha256": "6ab7e9baffa54eb348b814450f558ee029555dc122e28894b4305a7fc36d3795",
+        "size": 11797545,
+        "requires": [
+          "numpy"
+        ],
+        "summary": "Powerful data structures for data analysis, time series, and statistics"
+      },
+      {
+        "version": "3.1.0",
+        "abi": "x86_64",
+        "file": "pandas-3.1.0-cp314-cp314-android_24_x86_64.whl",
+        "sha256": "5a9a8c6ee7d7f5149cf582dbf1628dc2a0a792f1de56ee0f4ef1fec224b5978e",
+        "size": 12328809,
+        "requires": [
+          "numpy"
+        ],
+        "summary": "Powerful data structures for data analysis, time series, and statistics"
+      },
+      {
+        "version": "3.1.0",
+        "abi": "armeabi-v7a",
+        "file": "pandas-3.1.0-cp314-cp314-android_24_armeabi_v7a.whl",
+        "sha256": "871204fb7cf81050af91577d72a297db34b41c6864cdd781fd6530a1957414dc",
+        "size": 11624279,
+        "requires": [
+          "numpy"
+        ],
+        "summary": "Powerful data structures for data analysis, time series, and statistics"
+      },
+      {
+        "version": "3.1.0",
+        "abi": "x86",
+        "file": "pandas-3.1.0-cp314-cp314-android_24_x86.whl",
+        "sha256": "cdaf3776bd84bf68f2b483128c74a01cef725ec6d2999b65966090cd354b47ab",
+        "size": 12189239,
+        "requires": [
+          "numpy"
+        ],
+        "summary": "Powerful data structures for data analysis, time series, and statistics"
+      }
+    ],
+    "pillow": [
+      {
+        "version": "13.0.0",
+        "abi": "arm64-v8a",
+        "file": "pillow-13.0.0-cp314-cp314-android_24_arm64_v8a.whl",
+        "sha256": "00c614fa1a5ef094d8ae4e946cd75191bd86c1d052b2a72d3ae7844784088b0f",
+        "size": 2124238,
+        "requires": [],
+        "summary": "Python Imaging Library (fork)"
+      },
+      {
+        "version": "13.0.0",
+        "abi": "x86_64",
+        "file": "pillow-13.0.0-cp314-cp314-android_24_x86_64.whl",
+        "sha256": "a397db3252f72a839cac131d6c83d108c0747fb20a49f4d4c102da7d8f2e3586",
+        "size": 2227847,
+        "requires": [],
+        "summary": "Python Imaging Library (fork)"
+      },
+      {
+        "version": "13.0.0",
+        "abi": "armeabi-v7a",
+        "file": "pillow-13.0.0-cp314-cp314-android_24_armeabi_v7a.whl",
+        "sha256": "d61719b1f34a6dc2d48fd46f7fc72946b5a99f52dc453c8ca8f22275cb3e595b",
+        "size": 1867646,
+        "requires": [],
+        "summary": "Python Imaging Library (fork)"
+      },
+      {
+        "version": "13.0.0",
+        "abi": "x86",
+        "file": "pillow-13.0.0-cp314-cp314-android_24_x86.whl",
+        "sha256": "8a2b8f20865d8981ffb1935e2246c824236476ae1e45bf26058a0c47f176c2e7",
+        "size": 2321324,
+        "requires": [],
+        "summary": "Python Imaging Library (fork)"
+      }
+    ]
+  }
+}
