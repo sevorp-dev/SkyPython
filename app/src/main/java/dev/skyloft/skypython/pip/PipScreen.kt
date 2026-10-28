@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.pip
 
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -98,20 +99,13 @@ import dev.skyloft.skypython.ui.theme.ChipTone
 import dev.skyloft.skypython.ui.theme.CodeFont
 import dev.skyloft.skypython.ui.theme.Hairline
 import dev.skyloft.skypython.ui.theme.IconTile
-import dev.skyloft.skypython.ui.theme.Ink
 import dev.skyloft.skypython.ui.theme.LetterAvatar
-import dev.skyloft.skypython.ui.theme.MutedText
-import dev.skyloft.skypython.ui.theme.Orange
 import dev.skyloft.skypython.ui.theme.SectionLabel
 import dev.skyloft.skypython.ui.theme.SheetShape
 import dev.skyloft.skypython.ui.theme.SkyAlertDialog
 import dev.skyloft.skypython.ui.theme.SkyCard
 import dev.skyloft.skypython.ui.theme.SkyTopBar
-import dev.skyloft.skypython.ui.theme.SlateBar
-import dev.skyloft.skypython.ui.theme.SlateLine
-import dev.skyloft.skypython.ui.theme.SlateRaised
 import dev.skyloft.skypython.ui.theme.StatusChip
-import dev.skyloft.skypython.ui.theme.SuccessGreen
 import dev.skyloft.skypython.ui.theme.brandButtonColors
 import dev.skyloft.skypython.ui.theme.brandTonalButtonColors
 import dev.skyloft.skypython.ui.theme.floatingOutline
@@ -182,14 +176,14 @@ fun PipScreen(
         ) {
             PrimaryTabRow(
                 selectedTabIndex = state.tab.ordinal,
-                containerColor = SlateBar,
+                containerColor = SkyTheme.colors.bar,
                 contentColor = MaterialTheme.colorScheme.onSurface,
                 indicator = {
                     TabRowDefaults.PrimaryIndicator(
                         Modifier.tabIndicatorOffset(state.tab.ordinal, matchContentSize = false),
                         width = Dp.Unspecified,
                         height = 2.dp,
-                        color = Orange,
+                        color = SkyTheme.colors.accent,
                     )
                 },
                 divider = {},
@@ -343,7 +337,7 @@ private fun SearchTab(state: PipState, viewModel: PipViewModel) {
             }
             item(key = "intro") {
                 Row(Modifier.padding(top = 12.dp, start = 4.dp, end = 4.dp), verticalAlignment = Alignment.Top) {
-                    Icon(Icons.Outlined.Info, null, tint = MutedText, modifier = Modifier.padding(top = 2.dp).size(16.dp))
+                    Icon(Icons.Outlined.Info, null, tint = SkyTheme.colors.mutedText, modifier = Modifier.padding(top = 2.dp).size(16.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(
                         stringResource(R.string.pip_intro) + " " + stringResource(
@@ -367,7 +361,7 @@ private fun SectionHeader(text: String, count: Int? = null) {
         SectionLabel(text, Modifier.weight(1f, fill = false))
         if (count != null) {
             Spacer(Modifier.width(8.dp))
-            Text(count.toString(), color = MutedText, fontSize = 12.sp, fontFamily = CodeFont)
+            Text(count.toString(), color = SkyTheme.colors.mutedText, fontSize = 12.sp, fontFamily = CodeFont)
         }
     }
 }
@@ -376,16 +370,16 @@ private fun SectionHeader(text: String, count: Int? = null) {
 private fun SearchingCard() {
     SkyCard(Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = Orange)
+            CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = SkyTheme.colors.accent)
             Spacer(Modifier.width(12.dp))
-            Text(stringResource(R.string.pip_searching), style = MaterialTheme.typography.bodyMedium, color = MutedText)
+            Text(stringResource(R.string.pip_searching), style = MaterialTheme.typography.bodyMedium, color = SkyTheme.colors.mutedText)
         }
     }
 }
 
 @Composable
 private fun LookupCard(lookup: LookupResult, state: PipState, onInstall: (String) -> Unit) {
-    SkyCard(Modifier.fillMaxWidth(), border = if (lookup is LookupResult.Found) Orange.copy(alpha = 0.35f) else SlateLine) {
+    SkyCard(Modifier.fillMaxWidth(), border = if (lookup is LookupResult.Found) SkyTheme.colors.accent.copy(alpha = 0.35f) else SkyTheme.colors.line) {
         when (lookup) {
             is LookupResult.Found -> FoundProject(lookup.project, state, onInstall)
             is LookupResult.NotFound -> NoticeRow(
@@ -474,7 +468,7 @@ private fun ColumnScope.FoundProject(project: PyPiProject, state: PipState, onIn
             IconLine(
                 Icons.Outlined.CheckCircle,
                 stringResource(R.string.pip_prebuilt_line, prebuilt.wheel.name, prebuilt.wheel.version),
-                SuccessGreen,
+                SkyTheme.colors.success,
             )
         }
         is PrebuiltStatus.OtherAbis -> IconLine(
@@ -484,8 +478,8 @@ private fun ColumnScope.FoundProject(project: PyPiProject, state: PipState, onIn
         )
         null -> {
             val (icon, text, color) = when (project.wheel) {
-                WheelSupport.Pure -> Triple(Icons.Outlined.CheckCircle, R.string.pip_wheel_pure, SuccessGreen)
-                WheelSupport.PrebuiltAndroid -> Triple(Icons.Outlined.CheckCircle, R.string.pip_wheel_android, SuccessGreen)
+                WheelSupport.Pure -> Triple(Icons.Outlined.CheckCircle, R.string.pip_wheel_pure, SkyTheme.colors.success)
+                WheelSupport.PrebuiltAndroid -> Triple(Icons.Outlined.CheckCircle, R.string.pip_wheel_android, SkyTheme.colors.success)
                 WheelSupport.SourceOnly -> Triple(Icons.Outlined.Info, R.string.pip_wheel_source, MaterialTheme.colorScheme.tertiary)
                 WheelSupport.NativeOnly -> Triple(Icons.Outlined.Warning, R.string.pip_wheel_native, MaterialTheme.colorScheme.error)
                 WheelSupport.NoFiles -> Triple(Icons.Outlined.Warning, R.string.pip_wheel_none, MaterialTheme.colorScheme.error)
@@ -577,7 +571,7 @@ private fun PopularCard(
                 installingThis -> CircularProgressIndicator(
                     Modifier.padding(horizontal = 18.dp).size(22.dp),
                     strokeWidth = 2.dp,
-                    color = Orange,
+                    color = SkyTheme.colors.accent,
                 )
                 else -> Button(
                     onClick = onInstall,
@@ -639,9 +633,9 @@ private fun EmptyState(icon: ImageVector, title: String, modifier: Modifier = Mo
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
-            Modifier.size(64.dp).background(SlateRaised, CircleShape).border(1.dp, SlateLine, CircleShape),
+            Modifier.size(64.dp).background(SkyTheme.colors.raised, CircleShape).border(1.dp, SkyTheme.colors.line, CircleShape),
             contentAlignment = Alignment.Center,
-        ) { Icon(icon, contentDescription = null, tint = MutedText, modifier = Modifier.size(28.dp)) }
+        ) { Icon(icon, contentDescription = null, tint = SkyTheme.colors.mutedText, modifier = Modifier.size(28.dp)) }
         Spacer(Modifier.height(16.dp))
         Text(title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
         if (hint != null) {
@@ -649,7 +643,7 @@ private fun EmptyState(icon: ImageVector, title: String, modifier: Modifier = Mo
             Text(
                 hint,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MutedText,
+                color = SkyTheme.colors.mutedText,
                 textAlign = TextAlign.Center,
             )
         }
@@ -662,7 +656,7 @@ private fun EmptyState(icon: ImageVector, title: String, modifier: Modifier = Mo
 private fun InstalledTab(state: PipState, viewModel: PipViewModel) {
     Column(Modifier.fillMaxSize()) {
         if (state.loading && state.packages.isNotEmpty()) {
-            LinearProgressIndicator(Modifier.fillMaxWidth(), color = Orange, trackColor = SlateBar)
+            LinearProgressIndicator(Modifier.fillMaxWidth(), color = SkyTheme.colors.accent, trackColor = SkyTheme.colors.bar)
         }
         state.listError?.let {
             SkyCard(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 12.dp)) {
@@ -672,9 +666,9 @@ private fun InstalledTab(state: PipState, viewModel: PipViewModel) {
         when {
             state.packages.isEmpty() && state.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CircularProgressIndicator(Modifier.size(32.dp), strokeWidth = 3.dp, color = Orange)
+                    CircularProgressIndicator(Modifier.size(32.dp), strokeWidth = 3.dp, color = SkyTheme.colors.accent)
                     Spacer(Modifier.height(16.dp))
-                    Text(stringResource(R.string.pip_loading_packages), color = MutedText, style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.pip_loading_packages), color = SkyTheme.colors.mutedText, style = MaterialTheme.typography.bodyMedium)
                 }
             }
             state.packages.isEmpty() && state.listError == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -693,11 +687,11 @@ private fun InstalledTab(state: PipState, viewModel: PipViewModel) {
                     Row(Modifier.padding(start = 4.dp, end = 4.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                         SectionLabel(stringResource(R.string.pip_tab_installed))
                         Spacer(Modifier.width(8.dp))
-                        Text(state.packages.size.toString(), color = MutedText, fontSize = 12.sp, fontFamily = CodeFont)
+                        Text(state.packages.size.toString(), color = SkyTheme.colors.mutedText, fontSize = 12.sp, fontFamily = CodeFont)
                         Spacer(Modifier.weight(1f))
                         when {
                             state.checkingUpdates -> {
-                                CircularProgressIndicator(Modifier.size(12.dp), strokeWidth = 1.5.dp, color = MutedText)
+                                CircularProgressIndicator(Modifier.size(12.dp), strokeWidth = 1.5.dp, color = SkyTheme.colors.mutedText)
                                 Spacer(Modifier.width(6.dp))
                                 StatusText(stringResource(R.string.pip_checking_updates))
                             }
@@ -769,7 +763,7 @@ private fun PackageCard(
                 }
             }
             if (busy) {
-                CircularProgressIndicator(Modifier.padding(12.dp).size(20.dp), strokeWidth = 2.dp, color = Orange)
+                CircularProgressIndicator(Modifier.padding(12.dp).size(20.dp), strokeWidth = 2.dp, color = SkyTheme.colors.accent)
             } else {
                 if (update != null) {
                     Spacer(Modifier.width(4.dp))
@@ -816,7 +810,7 @@ private fun DetailsSheet(details: DetailsState, state: PipState, viewModel: PipV
                 StatusChip(stringResource(R.string.pip_update_available, it), tone = ChipTone.Accent, icon = Icons.Outlined.Upgrade)
             }
             Spacer(Modifier.height(16.dp))
-            if (details.loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Orange, trackColor = SlateBar)
+            if (details.loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = SkyTheme.colors.accent, trackColor = SkyTheme.colors.bar)
             details.error?.let {
                 Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, fontFamily = CodeFont)
             }
@@ -888,7 +882,7 @@ private fun RequirementsTab(state: PipState, viewModel: PipViewModel, currentFil
     }
     val openFile = openFileState.value
     Column(Modifier.fillMaxSize()) {
-        if (state.scanningFiles) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Orange, trackColor = SlateBar)
+        if (state.scanningFiles) LinearProgressIndicator(Modifier.fillMaxWidth(), color = SkyTheme.colors.accent, trackColor = SkyTheme.colors.bar)
         LazyColumn(
             Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 12.dp, bottom = 16.dp),
@@ -896,7 +890,7 @@ private fun RequirementsTab(state: PipState, viewModel: PipViewModel, currentFil
         ) {
             item(key = "intro") {
                 Row(Modifier.padding(horizontal = 4.dp), verticalAlignment = Alignment.Top) {
-                    Icon(Icons.Outlined.Info, null, tint = MutedText, modifier = Modifier.padding(top = 2.dp).size(16.dp))
+                    Icon(Icons.Outlined.Info, null, tint = SkyTheme.colors.mutedText, modifier = Modifier.padding(top = 2.dp).size(16.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(
                         stringResource(R.string.pip_req_intro),
@@ -971,12 +965,12 @@ private fun OperationPanel(state: PipState, onClose: () -> Unit) {
     val running = state.running
     val outcome = state.outcome
     val accent = when {
-        running != null -> Orange.copy(alpha = 0.45f)
-        outcome is InstallOutcome.Succeeded -> SuccessGreen.copy(alpha = 0.40f)
+        running != null -> SkyTheme.colors.accent.copy(alpha = 0.45f)
+        outcome is InstallOutcome.Succeeded -> SkyTheme.colors.success.copy(alpha = 0.40f)
         outcome is InstallOutcome.Failed -> MaterialTheme.colorScheme.error.copy(alpha = 0.45f)
-        else -> SlateLine
+        else -> SkyTheme.colors.line
     }
-    Box(Modifier.fillMaxWidth().background(SlateBar)) {
+    Box(Modifier.fillMaxWidth().background(SkyTheme.colors.bar)) {
         Column(Modifier.fillMaxWidth()) {
             Hairline()
             SkyCard(
@@ -990,12 +984,12 @@ private fun OperationPanel(state: PipState, onClose: () -> Unit) {
                 ) {
                     val (text, color) = when {
                         running != null -> runningText(running) to MaterialTheme.colorScheme.onSurface
-                        outcome is InstallOutcome.Succeeded -> doneText(outcome.operation) to SuccessGreen
+                        outcome is InstallOutcome.Succeeded -> doneText(outcome.operation) to SkyTheme.colors.success
                         outcome is InstallOutcome.Failed -> failedText(outcome.operation) to MaterialTheme.colorScheme.error
                         else -> "" to MaterialTheme.colorScheme.onSurface
                     }
                     when {
-                        running != null -> CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Orange)
+                        running != null -> CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = SkyTheme.colors.accent)
                         outcome is InstallOutcome.Succeeded -> Icon(Icons.Outlined.CheckCircle, null, tint = color, modifier = Modifier.size(18.dp))
                         outcome is InstallOutcome.Failed -> Icon(Icons.Outlined.Error, null, tint = color, modifier = Modifier.size(18.dp))
                     }
@@ -1021,8 +1015,8 @@ private fun OperationPanel(state: PipState, onClose: () -> Unit) {
                 if (running != null) {
                     LinearProgressIndicator(
                         Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(3.dp),
-                        color = Orange,
-                        trackColor = SlateRaised,
+                        color = SkyTheme.colors.accent,
+                        trackColor = SkyTheme.colors.raised,
                         strokeCap = StrokeCap.Round,
                     )
                     Spacer(Modifier.height(8.dp))
@@ -1055,8 +1049,8 @@ private fun InstallLog(log: String, modifier: Modifier) {
     LaunchedEffect(log) { scroll.scrollTo(scroll.maxValue) }
     Box(
         modifier
-            .background(Ink, RoundedCornerShape(8.dp))
-            .border(1.dp, SlateLine, RoundedCornerShape(8.dp))
+            .background(SkyTheme.colors.console, RoundedCornerShape(8.dp))
+            .border(1.dp, SkyTheme.colors.line, RoundedCornerShape(8.dp))
             .padding(10.dp)
             .verticalScroll(scroll),
     ) {

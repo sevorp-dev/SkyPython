@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.about
 
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -48,12 +49,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import dev.skyloft.skypython.R
 import dev.skyloft.skypython.ui.theme.BrandText
-import dev.skyloft.skypython.ui.theme.BrandTextBrush
-import dev.skyloft.skypython.ui.theme.OrangeSoft
 import dev.skyloft.skypython.ui.theme.IconTile
 import dev.skyloft.skypython.ui.theme.SectionLabel
 import dev.skyloft.skypython.ui.theme.Hairline
-import dev.skyloft.skypython.ui.theme.TextBright
 import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.SpanStyle
@@ -116,14 +114,14 @@ fun AboutScreen(
                     contentDescription = null,
                     modifier = Modifier.size(width = 128.dp, height = 90.dp),
                 )
-                BrandText(stringResource(R.string.app_name), fontSize = 32.sp, fontWeight = FontWeight.Bold, brush = BrandTextBrush)
+                BrandText(stringResource(R.string.app_name), fontSize = 32.sp, fontWeight = FontWeight.Bold, brush = SkyTheme.colors.brandBrush)
                 // One Text, so a longer translation wraps instead of being cut off.
                 val start = stringResource(R.string.about_tagline_start)
                 val end = stringResource(R.string.about_tagline_end)
                 Text(
                     buildAnnotatedString {
-                        withStyle(SpanStyle(color = TextBright)) { append(start) }
-                        withStyle(SpanStyle(color = OrangeSoft, fontWeight = FontWeight.Medium)) { append(end) }
+                        withStyle(SpanStyle(color = SkyTheme.colors.text)) { append(start) }
+                        withStyle(SpanStyle(color = SkyTheme.colors.accentText, fontWeight = FontWeight.Medium)) { append(end) }
                     },
                     fontSize = 17.sp,
                     textAlign = TextAlign.Center,

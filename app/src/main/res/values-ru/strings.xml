@@ -414,6 +414,13 @@
     <string name="settings_terminal_theme">Тема</string>
     <string name="settings_terminal_theme_dark">Тёмная</string>
     <string name="settings_terminal_theme_black">Чёрная</string>
+    <string name="settings_terminal_theme_auto">Как в приложении</string>
+    <string name="settings_terminal_theme_light">Светлая</string>
+    <string name="settings_section_appearance">Оформление</string>
+    <string name="settings_theme">Тема</string>
+    <string name="settings_theme_system">Как в системе</string>
+    <string name="settings_theme_dark">Тёмная</string>
+    <string name="settings_theme_light">Светлая</string>
     <string name="terminal_command_hint">Введите команду…</string>
     <string name="samples_search">Поиск примеров</string>
     <string name="samples_search_hint">Поиск…</string>

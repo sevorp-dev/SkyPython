@@ -1,16 +1,10 @@
 package dev.skyloft.skypython.settings
 
-import dev.skyloft.skypython.ui.theme.CodeKeyword
-import dev.skyloft.skypython.ui.theme.CodeBlue
-import dev.skyloft.skypython.ui.theme.CodeControl
-import dev.skyloft.skypython.ui.theme.CodeString
-import dev.skyloft.skypython.ui.theme.CodeText
-import dev.skyloft.skypython.ui.theme.SlatePanel
-import dev.skyloft.skypython.ui.theme.OrangeSoft
-import dev.skyloft.skypython.ui.theme.MutedText
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Contrast
 import androidx.compose.material.icons.outlined.FormatSize
 import androidx.compose.material.icons.outlined.FontDownload
 import androidx.compose.material.icons.outlined.ExpandMore
@@ -81,13 +75,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.skyloft.skypython.ui.theme.SlateLine
-import dev.skyloft.skypython.ui.theme.SlateRaised
 import dev.skyloft.skypython.ui.theme.CardGroup
 import dev.skyloft.skypython.ui.theme.CardDivider
 import dev.skyloft.skypython.ui.theme.SkyAlertDialog
 import dev.skyloft.skypython.ui.theme.skyFieldColors
-import dev.skyloft.skypython.ui.theme.Slate
 import dev.skyloft.skypython.ui.theme.IconTile
 import dev.skyloft.skypython.ui.theme.SectionLabel
 import dev.skyloft.skypython.ui.theme.brandSwitchColors
@@ -106,7 +97,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import dev.skyloft.skypython.locale.AppLanguage
 import dev.skyloft.skypython.locale.AppLocale
-import dev.skyloft.skypython.ui.theme.Orange
 
 /** Settings list. Changes are saved immediately. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -134,6 +124,17 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 24.dp),
         ) {
+            SectionTitle(stringResource(R.string.settings_section_appearance))
+            CardGroup {
+            ChoiceRow(
+                icon = Icons.Outlined.Contrast,
+                title = stringResource(R.string.settings_theme),
+                selected = s.appTheme,
+                options = AppTheme.entries,
+                label = { it.label() },
+                onSelect = { v -> update { it.copy(appTheme = v) } },
+            )
+            }
             SectionTitle(stringResource(R.string.settings_section_editor))
             CardGroup {
             FontSizeRow(
@@ -257,8 +258,17 @@ private fun CodeFontChoice.label(): String = when (this) {
 
 @Composable
 private fun TerminalTheme.label(): String = when (this) {
+    TerminalTheme.Auto -> stringResource(R.string.settings_terminal_theme_auto)
+    TerminalTheme.Light -> stringResource(R.string.settings_terminal_theme_light)
     TerminalTheme.Dark -> stringResource(R.string.settings_terminal_theme_dark)
     TerminalTheme.Black -> stringResource(R.string.settings_terminal_theme_black)
+}
+
+@Composable
+private fun AppTheme.label(): String = when (this) {
+    AppTheme.System -> stringResource(R.string.settings_theme_system)
+    AppTheme.Dark -> stringResource(R.string.settings_theme_dark)
+    AppTheme.Light -> stringResource(R.string.settings_theme_light)
 }
 
 /** A setting with a few named values: the current one on the right, a menu to pick another. */
@@ -284,15 +294,15 @@ private fun <T> ChoiceRow(
         Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
         Box {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(label(selected), style = MaterialTheme.typography.bodyMedium, color = OrangeSoft)
-                Icon(Icons.Outlined.ExpandMore, contentDescription = null, tint = MutedText, modifier = Modifier.padding(start = 4.dp).size(20.dp))
+                Text(label(selected), style = MaterialTheme.typography.bodyMedium, color = SkyTheme.colors.accentText)
+                Icon(Icons.Outlined.ExpandMore, contentDescription = null, tint = SkyTheme.colors.mutedText, modifier = Modifier.padding(start = 4.dp).size(20.dp))
             }
             DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
                 options.forEach { option ->
                     DropdownMenuItem(
                         text = { Text(label(option)) },
                         trailingIcon = if (option == selected) {
-                            { Icon(Icons.Outlined.Check, contentDescription = null, tint = OrangeSoft) }
+                            { Icon(Icons.Outlined.Check, contentDescription = null, tint = SkyTheme.colors.accentText) }
                         } else {
                             null
                         },
@@ -394,8 +404,8 @@ private fun FontSizeRow(sizeSp: Int, min: Int, max: Int, onChange: (Int) -> Unit
         }
         Row(
             Modifier
-                .background(SlateRaised, RoundedCornerShape(24.dp))
-                .border(1.dp, SlateLine, RoundedCornerShape(24.dp)),
+                .background(SkyTheme.colors.raised, RoundedCornerShape(24.dp))
+                .border(1.dp, SkyTheme.colors.line, RoundedCornerShape(24.dp)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = { onChange(sizeSp - 1) }, enabled = sizeSp > min) {
@@ -417,21 +427,22 @@ private fun FontSizeRow(sizeSp: Int, min: Int, max: Int, onChange: (Int) -> Unit
 /** One line of highlighted Python at the chosen size and font, so the user sees the effect immediately. */
 @Composable
 private fun CodePreview(sizeSp: Int, font: CodeFontChoice) {
-    val code = remember {
+    val c = SkyTheme.colors
+    val code = remember(c) {
         buildAnnotatedString {
-            withStyle(SpanStyle(color = CodeKeyword)) { append("def ") }
-            withStyle(SpanStyle(color = CodeBlue)) { append("greet") }
+            withStyle(SpanStyle(color = c.codeKeyword)) { append("def ") }
+            withStyle(SpanStyle(color = c.codeFunction)) { append("greet") }
             append("(name):  ")
-            withStyle(SpanStyle(color = CodeControl)) { append("return ") }
-            withStyle(SpanStyle(color = CodeString)) { append("f\"Hi {name}\"") }
+            withStyle(SpanStyle(color = c.codeControl)) { append("return ") }
+            withStyle(SpanStyle(color = c.codeString)) { append("f\"Hi {name}\"") }
         }
     }
     Row(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
-            .background(Slate, RoundedCornerShape(12.dp))
-            .border(1.dp, SlateLine, RoundedCornerShape(12.dp))
+            .background(c.codeBackground, RoundedCornerShape(12.dp))
+            .border(1.dp, SkyTheme.colors.line, RoundedCornerShape(12.dp))
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
@@ -439,7 +450,7 @@ private fun CodePreview(sizeSp: Int, font: CodeFontChoice) {
             code,
             fontFamily = if (font == CodeFontChoice.SystemMono) FontFamily.Monospace else CodeFont,
             fontSize = sizeSp.sp,
-            color = CodeText,
+            color = SkyTheme.colors.codeText,
             softWrap = false,
         )
     }
@@ -528,7 +539,7 @@ private fun LanguageRow() {
                         RadioButton(
                             selected = language == current,
                             onClick = null,
-                            colors = RadioButtonDefaults.colors(selectedColor = Orange),
+                            colors = RadioButtonDefaults.colors(selectedColor = SkyTheme.colors.accent),
                         )
                         Text(language.label(), style = MaterialTheme.typography.bodyLarge)
                     }

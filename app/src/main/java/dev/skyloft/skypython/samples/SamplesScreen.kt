@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.samples
 
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import dev.skyloft.skypython.ui.rememberMainScope
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -75,13 +76,7 @@ import dev.skyloft.skypython.ui.theme.SkyCard
 import dev.skyloft.skypython.ui.theme.TintedIcon
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
-import dev.skyloft.skypython.ui.theme.MutedText
-import dev.skyloft.skypython.ui.theme.Orange
 import dev.skyloft.skypython.ui.theme.SkyTopBar
-import dev.skyloft.skypython.ui.theme.SlateLine
-import dev.skyloft.skypython.ui.theme.SlateBar
-import dev.skyloft.skypython.ui.theme.SlateOutline
-import dev.skyloft.skypython.ui.theme.TextBright
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -139,7 +134,7 @@ fun SamplesScreen(projectsRoot: File, onOpen: (File) -> Unit, onBack: () -> Unit
         val list = remember(all, query) { filterSamples(all, query) }
         if (list.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(padding).padding(32.dp), contentAlignment = Alignment.Center) {
-                Text(stringResource(R.string.samples_no_match, query.trim()), color = MutedText)
+                Text(stringResource(R.string.samples_no_match, query.trim()), color = SkyTheme.colors.mutedText)
             }
             return@Scaffold
         }
@@ -214,8 +209,8 @@ private fun SearchField(query: String, onChange: (String) -> Unit) {
         value = query,
         onValueChange = onChange,
         singleLine = true,
-        textStyle = TextStyle(color = TextBright, fontSize = 15.sp),
-        cursorBrush = SolidColor(Orange),
+        textStyle = TextStyle(color = SkyTheme.colors.text, fontSize = 15.sp),
+        cursorBrush = SolidColor(SkyTheme.colors.accent),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         modifier = Modifier
             .fillMaxWidth()
@@ -225,15 +220,15 @@ private fun SearchField(query: String, onChange: (String) -> Unit) {
         decorationBox = { inner ->
             Row(
                 Modifier
-                    .background(SlateBar, shape)
-                    .border(1.dp, SlateOutline, shape)
+                    .background(SkyTheme.colors.bar, shape)
+                    .border(1.dp, SkyTheme.colors.outline, shape)
                     .heightIn(min = 44.dp)
                     .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(Icons.Outlined.Search, contentDescription = null, tint = MutedText)
+                Icon(Icons.Outlined.Search, contentDescription = null, tint = SkyTheme.colors.mutedText)
                 Box(Modifier.padding(start = 10.dp).weight(1f)) {
-                    if (query.isEmpty()) Text(hint, color = MutedText, fontSize = 15.sp)
+                    if (query.isEmpty()) Text(hint, color = SkyTheme.colors.mutedText, fontSize = 15.sp)
                     inner()
                 }
             }

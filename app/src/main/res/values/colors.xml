@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="sky_background">#FF1E1F22</color>
-    <color name="sky_primary">#FFF5A962</color>
+    <!-- Window / splash background before Compose draws: the light window (see ui/theme/SkyColors.kt). -->
+    <color name="sky_background">#FFF7F8FA</color>
+    <color name="sky_primary">#FFB05400</color>
 </resources>

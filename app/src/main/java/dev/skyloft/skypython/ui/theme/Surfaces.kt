@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 // Surfaces that stand off the window: cards, chips, avatars, outlined floating layers. One
-// recipe everywhere — a step-up fill ([SlatePanel]) and a 1dp [SlateLine] edge, no shadows —
+// recipe everywhere — a step-up fill ([SkyColors.panel]) and a 1dp [SkyColors.line] edge, no shadows —
 // so grouped content reads as a unit without getting loud.
 
 val CardShape = RoundedCornerShape(12.dp)
@@ -42,15 +42,15 @@ val CardShape = RoundedCornerShape(12.dp)
 val SheetShape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
 
 /**
- * A raised group: [SlatePanel] with a hairline border and 12dp corners. Content is laid out in a
+ * A raised group: [SkyColors.panel] with a hairline border and 12dp corners. Content is laid out in a
  * column with [contentPadding]; [onClick] makes the whole card a button.
  */
 @Composable
 fun SkyCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
-    color: Color = SlatePanel,
-    border: Color = SlateLine,
+    color: Color = SkyTheme.colors.panel,
+    border: Color = SkyTheme.colors.line,
     contentPadding: Dp = 16.dp,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -61,7 +61,7 @@ fun SkyCard(
             modifier = modifier,
             shape = CardShape,
             color = color,
-            contentColor = TextBright,
+            contentColor = SkyTheme.colors.text,
             border = BorderStroke(1.dp, border),
             content = body,
         )
@@ -70,7 +70,7 @@ fun SkyCard(
             modifier = modifier,
             shape = CardShape,
             color = color,
-            contentColor = TextBright,
+            contentColor = SkyTheme.colors.text,
             border = BorderStroke(1.dp, border),
             content = body,
         )
@@ -89,9 +89,9 @@ fun StatusChip(
     mono: Boolean = false,
 ) {
     val (fill, edge, ink) = when (tone) {
-        ChipTone.Accent -> Triple(OrangeTint, Orange.copy(alpha = 0.45f), OrangeSoft)
-        ChipTone.Success -> Triple(SuccessGreen.copy(alpha = 0.12f), SuccessGreen.copy(alpha = 0.40f), SuccessGreen)
-        ChipTone.Muted -> Triple(SlateRaised, SlateLine, MutedText)
+        ChipTone.Accent -> Triple(SkyTheme.colors.accentTint, SkyTheme.colors.accent.copy(alpha = 0.45f), SkyTheme.colors.accentText)
+        ChipTone.Success -> Triple(SkyTheme.colors.success.copy(alpha = 0.12f), SkyTheme.colors.success.copy(alpha = 0.40f), SkyTheme.colors.success)
+        ChipTone.Muted -> Triple(SkyTheme.colors.raised, SkyTheme.colors.line, SkyTheme.colors.mutedText)
     }
     val shape = RoundedCornerShape(50)
     Row(
@@ -115,17 +115,12 @@ fun StatusChip(
     }
 }
 
-/** Calm tints for [LetterAvatar], picked by name so a package keeps its colour. */
-private val avatarTints = listOf(
-    Color(0xFFF5A962), // orange
-    Color(0xFF7FB4F0), // blue
-    Color(0xFF8FD19A), // green
-    Color(0xFFC3A6F0), // violet
-    Color(0xFFE8C46A), // amber
-    Color(0xFF6FCFC4), // teal
-)
-
-private fun tintFor(key: String): Color = avatarTints[Math.floorMod(key.lowercase().hashCode(), avatarTints.size)]
+/** A calm tint for [LetterAvatar] ([SkyColors.avatarTints]), picked by name so a package keeps its colour. */
+@Composable
+private fun tintFor(key: String): Color {
+    val tints = SkyTheme.colors.avatarTints
+    return tints[Math.floorMod(key.lowercase().hashCode(), tints.size)]
+}
 
 /** [icon] on a soft rounded square in a calm colour picked by [key] (sample cards). */
 @Composable
@@ -165,7 +160,8 @@ fun LetterAvatar(name: String, modifier: Modifier = Modifier, size: Dp = 40.dp) 
 }
 
 /** The hairline edge of a floating layer (dialog, sheet) so it doesn't melt into the scrim. */
-fun Modifier.floatingOutline(shape: Shape): Modifier = border(1.dp, SlateLine, shape)
+@Composable
+fun Modifier.floatingOutline(shape: Shape): Modifier = border(1.dp, SkyTheme.colors.line, shape)
 
 /** [AlertDialog] with the app's outlined, opaque surface. */
 @Composable
@@ -188,21 +184,21 @@ fun SkyAlertDialog(
         title = title,
         text = text,
         shape = shape,
-        containerColor = SlatePanel,
+        containerColor = SkyTheme.colors.panel,
     )
 }
 
 /** Text fields: a visible outline at rest, the orange edge when focused, a slightly raised fill. */
 @Composable
 fun skyFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
-    unfocusedBorderColor = SlateOutline,
-    focusedBorderColor = OrangeSoft,
-    unfocusedContainerColor = SlateBar,
-    focusedContainerColor = SlateBar,
-    disabledContainerColor = SlateBar,
-    errorContainerColor = SlateBar,
-    focusedLabelColor = OrangeSoft,
-    cursorColor = Orange,
+    unfocusedBorderColor = SkyTheme.colors.outline,
+    focusedBorderColor = SkyTheme.colors.accentText,
+    unfocusedContainerColor = SkyTheme.colors.bar,
+    focusedContainerColor = SkyTheme.colors.bar,
+    disabledContainerColor = SkyTheme.colors.bar,
+    errorContainerColor = SkyTheme.colors.bar,
+    focusedLabelColor = SkyTheme.colors.accentText,
+    cursorColor = SkyTheme.colors.accent,
 )
 
 /**
@@ -217,5 +213,5 @@ fun CardGroup(modifier: Modifier = Modifier, content: @Composable ColumnScope.()
 /** A hairline between rows of a [CardGroup], inset past the leading icon. */
 @Composable
 fun CardDivider(inset: Dp = 72.dp) {
-    HorizontalDivider(Modifier.padding(start = inset), thickness = 1.dp, color = SlateLine)
+    HorizontalDivider(Modifier.padding(start = inset), thickness = 1.dp, color = SkyTheme.colors.line)
 }

@@ -20,21 +20,21 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import dev.skyloft.skypython.R
 
-/** Colours shared by every top bar: the IDE bar tone [SlateBar] over the darker page, light icons. */
+/** Colours shared by every top bar: the IDE bar tone [SkyColors.bar] over the darker page, light icons. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun skyTopBarColors() = TopAppBarDefaults.topAppBarColors(
-    containerColor = SlateBar,
-    scrolledContainerColor = SlateBar,
-    navigationIconContentColor = TextBright,
-    titleContentColor = TextBright,
-    actionIconContentColor = TextBright,
+    containerColor = SkyTheme.colors.bar,
+    scrolledContainerColor = SkyTheme.colors.bar,
+    navigationIconContentColor = SkyTheme.colors.text,
+    titleContentColor = SkyTheme.colors.text,
+    actionIconContentColor = SkyTheme.colors.text,
 )
 
 /** 1dp hairline under a bar or between sections. */
 @Composable
 fun Hairline(modifier: Modifier = Modifier) {
-    HorizontalDivider(modifier, thickness = 1.dp, color = SlateLine)
+    HorizontalDivider(modifier, thickness = 1.dp, color = SkyTheme.colors.line)
 }
 
 /** The one top bar of every secondary screen: back arrow, title, a [Hairline] under it. */

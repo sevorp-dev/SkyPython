@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.ui.nav
 
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -45,10 +46,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.remember
 import dev.skyloft.skypython.R
 import dev.skyloft.skypython.ui.theme.Hairline
-import dev.skyloft.skypython.ui.theme.MutedText
-import dev.skyloft.skypython.ui.theme.OrangeSoft
-import dev.skyloft.skypython.ui.theme.OrangeTint
-import dev.skyloft.skypython.ui.theme.SlateBar
 
 /** The five top-level screens of the bottom navigation bar, in bar order. [route] is the NavHost route. */
 enum class TopLevelDestination(val route: String, @param:StringRes val labelRes: Int, val icon: ImageVector) {
@@ -112,7 +109,7 @@ fun SkyBottomBar(
     Column(
         modifier
             .fillMaxWidth()
-            .background(SlateBar)
+            .background(SkyTheme.colors.bar)
             .testTag(BOTTOM_BAR_TAG),
     ) {
         Hairline()
@@ -147,7 +144,7 @@ private fun BottomItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val color = if (selected) OrangeSoft else MutedText
+    val color = if (selected) SkyTheme.colors.accentText else SkyTheme.colors.mutedText
     val label = stringResource(destination.labelRes)
     Column(
         modifier
@@ -166,7 +163,7 @@ private fun BottomItem(
         Box(
             Modifier
                 .size(width = 52.dp, height = 28.dp)
-                .background(if (selected) OrangeTint else Color.Transparent, RoundedCornerShape(14.dp)),
+                .background(if (selected) SkyTheme.colors.accentTint else Color.Transparent, RoundedCornerShape(14.dp)),
             contentAlignment = Alignment.Center,
         ) {
             // The label says it already; without a label the icon carries the name.

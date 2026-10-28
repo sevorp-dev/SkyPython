@@ -1,18 +1,14 @@
 package dev.skyloft.skypython.editor
 
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import dev.skyloft.skypython.project.friendlyPath
 import dev.skyloft.skypython.project.StorageRoot
 import dev.skyloft.skypython.project.StoragePermission
-import dev.skyloft.skypython.ui.theme.ErrorSurface
-import dev.skyloft.skypython.ui.theme.ErrorRed
-import dev.skyloft.skypython.ui.theme.OnErrorSurface
 import dev.skyloft.skypython.ui.keepsSnackbarsAbove
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import dev.skyloft.skypython.ui.theme.brandButtonColors
-import dev.skyloft.skypython.ui.theme.SuccessGreen
 import dev.skyloft.skypython.ui.theme.SectionLabel
-import dev.skyloft.skypython.ui.theme.Orange
 import dev.skyloft.skypython.ui.theme.CodeFont
 import dev.skyloft.skypython.runtime.BuildConfig
 import androidx.compose.ui.text.style.TextAlign
@@ -131,15 +127,10 @@ import dev.skyloft.skypython.ui.drawer.DrawerAction
 import dev.skyloft.skypython.ui.drawer.SkyDrawer
 import dev.skyloft.skypython.update.UpdateDot
 import androidx.compose.foundation.layout.offset
-import dev.skyloft.skypython.ui.theme.SlateBar
 import dev.skyloft.skypython.ui.theme.BrandText
 import dev.skyloft.skypython.ui.theme.Hairline
-import dev.skyloft.skypython.ui.theme.OrangeSoft
-import dev.skyloft.skypython.ui.theme.TextBright
-import dev.skyloft.skypython.ui.theme.MutedText
 import dev.skyloft.skypython.ui.theme.RunButton
 import dev.skyloft.skypython.ui.theme.skyTopBarColors
-import dev.skyloft.skypython.ui.theme.Slate
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
@@ -151,13 +142,13 @@ import java.io.File
 /** How long a traceback jump waits for the editor view to show the opened tab. */
 private const val JUMP_SETTLE_MILLIS = 150L
 
-private val TabSelected = TextBright
-private val TabIdle = MutedText
-private val SubtitleColor = MutedText
+private val TabSelected: Color @Composable get() = SkyTheme.colors.text
+private val TabIdle: Color @Composable get() = SkyTheme.colors.mutedText
+private val SubtitleColor: Color @Composable get() = SkyTheme.colors.mutedText
 // Error line: a flat, muted red band (warm, so it sits well beside the orange).
-private val ProblemBackground = ErrorSurface
-private val ProblemRed = ErrorRed
-private val ProblemText = OnErrorSurface
+private val ProblemBackground: Color @Composable get() = SkyTheme.colors.errorSurface
+private val ProblemRed: Color @Composable get() = SkyTheme.colors.error
+private val ProblemText: Color @Composable get() = SkyTheme.colors.onErrorSurface
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -429,9 +420,9 @@ fun EditorScreen(
         },
     ) {
         Scaffold(
-            containerColor = Slate,
+            containerColor = SkyTheme.colors.window,
             topBar = {
-                Column(Modifier.background(SlateBar)) {
+                Column(Modifier.background(SkyTheme.colors.bar)) {
                     TopAppBar(
                         colors = skyTopBarColors(),
                         navigationIcon = {
@@ -570,7 +561,7 @@ fun EditorScreen(
             bottomBar = {
                 // Library code (read-only): nothing to type or fix.
                 if (current != null && !current.readOnly) {
-                    Column(Modifier.keepsSnackbarsAbove().background(SlateBar).navigationBarsPadding().imePadding()) {
+                    Column(Modifier.keepsSnackbarsAbove().background(SkyTheme.colors.bar).navigationBarsPadding().imePadding()) {
                         Hairline()
                         DiagnosticsMapping.firstError(problems)?.let { error ->
                             ProblemLine(error, onClick = { controller.goTo(error) })
@@ -707,7 +698,7 @@ private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel, onClose: (
         tabX[state.currentId]?.let { x -> scroll.animateScrollTo((x - 48).coerceAtLeast(0)) }
     }
     Row(
-        Modifier.fillMaxWidth().background(SlateBar).height(44.dp),
+        Modifier.fillMaxWidth().background(SkyTheme.colors.bar).height(44.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
@@ -718,7 +709,7 @@ private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel, onClose: (
                 var menu by remember(doc.id) { mutableStateOf(false) }
                 val selected = doc.id == state.currentId
                 val label = viewModel.labelFor(doc, state.docs)
-                val chip by animateColorAsState(if (selected) Slate else Color.Transparent, label = "tab")
+                val chip by animateColorAsState(if (selected) SkyTheme.colors.window else Color.Transparent, label = "tab")
                 Box(
                     Modifier
                         .onGloballyPositioned { tabX[doc.id] = it.positionInParent().x.toInt() }
@@ -755,7 +746,7 @@ private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel, onClose: (
                             Icon(
                                 Icons.Outlined.Close,
                                 contentDescription = null,
-                                tint = if (selected) MutedText else MutedText.copy(alpha = 0.7f),
+                                tint = if (selected) SkyTheme.colors.mutedText else SkyTheme.colors.mutedText.copy(alpha = 0.7f),
                                 modifier = Modifier.size(16.dp),
                             )
                         }
@@ -768,7 +759,7 @@ private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel, onClose: (
                                     .padding(horizontal = 10.dp)
                                     .fillMaxWidth()
                                     .height(2.dp)
-                                    .background(Orange, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)),
+                                    .background(SkyTheme.colors.accent, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)),
                             )
                         }
                     }
@@ -782,7 +773,7 @@ private fun DocTabs(state: EditorUiState, viewModel: EditorViewModel, onClose: (
             }
         }
         IconButton(onClick = onNew) {
-            Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.new_file), tint = MutedText)
+            Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.new_file), tint = SkyTheme.colors.mutedText)
         }
     }
 }
@@ -798,16 +789,16 @@ private fun StatusLine(cursor: State<CursorPosition>, onCursorClick: () -> Unit)
         Modifier.fillMaxWidth().height(28.dp).padding(start = 14.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(6.dp).background(SuccessGreen, CircleShape))
+        Box(Modifier.size(6.dp).background(SkyTheme.colors.success, CircleShape))
         Text(
             stringResource(R.string.editor_status_python, BuildConfig.PYTHON_SHORT_VERSION),
-            color = MutedText,
+            color = SkyTheme.colors.mutedText,
             fontSize = 12.sp,
             modifier = Modifier.padding(start = 8.dp).weight(1f),
         )
         Text(
             cursorLabel(cursor.value, format),
-            color = MutedText,
+            color = SkyTheme.colors.mutedText,
             fontSize = 12.sp,
             fontFamily = CodeFont,
             maxLines = 1,
@@ -874,7 +865,7 @@ private fun EmptyEditor(
         Text(
             stringResource(R.string.editor_empty_hint),
             style = MaterialTheme.typography.bodyMedium,
-            color = MutedText,
+            color = SkyTheme.colors.mutedText,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 6.dp, bottom = 20.dp),
         )

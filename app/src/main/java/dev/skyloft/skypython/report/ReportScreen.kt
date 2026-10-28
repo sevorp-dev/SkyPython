@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.report
 
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
@@ -62,7 +63,6 @@ import dev.skyloft.skypython.settings.EditorSettings
 import dev.skyloft.skypython.ui.theme.SectionLabel
 import dev.skyloft.skypython.ui.theme.IconTile
 import dev.skyloft.skypython.ui.theme.SkyCard
-import dev.skyloft.skypython.ui.theme.SlateLine
 import dev.skyloft.skypython.ui.theme.skyFieldColors
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -264,7 +264,7 @@ fun ReportScreen(
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainerLowest,
                 shape = MaterialTheme.shapes.medium,
-                border = BorderStroke(1.dp, SlateLine),
+                border = BorderStroke(1.dp, SkyTheme.colors.line),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 SelectionContainer {

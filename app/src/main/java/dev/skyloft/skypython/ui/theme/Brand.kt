@@ -40,7 +40,7 @@ fun BrandText(
     fontSize: TextUnit,
     modifier: Modifier = Modifier,
     fontWeight: FontWeight = FontWeight.SemiBold,
-    color: Color = TextBright,
+    color: Color = SkyTheme.colors.text,
     brush: Brush? = null,
 ) {
     Text(
@@ -56,7 +56,7 @@ fun BrandText(
 }
 
 /**
- * Round action button: solid [Orange], dark icon, a soft Material shadow.
+ * Round action button: solid [SkyColors.accent], dark icon, a soft Material shadow.
  * [onLongClick], if set, is offered on a long press.
  */
 @OptIn(ExperimentalFoundationApi::class)
@@ -74,8 +74,8 @@ fun BrandFab(
     // Surface(onClick) has no long press: clicks are handled by the modifier instead.
     Surface(
         shape = CircleShape,
-        color = Orange,
-        contentColor = OnOrange,
+        color = SkyTheme.colors.accent,
+        contentColor = SkyTheme.colors.onAccent,
         shadowElevation = elevation,
         modifier = modifier
             .size(size)
@@ -101,13 +101,13 @@ fun RunButton(
     BrandFab(onClick, Icons.Filled.PlayArrow, stringResource(R.string.action_run), modifier, size, iconSize, elevation, onLongClick)
 }
 
-/** Filled buttons: solid [Orange] with dark text (7.9:1); disabled stays visible. */
+/** Filled buttons: solid [SkyColors.accent] with dark text (7.9:1); disabled stays visible. */
 @Composable
 fun brandButtonColors() = ButtonDefaults.buttonColors(
-    containerColor = Orange,
-    contentColor = OnOrange,
-    disabledContainerColor = SlateRaised,
-    disabledContentColor = MutedText,
+    containerColor = SkyTheme.colors.accent,
+    contentColor = SkyTheme.colors.onAccent,
+    disabledContainerColor = SkyTheme.colors.raised,
+    disabledContentColor = SkyTheme.colors.mutedText,
 )
 
 /**
@@ -116,10 +116,10 @@ fun brandButtonColors() = ButtonDefaults.buttonColors(
  */
 @Composable
 fun brandTonalButtonColors() = ButtonDefaults.buttonColors(
-    containerColor = Color(0x2EF28C38),
-    contentColor = OrangeSoft,
-    disabledContainerColor = SlateRaised,
-    disabledContentColor = MutedText,
+    containerColor = SkyTheme.colors.accentTonal,
+    contentColor = SkyTheme.colors.accentText,
+    disabledContainerColor = SkyTheme.colors.raised,
+    disabledContentColor = SkyTheme.colors.mutedText,
 )
 
 /**
@@ -133,13 +133,13 @@ fun IconTile(icon: ImageVector, modifier: Modifier = Modifier, size: Dp = 36.dp,
         contentAlignment = Alignment.Center,
         modifier = modifier
             .size(size)
-            .background(if (accent) OrangeTint else SlateRaised, shape)
-            .border(1.dp, if (accent) Orange.copy(alpha = 0.35f) else SlateLine, shape),
+            .background(if (accent) SkyTheme.colors.accentTint else SkyTheme.colors.raised, shape)
+            .border(1.dp, if (accent) SkyTheme.colors.accent.copy(alpha = 0.35f) else SkyTheme.colors.line, shape),
     ) {
         Icon(
             icon,
             contentDescription = null,
-            tint = if (accent) OrangeSoft else TextBright.copy(alpha = 0.86f),
+            tint = if (accent) SkyTheme.colors.accentText else SkyTheme.colors.text.copy(alpha = 0.86f),
             modifier = Modifier.size(size * 0.55f),
         )
     }
@@ -153,7 +153,7 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
         fontSize = 12.sp,
         fontWeight = FontWeight.SemiBold,
         letterSpacing = 1.sp,
-        color = MutedText,
+        color = SkyTheme.colors.mutedText,
         modifier = modifier,
     )
 }
@@ -164,7 +164,7 @@ fun Chevron(modifier: Modifier = Modifier) {
     Icon(
         Icons.AutoMirrored.Outlined.KeyboardArrowRight,
         contentDescription = null,
-        tint = MutedText,
+        tint = SkyTheme.colors.mutedText,
         modifier = modifier.size(20.dp),
     )
 }
@@ -172,11 +172,11 @@ fun Chevron(modifier: Modifier = Modifier) {
 /** Switches: dark thumb on the orange track when on, a visible outlined dark track when off. */
 @Composable
 fun brandSwitchColors() = SwitchDefaults.colors(
-    checkedThumbColor = OnOrange,
-    checkedTrackColor = Orange,
-    checkedBorderColor = Orange,
-    checkedIconColor = Orange,
-    uncheckedThumbColor = MutedText,
-    uncheckedTrackColor = SlatePanel,
-    uncheckedBorderColor = SlateOutline,
+    checkedThumbColor = SkyTheme.colors.onAccent,
+    checkedTrackColor = SkyTheme.colors.accent,
+    checkedBorderColor = SkyTheme.colors.accent,
+    checkedIconColor = SkyTheme.colors.accent,
+    uncheckedThumbColor = SkyTheme.colors.mutedText,
+    uncheckedTrackColor = SkyTheme.colors.panel,
+    uncheckedBorderColor = SkyTheme.colors.outline,
 )

@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.ui.drawer
 
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -73,15 +74,7 @@ import dev.skyloft.skypython.editor.CursorPosition
 import dev.skyloft.skypython.ui.theme.BrandText
 import dev.skyloft.skypython.ui.theme.Chevron
 import dev.skyloft.skypython.ui.theme.Hairline
-import dev.skyloft.skypython.ui.theme.MutedText
-import dev.skyloft.skypython.ui.theme.Orange
-import dev.skyloft.skypython.ui.theme.OrangeSoft
-import dev.skyloft.skypython.ui.theme.OrangeTint
 import dev.skyloft.skypython.ui.theme.SectionLabel
-import dev.skyloft.skypython.ui.theme.Slate
-import dev.skyloft.skypython.ui.theme.SlateLine
-import dev.skyloft.skypython.ui.theme.SlatePanel
-import dev.skyloft.skypython.ui.theme.TextBright
 import dev.skyloft.skypython.update.UpdateDot
 
 /** Texts of the drawer header; [line] and [offset] are null when no file is open. */
@@ -198,7 +191,7 @@ fun SkyDrawer(
     ModalDrawerSheet(
         modifier = Modifier.fillMaxWidth(0.86f).widthIn(max = 360.dp),
         drawerShape = RoundedCornerShape(topEnd = 20.dp, bottomEnd = 20.dp),
-        drawerContainerColor = Slate,
+        drawerContainerColor = SkyTheme.colors.window,
         windowInsets = WindowInsets(0),
     ) {
         Row(
@@ -216,10 +209,10 @@ fun SkyDrawer(
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 BrandText(stringResource(R.string.app_name), fontSize = 19.sp)
-                Text("v$version", color = MutedText, fontSize = 12.sp)
+                Text("v$version", color = SkyTheme.colors.mutedText, fontSize = 12.sp)
             }
             IconButton(onClick = onClose) {
-                Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.action_close), tint = MutedText)
+                Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.action_close), tint = SkyTheme.colors.mutedText)
             }
         }
         FileCard(header, symbol)
@@ -228,10 +221,10 @@ fun SkyDrawer(
                 Modifier.padding(start = 20.dp, end = 16.dp, top = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(Icons.Outlined.Folder, contentDescription = null, tint = OrangeSoft, modifier = Modifier.size(16.dp))
+                Icon(Icons.Outlined.Folder, contentDescription = null, tint = SkyTheme.colors.accentText, modifier = Modifier.size(16.dp))
                 Text(
                     stringResource(R.string.drawer_project, projectName),
-                    color = MutedText,
+                    color = SkyTheme.colors.mutedText,
                     fontSize = 12.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -280,21 +273,21 @@ private fun FileCard(header: DrawerHeader, symbol: String?) {
             .padding(horizontal = 16.dp)
             .fillMaxWidth()
             .clip(shape)
-            .background(SlatePanel)
-            .border(1.dp, SlateLine, shape)
+            .background(SkyTheme.colors.panel)
+            .border(1.dp, SkyTheme.colors.line, shape)
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             Icons.AutoMirrored.Outlined.InsertDriveFile,
             contentDescription = null,
-            tint = if (header.line != null) OrangeSoft else MutedText,
+            tint = if (header.line != null) SkyTheme.colors.accentText else SkyTheme.colors.mutedText,
             modifier = Modifier.size(20.dp),
         )
         Column(Modifier.padding(start = 12.dp)) {
             Text(
                 header.title,
-                color = TextBright,
+                color = SkyTheme.colors.text,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -303,7 +296,7 @@ private fun FileCard(header: DrawerHeader, symbol: String?) {
             if (header.line != null) {
                 Text(
                     header.line + "  ·  " + header.offset.orEmpty(),
-                    color = MutedText,
+                    color = SkyTheme.colors.mutedText,
                     fontSize = 12.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -334,7 +327,7 @@ private fun DrawerItem(action: DrawerAction, selected: Boolean, badge: Boolean =
             .fillMaxWidth()
             .height(48.dp)
             .clip(shape)
-            .background(if (selected) OrangeTint else androidx.compose.ui.graphics.Color.Transparent)
+            .background(if (selected) SkyTheme.colors.accentTint else androidx.compose.ui.graphics.Color.Transparent)
             .clickable(role = Role.Button, onClick = onClick)
             .semantics { this.selected = selected }
             .padding(horizontal = 12.dp),
@@ -342,13 +335,13 @@ private fun DrawerItem(action: DrawerAction, selected: Boolean, badge: Boolean =
         Icon(
             action.icon(),
             contentDescription = null,
-            tint = if (selected) Orange else TextBright.copy(alpha = 0.86f),
+            tint = if (selected) SkyTheme.colors.accent else SkyTheme.colors.text.copy(alpha = 0.86f),
             modifier = Modifier.size(22.dp),
         )
         Spacer(Modifier.width(16.dp))
         Text(
             stringResource(action.labelRes()),
-            color = if (selected) OrangeSoft else TextBright,
+            color = if (selected) SkyTheme.colors.accentText else SkyTheme.colors.text,
             fontSize = 15.sp,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
             maxLines = 1,
@@ -383,7 +376,7 @@ private fun DrawerFooter() {
         Box(Modifier.padding(start = 8.dp, bottom = 8.dp)) {
             Text(
                 stringResource(R.string.drawer_footer_developer),
-                color = MutedText,
+                color = SkyTheme.colors.mutedText,
                 fontSize = 12.sp,
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
@@ -404,11 +397,11 @@ private fun FooterLink(icon: ImageVector, title: String, subtitle: String, onCli
             .clickable(onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 6.dp),
     ) {
-        Icon(icon, contentDescription = null, tint = MutedText, modifier = Modifier.size(20.dp))
+        Icon(icon, contentDescription = null, tint = SkyTheme.colors.mutedText, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(16.dp))
         Column {
-            Text(title, color = TextBright, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1)
-            Text(subtitle, color = MutedText, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(title, color = SkyTheme.colors.text, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+            Text(subtitle, color = SkyTheme.colors.mutedText, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }

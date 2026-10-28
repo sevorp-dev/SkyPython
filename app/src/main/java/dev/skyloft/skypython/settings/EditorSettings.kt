@@ -19,10 +19,30 @@ data class EditorSettings(
     /** Text size of the interpreter and the terminal, in sp (see [clampTerminalFontSize]). */
     val terminalFontSizeSp: Int = 14,
     /** Colours of the interpreter and the terminal. */
-    val terminalTheme: TerminalTheme = TerminalTheme.Dark,
+    val terminalTheme: TerminalTheme = TerminalTheme.Auto,
     /** The bottom bar (Editor · Terminal · Packages · Projects · Settings); the ☰ drawer stays either way. */
     val bottomNavBar: Boolean = true,
+    /** Light or dark app theme, or the system's choice. */
+    val appTheme: AppTheme = AppTheme.System,
 )
+
+/** App theme choices (Settings → Appearance → Theme). [key] is what DataStore keeps. */
+enum class AppTheme(val key: String) {
+    System("system"),
+    Dark("dark"),
+    Light("light");
+
+    /** Whether the app is dark, given the system's current choice. */
+    fun isDark(systemDark: Boolean): Boolean = when (this) {
+        System -> systemDark
+        Dark -> true
+        Light -> false
+    }
+
+    companion object {
+        fun fromKey(key: String?): AppTheme = entries.firstOrNull { it.key == key } ?: System
+    }
+}
 
 /** Code typeface choices. [key] is what DataStore keeps (stable across renames). */
 enum class CodeFontChoice(val key: String) {
@@ -34,12 +54,25 @@ enum class CodeFontChoice(val key: String) {
     }
 }
 
-/** Terminal colour themes: the app's dark console, or near-black (easier on OLED screens at night). */
+/**
+ * Terminal colour themes: the app's console (light or dark with the app), or always light, always
+ * dark, or near-black (easier on OLED screens at night).
+ */
 enum class TerminalTheme(val key: String) {
-    Dark("dark"),
+    // "dark" is historical: it was the app's console when the app was dark only.
+    Auto("dark"),
+    Light("light"),
+    Dark("always_dark"),
     Black("black");
 
+    /** Whether the terminal is light while the app is light ([appLight]) or dark. */
+    fun isLight(appLight: Boolean): Boolean = when (this) {
+        Auto -> appLight
+        Light -> true
+        Dark, Black -> false
+    }
+
     companion object {
-        fun fromKey(key: String?): TerminalTheme = entries.firstOrNull { it.key == key } ?: Dark
+        fun fromKey(key: String?): TerminalTheme = entries.firstOrNull { it.key == key } ?: Auto
     }
 }

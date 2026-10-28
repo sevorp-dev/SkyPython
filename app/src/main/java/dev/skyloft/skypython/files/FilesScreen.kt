@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.files
 
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import dev.skyloft.skypython.ui.rememberMainScope
 import android.content.Intent
 import android.net.Uri
@@ -80,14 +81,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import dev.skyloft.skypython.ui.theme.SlateBar
-import dev.skyloft.skypython.ui.theme.SlateLine
-import dev.skyloft.skypython.ui.theme.Slate
-import dev.skyloft.skypython.ui.theme.MutedText
 import dev.skyloft.skypython.ui.theme.BrandFab
 import dev.skyloft.skypython.ui.theme.Hairline
-import dev.skyloft.skypython.ui.theme.OrangeSoft
-import dev.skyloft.skypython.ui.theme.TextBright
 import dev.skyloft.skypython.ui.theme.SkyPythonTheme
 import androidx.compose.foundation.background
 import androidx.compose.material.icons.outlined.Code
@@ -100,8 +95,6 @@ import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material3.Button
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
-import dev.skyloft.skypython.ui.theme.Orange
-import dev.skyloft.skypython.ui.theme.OrangeTint
 import dev.skyloft.skypython.ui.theme.brandButtonColors
 import java.io.File
 import androidx.compose.ui.res.stringResource
@@ -312,7 +305,7 @@ private fun FilesContent(
     }
 
     Scaffold(
-        containerColor = Slate,
+        containerColor = SkyTheme.colors.window,
         topBar = {
             SkyTopBar(
                 title = stringResource(R.string.title_files),
@@ -365,7 +358,7 @@ private fun FilesContent(
                             onShare = { onShare(entry) },
                             onOpenWith = { onOpenWith(entry) },
                         )
-                        HorizontalDivider(Modifier.padding(start = 72.dp), color = SlateLine)
+                        HorizontalDivider(Modifier.padding(start = 72.dp), color = SkyTheme.colors.line)
                     }
                 }
             }
@@ -379,34 +372,34 @@ private fun ProjectBar(name: String, path: String?, onOpenProject: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
-            .background(SlateBar)
+            .background(SkyTheme.colors.bar)
             .padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            Modifier.size(32.dp).clip(CircleShape).background(OrangeTint),
+            Modifier.size(32.dp).clip(CircleShape).background(SkyTheme.colors.accentTint),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.Outlined.Folder, contentDescription = null, tint = OrangeSoft, modifier = Modifier.size(18.dp))
+            Icon(Icons.Outlined.Folder, contentDescription = null, tint = SkyTheme.colors.accentText, modifier = Modifier.size(18.dp))
         }
         Column(Modifier.weight(1f).padding(start = 12.dp)) {
             Text(
                 name.ifEmpty { stringResource(R.string.projects_label) },
-                color = TextBright,
+                color = SkyTheme.colors.text,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
                 path ?: stringResource(R.string.projects_app_desc),
-                color = MutedText,
+                color = SkyTheme.colors.mutedText,
                 style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
                 overflow = TextOverflow.StartEllipsis,
             )
         }
         TextButton(onClick = onOpenProject) {
-            Text(stringResource(R.string.projects_open_project), color = Orange, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.projects_open_project), color = SkyTheme.colors.accent, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -433,7 +426,7 @@ private fun EmptyState(text: String, onOpenProject: (() -> Unit)?, onOpenAppProj
         }
         if (onOpenAppProjects != null) {
             TextButton(onClick = onOpenAppProjects, modifier = Modifier.padding(top = 4.dp)) {
-                Text(stringResource(R.string.projects_back_to_app), color = MutedText)
+                Text(stringResource(R.string.projects_back_to_app), color = SkyTheme.colors.mutedText)
             }
         }
     }
@@ -444,7 +437,7 @@ private fun Breadcrumbs(state: FilesState, rootLabel: String, onUp: () -> Unit, 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(SlateBar)
+            .background(SkyTheme.colors.bar)
             .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -452,7 +445,7 @@ private fun Breadcrumbs(state: FilesState, rootLabel: String, onUp: () -> Unit, 
             Icon(
                 Icons.Outlined.ArrowUpward,
                 contentDescription = stringResource(R.string.files_up_one_folder),
-                tint = if (state.canGoUp) TextBright else MutedText.copy(alpha = 0.5f),
+                tint = if (state.canGoUp) SkyTheme.colors.text else SkyTheme.colors.mutedText.copy(alpha = 0.5f),
             )
         }
         Row(
@@ -467,7 +460,7 @@ private fun Breadcrumbs(state: FilesState, rootLabel: String, onUp: () -> Unit, 
                         Icons.AutoMirrored.Outlined.KeyboardArrowRight,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
-                        tint = MutedText,
+                        tint = SkyTheme.colors.mutedText,
                     )
                 }
                 val isLast = index == state.breadcrumbs.lastIndex
@@ -476,7 +469,7 @@ private fun Breadcrumbs(state: FilesState, rootLabel: String, onUp: () -> Unit, 
                         // The project's name; the app's own folder is called "Projects" everywhere else.
                         if (index == 0) rootLabel.ifEmpty { stringResource(R.string.projects_label) } else crumb.label,
                         maxLines = 1,
-                        color = if (isLast) TextBright else MutedText,
+                        color = if (isLast) SkyTheme.colors.text else SkyTheme.colors.mutedText,
                         fontWeight = if (isLast) FontWeight.Medium else FontWeight.Normal,
                     )
                 }
@@ -507,7 +500,7 @@ private fun EntryRow(
                     else -> Icons.Outlined.Description
                 },
                 contentDescription = stringResource(if (entry.isDirectory) R.string.files_folder else R.string.files_file),
-                tint = if (entry.isDirectory) OrangeSoft else MutedText,
+                tint = if (entry.isDirectory) SkyTheme.colors.accentText else SkyTheme.colors.mutedText,
             )
         },
         headlineContent = { Text(entry.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
