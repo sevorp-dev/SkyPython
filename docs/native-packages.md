@@ -27,13 +27,23 @@ publish):
   `libwebp.so` in the prefix are linker scripts that add libpng / libsharpyuv. The x86_64
   and x86 wheels are smoke-tested (draw text with the default FreeType font, save PNG, JPEG,
   WebP, TIFF; `features.check` for each library).
+- kiwisolver 1.5.1, ContourPy 1.4.0, Matplotlib 3.11.2 (C++, cppy / pybind11): libc++_shared
+  vendored by auditwheel on 64-bit, libc++ linked statically on 32-bit (kiwisolver's
+  `setup.py` gets `extra_link_args`, the meson ones `cpp_link_args`). Matplotlib builds its
+  bundled FreeType, HarfBuzz, libraqm, SheenBidi and Qhull (meson subprojects, downloaded
+  from their wraps) statically. `requires` in `index.json`: contourpy → numpy; matplotlib →
+  numpy, pillow, kiwisolver, contourpy (the plan job's `requires` table). A package with
+  `requires` is tested against the wheels already **published** on `wheels` for the same ABI
+  (fetched into `PIP_FIND_LINKS`), so publish kiwisolver/contourpy before matplotlib. The
+  x86_64 and x86 matplotlib wheels are smoke-tested (Agg plot + contourf + legend saved as
+  PNG).
 - `.github/wheels/finish_wheels.py` adds the license texts of vendored / statically linked
   libraries (OpenBLAS, libc++, Pillow's dependencies) to `*.dist-info/licenses/` and strips
   build-machine RUNPATHs; `verify_wheels.py` checks the tag, ELF machine, 16 KB LOAD
   alignment, NEEDED and RUNPATH of every `.so`; `make_index.py` keeps one wheel per
   project × ABI and writes `index.json` + `SHA256SUMS`.
 - Trigger: push to `build-wheels` (paths `.github/wheels/**`, the workflow; "[skip publish]"
-  in the commit message builds without publishing) or "Run workflow" (input `packages`
+  in the commit message builds without publishing, "[packages: a b]" picks the packages) or "Run workflow" (input `packages`
   picks e.g. only `pillow`). A package is published only if both of its 64-bit wheels were
   built; failed 32-bit legs keep their previously published wheels. A published file name
   is never overwritten (raw.githubusercontent.com caches each file for ~5 minutes, so a

@@ -19,13 +19,22 @@
 #   by auditwheel together with libc++_shared; no BLAS and static libc++ on 32-bit.
 # Pillow: libjpeg-turbo, libpng, FreeType, libwebp, libtiff and Little CMS built from source
 #   (.github/wheels/build_pillow_deps.sh) and linked statically; zlib is Android's libz.so.
+# pandas: built against this index's own NumPy wheel (its Android numpy headers via
+#   cibuildwheel's xbuild-files; the host gets the same NumPy version from PyPI); C++ runtime
+#   vendored by auditwheel on 64-bit, linked statically on 32-bit. Published with
+#   requires = ["numpy"].
+# kiwisolver, contourpy, matplotlib (C++): libc++_shared vendored by auditwheel on 64-bit,
+#   libc++ linked statically on 32-bit. matplotlib builds its bundled FreeType, HarfBuzz,
+#   libraqm, SheenBidi and Qhull (meson subprojects) statically. Packages with `requires`
+#   (contourpy -> numpy; matplotlib -> numpy, pillow, kiwisolver, contourpy) are built and
+#   tested against the wheels already published on `wheels`, so publish those first.
 name: Build Android wheels
 
 on:
   workflow_dispatch:
     inputs:
       packages:
-        description: Packages to build (space-separated; numpy, pillow)
+        description: Packages to build (space-separated; numpy, pillow, pandas, kiwisolver, contourpy, matplotlib)
         required: true
         default: numpy pillow
       numpy_version:
@@ -36,6 +45,22 @@ on:
         description: Pillow version (PyPI sdist)
         required: true
         default: 13.0.0
+      pandas_version:
+        description: pandas version (PyPI sdist)
+        required: true
+        default: 3.1.0
+      kiwisolver_version:
+        description: kiwisolver version (PyPI sdist)
+        required: true
+        default: 1.5.1
+      contourpy_version:
+        description: ContourPy version (PyPI sdist)
+        required: true
+        default: 1.4.0
+      matplotlib_version:
+        description: Matplotlib version (PyPI sdist)
+        required: true
+        default: 3.11.2
       publish:
         description: Publish the wheels to the `wheels` branch
         type: boolean
@@ -45,7 +70,9 @@ on:
         type: boolean
         default: false
   # Pushing the branch `build-wheels` runs it with the defaults; "[skip publish]" in the
-  # commit message builds and tests without publishing.
+  # commit message builds and tests without publishing, "[packages: pandas]" (any list of
+  # packages) builds only those. Matplotlib is tested against the PUBLISHED kiwisolver and
+  # contourpy wheels, so publish those first ("[packages: kiwisolver contourpy]"), then matplotlib (it requires numpy, pillow, kiwisolver, contourpy).
   push:
     branches: [ build-wheels ]
     paths:
@@ -62,6 +89,10 @@ env:
   PACKAGES: ${{ inputs.packages || 'numpy pillow' }}
   NUMPY_VERSION: ${{ inputs.numpy_version || '2.5.4' }}
   PILLOW_VERSION: ${{ inputs.pillow_version || '13.0.0' }}
+  PANDAS_VERSION: ${{ inputs.pandas_version || '3.1.0' }}
+  KIWISOLVER_VERSION: ${{ inputs.kiwisolver_version || '1.5.1' }}
+  CONTOURPY_VERSION: ${{ inputs.contourpy_version || '1.4.0' }}
+  MATPLOTLIB_VERSION: ${{ inputs.matplotlib_version || '3.11.2' }}
   CIBW_VERSION: 4.3.4
   OPENBLAS_VERSION: 0.3.33
   # CPython for the 32-bit ABIs: our own build (build-python.yml), hashes pinned in
@@ -74,13 +105,25 @@ jobs:
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
       packages: ${{ steps.plan.outputs.packages }}
+      requires: ${{ steps.plan.outputs.requires }}
     steps:
       - id: plan
         run: |
           python3 - <<'PY'
           import json, os, re
-          known = ["numpy", "pillow"]
-          wanted = [p.lower() for p in re.split(r"[\s,]+", os.environ["PACKAGES"]) if p]
+          known = ["numpy", "pillow", "pandas", "kiwisolver", "contourpy", "matplotlib"]
+          # Other packages of this index each one needs at runtime: written to index.json
+          # ("requires"), and their published wheels are used to build and test it.
+          requires = {
+              "contourpy": ["numpy"],
+              "matplotlib": ["numpy", "pillow", "kiwisolver", "contourpy"],
+          }
+          packages = os.environ["PACKAGES"]
+          # On push, "[packages: a b]" in the commit message overrides the default list.
+          m = re.search(r"\[packages?:\s*([^\]]+)\]", os.environ.get("HEAD_MSG") or "")
+          if os.environ["GITHUB_EVENT_NAME"] == "push" and m:
+              packages = m.group(1)
+          wanted = [p.lower() for p in re.split(r"[\s,]+", packages) if p]
           bad = [p for p in wanted if p not in known]
           if bad or not wanted:
               raise SystemExit(f"::error::unknown packages {bad}; choose from {known}")
@@ -91,12 +134,16 @@ jobs:
               {"abi": "armeabi_v7a", "triplet": "arm-linux-androideabi", "bits": 32, "test": False},
               {"abi": "x86", "triplet": "i686-linux-android", "bits": 32, "test": True},
           ]
-          include = [{"package": p, **a} for p in known if p in wanted for a in abis]
+          include = [{"package": p, "deps": " ".join(requires.get(p, [])), **a}
+                     for p in known if p in wanted for a in abis]
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write(f"matrix={json.dumps({'include': include})}\n")
               f.write(f"packages={' '.join(p for p in known if p in wanted)}\n")
+              f.write(f"requires={' '.join(p + '=' + ','.join(d) for p, d in requires.items())}\n")
           print(json.dumps(include, indent=1))
           PY
+        env:
+          HEAD_MSG: ${{ github.event.head_commit.message }}
 
   build:
     needs: plan
@@ -113,6 +160,7 @@ jobs:
       TRIPLET: ${{ matrix.triplet }}
       BITS: ${{ matrix.bits }}
       RUN_TEST: ${{ matrix.test }}
+      DEPS: ${{ matrix.deps }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -171,6 +219,39 @@ jobs:
           mkdir src
           tar -xzf sdist.tar.gz -C src --strip-components=1
 
+      # The wheels of this index the package needs (matrix.deps) come from the `wheels`
+      # branch, for this ABI: pip finds them there (PIP_FIND_LINKS) when installing the
+      # test environment; pure-Python dependencies still come from PyPI.
+      - name: Fetch the published wheels it needs (${{ matrix.deps }})
+        if: matrix.deps != ''
+        run: |
+          set -euo pipefail
+          git fetch -q --depth=1 origin wheels
+          mkdir -p "$RUNNER_TEMP/deps"
+          for dep in $DEPS; do
+            files="$(git ls-tree --name-only FETCH_HEAD | grep -E "^${dep}-[^-]+-.*-android_[0-9]+_${ABI}\.whl$" || true)"
+            if [ -z "$files" ]; then
+              # Still build and verify the wheel, untested; the leg fails before uploading it.
+              echo "::warning::no published $dep wheel for $ABI on branch wheels; publish $dep first"
+              echo "DEPS_MISSING=${DEPS_MISSING:-}${DEPS_MISSING:+ }$dep" >> "$GITHUB_ENV"
+              DEPS_MISSING="${DEPS_MISSING:-}${DEPS_MISSING:+ }$dep"
+              continue
+            fi
+            for f in $files; do
+              git cat-file blob "FETCH_HEAD:$f" > "$RUNNER_TEMP/deps/$f"
+            done
+          done
+          (cd "$RUNNER_TEMP/deps" && sha256sum *.whl) || true
+          echo "::notice title=Dependencies $ABI::$(cd "$RUNNER_TEMP/deps" && ls | tr '\n' ' ')"
+
+      # Static libc++ on 32-bit, where auditwheel cannot vendor libc++_shared (see numpy).
+      - name: Link libc++ statically (kiwisolver, 32-bit)
+        if: matrix.package == 'kiwisolver' && matrix.bits == 32
+        run: |
+          set -euo pipefail
+          sed -i 's/        language="c++",/        language="c++",\n        extra_link_args=["-static-libstdc++"],/' src/setup.py
+          grep -n 'extra_link_args=\["-static-libstdc++"\]' src/setup.py
+
       # NumPy's build runs a test program to find the long double format, which is impossible
       # when cross-compiling. Android: 128-bit quad on 64-bit ABIs (also x86_64), plain double
       # on 32-bit. NumPy main (2.6.0) hardcodes the same for Android (numpy/numpy#30412).
@@ -205,6 +286,30 @@ jobs:
           sudo apt-get install -y -q nasm > /dev/null
           nasm -v
           mkdir -p "$RUNNER_TEMP/pillow-deps"
+
+      # pandas compiles against NumPy's headers. The build machine gets NumPy from PyPI (the
+      # version this index publishes, pinned with PIP_CONSTRAINT); cibuildwheel's default
+      # xbuild-files then copy the target's _numpyconfig.h etc. from the Android wheel, which
+      # pip finds in PIP_FIND_LINKS: our own published wheel for this ABI. The emulator test
+      # installs the same wheel (python-dateutil and six come from PyPI).
+      - name: Fetch this index's NumPy wheel (pandas)
+        if: matrix.package == 'pandas'
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os, urllib.request
+          base = "https://raw.githubusercontent.com/${{ github.repository }}/wheels/"
+          abi = {"arm64_v8a": "arm64-v8a", "armeabi_v7a": "armeabi-v7a"}.get(os.environ["ABI"], os.environ["ABI"])
+          index = json.load(urllib.request.urlopen(base + "index.json"))
+          e = next(e for e in index["packages"]["numpy"] if e["abi"] == abi)
+          data = urllib.request.urlopen(base + e["file"]).read()
+          assert hashlib.sha256(data).hexdigest() == e["sha256"], "numpy wheel hash mismatch"
+          d = os.path.join(os.environ["RUNNER_TEMP"], "numpy-wheels")
+          os.makedirs(d, exist_ok=True)
+          open(os.path.join(d, e["file"]), "wb").write(data)
+          open(os.path.join(os.environ["RUNNER_TEMP"], "numpy-constraint.txt"), "w").write(f"numpy=={e['version']}\n")
+          print(f"::notice title=numpy for pandas {abi}::{e['file']} sha256 {e['sha256']}")
+          PY
 
       # Our own cibuildwheel config (replaces the one in the package's pyproject.toml).
       - name: Write the cibuildwheel config
@@ -241,7 +346,33 @@ jobs:
               config_settings = "{ setup-args = %s, build-dir = \"build\" }" % json.dumps(setup_args)
               smoke = ("import numpy; print('SMOKE', numpy.__version__, numpy.arange(10).sum(), "
                        "numpy.linalg.inv([[1,2],[3,4]])); numpy.show_config()")
-          else:  # pillow
+          elif package == "pandas":
+              env = {"PIP_FIND_LINKS": f"{tmp}/numpy-wheels",
+                     "PIP_CONSTRAINT": f"{tmp}/numpy-constraint.txt",
+                     # not setup-python's (the runner's python3.pc instead of the target's)
+                     "PKG_CONFIG_PATH": ""}
+              if bits == "64":
+                  # cibuildwheel's default: vendors libc++_shared into pandas.libs/.
+                  setup_args = []
+                  repair = "auditwheel repair --ldpaths {ldpaths} -w {dest_dir} {wheel}"
+              else:
+                  # auditwheel does not know 32-bit Android: static libc++, with the 16 KB
+                  # page flags repeated (cpp_link_args replaces $LDFLAGS for C++ targets).
+                  cpp_link = ["-static-libstdc++", "-Wl,--build-id=sha1", "-Wl,--no-rosegment",
+                              "-Wl,-z,max-page-size=16384", "-Wl,--no-undefined", "-lm"]
+                  setup_args = ["-Dcpp_link_args=" + repr(cpp_link)]
+                  repair = ""
+              config_settings = "{ setup-args = %s, build-dir = \"build\" }" % json.dumps(setup_args)
+              smoke = (
+                  "import pandas as pd, numpy as np, io; "
+                  "df = pd.DataFrame({'city': ['Oslo', 'Rome', 'Oslo'], 't': [3.5, 18.2, 4.1]}); "
+                  "print('SMOKE', pd.__version__, np.__version__, df.groupby('city').t.mean().round(2).to_dict()); "
+                  "print('SMOKE', pd.read_csv(io.StringIO('a,b\\n1,2\\n3,4')).sum().to_dict(), "
+                  "pd.Timestamp('2026-10-26').day_name(), "
+                  "pd.Series([1.0, 2.0, 3.0, 4.0]).rolling(2).mean().tolist(), "
+                  "pd.to_datetime(['2026-01-31', '2026-02-28']).month.tolist())"
+              )
+          elif package == "pillow":
               deps = f"{tmp}/pillow-deps"
               before_build = f"bash {os.environ['GITHUB_WORKSPACE']}/.github/wheels/build_pillow_deps.sh"
               env = {"PILLOW_DEPS": deps, "PKG_CONFIG_PATH": ""}
@@ -268,12 +399,67 @@ jobs:
                   "features.version('littlecms2')); "
                   "assert all(features.check(c) for c in " + repr(checks) + ")"
               )
+          else:  # kiwisolver, contourpy, matplotlib: C++ (pybind11 / cppy)
+              # Clear setup-python's PKG_CONFIG_PATH (see numpy 32-bit).
+              env = {"PKG_CONFIG_PATH": ""}
+              if bits == "64":
+                  # cibuildwheel's default: vendors libc++_shared into <package>.libs/.
+                  repair = "auditwheel repair --ldpaths {ldpaths} -w {dest_dir} {wheel}"
+              else:
+                  # Static libc++ (kiwisolver: setup.py patched above); the 16 KB-page link
+                  # flags of android-env.sh repeated, as cpp_link_args replaces $LDFLAGS.
+                  repair = ""
+              setup_args = []
+              if package == "contourpy":
+                  setup_args.append("-Dwerror=false")  # the NDK's clang may warn differently
+              if bits == "32" and package != "kiwisolver":
+                  setup_args.append("-Dcpp_link_args=" + repr(
+                      ["-static-libstdc++", "-Wl,--build-id=sha1", "-Wl,--no-rosegment",
+                       "-Wl,-z,max-page-size=16384", "-Wl,--no-undefined", "-lm"]))
+              config_settings = ("{ setup-args = %s }" % json.dumps(setup_args)) if setup_args else "{}"
+              if package == "kiwisolver":
+                  smoke = (
+                      "import kiwisolver as k, unittest; x=k.Variable('x'); y=k.Variable('y'); "
+                      "s=k.Solver(); c=(x+y==10); s.addConstraint(c); s.addConstraint(x-y==2); "
+                      "s.updateVariables(); "
+                      "unittest.TestCase().assertRaises(k.DuplicateConstraint, s.addConstraint, c); "
+                      "print('SMOKE', k.__version__, x.value(), y.value()); "
+                      "assert (round(x.value(), 6), round(y.value(), 6)) == (6.0, 4.0)"
+                  )
+              elif package == "contourpy":
+                  smoke = (
+                      "import contourpy, numpy as np; z=np.random.rand(40,40); "
+                      "g=contourpy.contour_generator(z=z); l=g.lines(0.5); f=g.filled(0.2,0.6); "
+                      "t=contourpy.contour_generator(z=z, name='threaded', chunk_count=4, thread_count=2); "
+                      "tf=t.filled(0.2,0.6); "
+                      "print('SMOKE', contourpy.__version__, np.__version__, np.__file__, "
+                      "len(l[0]), len(f[0]), len(tf[0]), t.thread_count)"
+                  )
+              else:  # matplotlib
+                  smoke = (
+                      "import matplotlib; matplotlib.use('Agg'); "
+                      "import matplotlib.pyplot as plt, numpy as np; "
+                      "x=np.linspace(0,6.28,200); fig,ax=plt.subplots(); ax.plot(x,np.sin(x),label='sin'); "
+                      "ax.contourf(*np.meshgrid(x[:20],x[:20]), np.random.rand(20,20)); ax.legend(); "
+                      "ax.set_title('SkyPython'); fig.savefig('t.png', dpi=100); "
+                      "import kiwisolver, contourpy, PIL.Image; from matplotlib import ft2font; "
+                      "print('SMOKE', matplotlib.__version__, kiwisolver.__version__, contourpy.__version__, "
+                      "open('t.png','rb').read(8)); "
+                      "print('SMOKE', 'numpy', np.__version__, 'pillow', PIL.__version__, "
+                      "'freetype', ft2font.__freetype_version__, PIL.Image.open('t.png').size); "
+                      "assert open('t.png','rb').read(8) == bytes.fromhex('89504e470d0a1a0a')"
+                  )
+          test_requires = os.environ["DEPS"].split()
+          if test_requires:
+              env["PIP_FIND_LINKS"] = f"{tmp}/deps"
+          if os.environ.get("DEPS_MISSING"):
+              test = "false"  # cannot install the test environment
           lines = [
               "[tool.cibuildwheel]",
               'build-frontend = "build"',
               f"before-build = {q(before_build)}",
               'before-test = ""',
-              "test-requires = []",
+              f"test-requires = {json.dumps(test_requires)}",
               f"test-command = {q('python -c ' + chr(34) + smoke + chr(34))}",
               f"test-skip = {q('' if test == 'true' else '*')}",
               "build-verbosity = 1",
@@ -338,7 +524,11 @@ jobs:
               blas = [l for l in lines if re.search(r"openblas|lapack|blas", l, re.I)][-12:]
               if blas:
                   emit("BLAS lines", blas)
-          else:
+          elif os.environ["PACKAGE"] == "matplotlib":
+              subs = [l for l in lines if re.search(r"Subproject |Downloading .* source|Executing subproject", l)][:12]
+              if subs:
+                  emit("matplotlib subprojects", subs)
+          elif os.environ["PACKAGE"] == "pillow":
               for i, l in enumerate(lines):
                   if "PIL SETUP SUMMARY" in l:
                       emit("Pillow setup summary", lines[i:i + 20])
@@ -369,6 +559,25 @@ jobs:
                  --license "OpenBLAS-LICENSE.txt=$RUNNER_TEMP/OpenBLAS-LICENSE.txt@libopenblas")
           elif [ "$PACKAGE" = numpy ]; then
             lic=(--license "libc++-LICENSE.txt=$libcxx")  # linked statically
+          elif [ "$PACKAGE" = pandas ] && [ "$BITS" = 64 ]; then
+            lic=(--license "libc++-LICENSE.txt=$libcxx@libc++_shared")  # vendored by auditwheel
+          elif [ "$PACKAGE" = pandas ]; then
+            lic=(--license "libc++-LICENSE.txt=$libcxx")  # linked statically
+          elif [ "$PACKAGE" != pillow ]; then
+            # kiwisolver, contourpy, matplotlib: libc++ is vendored (64-bit) or linked
+            # statically (32-bit); the header-only C++ helpers they compile in are cppy /
+            # pybind11. matplotlib's own license files already cover its bundled FreeType,
+            # HarfBuzz, libraqm, SheenBidi and Agg, but not Qhull.
+            lic=(--license "libc++-LICENSE.txt=$libcxx")
+            case "$PACKAGE" in
+              kiwisolver) lic+=(--license "cppy-LICENSE.txt=.github/wheels/licenses/cppy-LICENSE.txt") ;;
+              *) lic+=(--license "pybind11-LICENSE.txt=.github/wheels/licenses/pybind11-LICENSE.txt") ;;
+            esac
+            if [ "$PACKAGE" = matplotlib ]; then
+              qhull=(src/subprojects/qhull-*/COPYING.txt)
+              [ -f "${qhull[0]}" ] || { echo "::error::Qhull's COPYING.txt not found in src/subprojects"; exit 1; }
+              lic+=(--license "qhull-COPYING.txt=${qhull[0]}")
+            fi
           else
             # Pillow: every library built by build_pillow_deps.sh is linked statically.
             files=("$RUNNER_TEMP"/pillow-deps/licenses/*)
@@ -379,9 +588,22 @@ jobs:
           fi
           python .github/wheels/finish_wheels.py wheelhouse/*.whl "${lic[@]}" 2>&1 | tee finish.log ||
             { echo "::error title=finish_wheels::$(tail -20 finish.log | sed ':a;N;$!ba;s/\n/%0A/g')"; exit 1; }
+          python - wheelhouse/*.whl <<'PY'
+          import sys, zipfile
+          for w in sys.argv[1:]:
+              names = [n.split(".dist-info/", 1)[1] for n in zipfile.ZipFile(w).namelist()
+                       if any(f".dist-info/{s}" in n.lower() for s in ("licen", "copying"))]
+              print(f"::notice title=Licenses in {w.split('/')[-1]}::" + " ".join(names))
+          PY
 
       - name: Verify the wheel (tag, ELF machine, 16 KB alignment, dependencies)
         run: python .github/wheels/verify_wheels.py --max-api 24 --python-tag cp314 wheelhouse/*.whl
+
+      - name: Refuse an untested wheel (dependencies not published)
+        if: env.DEPS_MISSING != ''
+        run: |
+          echo "::error::built and verified, but not tested and not uploaded: publish $DEPS_MISSING first"
+          exit 1
 
       - uses: actions/upload-artifact@v5
         with:
@@ -437,7 +659,11 @@ jobs:
           before="$(cat site/index.json site/README.md 2>/dev/null | sha256sum)"
           replace=()
           [ "$REPLACE" = true ] && replace=(--replace)
-          python .github/wheels/make_index.py --site site "${replace[@]}" "${wheels[@]}"
+          requires=()
+          for r in $REQUIRES; do requires+=(--requires "$r"); done
+          # The index is rewritten from every published wheel, so list all `requires` here.
+          python .github/wheels/make_index.py --site site "${replace[@]}" "${requires[@]}" \
+            --requires pandas=numpy "${wheels[@]}"
 
           repo="${GITHUB_REPOSITORY}"
           {
@@ -498,6 +724,35 @@ jobs:
             echo "- **libtiff** — libtiff License (https://libtiff.gitlab.io/libtiff/):"
             echo "  \`libtiff-LICENSE.md\`."
             echo "- **Little CMS 2** — MIT (https://www.littlecms.com): \`lcms2-LICENSE.txt\`."
+            echo
+            echo "### pandas"
+            echo
+            echo "Needs this index's \`numpy\` (\`requires\`); python-dateutil and six come from PyPI."
+            echo
+            echo "- **pandas** — BSD-3-Clause (https://github.com/pandas-dev/pandas): \`LICENSE\`,"
+            echo "  plus the bundled code listed in its \`LICENSES/\` (klib, ultrajson, musl, xsimd,"
+            echo "  fast_float, NumPy datetime code and others), all in \`*.dist-info/licenses/\`."
+            echo "- **LLVM libc++** (vendored as \`pandas.libs/libc++_shared-*.so\` on 64-bit, linked"
+            echo "  statically on 32-bit) — Apache-2.0 WITH LLVM-exception: \`libc++-LICENSE.txt\`."
+            echo
+            echo "### kiwisolver, contourpy, matplotlib"
+            echo
+            echo "- **LLVM libc++** (vendored as \`<package>.libs/libc++_shared-*.so\` on 64-bit, linked"
+            echo "  statically on 32-bit) — Apache-2.0 WITH LLVM-exception: \`libc++-LICENSE.txt\`."
+            echo "- **kiwisolver** — BSD-3-Clause (https://github.com/nucleic/kiwi): \`LICENSE\`; it"
+            echo "  compiles in the header-only **cppy** — BSD-3-Clause: \`cppy-LICENSE.txt\`."
+            echo "- **ContourPy** — BSD-3-Clause (https://github.com/contourpy/contourpy): \`LICENSE\`."
+            echo "- **pybind11** (header-only, compiled into contourpy and matplotlib) — BSD-3-Clause"
+            echo "  (https://github.com/pybind/pybind11): \`pybind11-LICENSE.txt\`."
+            echo "- **Matplotlib** — PSF-based Matplotlib License, with fonts and bundled code under"
+            echo "  their own licenses (https://matplotlib.org): \`LICENSE/LICENSE\` and the other"
+            echo "  \`LICENSE/LICENSE_*\` files, \`extern/agg24-svn/src/copying\` (Anti-Grain Geometry)."
+            echo "  Its extension modules link statically the copies it builds itself:"
+            echo "  **FreeType** (FreeType License: \`LICENSE/LICENSE_FREETYPE\`; portions of this software"
+            echo "  are copyright © The FreeType Project (www.freetype.org), all rights reserved),"
+            echo "  **HarfBuzz** (Old MIT: \`LICENSE/LICENSE_HARFBUZZ\`), **libraqm** (MIT:"
+            echo "  \`LICENSE/LICENSE_LIBRAQM\`), **SheenBidi** (Apache-2.0: \`LICENSE/LICENSE_SHEENBIDI\`)"
+            echo "  and **Qhull** (Qhull License, http://www.qhull.org: \`qhull-COPYING.txt\`)."
           } > site/README.md
 
           if [ "$(cat site/index.json site/README.md | sha256sum)" = "$before" ]; then
@@ -525,5 +780,6 @@ jobs:
           fi
         env:
           BUILT: ${{ needs.plan.outputs.packages }}
+          REQUIRES: ${{ needs.plan.outputs.requires }}
           GH_TOKEN: ${{ github.token }}
           REPLACE: ${{ inputs.replace || false }}
