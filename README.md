@@ -39,15 +39,15 @@ Everything a mobile Python developer needs, in the open: a comfortable editor wi
 drawer, an interactive console, a terminal and a package manager — free of ads and premium
 walls, and built to work on as many phones as possible, including old and low-end ones.
 
-## 🆕 What's new in 0.0.5
+## 🆕 What's new in 0.0.6
 
-- 📂 **Open any folder on your phone as a project** — Documents, Download, SD card; recent projects; programs run inside the project folder
-- 🔔 **Updates right in the app** — "SkyPython X is available" → What's new → **Install**: the right file for your phone, checked and installed over the old version
-- 🖼️ **Pillow** prebuilt for Android — photos, JPEG/PNG/WebP, drawing text; new sample "Make a picture card"
-- 🎨 **Clearer interface** — Pip as cards with sections and badges, "Installed" shows right away; settings, samples and dialogs stand out from the background
-- 🛠️ Huge program output no longer freezes the app on slow phones
+- 📈 **matplotlib charts** — `plt.show()` opens the chart right in the app; swipe between figures, save or share them
+- 🐼 **pandas** — tables, CSV and data analysis, prebuilt for Android like NumPy, Pillow and matplotlib
+- ☀️ **Light theme** — System / Dark / Light, with a light editor and terminal
+- 🌍 **Six new languages** — Українська, Español, Deutsch, Português (Brasil), Türkçe, 简体中文
+- Update from 0.0.5 right in the app: tap **Install** in the update banner
 
-0.0.4 brought NumPy, the IDE dark theme and the image viewer; 0.0.3 the real terminal, smart editor and debugger.
+0.0.5 brought projects from the phone's storage, in-app updates and Pillow; 0.0.4 NumPy and the image viewer; 0.0.3 the real terminal, smart editor and debugger.
 
 Full details for every version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -68,11 +68,12 @@ is simply part of SkyPython.
 | 🐞 **Debugger** | Tap a line number to set a breakpoint (long-press for a condition), long-press ▶ → Debug. Step over / into / out, continue, variables tree, watches, call stack. |
 | 🐍 **Interpreter** | Interactive Python (`>>>`) with history, colours and Ctrl+C that interrupts without losing your session. |
 | ⌨️ **Terminal** | A real terminal with `python`, `pip`, Esc / Tab / Ctrl / Alt / arrows. |
-| 📦 **Pip** | Search PyPI, popular packages in one tap, install from `requirements.txt`, updates and uninstall. Pure-Python packages from PyPI, plus packages with native code that SkyPython builds for Android — **NumPy** and **Pillow** today, more coming. Cards with sections, badges and live install status. |
+| 📦 **Pip** | Search PyPI, popular packages in one tap, install from `requirements.txt`, updates and uninstall. Pure-Python packages from PyPI, plus packages with native code that SkyPython builds for Android — **NumPy**, **Pillow**, **matplotlib** and **pandas** today, more coming. Cards with sections, badges and live install status. |
+| 📈 **Charts** | `plt.show()` opens matplotlib figures right in the app — swipe between them, save to the project, share. |
 | 🖼️ **Images** | Pictures your program saves appear right under the run output; a built-in viewer with zoom, share, open with and delete. |
 | 📁 **Projects** | **Open any folder on the phone** (internal storage, SD card) as a project, recent projects, a built-in folder browser; programs run inside the project folder. Create, rename, delete files and folders; open and save files from other apps; **share** a file as is or a whole folder as `.zip` (Telegram, mail, cloud…). |
 | 🎓 **Samples** | Ready-to-run examples with search: input, loops, functions, classes, files, JSON, a small game, drawing a picture, a Pillow picture card. |
-| ⚙️ **Settings** | Font size and family, word wrap, line numbers, completion, auto-close, keyboard suggestions, symbol bar keys, terminal size and theme, bottom bar on/off, language (English / Русский). |
+| ⚙️ **Settings** | Font size and family, word wrap, line numbers, completion, auto-close, keyboard suggestions, symbol bar keys, terminal size and theme, bottom bar on/off, **theme (System / Dark / Light)**, language (English, Русский, Українська, Español, Deutsch, Português, Türkçe, 简体中文). |
 | 🔔 **Updates** | SkyPython tells you when a new version is out and installs the right APK for your phone from inside the app — checked, over the old version, your files kept. |
 | 🚨 **Report a problem** | If something goes wrong, SkyPython offers to send a report (error + device info, no personal data) as a GitHub issue or via any app — nothing is ever sent automatically. |
 
@@ -119,6 +120,12 @@ Everything works **offline** except installing packages and checking for updates
 <p align="center">
   <img src="docs/screenshots/update_banner.png" width="24%" alt="Update banner">
   <img src="docs/screenshots/update.png" width="24%" alt="Update screen">
+  <img src="docs/screenshots/plot.png" width="24%" alt="matplotlib chart opened by plt.show()">
+  <img src="docs/screenshots/plot_chips.png" width="24%" alt="Figures under the output">
+</p>
+<p align="center">
+  <img src="docs/screenshots/editor_light.png" width="24%" alt="Light theme: editor">
+  <img src="docs/screenshots/pip_light.png" width="24%" alt="Light theme: Pip with prebuilt packages">
 </p>
 
 ## 📥 Install
@@ -240,17 +247,18 @@ What's new in every version: [CHANGELOG.md](CHANGELOG.md) and the [Releases](htt
 - [x] Pip for pure-Python packages, PyPI search
 - [x] Debugger with breakpoints and watches
 - [x] Go to definition, outline, find & replace
-- [x] Android 7.0+ and 32-bit devices, English and Russian
+- [x] Android 7.0+ and 32-bit devices, 8 languages
 - [x] Prebuilt packages with native code: **NumPy** ✅
 - [x] Images your scripts save shown right in the app
 - [x] Pillow (images and photos)
 - [x] Open projects from the phone's storage
 - [x] Updates right in the app
-- [ ] More native packages: matplotlib → pandas
-- [ ] Plots from matplotlib shown right in the app
+- [x] matplotlib and pandas
+- [x] Plots from matplotlib shown right in the app
 - [ ] GUI apps (Kivy / Tkinter-style windows)
 - [x] IDE dark theme
-- [ ] Light theme, more languages
+- [x] Light theme, more languages
+- [ ] More packages: scipy, scikit-learn
 - [ ] OpenCV, TensorFlow Lite, PyTorch (long term)
 
 ## 🤝 Contributing
