@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.SkyPython" parent="android:Theme.Material.NoActionBar">
+    <!-- Follows the system theme until the app theme setting is read (values-night: dark). -->
+    <style name="Theme.SkyPython" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/sky_background</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>

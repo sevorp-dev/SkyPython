@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The dark window (see ui/theme/SkyColors.kt). -->
+    <color name="sky_background">#FF1E1F22</color>
+    <color name="sky_primary">#FFF5A962</color>
+</resources>

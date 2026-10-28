@@ -4,9 +4,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -15,74 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.skyloft.skypython.R
-
-// "IDE dark": neutral near-black surfaces (no blue tint) in clear elevation steps, like the dark
-// themes of desktop code editors, and one warm orange accent. Translucency is used sparingly — on
-// floating layers (menus, sheets, snackbars, the drawer scrim) — never on text-heavy panels.
-// Text contrast is WCAG AA (≥ 4.5:1) on every surface. (The Slate* names are historical.)
-
-/** Darkest: console / terminal output and logs. */
-val Ink = Color(0xFF161616)
-/** The terminal's "Black" theme: near-black for OLED screens at night. */
-val InkBlack = Color(0xFF0A0A0A)
-/** Window and code-area background (also the Sora view's, see CodeEditor). */
-val Slate = Color(0xFF1E1F22)
-/** Top bars, the tab strip, the status line, symbol bar and key rows: one step above [Slate]. */
-val SlateBar = Color(0xFF2B2D30)
-/** Raised panels: cards, fields, menus, the completion popup. */
-val SlatePanel = Color(0xFF313338)
-/** Dialogs and pressed / selected rows: above [SlatePanel]. */
-val SlateRaised = Color(0xFF37393E)
-/** 1dp hairlines between rows and sections, and borders of floating layers. */
-val SlateLine = Color(0xFF3C3E43)
-/** Outlines of controls (text fields, the off switch): stronger than [SlateLine]. */
-val SlateOutline = Color(0xFF5A5D63)
-
-/** The accent: solid fills (Run, FABs, filled buttons, switch tracks) under [OnOrange] content. */
-val Orange = Color(0xFFF28C38)
-/** Content on [Orange]: a deep brown-black (≈ 7.4:1), sharper than white on orange (2.4:1). */
-val OnOrange = Color(0xFF221203)
-/** Accent as text / icons on dark surfaces (links, selected tabs, section labels) — ≥ 6:1 everywhere. */
-val OrangeSoft = Color(0xFFF5A962)
-/** A quiet orange wash behind selected rows and armed keys. */
-val OrangeTint = Color(0x1FF28C38)
-
-/** Primary text. */
-val TextBright = Color(0xFFDFE1E5)
-/** Secondary text (subtitles, hints) — 6.5:1 on [Slate], 5.5:1 on [SlateBar], 5.0:1 on [SlatePanel], 4.6:1 on [SlateRaised]. */
-val MutedText = Color(0xFFA0A3AA)
-/** Code functions / links in code — the cool counterpart of the orange keywords. */
-val CodeBlue = Color(0xFF56A8F5)
-val ErrorRed = Color(0xFFFF7B72)
-val SuccessGreen = Color(0xFF7FD18B)
-/** Warning squiggles. */
-val WarningAmber = Color(0xFFE3B95C)
-/** A problem banner's background and text (the editor's error strip). */
-val ErrorSurface = Color(0xFF3A2B2D)
-val OnErrorSurface = Color(0xFFFFD9DE)
-
-// Code colours, shared by the editor theme (assets/textmate/skypython-dark.json) and previews.
-/** Plain code text. */
-val CodeText = Color(0xFFBCBEC4)
-/** Keywords (def, class, import, True …): a muted warm orange. */
-val CodeKeyword = Color(0xFFCF8E6D)
-/** Control-flow keywords (if, return, for …): the accent orange. */
-val CodeControl = Orange
-val CodeString = Color(0xFF6AAB73)
-/** The selected completion row and find matches: a warm, opaque take on the orange selection. */
-val CodeSelection = Color(0xFF4A3B2B)
-/** Completion-kind badges behind the orange letter. */
-val BadgeTint = Color(0xFF3D3328)
-
-/** Console text and its dim lines (prompts, notices). */
-val ConsoleText = Color(0xFFD5D7DC)
-val ConsoleDim = Color(0xFF85898F)
-
-/** Brand name in About: a soft orange → amber sweep (no glow). */
-val BrandTextBrush: Brush = Brush.linearGradient(listOf(Orange, Color(0xFFFFC27A)))
-
-/** Floating layers (menus, sheets, snackbars) let the content shimmer through a little. */
-const val GLASS_ALPHA = 0.96f
 
 /** UI text: Inter (SIL OFL 1.1), static Latin + Cyrillic subsets in res/font. */
 val InterFamily = FontFamily(
@@ -101,51 +36,97 @@ val CodeFont = FontFamily(
     Font(R.font.jetbrains_mono_bold, FontWeight.Bold),
 )
 
-// Every slot is set: any slot left out falls back to Material's baseline purple tones,
-// which show up in dialogs, menus, text-field outlines and switch tracks.
-private val SkyColors = darkColorScheme(
-    primary = OrangeSoft,
-    onPrimary = OnOrange,
-    primaryContainer = Color(0xFF5A3313),
-    onPrimaryContainer = Color(0xFFFFDCC0),
-    inversePrimary = Orange,
-    secondary = CodeBlue,
-    onSecondary = Color(0xFF06233F),
-    secondaryContainer = SlateRaised,
-    onSecondaryContainer = TextBright,
-    tertiary = Color(0xFFFFC27A),
-    onTertiary = Color(0xFF3A2400),
-    tertiaryContainer = Color(0xFF4A3520),
-    onTertiaryContainer = Color(0xFFFFE2C2),
-    background = Slate,
-    onBackground = TextBright,
-    surface = Slate,
-    onSurface = TextBright,
-    surfaceVariant = SlatePanel,
-    onSurfaceVariant = MutedText,
-    // Flat: no orange tint added to raised surfaces.
-    surfaceTint = Color.Transparent,
-    // Snackbars: a raised dark panel with orange actions, not a light slab.
-    inverseSurface = SlateRaised.copy(alpha = 0.97f),
-    inverseOnSurface = TextBright,
-    error = ErrorRed,
-    onError = Color(0xFF410002),
-    errorContainer = Color(0xFF4D1F1D),
-    onErrorContainer = Color(0xFFFFDAD6),
-    outline = SlateOutline,
-    outlineVariant = SlateLine,
-    scrim = Color(0xFF000000),
-    surfaceBright = Color(0xFF3C3E43),
-    surfaceDim = Ink,
-    surfaceContainerLowest = Ink,
-    // Bottom sheets.
-    surfaceContainerLow = SlateBar.copy(alpha = 0.97f),
-    // Menus float over content: slightly translucent.
-    surfaceContainer = SlatePanel.copy(alpha = GLASS_ALPHA),
-    // Dialogs stay opaque (they hold text and fields).
-    surfaceContainerHigh = SlatePanel,
-    surfaceContainerHighest = SlateRaised,
-)
+// Material slots follow the palette. Every slot is set: any slot left out falls back to
+// Material's baseline purple tones, which show up in dialogs, menus, text-field outlines and
+// switch tracks.
+private fun materialColors(c: SkyColors): ColorScheme = if (c.isLight) {
+    lightColorScheme(
+        primary = c.accentText,
+        onPrimary = Color.White,
+        primaryContainer = Color(0xFFFFDCC0),
+        onPrimaryContainer = Color(0xFF3A1D00),
+        inversePrimary = Color(0xFFF5A962),
+        secondary = c.codeFunction,
+        onSecondary = Color.White,
+        secondaryContainer = c.raised,
+        onSecondaryContainer = c.text,
+        tertiary = Color(0xFF8A5A00),
+        onTertiary = Color.White,
+        tertiaryContainer = Color(0xFFFFE2C2),
+        onTertiaryContainer = Color(0xFF2C1A00),
+        background = c.window,
+        onBackground = c.text,
+        surface = c.window,
+        onSurface = c.text,
+        surfaceVariant = c.raised,
+        onSurfaceVariant = c.mutedText,
+        // Flat: no orange tint added to raised surfaces.
+        surfaceTint = Color.Transparent,
+        // Snackbars: a dark slab with orange actions, the usual contrast on a light page.
+        inverseSurface = DarkSkyColors.bar.copy(alpha = 0.97f),
+        inverseOnSurface = DarkSkyColors.text,
+        error = c.error,
+        onError = Color.White,
+        errorContainer = c.errorSurface,
+        onErrorContainer = c.onErrorSurface,
+        outline = c.outline,
+        outlineVariant = c.line,
+        scrim = Color(0xFF000000),
+        surfaceBright = c.panel,
+        surfaceDim = Color(0xFFE8E9EC),
+        surfaceContainerLowest = c.panel,
+        // Bottom sheets.
+        surfaceContainerLow = c.panel.copy(alpha = 0.98f),
+        // Menus float over content: slightly translucent.
+        surfaceContainer = c.panel.copy(alpha = GLASS_ALPHA),
+        // Dialogs stay opaque (they hold text and fields).
+        surfaceContainerHigh = c.panel,
+        surfaceContainerHighest = c.raised,
+    )
+} else {
+    darkColorScheme(
+        primary = c.accentText,
+        onPrimary = c.onAccent,
+        primaryContainer = Color(0xFF5A3313),
+        onPrimaryContainer = Color(0xFFFFDCC0),
+        inversePrimary = c.accent,
+        secondary = c.codeFunction,
+        onSecondary = Color(0xFF06233F),
+        secondaryContainer = c.raised,
+        onSecondaryContainer = c.text,
+        tertiary = Color(0xFFFFC27A),
+        onTertiary = Color(0xFF3A2400),
+        tertiaryContainer = Color(0xFF4A3520),
+        onTertiaryContainer = Color(0xFFFFE2C2),
+        background = c.window,
+        onBackground = c.text,
+        surface = c.window,
+        onSurface = c.text,
+        surfaceVariant = c.panel,
+        onSurfaceVariant = c.mutedText,
+        surfaceTint = Color.Transparent,
+        // Snackbars: a raised dark panel with orange actions, not a light slab.
+        inverseSurface = c.raised.copy(alpha = 0.97f),
+        inverseOnSurface = c.text,
+        error = c.error,
+        onError = Color(0xFF410002),
+        errorContainer = Color(0xFF4D1F1D),
+        onErrorContainer = Color(0xFFFFDAD6),
+        outline = c.outline,
+        outlineVariant = c.line,
+        scrim = Color(0xFF000000),
+        surfaceBright = c.line,
+        surfaceDim = c.console,
+        surfaceContainerLowest = c.console,
+        surfaceContainerLow = c.bar.copy(alpha = 0.97f),
+        surfaceContainer = c.panel.copy(alpha = GLASS_ALPHA),
+        surfaceContainerHigh = c.panel,
+        surfaceContainerHighest = c.raised,
+    )
+}
+
+private val DarkMaterialColors = materialColors(DarkSkyColors)
+private val LightMaterialColors = materialColors(LightSkyColors)
 
 private val SkyTypography: Typography = Typography().let { base ->
     fun TextStyle.inter() = copy(fontFamily = InterFamily)
@@ -177,7 +158,19 @@ private val SkyShapes = Shapes(
     extraLarge = RoundedCornerShape(24.dp),
 )
 
+/**
+ * The app theme. [dark] picks [DarkSkyColors] or [LightSkyColors] (by default the system's
+ * choice); screens read the palette through [SkyTheme.colors] and Material's slots follow it.
+ */
 @Composable
-fun SkyPythonTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = SkyColors, typography = SkyTypography, shapes = SkyShapes, content = content)
+fun SkyPythonTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+    val colors = if (dark) DarkSkyColors else LightSkyColors
+    CompositionLocalProvider(LocalSkyColors provides colors) {
+        MaterialTheme(
+            colorScheme = if (dark) DarkMaterialColors else LightMaterialColors,
+            typography = SkyTypography,
+            shapes = SkyShapes,
+            content = content,
+        )
+    }
 }

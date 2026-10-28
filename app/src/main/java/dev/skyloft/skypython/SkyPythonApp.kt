@@ -1,5 +1,6 @@
 package dev.skyloft.skypython
 
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import dev.skyloft.skypython.project.OpenProjectScreen
 import dev.skyloft.skypython.project.ProjectsViewModel
 import dev.skyloft.skypython.project.StoragePermission
@@ -66,7 +67,6 @@ import dev.skyloft.skypython.editor.EditorController
 import dev.skyloft.skypython.ui.nav.BottomNavPolicy
 import dev.skyloft.skypython.ui.nav.SkyBottomBar
 import dev.skyloft.skypython.ui.nav.TopLevelDestination
-import dev.skyloft.skypython.ui.theme.Slate
 import kotlinx.coroutines.flow.map
 import dev.skyloft.skypython.about.AboutScreen
 import dev.skyloft.skypython.console.ConsoleScreen
@@ -302,7 +302,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
     val clearance = remember { SnackbarClearance() }
     var hostGapPx by remember { mutableIntStateOf(0) }
     CompositionLocalProvider(LocalSnackbarClearance provides clearance) {
-    Column(Modifier.fillMaxSize().background(Slate)) {
+    Column(Modifier.fillMaxSize().background(SkyTheme.colors.window)) {
         Box(
             Modifier
                 .fillMaxWidth()

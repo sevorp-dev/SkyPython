@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.viewer
 
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import android.graphics.Bitmap
 import android.text.format.Formatter
 import android.widget.Toast
@@ -74,10 +75,6 @@ import dev.skyloft.skypython.R
 import dev.skyloft.skypython.share.openWith
 import dev.skyloft.skypython.share.shareFile
 import dev.skyloft.skypython.ui.theme.Hairline
-import dev.skyloft.skypython.ui.theme.Ink
-import dev.skyloft.skypython.ui.theme.MutedText
-import dev.skyloft.skypython.ui.theme.SlatePanel
-import dev.skyloft.skypython.ui.theme.SlateRaised
 import dev.skyloft.skypython.ui.theme.skyTopBarColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -119,7 +116,7 @@ fun ImageViewerScreen(file: File, onBack: () -> Unit, onDeleted: (File) -> Unit)
     val scope = rememberCoroutineScope()
 
     Scaffold(
-        containerColor = Ink,
+        containerColor = SkyTheme.colors.console,
         topBar = {
             Column {
                 TopAppBar(
@@ -130,7 +127,7 @@ fun ImageViewerScreen(file: File, onBack: () -> Unit, onDeleted: (File) -> Unit)
                             Text(
                                 if (ready != null) stringResource(R.string.viewer_info, ready.width, ready.height, size) else size,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MutedText,
+                                color = SkyTheme.colors.mutedText,
                                 maxLines = 1,
                             )
                         }
@@ -201,9 +198,9 @@ private fun ViewerError(failure: LoadedImage.Failed) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Icon(Icons.Outlined.BrokenImage, contentDescription = null, tint = MutedText, modifier = Modifier.size(48.dp))
+        Icon(Icons.Outlined.BrokenImage, contentDescription = null, tint = SkyTheme.colors.mutedText, modifier = Modifier.size(48.dp))
         Text(stringResource(R.string.viewer_error_title), style = MaterialTheme.typography.titleMedium)
-        Text(text, style = MaterialTheme.typography.bodyMedium, color = MutedText, textAlign = TextAlign.Center)
+        Text(text, style = MaterialTheme.typography.bodyMedium, color = SkyTheme.colors.mutedText, textAlign = TextAlign.Center)
     }
 }
 
@@ -226,8 +223,10 @@ private fun checkerTile(cellPx: Int, dark: Color, light: Color): ImageBitmap {
 private fun ZoomableImage(bitmap: Bitmap, name: String) {
     val image = remember(bitmap) { bitmap.asImageBitmap() }
     val cellPx = with(LocalDensity.current) { 8.dp.roundToPx() }.coerceAtLeast(2)
-    val checker = remember(cellPx) {
-        ShaderBrush(ImageShader(checkerTile(cellPx, SlatePanel, SlateRaised), TileMode.Repeated, TileMode.Repeated))
+    val dark = SkyTheme.colors.panel
+    val light = SkyTheme.colors.raised
+    val checker = remember(cellPx, dark, light) {
+        ShaderBrush(ImageShader(checkerTile(cellPx, dark, light), TileMode.Repeated, TileMode.Repeated))
     }
     var zoom by remember { mutableFloatStateOf(1f) }
     var panX by remember { mutableFloatStateOf(0f) }

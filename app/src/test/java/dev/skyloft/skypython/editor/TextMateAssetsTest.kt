@@ -63,9 +63,28 @@ class TextMateAssetsTest {
     }
 
     @Test
+    fun lightThemeLoadsWithTokenColors() {
+        val registry = Registry()
+        registry.setTheme(IThemeSource.fromFile(File(dir, "skypython-light.json")))
+        val colors = registry.colorMap.map { it.uppercase() }
+        assertTrue(colors.toString(), "#0033B3" in colors) // keywords blue
+        assertTrue(colors.toString(), "#067D17" in colors) // strings green
+        assertTrue(colors.toString(), "#1750EB" in colors) // numbers
+        assertTrue(colors.toString(), "#8C8C8C" in colors) // comments
+        assertTrue(colors.toString(), "#00627A" in colors) // functions
+        assertTrue(colors.toString(), "#9E880D" in colors) // decorators
+        assertTrue(colors.toString(), "#871094" in colors) // self / constants
+        // No dark-theme token colour left behind.
+        assertTrue(colors.toString(), "#BCBEC4" !in colors && "#CF8E6D" !in colors)
+        val raw = File(dir, "skypython-light.json").readText()
+        assertTrue(raw.contains("\"editor.background\": \"#FFFFFF\""))
+        assertTrue(raw.contains("\"type\": \"light\""))
+    }
+
+    @Test
     fun noticeListsEveryBundledThirdPartyFile() {
         val notice = File(dir, "NOTICE.md").readText()
-        listOf("python.tmLanguage.json", "language-configuration.json", "skypython-dark.json").forEach {
+        listOf("python.tmLanguage.json", "language-configuration.json", "skypython-dark.json", "skypython-light.json").forEach {
             assertTrue("NOTICE.md missing $it", notice.contains(it))
         }
         assertTrue(File(dir, "python/LICENSE-MagicPython.txt").isFile)

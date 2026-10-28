@@ -1,7 +1,6 @@
 package dev.skyloft.skypython.console
 
-import dev.skyloft.skypython.ui.theme.ConsoleText
-import dev.skyloft.skypython.ui.theme.ConsoleDim
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import dev.skyloft.skypython.ui.theme.CodeFont
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
@@ -35,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,12 +62,7 @@ import dev.skyloft.skypython.R
 import dev.skyloft.skypython.runTargetTitle
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.skyloft.skypython.ui.theme.SlateLine
-import dev.skyloft.skypython.ui.theme.SlateBar
-import dev.skyloft.skypython.ui.theme.ErrorRed
 import androidx.compose.material3.HorizontalDivider
-import dev.skyloft.skypython.ui.theme.Ink
-import dev.skyloft.skypython.ui.theme.Orange
 import dev.skyloft.skypython.ui.theme.brandButtonColors
 import dev.skyloft.skypython.ui.theme.SkyTopBar
 import androidx.compose.foundation.clickable
@@ -77,12 +72,12 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 
-/** Terminal-like colours for the output area, independent of the app theme. */
-private val ConsoleBackground = Ink
-private val ConsolePrompt = Orange
+/** Terminal-like colours for the output area (the console palette of the current theme). */
+private val ConsoleBackground: Color @Composable get() = SkyTheme.colors.console
+private val ConsolePrompt: Color @Composable get() = SkyTheme.colors.accentText
 
-private val ConsoleTextStyle = TextStyle(
-    color = ConsoleText,
+private val ConsoleTextStyle: TextStyle @Composable get() = TextStyle(
+    color = SkyTheme.colors.consoleText,
     fontFamily = CodeFont,
     fontSize = 14.sp,
     lineHeight = 19.sp,
@@ -95,7 +90,7 @@ fun ConsoleScreen(viewModel: ConsoleViewModel, onBack: () -> Unit) {
 
     Scaffold(
         containerColor = ConsoleBackground,
-        contentColor = ConsoleText,
+        contentColor = SkyTheme.colors.consoleText,
         topBar = {
             SkyTopBar(
                 title = consoleTitle(state.title),
@@ -105,7 +100,7 @@ fun ConsoleScreen(viewModel: ConsoleViewModel, onBack: () -> Unit) {
                         // Gentle first: KeyboardInterrupt lets the script clean up; Stop kills it.
                         if (state.acceptsInput) InterruptButton(onClick = viewModel::interrupt)
                         IconButton(onClick = viewModel::stop) {
-                            Icon(Icons.Outlined.Stop, contentDescription = stringResource(R.string.action_stop), tint = ErrorRed)
+                            Icon(Icons.Outlined.Stop, contentDescription = stringResource(R.string.action_stop), tint = SkyTheme.colors.error)
                         }
                     } else {
                         IconButton(onClick = viewModel::restart) {
@@ -131,7 +126,7 @@ fun ConsoleScreen(viewModel: ConsoleViewModel, onBack: () -> Unit) {
                     else -> ConsoleOutput(state.lines, state.version, statusLineRegex())
                 }
             }
-            HorizontalDivider(color = SlateLine)
+            HorizontalDivider(color = SkyTheme.colors.line)
             InputRow(
                 enabled = state.acceptsInput,
                 // The REPL and the shell always want typing; a script may never read input, so the
@@ -180,7 +175,9 @@ private fun ConsoleOutput(lines: List<ConsoleLine>, version: Long, statusLine: R
             modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
         ) {
             itemsIndexed(lines) { _, line ->
-                Text(text = remember(line, statusLine) { line.toAnnotated(statusLine) }, style = ConsoleTextStyle)
+                val dim = SkyTheme.colors.consoleDim
+                val err = SkyTheme.colors.error
+                Text(text = remember(line, statusLine, dim, err) { line.toAnnotated(statusLine, dim, err) }, style = ConsoleTextStyle)
             }
         }
     }
@@ -220,14 +217,14 @@ internal fun statusLineRegex(footers: List<String>, cancelled: List<String>): Re
     return Regex(alternatives.joinToString("|"))
 }
 
-private fun ConsoleLine.toAnnotated(statusLine: Regex): AnnotatedString = buildAnnotatedString {
+private fun ConsoleLine.toAnnotated(statusLine: Regex, dim: Color, error: Color): AnnotatedString = buildAnnotatedString {
     val only = pieces.singleOrNull()
     if (only != null && !only.isError && statusLine.matches(only.text)) {
-        withStyle(SpanStyle(color = ConsoleDim)) { append(only.text) }
+        withStyle(SpanStyle(color = dim)) { append(only.text) }
         return@buildAnnotatedString
     }
     for (piece in pieces) {
-        if (piece.isError) withStyle(SpanStyle(color = ErrorRed)) { append(piece.text) }
+        if (piece.isError) withStyle(SpanStyle(color = error)) { append(piece.text) }
         else append(piece.text)
     }
 }
@@ -246,18 +243,18 @@ private fun InputRow(enabled: Boolean, autoFocus: Boolean, onSend: (String) -> U
         Modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
-            .background(SlateBar)
+            .background(SkyTheme.colors.bar)
             .clickable(enabled = enabled, indication = null, interactionSource = null) { focus.requestFocus() }
             .padding(start = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             "\u276F ",
-            style = ConsoleTextStyle.copy(color = if (enabled) ConsolePrompt else ConsoleDim),
+            style = ConsoleTextStyle.copy(color = if (enabled) ConsolePrompt else SkyTheme.colors.consoleDim),
         )
         Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
             if (!enabled && text.isEmpty()) {
-                Text(stringResource(R.string.console_not_running), style = ConsoleTextStyle.copy(color = ConsoleDim))
+                Text(stringResource(R.string.console_not_running), style = ConsoleTextStyle.copy(color = SkyTheme.colors.consoleDim))
             }
             BasicTextField(
                 value = text,
@@ -282,7 +279,7 @@ private fun InputRow(enabled: Boolean, autoFocus: Boolean, onSend: (String) -> U
                 Icons.AutoMirrored.Outlined.Send,
                 contentDescription = stringResource(R.string.action_send),
                 modifier = Modifier.size(18.dp),
-                tint = if (enabled) ConsolePrompt else ConsoleDim,
+                tint = if (enabled) ConsolePrompt else SkyTheme.colors.consoleDim,
             )
         }
     }
@@ -308,7 +305,7 @@ internal fun InstallError(message: String, onRetry: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(stringResource(R.string.console_setup_failed), style = MaterialTheme.typography.titleMedium)
-        Text(message, Modifier.padding(vertical = 12.dp), color = ErrorRed)
+        Text(message, Modifier.padding(vertical = 12.dp), color = SkyTheme.colors.error)
         Button(onClick = onRetry, colors = brandButtonColors()) { Text(stringResource(R.string.action_retry)) }
     }
 }
@@ -334,12 +331,12 @@ internal fun EmbeddedConsole(state: ConsoleState, onSend: (String) -> Unit, modi
     Column(modifier.background(ConsoleBackground)) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
             when {
-                state.installError != null -> Text(state.installError, Modifier.padding(12.dp), color = ErrorRed)
+                state.installError != null -> Text(state.installError, Modifier.padding(12.dp), color = SkyTheme.colors.error)
                 state.installing -> Installing()
                 else -> ConsoleOutput(state.lines, state.version, statusLineRegex())
             }
         }
-        HorizontalDivider(color = SlateLine)
+        HorizontalDivider(color = SkyTheme.colors.line)
         InputRow(enabled = state.acceptsInput, autoFocus = false, onSend = onSend)
     }
 }

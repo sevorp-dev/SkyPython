@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.update
 
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -59,22 +60,13 @@ import dev.skyloft.skypython.ui.theme.CardGroup
 import dev.skyloft.skypython.ui.theme.Chevron
 import dev.skyloft.skypython.ui.theme.ChipTone
 import dev.skyloft.skypython.ui.theme.CodeFont
-import dev.skyloft.skypython.ui.theme.SlateBar
 import androidx.compose.foundation.shape.RoundedCornerShape
-import dev.skyloft.skypython.ui.theme.ErrorRed
-import dev.skyloft.skypython.ui.theme.ErrorSurface
 import dev.skyloft.skypython.ui.theme.IconTile
-import dev.skyloft.skypython.ui.theme.MutedText
-import dev.skyloft.skypython.ui.theme.OnErrorSurface
-import dev.skyloft.skypython.ui.theme.Orange
-import dev.skyloft.skypython.ui.theme.OrangeSoft
 import dev.skyloft.skypython.ui.theme.SectionLabel
 import dev.skyloft.skypython.ui.theme.SkyAlertDialog
 import dev.skyloft.skypython.ui.theme.SkyCard
 import dev.skyloft.skypython.ui.theme.SkyTopBar
-import dev.skyloft.skypython.ui.theme.SlateLine
 import dev.skyloft.skypython.ui.theme.StatusChip
-import dev.skyloft.skypython.ui.theme.TextBright
 import dev.skyloft.skypython.ui.theme.brandButtonColors
 import dev.skyloft.skypython.ui.theme.brandSwitchColors
 import java.util.Locale
@@ -85,7 +77,7 @@ const val UPDATE_INSTALL_TAG = "update-install"
 /** The small orange dot of "an update is waiting" (☰, the drawer's About, About's row). */
 @Composable
 fun UpdateDot(modifier: Modifier = Modifier) {
-    Box(modifier.size(8.dp).background(Orange, CircleShape))
+    Box(modifier.size(8.dp).background(SkyTheme.colors.accent, CircleShape))
 }
 
 /** "SkyPython 0.0.6 is available · What's new · Update" over the editor; ✕ hides it for that version. */
@@ -110,22 +102,22 @@ fun UpdateBanner(
             Column(Modifier.weight(1f).padding(start = 12.dp)) {
                 Text(
                     stringResource(R.string.update_banner_title, version.toString()),
-                    color = TextBright,
+                    color = SkyTheme.colors.text,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
-                Text(stringResource(R.string.update_banner_text), color = MutedText, fontSize = 12.sp)
+                Text(stringResource(R.string.update_banner_text), color = SkyTheme.colors.mutedText, fontSize = 12.sp)
             }
             IconButton(onClick = onDismiss) {
-                Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.update_banner_hide), tint = MutedText)
+                Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.update_banner_hide), tint = SkyTheme.colors.mutedText)
             }
         }
         Row(
             Modifier.fillMaxWidth().padding(start = 56.dp, end = 8.dp, bottom = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            TextButton(onClick = onWhatsNew) { Text(stringResource(R.string.update_whats_new), color = MutedText) }
-            TextButton(onClick = onUpdate) { Text(stringResource(R.string.update_banner_update), color = OrangeSoft, fontWeight = FontWeight.SemiBold) }
+            TextButton(onClick = onWhatsNew) { Text(stringResource(R.string.update_whats_new), color = SkyTheme.colors.mutedText) }
+            TextButton(onClick = onUpdate) { Text(stringResource(R.string.update_banner_update), color = SkyTheme.colors.accentText, fontWeight = FontWeight.SemiBold) }
         }
     }
 }
@@ -157,7 +149,7 @@ fun UpdateScreen(controller: UpdateController, onBack: () -> Unit) {
                 }
                 Text(
                     stringResource(R.string.update_installed_version, state.currentVersion),
-                    color = MutedText,
+                    color = SkyTheme.colors.mutedText,
                     fontSize = 13.sp,
                     modifier = Modifier.padding(top = 4.dp),
                 )
@@ -168,7 +160,7 @@ fun UpdateScreen(controller: UpdateController, onBack: () -> Unit) {
             SkyCard(Modifier.fillMaxWidth()) {
                 val blocks = remember(state.notes) { state.notes?.let(ReleaseNotes::parse).orEmpty() }
                 if (blocks.isEmpty()) {
-                    Text(stringResource(R.string.update_notes_unavailable), color = MutedText, fontSize = 14.sp)
+                    Text(stringResource(R.string.update_notes_unavailable), color = SkyTheme.colors.mutedText, fontSize = 14.sp)
                 } else {
                     Notes(blocks)
                 }
@@ -186,7 +178,7 @@ fun UpdateScreen(controller: UpdateController, onBack: () -> Unit) {
     if (state.needsInstallPermission) {
         SkyAlertDialog(
             onDismissRequest = controller::dismissPermission,
-            icon = { Icon(Icons.Outlined.SystemUpdate, contentDescription = null, tint = OrangeSoft) },
+            icon = { Icon(Icons.Outlined.SystemUpdate, contentDescription = null, tint = SkyTheme.colors.accentText) },
             title = { Text(stringResource(R.string.update_permission_title)) },
             text = { Text(stringResource(R.string.update_permission_text)) },
             confirmButton = {
@@ -213,9 +205,9 @@ private fun InstallArea(state: UpdateState, controller: UpdateController) {
             Spacer(Modifier.height(8.dp))
             val fraction = if (phase.total > 0) (phase.done.toFloat() / phase.total).coerceIn(0f, 1f) else null
             if (fraction != null) {
-                LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth(), color = Orange, trackColor = SlateLine)
+                LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth(), color = SkyTheme.colors.accent, trackColor = SkyTheme.colors.line)
             } else {
-                LinearProgressIndicator(Modifier.fillMaxWidth(), color = Orange, trackColor = SlateLine)
+                LinearProgressIndicator(Modifier.fillMaxWidth(), color = SkyTheme.colors.accent, trackColor = SkyTheme.colors.line)
             }
             Text(
                 if (fraction != null) {
@@ -223,7 +215,7 @@ private fun InstallArea(state: UpdateState, controller: UpdateController) {
                 } else {
                     stringResource(R.string.update_progress_unknown, megabytes(phase.done))
                 },
-                color = MutedText,
+                color = SkyTheme.colors.mutedText,
                 fontSize = 13.sp,
                 modifier = Modifier.padding(top = 8.dp),
             )
@@ -233,13 +225,13 @@ private fun InstallArea(state: UpdateState, controller: UpdateController) {
         }
         UpdatePhase.Installing -> {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                CircularProgressIndicator(Modifier.size(20.dp), color = Orange, strokeWidth = 2.dp)
+                CircularProgressIndicator(Modifier.size(20.dp), color = SkyTheme.colors.accent, strokeWidth = 2.dp)
                 Spacer(Modifier.width(12.dp))
                 Text(stringResource(R.string.update_installing), fontWeight = FontWeight.Medium)
             }
             Text(
                 stringResource(R.string.update_installing_hint),
-                color = MutedText,
+                color = SkyTheme.colors.mutedText,
                 fontSize = 13.sp,
                 modifier = Modifier.padding(top = 8.dp),
             )
@@ -253,7 +245,7 @@ private fun InstallArea(state: UpdateState, controller: UpdateController) {
             InstallButton(R.string.update_install, controller::install)
             Text(
                 stringResource(R.string.update_install_hint, variantLabel()),
-                color = MutedText,
+                color = SkyTheme.colors.mutedText,
                 fontSize = 13.sp,
                 modifier = Modifier.padding(top = 8.dp),
             )
@@ -261,7 +253,7 @@ private fun InstallArea(state: UpdateState, controller: UpdateController) {
     }
     if (!state.busy) {
         TextButton(onClick = controller::skip, modifier = Modifier.padding(top = 4.dp)) {
-            Text(stringResource(R.string.update_skip), color = MutedText)
+            Text(stringResource(R.string.update_skip), color = SkyTheme.colors.mutedText)
         }
     }
 }
@@ -291,12 +283,12 @@ private fun FailureCard(failure: UpdateFailure) {
             if (failure.incompatible) stringResource(R.string.update_failed_incompatible)
             else stringResource(R.string.update_failed_install, failure.message ?: "status ${failure.status}")
     }
-    SkyCard(Modifier.fillMaxWidth(), color = ErrorSurface, border = ErrorRed.copy(alpha = 0.4f), contentPadding = 12.dp) {
+    SkyCard(Modifier.fillMaxWidth(), color = SkyTheme.colors.errorSurface, border = SkyTheme.colors.error.copy(alpha = 0.4f), contentPadding = 12.dp) {
         Row {
-            Icon(Icons.Outlined.ErrorOutline, contentDescription = null, tint = ErrorRed, modifier = Modifier.size(20.dp))
+            Icon(Icons.Outlined.ErrorOutline, contentDescription = null, tint = SkyTheme.colors.error, modifier = Modifier.size(20.dp))
             Column(Modifier.padding(start = 12.dp)) {
-                Text(stringResource(R.string.update_failed_title), color = OnErrorSurface, fontWeight = FontWeight.SemiBold)
-                Text(text, color = OnErrorSurface, fontSize = 13.sp, modifier = Modifier.padding(top = 2.dp))
+                Text(stringResource(R.string.update_failed_title), color = SkyTheme.colors.onErrorSurface, fontWeight = FontWeight.SemiBold)
+                Text(text, color = SkyTheme.colors.onErrorSurface, fontSize = 13.sp, modifier = Modifier.padding(top = 2.dp))
             }
         }
     }
@@ -309,7 +301,7 @@ private fun UpToDateCard(state: UpdateState, onCheck: () -> Unit) {
             IconTile(Icons.Outlined.Update, size = 40.dp)
             Column(Modifier.padding(start = 12.dp)) {
                 Text(stringResource(R.string.update_none_title), fontWeight = FontWeight.SemiBold)
-                Text(stringResource(R.string.about_version, state.currentVersion), color = MutedText, fontSize = 13.sp)
+                Text(stringResource(R.string.about_version, state.currentVersion), color = SkyTheme.colors.mutedText, fontSize = 13.sp)
             }
         }
         Spacer(Modifier.height(16.dp))
@@ -320,7 +312,7 @@ private fun UpToDateCard(state: UpdateState, onCheck: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
         ) {
             if (state.checking) {
-                CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = MutedText)
+                CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = SkyTheme.colors.mutedText)
                 Spacer(Modifier.width(8.dp))
             }
             Text(stringResource(if (state.checking) R.string.update_checking else R.string.update_check))
@@ -335,24 +327,24 @@ private fun Notes(blocks: List<NoteBlock>) {
             when (block) {
                 is NoteBlock.Heading -> Text(
                     block.text,
-                    color = if (block.level <= 2) TextBright else OrangeSoft,
+                    color = if (block.level <= 2) SkyTheme.colors.text else SkyTheme.colors.accentText,
                     fontSize = if (block.level <= 1) 18.sp else if (block.level == 2) 16.sp else 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(top = 6.dp),
                 )
                 is NoteBlock.Bullet -> Row {
-                    Text(block.marker, color = OrangeSoft, fontSize = 14.sp, modifier = Modifier.width(20.dp))
-                    Text(block.text, fontSize = 14.sp, color = TextBright)
+                    Text(block.marker, color = SkyTheme.colors.accentText, fontSize = 14.sp, modifier = Modifier.width(20.dp))
+                    Text(block.text, fontSize = 14.sp, color = SkyTheme.colors.text)
                 }
-                is NoteBlock.Paragraph -> Text(block.text, fontSize = 14.sp, color = TextBright)
+                is NoteBlock.Paragraph -> Text(block.text, fontSize = 14.sp, color = SkyTheme.colors.text)
                 is NoteBlock.Code -> Text(
                     block.text,
                     fontSize = 13.sp,
                     fontFamily = CodeFont,
-                    color = TextBright,
+                    color = SkyTheme.colors.text,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(SlateBar, RoundedCornerShape(8.dp))
+                        .background(SkyTheme.colors.bar, RoundedCornerShape(8.dp))
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                 )
             }
@@ -427,11 +419,11 @@ private fun CheckRow(state: UpdateState, onClick: () -> Unit) {
                 if (available != null) stringResource(R.string.update_check_summary_available, available.toString())
                 else stringResource(R.string.about_version, state.currentVersion),
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (available != null) OrangeSoft else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (available != null) SkyTheme.colors.accentText else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         when {
-            state.checking -> CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = Orange)
+            state.checking -> CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = SkyTheme.colors.accent)
             available != null -> Row(verticalAlignment = Alignment.CenterVertically) {
                 UpdateDot()
                 Spacer(Modifier.width(8.dp))

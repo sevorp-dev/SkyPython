@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.project
 
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import android.app.Activity
 import android.text.format.DateUtils
 import androidx.activity.compose.BackHandler
@@ -82,16 +83,8 @@ import dev.skyloft.skypython.files.describeFileError
 import dev.skyloft.skypython.locale.AppLocale
 import dev.skyloft.skypython.ui.rememberMainScope
 import dev.skyloft.skypython.ui.theme.Hairline
-import dev.skyloft.skypython.ui.theme.MutedText
-import dev.skyloft.skypython.ui.theme.OrangeSoft
-import dev.skyloft.skypython.ui.theme.OrangeTint
 import dev.skyloft.skypython.ui.theme.SectionLabel
 import dev.skyloft.skypython.ui.theme.SkyTopBar
-import dev.skyloft.skypython.ui.theme.Slate
-import dev.skyloft.skypython.ui.theme.SlateBar
-import dev.skyloft.skypython.ui.theme.SlateLine
-import dev.skyloft.skypython.ui.theme.SlatePanel
-import dev.skyloft.skypython.ui.theme.TextBright
 import dev.skyloft.skypython.ui.theme.brandButtonColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -233,7 +226,7 @@ private fun HomeContent(
 ) {
     val now = remember { System.currentTimeMillis() }
     Scaffold(
-        containerColor = Slate,
+        containerColor = SkyTheme.colors.window,
         topBar = { SkyTopBar(title = stringResource(R.string.projects_open_project), onBack = onBack) },
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
@@ -260,7 +253,7 @@ private fun HomeContent(
                     if (recents.isEmpty()) {
                         Text(
                             stringResource(R.string.projects_no_recent),
-                            color = MutedText,
+                            color = SkyTheme.colors.mutedText,
                             fontSize = 14.sp,
                             modifier = Modifier.padding(16.dp),
                         )
@@ -286,7 +279,7 @@ private fun HomeContent(
                                     Icon(
                                         Icons.Outlined.Close,
                                         contentDescription = stringResource(R.string.projects_remove_recent, name),
-                                        tint = MutedText,
+                                        tint = SkyTheme.colors.mutedText,
                                     )
                                 }
                             },
@@ -305,7 +298,7 @@ private fun HomeContent(
                             subtitle = stringResource(R.string.projects_root_desc),
                             onClick = { onRoot(root) },
                             trailing = {
-                                Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null, tint = MutedText)
+                                Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null, tint = SkyTheme.colors.mutedText)
                             },
                         )
                     }
@@ -315,7 +308,7 @@ private fun HomeContent(
     }
 }
 
-/** A list card: [SlatePanel] surface, 12 dp corners, a 1 dp [SlateLine] border. */
+/** A list card: [SkyColors.panel] surface, 12 dp corners, a 1 dp [SkyColors.line] border. */
 @Composable
 private fun Card(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val shape = RoundedCornerShape(12.dp)
@@ -323,8 +316,8 @@ private fun Card(modifier: Modifier = Modifier, content: @Composable () -> Unit)
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(SlatePanel)
-            .border(1.dp, SlateLine, shape),
+            .background(SkyTheme.colors.panel)
+            .border(1.dp, SkyTheme.colors.line, shape),
     ) { content() }
 }
 
@@ -332,10 +325,10 @@ private fun Card(modifier: Modifier = Modifier, content: @Composable () -> Unit)
 @Composable
 private fun CircleIcon(icon: ImageVector, size: Int = 36) {
     Box(
-        Modifier.size(size.dp).clip(CircleShape).background(OrangeTint),
+        Modifier.size(size.dp).clip(CircleShape).background(SkyTheme.colors.accentTint),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = OrangeSoft, modifier = Modifier.size((size * 0.55f).dp))
+        Icon(icon, contentDescription = null, tint = SkyTheme.colors.accentText, modifier = Modifier.size((size * 0.55f).dp))
     }
 }
 
@@ -361,7 +354,7 @@ private fun ProjectRow(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     title,
-                    color = TextBright,
+                    color = SkyTheme.colors.text,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
@@ -371,19 +364,19 @@ private fun ProjectRow(
                 if (badge != null) {
                     Text(
                         badge,
-                        color = OrangeSoft,
+                        color = SkyTheme.colors.accentText,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
                             .padding(start = 8.dp)
                             .clip(RoundedCornerShape(6.dp))
-                            .background(OrangeTint)
+                            .background(SkyTheme.colors.accentTint)
                             .padding(horizontal = 6.dp, vertical = 2.dp),
                     )
                 }
             }
-            Text(subtitle, color = MutedText, fontSize = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            if (detail != null) Text(detail, color = MutedText.copy(alpha = 0.8f), fontSize = 12.sp, maxLines = 1)
+            Text(subtitle, color = SkyTheme.colors.mutedText, fontSize = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            if (detail != null) Text(detail, color = SkyTheme.colors.mutedText.copy(alpha = 0.8f), fontSize = 12.sp, maxLines = 1)
         }
         trailing?.invoke()
     }
@@ -398,7 +391,7 @@ private fun PermissionContent(
     onNotNow: () -> Unit,
 ) {
     Scaffold(
-        containerColor = Slate,
+        containerColor = SkyTheme.colors.window,
         topBar = { SkyTopBar(title = stringResource(R.string.projects_open_project), onBack = onNotNow) },
     ) { padding ->
         Column(
@@ -415,7 +408,7 @@ private fun PermissionContent(
             Spacer(Modifier.height(20.dp))
             Text(
                 stringResource(R.string.storage_title),
-                color = TextBright,
+                color = SkyTheme.colors.text,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
@@ -423,7 +416,7 @@ private fun PermissionContent(
             Spacer(Modifier.height(12.dp))
             Text(
                 stringResource(R.string.storage_text),
-                color = MutedText,
+                color = SkyTheme.colors.mutedText,
                 fontSize = 15.sp,
                 textAlign = TextAlign.Center,
             )
@@ -444,7 +437,7 @@ private fun PermissionContent(
                         else -> R.string.storage_steps_runtime
                     },
                 ),
-                color = if (denied) OrangeSoft else MutedText,
+                color = if (denied) SkyTheme.colors.accentText else SkyTheme.colors.mutedText,
                 fontSize = 13.sp,
                 textAlign = TextAlign.Center,
             )
@@ -453,7 +446,7 @@ private fun PermissionContent(
                 Text(stringResource(if (denied) R.string.storage_open_settings else R.string.storage_allow), fontWeight = FontWeight.SemiBold)
             }
             TextButton(onClick = onNotNow, modifier = Modifier.padding(top = 4.dp)) {
-                Text(stringResource(R.string.crash_dialog_later), color = MutedText)
+                Text(stringResource(R.string.crash_dialog_later), color = SkyTheme.colors.mutedText)
             }
         }
     }
@@ -463,7 +456,7 @@ private fun PermissionContent(
 private fun Point(icon: ImageVector, text: String) {
     Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
         CircleIcon(icon)
-        Text(text, color = TextBright, fontSize = 14.sp, modifier = Modifier.padding(start = 16.dp))
+        Text(text, color = SkyTheme.colors.text, fontSize = 14.sp, modifier = Modifier.padding(start = 16.dp))
     }
 }
 
@@ -488,7 +481,7 @@ private fun BrowseContent(
     val crumbs = remember(dir, root) { FolderListing.crumbs(dir, root.dir) }
     val parent = FolderListing.parentWithin(dir, root.dir)
     Scaffold(
-        containerColor = Slate,
+        containerColor = SkyTheme.colors.window,
         topBar = {
             SkyTopBar(
                 title = stringResource(R.string.projects_browse_title),
@@ -499,7 +492,7 @@ private fun BrowseContent(
                         Icon(
                             if (showHidden) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
                             contentDescription = stringResource(R.string.projects_show_hidden),
-                            tint = if (showHidden) OrangeSoft else TextBright,
+                            tint = if (showHidden) SkyTheme.colors.accentText else SkyTheme.colors.text,
                         )
                     }
                     IconButton(onClick = { newFolder = true }) {
@@ -510,7 +503,7 @@ private fun BrowseContent(
         },
         snackbarHost = { SnackbarHost(snackbar) },
         bottomBar = {
-            Column(Modifier.background(SlateBar).navigationBarsPadding()) {
+            Column(Modifier.background(SkyTheme.colors.bar).navigationBarsPadding()) {
                 Hairline()
                 Button(
                     onClick = onUse,
@@ -531,14 +524,14 @@ private fun BrowseContent(
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             Row(
-                Modifier.fillMaxWidth().background(SlateBar).padding(horizontal = 4.dp),
+                Modifier.fillMaxWidth().background(SkyTheme.colors.bar).padding(horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = { parent?.let(onEnter) }, enabled = parent != null) {
                     Icon(
                         Icons.Outlined.ArrowUpward,
                         contentDescription = stringResource(R.string.files_up_one_folder),
-                        tint = if (parent != null) TextBright else MutedText.copy(alpha = 0.5f),
+                        tint = if (parent != null) SkyTheme.colors.text else SkyTheme.colors.mutedText.copy(alpha = 0.5f),
                     )
                 }
                 Row(
@@ -551,7 +544,7 @@ private fun BrowseContent(
                                 Icons.AutoMirrored.Outlined.KeyboardArrowRight,
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp),
-                                tint = MutedText,
+                                tint = SkyTheme.colors.mutedText,
                             )
                         }
                         val last = i == crumbs.lastIndex
@@ -559,7 +552,7 @@ private fun BrowseContent(
                             Text(
                                 if (i == 0) rootLabel else crumb.label,
                                 maxLines = 1,
-                                color = if (last) TextBright else MutedText,
+                                color = if (last) SkyTheme.colors.text else SkyTheme.colors.mutedText,
                                 fontWeight = if (last) FontWeight.Medium else FontWeight.Normal,
                             )
                         }
@@ -571,7 +564,7 @@ private fun BrowseContent(
             if (list != null && list.none { it.isDirectory }) {
                 Text(
                     stringResource(R.string.projects_no_folders),
-                    color = MutedText,
+                    color = SkyTheme.colors.mutedText,
                     fontSize = 14.sp,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                 )
@@ -611,18 +604,18 @@ private fun BrowseRow(entry: FileEntry, onClick: () -> Unit) {
             CircleIcon(Icons.Outlined.Folder)
         } else {
             Box(Modifier.size(36.dp), contentAlignment = Alignment.Center) {
-                Icon(Icons.AutoMirrored.Outlined.InsertDriveFile, contentDescription = null, tint = MutedText.copy(alpha = 0.6f), modifier = Modifier.size(20.dp))
+                Icon(Icons.AutoMirrored.Outlined.InsertDriveFile, contentDescription = null, tint = SkyTheme.colors.mutedText.copy(alpha = 0.6f), modifier = Modifier.size(20.dp))
             }
         }
         Text(
             entry.name,
-            color = if (entry.isDirectory) TextBright else MutedText.copy(alpha = 0.7f),
+            color = if (entry.isDirectory) SkyTheme.colors.text else SkyTheme.colors.mutedText.copy(alpha = 0.7f),
             fontSize = 15.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f).padding(start = 16.dp),
         )
-        if (entry.isDirectory) Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null, tint = MutedText)
+        if (entry.isDirectory) Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null, tint = SkyTheme.colors.mutedText)
     }
 }
 

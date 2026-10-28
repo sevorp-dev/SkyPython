@@ -1,7 +1,7 @@
 package dev.skyloft.skypython.debug
 
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import dev.skyloft.skypython.ui.theme.CodeFont
-import dev.skyloft.skypython.ui.theme.SlateBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -111,7 +111,7 @@ fun DebugPanel(
     var tab by rememberSaveable { mutableIntStateOf(DebugTab.Variables.ordinal) }
     val colors = MaterialTheme.colorScheme
     Surface(
-        color = SlateBar,
+        color = SkyTheme.colors.bar,
         contentColor = colors.onSurface,
         modifier = modifier.fillMaxWidth().testTag(DebugTags.PANEL),
     ) {
@@ -127,7 +127,7 @@ fun DebugPanel(
                 PrimaryScrollableTabRow(
                     selectedTabIndex = tab,
                     edgePadding = 0.dp,
-                    containerColor = SlateBar,
+                    containerColor = SkyTheme.colors.bar,
                     contentColor = colors.primary,
                 ) {
                     DebugTab.entries.forEach { t ->

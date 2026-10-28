@@ -1,20 +1,11 @@
 package dev.skyloft.skypython.terminal
 
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import androidx.compose.foundation.BorderStroke
-import dev.skyloft.skypython.ui.theme.InkBlack
+import dev.skyloft.skypython.ui.theme.DarkSkyColors
+import dev.skyloft.skypython.ui.theme.LightSkyColors
 import dev.skyloft.skypython.ui.rememberMainScope
 import dev.skyloft.skypython.ui.keepsSnackbarsAbove
-import dev.skyloft.skypython.ui.theme.TextBright
-import dev.skyloft.skypython.ui.theme.SlateRaised
-import dev.skyloft.skypython.ui.theme.SlatePanel
-import dev.skyloft.skypython.ui.theme.SlateLine
-import dev.skyloft.skypython.ui.theme.SlateBar
-import dev.skyloft.skypython.ui.theme.OrangeTint
-import dev.skyloft.skypython.ui.theme.OrangeSoft
-import dev.skyloft.skypython.ui.theme.Orange
-import dev.skyloft.skypython.ui.theme.OnOrange
-import dev.skyloft.skypython.ui.theme.MutedText
-import dev.skyloft.skypython.ui.theme.Ink
 import dev.skyloft.skypython.ui.theme.CodeFont
 import dev.skyloft.skypython.settings.TerminalTheme
 import dev.skyloft.skypython.settings.EditorSettings
@@ -183,7 +174,8 @@ fun TerminalScreen(
     val kind = viewModel.kind
     val actions = state.actions(kind)
     var view by remember { mutableStateOf<TerminalView?>(null) }
-    val background = terminalBackground(settings.terminalTheme)
+    val scheme = terminalScheme(settings.terminalTheme)
+    val background = scheme.background
     LaunchedEffect(settings.terminalFontSizeSp) { viewModel.setFontSize(settings.terminalFontSizeSp) }
     val saveFont by rememberUpdatedState(onFontSizeChange)
     DisposableEffect(viewModel) {
@@ -265,7 +257,7 @@ fun TerminalScreen(
                     TerminalBody.InstallError -> InstallError(state.installError.orEmpty(), viewModel::restart)
                     TerminalBody.StartError -> StartError(state.startError.orEmpty(), kind, onUseSimpleConsole)
                     TerminalBody.Terminal -> if (session != null) {
-                        TerminalPane(session, viewModel, state.fontSp, settings, background) { view = it }
+                        TerminalPane(session, viewModel, state.fontSp, settings, scheme) { view = it }
                     }
                     TerminalBody.Installing -> Installing()
                     TerminalBody.Starting -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -404,7 +396,7 @@ private fun RunImagesRow(images: List<File>, onOpen: (File) -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
-            .background(SlateBar)
+            .background(SkyTheme.colors.bar)
             .horizontalScroll(rememberScrollState())
             .padding(start = 12.dp, end = 12.dp, top = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -438,7 +430,7 @@ private fun FinishedBar(exitCode: Int, onRunAgain: () -> Unit, onBackToEditor: (
         Modifier
             .keepsSnackbarsAbove()
             .fillMaxWidth()
-            .background(SlateBar)
+            .background(SkyTheme.colors.bar)
             .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -469,14 +461,14 @@ private fun TerminalPane(
     viewModel: TerminalViewModel,
     fontSp: Float,
     settings: EditorSettings,
-    background: Color,
+    scheme: TerminalScheme,
     onView: (TerminalView?) -> Unit,
 ) {
-    val colors = MaterialTheme.colorScheme
     val palette = TerminalPalette(
-        foreground = colors.onBackground.toArgb(),
-        background = background.toArgb(),
-        cursor = Orange.toArgb(),
+        foreground = scheme.foreground.toArgb(),
+        background = scheme.background.toArgb(),
+        cursor = scheme.cursor.toArgb(),
+        light = scheme.light,
     )
     val context = LocalContext.current
     val typeface = remember(settings.codeFont) { codeTypeface(context, settings.codeFont) }
@@ -593,17 +585,52 @@ private fun shareOutput(context: Context, event: TerminalEvent.Share) {
  * white, then the bright eight. Magenta is the accent orange: Python 3.13+ paints its `>>>`
  * prompt with it.
  */
-private val ANSI_COLORS = longArrayOf(
+private val DARK_ANSI_COLORS = longArrayOf(
     0xFF3C3E43, 0xFFF0726A, 0xFF7EC27F, 0xFFF0C26B, 0xFF56A8F5, 0xFFF5A962, 0xFF3FBFC9, 0xFFC7C9CF,
     0xFF6F737A, 0xFFFF9B94, 0xFFA3D9A0, 0xFFFFD48F, 0xFF8CC4FA, 0xFFF7B474, 0xFF7ED8DF, 0xFFF2F3F5,
 ).let { argb -> IntArray(argb.size) { argb[it].toInt() } }
 
-/** The app theme's colours as the terminal's default foreground, background and cursor. */
-private data class TerminalPalette(val foreground: Int, val background: Int, val cursor: Int) {
+/**
+ * The light console's 16 colours: deep, dark-on-light inks (≥ 4.5:1 on the console for the
+ * normal eight but white), so coloured output stays readable. "White" is a mid grey, not
+ * invisible white-on-white; magenta is the burnt accent orange of the light theme.
+ */
+private val LIGHT_ANSI_COLORS = longArrayOf(
+    0xFF24292F, 0xFFC42B1C, 0xFF1A7F37, 0xFF8A6100, 0xFF0B5CC4, 0xFFB05400, 0xFF0A7C86, 0xFF6E7781,
+    0xFF57606A, 0xFFCF222E, 0xFF1F883D, 0xFF9A6700, 0xFF0969DA, 0xFFC25E0A, 0xFF1B7C83, 0xFF8C959F,
+).let { argb -> IntArray(argb.size) { argb[it].toInt() } }
+
+/**
+ * A terminal theme resolved against the app theme: [background], default [foreground] text,
+ * [cursor], and whether the [light] ANSI colours apply.
+ */
+private data class TerminalScheme(val background: Color, val foreground: Color, val cursor: Color, val light: Boolean)
+
+/** [theme] for the current app palette: Auto follows the app (light console in the light theme). */
+@Composable
+private fun terminalScheme(theme: TerminalTheme): TerminalScheme {
+    val app = SkyTheme.colors
+    val light = theme.isLight(app.isLight)
+    val c = if (light) LightSkyColors else DarkSkyColors
+    return TerminalScheme(
+        background = if (theme == TerminalTheme.Black) TERMINAL_BLACK else c.console,
+        foreground = c.consoleText,
+        cursor = if (light) c.accentText else c.accent,
+        light = light,
+    )
+}
+
+/** The "Black" theme: near-black for OLED screens at night. */
+private val TERMINAL_BLACK = Color(0xFF0A0A0A)
+
+/** The terminal's default foreground, background and cursor, and its ANSI colours. */
+private data class TerminalPalette(val foreground: Int, val background: Int, val cursor: Int, val light: Boolean) {
+    private val ansi get() = if (light) LIGHT_ANSI_COLORS else DARK_ANSI_COLORS
+
     /** For emulators created from now on, and for a full reset (`ESC c`). */
     fun applyDefaults() {
         val d = TerminalColors.COLOR_SCHEME.mDefaultColors
-        ANSI_COLORS.copyInto(d)
+        ansi.copyInto(d)
         d[TextStyle.COLOR_INDEX_FOREGROUND] = foreground
         d[TextStyle.COLOR_INDEX_BACKGROUND] = background
         d[TextStyle.COLOR_INDEX_CURSOR] = cursor
@@ -612,7 +639,7 @@ private data class TerminalPalette(val foreground: Int, val background: Int, val
     /** For an emulator that already exists (colours a program set itself are kept). */
     fun applyTo(session: TerminalSession) {
         val c = session.emulator?.mColors?.mCurrentColors ?: return
-        ANSI_COLORS.copyInto(c)
+        ansi.copyInto(c)
         c[TextStyle.COLOR_INDEX_FOREGROUND] = foreground
         c[TextStyle.COLOR_INDEX_BACKGROUND] = background
         c[TextStyle.COLOR_INDEX_CURSOR] = cursor
@@ -725,7 +752,7 @@ private fun KeyRow(modifiers: Modifiers, enabled: Boolean, onKey: (ExtraKey) -> 
             .keepsSnackbarsAbove()
             .fillMaxWidth()
             .height(44.dp)
-            .background(SlateBar)
+            .background(SkyTheme.colors.bar)
             .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
@@ -739,10 +766,10 @@ private fun KeyRow(modifiers: Modifiers, enabled: Boolean, onKey: (ExtraKey) -> 
                 // An armed Ctrl / Alt sits on a tonal pill, so it reads as "on" at a glance.
                 // Every key sits on a soft keycap one step above the bar.
                 colors = ButtonDefaults.textButtonColors(
-                    containerColor = if (armed) OrangeTint else SlatePanel,
-                    disabledContainerColor = SlatePanel.copy(alpha = 0.5f),
+                    containerColor = if (armed) SkyTheme.colors.accentTint else SkyTheme.colors.panel,
+                    disabledContainerColor = SkyTheme.colors.panel.copy(alpha = 0.5f),
                 ),
-                border = BorderStroke(1.dp, if (armed) Orange.copy(alpha = 0.45f) else SlateLine),
+                border = BorderStroke(1.dp, if (armed) SkyTheme.colors.accent.copy(alpha = 0.45f) else SkyTheme.colors.line),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .padding(horizontal = 2.dp)
@@ -758,7 +785,7 @@ private fun KeyRow(modifiers: Modifiers, enabled: Boolean, onKey: (ExtraKey) -> 
                     fontSize = 15.sp,
                     color = when {
                         !enabled -> colors.onSurface.copy(alpha = 0.38f)
-                        armed -> OrangeSoft
+                        armed -> SkyTheme.colors.accentText
                         else -> colors.onSurface
                     },
                 )
@@ -782,11 +809,6 @@ private fun StartError(message: String, kind: TerminalKind, onUseSimpleConsole: 
     }
 }
 
-/** The terminal background for a theme: the app's darkest surface, or near-black. */
-private fun terminalBackground(theme: TerminalTheme): Color = when (theme) {
-    TerminalTheme.Dark -> Ink
-    TerminalTheme.Black -> InkBlack
-}
 
 /**
  * The interpreter's command line: a rounded field and a round orange send button. Enter sends
@@ -806,7 +828,7 @@ private fun CommandLine(enabled: Boolean, onSend: (String) -> Unit) {
         Modifier
             .keepsSnackbarsAbove()
             .fillMaxWidth()
-            .background(SlateBar)
+            .background(SkyTheme.colors.bar)
             .padding(start = 12.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -815,8 +837,8 @@ private fun CommandLine(enabled: Boolean, onSend: (String) -> Unit) {
             onValueChange = { text = it },
             enabled = enabled,
             singleLine = true,
-            textStyle = androidx.compose.ui.text.TextStyle(color = TextBright, fontFamily = CodeFont, fontSize = 15.sp),
-            cursorBrush = SolidColor(Orange),
+            textStyle = androidx.compose.ui.text.TextStyle(color = SkyTheme.colors.text, fontFamily = CodeFont, fontSize = 15.sp),
+            cursorBrush = SolidColor(SkyTheme.colors.accent),
             // Code, not prose: no auto-capitals ("i" → "I") and no autocorrect.
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.None,
@@ -829,14 +851,14 @@ private fun CommandLine(enabled: Boolean, onSend: (String) -> Unit) {
             decorationBox = { inner ->
                 Box(
                     Modifier
-                        .background(SlatePanel, shape)
-                        .border(1.dp, SlateLine, shape)
+                        .background(SkyTheme.colors.panel, shape)
+                        .border(1.dp, SkyTheme.colors.line, shape)
                         .heightIn(min = 44.dp)
                         .padding(horizontal = 14.dp),
                     contentAlignment = Alignment.CenterStart,
                 ) {
                     if (text.isEmpty()) {
-                        Text(stringResource(R.string.terminal_command_hint), color = MutedText, fontSize = 15.sp)
+                        Text(stringResource(R.string.terminal_command_hint), color = SkyTheme.colors.mutedText, fontSize = 15.sp)
                     }
                     inner()
                 }
@@ -849,14 +871,14 @@ private fun CommandLine(enabled: Boolean, onSend: (String) -> Unit) {
                 .padding(start = 8.dp)
                 .size(44.dp)
                 .clip(CircleShape)
-                .background(if (enabled) Orange else SlateRaised)
+                .background(if (enabled) SkyTheme.colors.accent else SkyTheme.colors.raised)
                 .clickable(enabled = enabled, role = Role.Button, onClickLabel = sendLabel) { send() }
                 .semantics { contentDescription = sendLabel },
         ) {
             Icon(
                 Icons.AutoMirrored.Outlined.Send,
                 contentDescription = null,
-                tint = if (enabled) OnOrange else MutedText,
+                tint = if (enabled) SkyTheme.colors.onAccent else SkyTheme.colors.mutedText,
                 modifier = Modifier.size(20.dp),
             )
         }

@@ -76,7 +76,8 @@ class SettingsMappingTest {
         val d = SettingsMapping.read(emptyPreferences())
         assertEquals(CodeFontChoice.JetBrainsMono, d.codeFont)
         assertEquals(14, d.terminalFontSizeSp)
-        assertEquals(TerminalTheme.Dark, d.terminalTheme)
+        assertEquals(TerminalTheme.Auto, d.terminalTheme)
+        assertEquals(AppTheme.System, d.appTheme)
     }
 
     @Test
@@ -85,6 +86,33 @@ class SettingsMappingTest {
         val prefs = mutablePreferencesOf()
         SettingsMapping.write(prefs, s)
         assertEquals(s, SettingsMapping.read(prefs))
+        for (app in AppTheme.entries) for (terminal in TerminalTheme.entries) {
+            val t = EditorSettings(appTheme = app, terminalTheme = terminal)
+            val p = mutablePreferencesOf()
+            SettingsMapping.write(p, t)
+            assertEquals(t, SettingsMapping.read(p))
+        }
+    }
+
+    @Test
+    fun themesResolveAgainstTheSystemAndTheApp() {
+        assertEquals(true, AppTheme.System.isDark(systemDark = true))
+        assertEquals(false, AppTheme.System.isDark(systemDark = false))
+        assertEquals(true, AppTheme.Dark.isDark(systemDark = false))
+        assertEquals(false, AppTheme.Light.isDark(systemDark = true))
+        assertEquals(true, TerminalTheme.Auto.isLight(appLight = true))
+        assertEquals(false, TerminalTheme.Auto.isLight(appLight = false))
+        assertEquals(true, TerminalTheme.Light.isLight(appLight = false))
+        assertEquals(false, TerminalTheme.Dark.isLight(appLight = true))
+        assertEquals(false, TerminalTheme.Black.isLight(appLight = true))
+    }
+
+    @Test
+    fun legacyDarkTerminalThemeFollowsTheApp() {
+        // "dark" was the only console before the light theme: it now means "match the app".
+        val prefs = mutablePreferencesOf()
+        prefs[stringPreferencesKey("terminal_theme")] = "dark"
+        assertEquals(TerminalTheme.Auto, SettingsMapping.read(prefs).terminalTheme)
     }
 
     @Test
@@ -101,16 +129,19 @@ class SettingsMappingTest {
         val prefs = mutablePreferencesOf()
         prefs[stringPreferencesKey("code_font")] = "comic_sans"
         prefs[stringPreferencesKey("terminal_theme")] = "neon"
+        prefs[stringPreferencesKey("app_theme")] = "sepia"
         val s = SettingsMapping.read(prefs)
         assertEquals(CodeFontChoice.JetBrainsMono, s.codeFont)
-        assertEquals(TerminalTheme.Dark, s.terminalTheme)
+        assertEquals(TerminalTheme.Auto, s.terminalTheme)
+        assertEquals(AppTheme.System, s.appTheme)
     }
 
     @Test
     fun choiceKeysAreStable() {
         // Stored in DataStore: renaming an enum constant must not lose the user's choice.
         assertEquals(listOf("jetbrains_mono", "system_mono"), CodeFontChoice.entries.map { it.key })
-        assertEquals(listOf("dark", "black"), TerminalTheme.entries.map { it.key })
+        assertEquals(listOf("dark", "light", "always_dark", "black"), TerminalTheme.entries.map { it.key })
+        assertEquals(listOf("system", "dark", "light"), AppTheme.entries.map { it.key })
     }
 
     @Test

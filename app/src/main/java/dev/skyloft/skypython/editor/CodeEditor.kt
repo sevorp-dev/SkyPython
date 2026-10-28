@@ -1,20 +1,10 @@
 package dev.skyloft.skypython.editor
 
-import dev.skyloft.skypython.ui.theme.Slate
-import dev.skyloft.skypython.ui.theme.SlateBar
-import dev.skyloft.skypython.ui.theme.SlatePanel
-import dev.skyloft.skypython.ui.theme.SlateLine
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import dev.skyloft.skypython.ui.theme.GLASS_ALPHA
-import dev.skyloft.skypython.ui.theme.CodeSelection
-import dev.skyloft.skypython.ui.theme.TextBright
-import dev.skyloft.skypython.ui.theme.MutedText
-import dev.skyloft.skypython.ui.theme.OrangeSoft
-import dev.skyloft.skypython.ui.theme.ErrorRed
-import dev.skyloft.skypython.ui.theme.Orange
-import dev.skyloft.skypython.ui.theme.WarningAmber
-import dev.skyloft.skypython.ui.theme.BadgeTint
-import dev.skyloft.skypython.ui.theme.OrangeTint
-import dev.skyloft.skypython.ui.theme.SlateOutline
+import dev.skyloft.skypython.ui.theme.SkyColors
+import dev.skyloft.skypython.ui.theme.DarkSkyColors
+import dev.skyloft.skypython.ui.theme.LightSkyColors
 import io.github.rosemoe.sora.widget.SelectionMovement
 import dev.skyloft.skypython.settings.CodeFontChoice
 import dev.skyloft.skypython.R
@@ -92,13 +82,13 @@ import dev.skyloft.skypython.ui.rememberMainScope
 import io.github.rosemoe.sora.widget.schemes.EditorColorScheme
 import org.eclipse.tm4e.core.registry.IThemeSource
 
-private val EDITOR_BG = Slate.toArgb()
-private val GUTTER_DIVIDER = SlateBar.toArgb()
-private const val THEME_PATH = "textmate/skypython-dark.json"
-private const val THEME_NAME = "skypython-dark"
+private const val DARK_THEME_PATH = "textmate/skypython-dark.json"
+private const val DARK_THEME_NAME = "skypython-dark"
+private const val LIGHT_THEME_PATH = "textmate/skypython-light.json"
+private const val LIGHT_THEME_NAME = "skypython-light"
 private const val PYTHON_SCOPE = "source.python"
 
-/** One-time registration of the bundled TextMate grammar and theme (assets/textmate/). */
+/** One-time registration of the bundled TextMate grammar and themes (assets/textmate/). */
 object TextMateSetup {
     @Volatile private var done = false
 
@@ -107,83 +97,154 @@ object TextMateSetup {
         if (done) return
         FileProviderRegistry.getInstance().addFileProvider(AssetsFileResolver(context.applicationContext.assets))
         val themes = ThemeRegistry.getInstance()
-        val stream = FileProviderRegistry.getInstance().tryGetInputStream(THEME_PATH)
-            ?: error("missing asset $THEME_PATH")
-        themes.loadTheme(ThemeModel(IThemeSource.fromInputStream(stream, THEME_PATH, null), THEME_NAME).apply { isDark = true })
-        themes.setTheme(THEME_NAME)
+        for ((path, name, dark) in listOf(
+            Triple(DARK_THEME_PATH, DARK_THEME_NAME, true),
+            Triple(LIGHT_THEME_PATH, LIGHT_THEME_NAME, false),
+        )) {
+            val stream = FileProviderRegistry.getInstance().tryGetInputStream(path) ?: error("missing asset $path")
+            themes.loadTheme(ThemeModel(IThemeSource.fromInputStream(stream, path, null), name).apply { isDark = dark })
+        }
+        themes.setTheme(DARK_THEME_NAME)
         GrammarRegistry.getInstance().loadGrammars("textmate/languages.json")
         done = true
+    }
+
+    /** Makes the light or dark syntax theme current (open color schemes and analyzers follow). */
+    @Synchronized
+    fun select(light: Boolean) {
+        val name = if (light) LIGHT_THEME_NAME else DARK_THEME_NAME
+        val themes = ThemeRegistry.getInstance()
+        if (themes.currentThemeModel?.name != name) themes.setTheme(name)
+    }
+}
+
+/** The editor's non-syntax colours (popups, gutter, squiggles) for one app palette, as ARGB. */
+internal data class EditorPalette(
+    val light: Boolean,
+    val background: Int,
+    val gutterDivider: Int,
+    val popupBackground: Int,
+    val popupBorder: Int,
+    val popupSelected: Int,
+    val popupText: Int,
+    val popupTextSecondary: Int,
+    val popupMatched: Int,
+    val squiggleError: Int,
+    val squiggleWarning: Int,
+    val accent: Int,
+    val bracketBorder: Int,
+    val bracketBackground: Int,
+    val scrollThumb: Int,
+    val badge: Int,
+) {
+    companion object {
+        fun of(c: SkyColors) = EditorPalette(
+            light = c.isLight,
+            background = c.codeBackground.toArgb(),
+            gutterDivider = (if (c.isLight) c.line else c.bar).toArgb(),
+            // Completion popup and problem tooltip: the app's raised panel and text colours.
+            popupBackground = c.panel.copy(alpha = GLASS_ALPHA).toArgb(),
+            popupBorder = c.line.toArgb(),
+            popupSelected = c.codeSelection.toArgb(),
+            popupText = c.text.toArgb(),
+            popupTextSecondary = c.mutedText.toArgb(),
+            popupMatched = c.accentText.toArgb(),
+            squiggleError = c.error.toArgb(),
+            squiggleWarning = c.warning.toArgb(),
+            accent = c.accent.toArgb(),
+            bracketBorder = c.accentText.copy(alpha = 0.6f).toArgb(),
+            bracketBackground = c.accentTint.toArgb(),
+            scrollThumb = c.outline.copy(alpha = if (c.isLight) 0.6f else 0.8f).toArgb(),
+            badge = c.badge.toArgb(),
+        )
+
+        val Dark = of(DarkSkyColors)
+        val Light = of(LightSkyColors)
+
+        /** The palette of the shown editor (completion badges are made off the main thread). */
+        @Volatile var current: EditorPalette = Dark
     }
 }
 
 /** TextMate colors with SkyPython's background forced on the text area and gutter. */
-private class SkyColorScheme(registry: ThemeRegistry) :
+private class SkyColorScheme(registry: ThemeRegistry, val palette: EditorPalette) :
     TextMateColorScheme(registry, registry.currentThemeModel) {
-    override fun applyDefault() {
-        super.applyDefault()
-        setColor(WHOLE_BACKGROUND, EDITOR_BG)
-        setColor(LINE_NUMBER_BACKGROUND, EDITOR_BG)
-        setColor(LINE_DIVIDER, GUTTER_DIVIDER)
+    // The super constructor already calls applyDefault / getColor: until this is set, they
+    // fall back to the TextMate theme's own colours.
+    private var p: EditorPalette? = null
+
+    init {
+        p = palette
+        applyDefault()
     }
 
-    override fun getColor(type: Int): Int = when (type) {
-        WHOLE_BACKGROUND, LINE_NUMBER_BACKGROUND -> EDITOR_BG
-        LINE_DIVIDER -> GUTTER_DIVIDER
-        // The theme has no suggest-widget / tooltip colors; Sora's defaults are light-on-light.
-        COMPLETION_WND_BACKGROUND, DIAGNOSTIC_TOOLTIP_BACKGROUND -> POPUP_BG
-        COMPLETION_WND_CORNER -> POPUP_BORDER
-        // Find matches: the selection colour, so highlighted (often yellow string) text stays readable.
-        COMPLETION_WND_ITEM_CURRENT, MATCHED_TEXT_BACKGROUND -> POPUP_SELECTED
-        COMPLETION_WND_TEXT_PRIMARY, DIAGNOSTIC_TOOLTIP_BRIEF_MSG -> POPUP_TEXT
-        COMPLETION_WND_TEXT_SECONDARY, DIAGNOSTIC_TOOLTIP_DETAILED_MSG -> POPUP_TEXT_SECONDARY
-        COMPLETION_WND_TEXT_MATCHED -> POPUP_MATCHED
-        // Selection toolbar (cut / copy / paste …): the same dark popup as the suggestions.
-        TEXT_ACTION_WINDOW_BACKGROUND -> POPUP_BG
-        TEXT_ACTION_WINDOW_ICON_COLOR -> POPUP_TEXT
-        // Selection handles: the accent, like the cursor (Sora's default is a stock blue).
-        SELECTION_HANDLE -> ACCENT
-        // The bracket pair at the cursor: a warm box, not Sora's stock blue.
-        HIGHLIGHTED_DELIMITERS_BORDER -> BRACKET_BORDER
-        HIGHLIGHTED_DELIMITERS_BACKGROUND -> BRACKET_BG
-        HIGHLIGHTED_DELIMITERS_UNDERLINE -> TRANSPARENT
-        HOVER_BACKGROUND, SIGNATURE_BACKGROUND -> POPUP_BG
-        HOVER_BORDER, SIGNATURE_BORDER, STICKY_SCROLL_DIVIDER -> POPUP_BORDER
-        HOVER_TEXT_NORMAL, SIGNATURE_TEXT_NORMAL -> POPUP_TEXT
-        HOVER_TEXT_HIGHLIGHTED, SIGNATURE_TEXT_HIGHLIGHTED_PARAMETER -> POPUP_MATCHED
-        SCROLL_BAR_THUMB -> SCROLL_THUMB
-        SCROLL_BAR_THUMB_PRESSED -> POPUP_MATCHED
-        PROBLEM_ERROR -> SQUIGGLE_ERROR
-        PROBLEM_WARNING -> SQUIGGLE_WARNING
-        else -> super.getColor(type)
+    override fun applyDefault() {
+        super.applyDefault()
+        val p = p ?: return
+        setColor(WHOLE_BACKGROUND, p.background)
+        setColor(LINE_NUMBER_BACKGROUND, p.background)
+        setColor(LINE_DIVIDER, p.gutterDivider)
     }
+
+    override fun getColor(type: Int): Int {
+        val p = p ?: return super.getColor(type)
+        return when (type) {
+            WHOLE_BACKGROUND, LINE_NUMBER_BACKGROUND -> p.background
+            LINE_DIVIDER -> p.gutterDivider
+            // The theme has no suggest-widget / tooltip colors; Sora's defaults don't match.
+            COMPLETION_WND_BACKGROUND, DIAGNOSTIC_TOOLTIP_BACKGROUND -> p.popupBackground
+            COMPLETION_WND_CORNER -> p.popupBorder
+            // Find matches: the selection colour, so highlighted (often yellow string) text stays readable.
+            COMPLETION_WND_ITEM_CURRENT, MATCHED_TEXT_BACKGROUND -> p.popupSelected
+            COMPLETION_WND_TEXT_PRIMARY, DIAGNOSTIC_TOOLTIP_BRIEF_MSG -> p.popupText
+            COMPLETION_WND_TEXT_SECONDARY, DIAGNOSTIC_TOOLTIP_DETAILED_MSG -> p.popupTextSecondary
+            COMPLETION_WND_TEXT_MATCHED -> p.popupMatched
+            // Selection toolbar (cut / copy / paste …): the same popup as the suggestions.
+            TEXT_ACTION_WINDOW_BACKGROUND -> p.popupBackground
+            TEXT_ACTION_WINDOW_ICON_COLOR -> p.popupText
+            // Selection handles: the accent, like the cursor (Sora's default is a stock blue).
+            SELECTION_HANDLE -> p.accent
+            // The bracket pair at the cursor: a warm box, not Sora's stock blue.
+            HIGHLIGHTED_DELIMITERS_BORDER -> p.bracketBorder
+            HIGHLIGHTED_DELIMITERS_BACKGROUND -> p.bracketBackground
+            HIGHLIGHTED_DELIMITERS_UNDERLINE -> TRANSPARENT
+            HOVER_BACKGROUND, SIGNATURE_BACKGROUND -> p.popupBackground
+            HOVER_BORDER, SIGNATURE_BORDER, STICKY_SCROLL_DIVIDER -> p.popupBorder
+            HOVER_TEXT_NORMAL, SIGNATURE_TEXT_NORMAL -> p.popupText
+            HOVER_TEXT_HIGHLIGHTED, SIGNATURE_TEXT_HIGHLIGHTED_PARAMETER -> p.popupMatched
+            SCROLL_BAR_THUMB -> p.scrollThumb
+            SCROLL_BAR_THUMB_PRESSED -> p.popupMatched
+            PROBLEM_ERROR -> p.squiggleError
+            PROBLEM_WARNING -> p.squiggleWarning
+            else -> super.getColor(type)
+        }
+    }
+}
+
+/** Gives [view] the syntax theme and editor colours of [palette], re-highlighting the text. */
+private fun applyEditorPalette(view: CodeEditor, palette: EditorPalette) {
+    EditorPalette.current = palette
+    TextMateSetup.select(palette.light)
+    val current = view.colorScheme as? SkyColorScheme
+    if (current != null && current.palette == palette) return
+    view.colorScheme = SkyColorScheme(ThemeRegistry.getInstance(), palette)
+    // Spans carry colour ids of the theme they were made with: highlight again.
+    if (current != null) view.rerunAnalysis()
 }
 
 private const val PINCH_SAVE_DELAY_MS = 600L
 private val JUMP_RESCROLL_MS = longArrayOf(150L, 500L, 1_200L)
-// Completion popup and problem tooltip: the app's raised panel and text colours.
-private val POPUP_BG = SlatePanel.copy(alpha = GLASS_ALPHA).toArgb()
-private val POPUP_BORDER = SlateLine.toArgb()
-private val POPUP_SELECTED = CodeSelection.toArgb()
-private val POPUP_TEXT = TextBright.toArgb()
-private val POPUP_TEXT_SECONDARY = MutedText.toArgb()
-private val POPUP_MATCHED = OrangeSoft.toArgb()
-private val SQUIGGLE_ERROR = ErrorRed.toArgb()
-private val ACCENT = Orange.toArgb()
-private val SQUIGGLE_WARNING = WarningAmber.toArgb()
-private val BRACKET_BORDER = OrangeSoft.copy(alpha = 0.6f).toArgb()
-private val BRACKET_BG = OrangeTint.toArgb()
-private val SCROLL_THUMB = SlateOutline.copy(alpha = 0.8f).toArgb()
 private const val TRANSPARENT = 0
 
 /**
  * Completion-list badge: the kind's first letter on a soft tonal circle in the accent orange,
  * instead of Sora's saturated per-kind colours.
  */
-internal class CompletionBadge(kind: CompletionItemKind) : Drawable() {
+internal class CompletionBadge(kind: CompletionItemKind, palette: EditorPalette = EditorPalette.current) : Drawable() {
     private val letter = kind.name.first().uppercase()
-    private val circle = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = BADGE_BG }
+    private val circle = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = palette.badge }
     private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = POPUP_MATCHED
+        color = palette.popupMatched
         textAlign = Paint.Align.CENTER
         typeface = Typeface.DEFAULT_BOLD
     }
@@ -209,8 +270,6 @@ internal class CompletionBadge(kind: CompletionItemKind) : Drawable() {
     @Deprecated("Deprecated in Java")
     override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
 }
-
-private val BADGE_BG = BadgeTint.toArgb()
 
 /** Text and a position in it, as the language server takes them: 1-based [line], UTF-16 [column]. */
 data class LookupPosition(val source: String, val line: Int, val column: Int)
@@ -670,6 +729,8 @@ fun CodeEditor(
     }
 
     controller.usageAccent = MaterialTheme.colorScheme.primary
+    val palette = if (SkyTheme.colors.isLight) EditorPalette.Light else EditorPalette.Dark
+    val currentPalette by rememberUpdatedState(palette)
 
     // ---- parameter hint ----
     var hint by remember { mutableStateOf<HintState?>(null) }
@@ -719,6 +780,8 @@ fun CodeEditor(
         modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
             TextMateSetup.ensure(ctx)
+            // The analyzer of the language below takes the syntax theme current at its creation.
+            TextMateSetup.select(currentPalette.light)
             DebugAwareCodeEditor(ctx).apply {
                 tabWidth = 4
                 // Backspace in leading spaces removes a whole indent level (4 spaces).
@@ -742,7 +805,7 @@ fun CodeEditor(
                 lineNumberMarginLeft = 6 * dp
                 setDividerMargin(6 * dp, 6 * dp)
                 applyConfig(config)
-                colorScheme = SkyColorScheme(ThemeRegistry.getInstance())
+                applyEditorPalette(this, currentPalette)
                 val language = PythonLanguage(TextMateLanguage.create(PYTHON_SCOPE, true)) { source, line, column ->
                     // Sora's completion thread; interrupting it (more typing) cancels the request.
                     runBlocking { service.complete(source, line, column, currentPath) }
@@ -843,6 +906,11 @@ fun CodeEditor(
         val line = debugMarks.executionLine ?: return@LaunchedEffect
         val view = controller.view ?: return@LaunchedEffect
         if (line - 1 in 0 until view.text.lineCount) view.ensurePositionVisible(line - 1, 0)
+    }
+
+    // Settings → Appearance → Theme: the open editor switches its syntax theme and colours at once.
+    LaunchedEffect(palette) {
+        controller.view?.let { applyEditorPalette(it, palette) }
     }
 
     // Settings changes apply live to the existing view.

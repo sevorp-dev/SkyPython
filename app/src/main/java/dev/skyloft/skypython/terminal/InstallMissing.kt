@@ -1,5 +1,6 @@
 package dev.skyloft.skypython.terminal
 
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import dev.skyloft.skypython.ui.theme.SheetShape
 import dev.skyloft.skypython.ui.theme.floatingOutline
 import androidx.compose.foundation.background
@@ -50,7 +51,6 @@ import dev.skyloft.skypython.pip.MissingPackage
 import dev.skyloft.skypython.pip.PipOperation
 import dev.skyloft.skypython.pip.PipViewModel
 import dev.skyloft.skypython.ui.theme.CodeFont
-import dev.skyloft.skypython.ui.theme.SlateBar
 import dev.skyloft.skypython.ui.theme.brandButtonColors
 
 /** Test tag of the "Install x" action under a run that failed on a missing module. */
@@ -71,7 +71,7 @@ fun InstallMissingRow(missing: MissingPackage, enabled: Boolean, onInstall: () -
     Row(
         Modifier
             .fillMaxWidth()
-            .background(SlateBar)
+            .background(SkyTheme.colors.bar)
             .padding(start = 12.dp, end = 12.dp, top = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

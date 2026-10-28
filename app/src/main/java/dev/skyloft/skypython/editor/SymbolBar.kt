@@ -1,10 +1,7 @@
 package dev.skyloft.skypython.editor
 
-import dev.skyloft.skypython.ui.theme.OrangeTint
-import dev.skyloft.skypython.ui.theme.Orange
-import dev.skyloft.skypython.ui.theme.SlatePanel
+import dev.skyloft.skypython.ui.theme.SkyTheme
 import androidx.compose.foundation.border
-import dev.skyloft.skypython.ui.theme.OrangeSoft
 import androidx.compose.material.icons.outlined.KeyboardHide
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
@@ -60,10 +57,7 @@ import dev.skyloft.skypython.R
 import dev.skyloft.skypython.settings.DEFAULT_SYMBOL_KEYS
 import dev.skyloft.skypython.settings.SymbolKey
 import dev.skyloft.skypython.settings.parseSymbolKeys
-import dev.skyloft.skypython.ui.theme.SlateBar
-import dev.skyloft.skypython.ui.theme.SlateLine
 import dev.skyloft.skypython.ui.theme.RunButton
-import dev.skyloft.skypython.ui.theme.TextBright
 
 /** The default keys (Settings can change them, see [parseSymbolKeys]). */
 val SYMBOL_KEYS: List<SymbolKey> = parseSymbolKeys(DEFAULT_SYMBOL_KEYS)
@@ -83,7 +77,7 @@ enum class EditAction(@StringRes val description: Int, val icon: ImageVector?, v
     GoToLine(R.string.go_to_line_title, Icons.Outlined.FormatListNumbered),
 }
 
-private val KeyDivider = SlateLine
+private val KeyDivider: Color @Composable get() = SkyTheme.colors.line
 
 /**
  * Strip of quick-insert [keys] above the keyboard. Left: a key that flips the strip to edit
@@ -111,7 +105,7 @@ fun SymbolBar(
             description = stringResource(if (actions) R.string.editor_actions_hide else R.string.editor_actions_show),
             selected = actions,
         ) {
-            Icon(Icons.Outlined.EditNote, contentDescription = null, tint = if (actions) OrangeSoft else KeyText)
+            Icon(Icons.Outlined.EditNote, contentDescription = null, tint = if (actions) SkyTheme.colors.accentText else KeyText)
         }
         VerticalDivider(Modifier.height(24.dp), color = KeyDivider)
         Row(
@@ -173,11 +167,11 @@ fun SymbolBar(
     }
 }
 
-private val KeyText = TextBright.copy(alpha = 0.9f)
+private val KeyText: Color @Composable get() = SkyTheme.colors.text.copy(alpha = 0.9f)
 
-/** Keycaps: one step above the bar ([SlateBar]), with a hairline edge. */
-private val KeyCap = SlatePanel
-private val KeyEdge = SlateLine
+/** Keycaps: one step above the bar ([SkyColors.bar]), with a hairline edge. */
+private val KeyCap: Color @Composable get() = SkyTheme.colors.panel
+private val KeyEdge: Color @Composable get() = SkyTheme.colors.line
 
 /**
  * One key: at least 40dp wide (+4dp gap), a soft raised keycap on the bar so keys read as keys,
@@ -198,8 +192,8 @@ private fun BarKey(
             .widthIn(min = 40.dp)
             .padding(vertical = 6.dp, horizontal = 2.dp)
             .clip(shape)
-            .background(if (selected) OrangeTint else KeyCap)
-            .border(1.dp, if (selected) Orange.copy(alpha = 0.45f) else KeyEdge, shape)
+            .background(if (selected) SkyTheme.colors.accentTint else KeyCap)
+            .border(1.dp, if (selected) SkyTheme.colors.accent.copy(alpha = 0.45f) else KeyEdge, shape)
             .clickable(onClickLabel = description, role = Role.Button, onClick = onClick)
             .then(if (description != null) Modifier.semantics { contentDescription = description } else Modifier)
             .padding(horizontal = 8.dp),
