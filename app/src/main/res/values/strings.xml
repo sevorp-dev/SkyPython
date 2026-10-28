@@ -567,4 +567,6 @@
     <string name="settings_section_updates">Updates</string>
     <string name="settings_auto_update">Check for updates automatically</string>
     <string name="settings_auto_update_summary">Looks for a new release on GitHub when the app starts, at most twice a day</string>
+    <string name="pip_pkg_matplotlib">Charts and plots (native code)</string>
+    <string name="pip_pkg_pandas">Tables and data analysis (native code)</string>
 </resources>

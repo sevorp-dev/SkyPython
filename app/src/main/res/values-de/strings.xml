@@ -552,4 +552,6 @@
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_dark">Dunkel</string>
     <string name="settings_theme_light">Hell</string>
+    <string name="pip_pkg_matplotlib">Diagramme und Plots (nativer Code)</string>
+    <string name="pip_pkg_pandas">Tabellen und Datenanalyse (nativer Code)</string>
 </resources>

@@ -64,6 +64,8 @@ object PopularPackages {
         PopularPackage("pillow", R.string.pip_pkg_pillow, PopularSection.Data, Availability.ComingLater),
         // Installable from SkyPython's wheel index once it has a build for the device.
         PopularPackage("numpy", R.string.pip_pkg_numpy, PopularSection.Data, Availability.ComingLater),
+        PopularPackage("matplotlib", R.string.pip_pkg_matplotlib, PopularSection.Data, Availability.ComingLater),
+        PopularPackage("pandas", R.string.pip_pkg_pandas, PopularSection.Data, Availability.ComingLater),
         PopularPackage("httpx", R.string.pip_pkg_httpx, PopularSection.Web),
         PopularPackage("beautifulsoup4", R.string.pip_pkg_beautifulsoup4, PopularSection.Web),
         // markupsafe ships cp314 Android wheels for arm64-v8a and x86_64 only.

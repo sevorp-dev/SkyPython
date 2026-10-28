@@ -552,4 +552,6 @@
     <string name="settings_theme_system">Sistema</string>
     <string name="settings_theme_dark">Escuro</string>
     <string name="settings_theme_light">Claro</string>
+    <string name="pip_pkg_matplotlib">Gráficos e diagramas (código nativo)</string>
+    <string name="pip_pkg_pandas">Tabelas e análise de dados (código nativo)</string>
 </resources>

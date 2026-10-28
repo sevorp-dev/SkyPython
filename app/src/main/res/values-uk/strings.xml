@@ -552,4 +552,6 @@
     <string name="settings_theme_system">Системна</string>
     <string name="settings_theme_dark">Темна</string>
     <string name="settings_theme_light">Світла</string>
+    <string name="pip_pkg_matplotlib">Графіки та діаграми (нативний код)</string>
+    <string name="pip_pkg_pandas">Таблиці та аналіз даних (нативний код)</string>
 </resources>

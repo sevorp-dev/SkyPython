@@ -550,4 +550,6 @@
     <string name="settings_section_updates">Обновления</string>
     <string name="settings_auto_update">Проверять обновления автоматически</string>
     <string name="settings_auto_update_summary">Ищет новую версию на GitHub при запуске, не чаще двух раз в день</string>
+    <string name="pip_pkg_matplotlib">Графики и диаграммы (нативный код)</string>
+    <string name="pip_pkg_pandas">Таблицы и анализ данных (нативный код)</string>
 </resources>

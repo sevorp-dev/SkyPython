@@ -552,4 +552,6 @@
     <string name="settings_theme_system">Sistem</string>
     <string name="settings_theme_dark">Koyu</string>
     <string name="settings_theme_light">Açık</string>
+    <string name="pip_pkg_matplotlib">Grafikler ve çizimler (yerel kod)</string>
+    <string name="pip_pkg_pandas">Tablolar ve veri analizi (yerel kod)</string>
 </resources>
