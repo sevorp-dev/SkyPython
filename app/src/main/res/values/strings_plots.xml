@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figures a program showed with plt.show(): the chips under the output and the plot viewer. -->
+<resources>
+    <string name="plot_figures_label">Figures</string>
+    <string name="plot_figure">Figure %1$s</string>
+    <string name="plot_open">Show figure %1$s</string>
+    <string name="plot_position">%1$d of %2$d</string>
+    <string name="plot_save">Save to project</string>
+    <string name="plot_save_failed">Couldn\'t save the figure: %1$s</string>
+</resources>

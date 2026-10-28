@@ -7,7 +7,12 @@ import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -189,7 +194,7 @@ fun ImageViewerScreen(file: File, onBack: () -> Unit, onDeleted: (File) -> Unit)
 }
 
 @Composable
-private fun ViewerError(failure: LoadedImage.Failed) {
+internal fun ViewerError(failure: LoadedImage.Failed) {
     val text = when (failure.reason) {
         LoadedImage.Reason.Missing -> stringResource(R.string.viewer_error_missing)
         LoadedImage.Reason.Unsupported -> stringResource(R.string.viewer_error_unsupported)
@@ -221,9 +226,12 @@ private fun checkerTile(cellPx: Int, dark: Color, light: Color): ImageBitmap {
     return bitmap.asImageBitmap()
 }
 
-/** The picture fitted to the view; pinch / double tap zoom (to [ImageMath.MAX_ZOOM]), drag pans. */
+/**
+ * The picture fitted to the view; pinch / double tap zoom (to [ImageMath.MAX_ZOOM]), drag pans.
+ * One finger at full view is left alone, so a pager around it can swipe to the next picture.
+ */
 @Composable
-private fun ZoomableImage(bitmap: Bitmap, name: String) {
+internal fun ZoomableImage(bitmap: Bitmap, name: String) {
     val image = remember(bitmap) { bitmap.asImageBitmap() }
     val cellPx = with(LocalDensity.current) { 8.dp.roundToPx() }.coerceAtLeast(2)
     val checker = remember(cellPx) {
@@ -273,14 +281,24 @@ private fun ZoomableImage(bitmap: Bitmap, name: String) {
                     })
                 }
                 .pointerInput(bitmap) {
-                    detectTransformGestures { centroid, pan, gestureZoom, _ ->
-                        val center = Offset(size.width / 2f, size.height / 2f)
-                        val focus = centroid - center
-                        val newZoom = (zoom * gestureZoom).coerceIn(1f, ImageMath.MAX_ZOOM)
-                        panX = ImageMath.panAfterZoom(panX, focus.x, zoom, newZoom) + pan.x
-                        panY = ImageMath.panAfterZoom(panY, focus.y, zoom, newZoom) + pan.y
-                        zoom = newZoom
-                        clamp()
+                    awaitEachGesture {
+                        awaitFirstDown(requireUnconsumed = false)
+                        do {
+                            val event = awaitPointerEvent()
+                            if (event.changes.any { it.isConsumed }) break
+                            // Pinch, or a drag of the zoomed-in picture; a drag at full view is a swipe.
+                            if (event.changes.count { it.pressed } >= 2 || zoom > 1.01f) {
+                                val center = Offset(size.width / 2f, size.height / 2f)
+                                val focus = event.calculateCentroid(useCurrent = false) - center
+                                val pan = event.calculatePan()
+                                val newZoom = (zoom * event.calculateZoom()).coerceIn(1f, ImageMath.MAX_ZOOM)
+                                panX = ImageMath.panAfterZoom(panX, focus.x, zoom, newZoom) + pan.x
+                                panY = ImageMath.panAfterZoom(panY, focus.y, zoom, newZoom) + pan.y
+                                zoom = newZoom
+                                clamp()
+                                event.changes.forEach { if (it.positionChanged()) it.consume() }
+                            }
+                        } while (event.changes.any { it.pressed })
                     }
                 },
         ) {

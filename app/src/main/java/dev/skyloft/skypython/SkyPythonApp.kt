@@ -101,6 +101,7 @@ import dev.skyloft.skypython.terminal.TerminalScreen
 import dev.skyloft.skypython.terminal.TerminalViewModel
 import dev.skyloft.skypython.ui.drawer.DrawerAction
 import dev.skyloft.skypython.viewer.ImageViewerScreen
+import dev.skyloft.skypython.viewer.PlotViewerScreen
 import dev.skyloft.skypython.update.UpdateAboutSection
 import dev.skyloft.skypython.update.UpdateBanner
 import dev.skyloft.skypython.update.UpdateMessage
@@ -127,11 +128,17 @@ private object Routes {
     const val REPORT_ID = "id"
     const val IMAGE = "image"
     const val IMAGE_PATH = "path"
+    const val PLOTS = "plots"
+    const val PLOTS_KIND = "kind"
+    const val PLOTS_INDEX = "index"
     const val OPEN_PROJECT = "open-project"
     const val UPDATE = "update"
 
     /** The image viewer showing [file]. */
     fun image(file: File) = "$IMAGE?$IMAGE_PATH=${android.net.Uri.encode(file.path)}"
+
+    /** The figures [kind]'s program showed with plt.show(), from the [index]th. */
+    fun plots(kind: TerminalKind, index: Int) = "$PLOTS/${kind.name}?$PLOTS_INDEX=$index"
 
     /** The Report screen, with a saved crash or a recent error attached when [id] is given. */
     fun report(id: String? = null) = if (id == null) REPORT else "$REPORT?$REPORT_ID=$id"
@@ -199,6 +206,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
     val openConsole = { nav.go(Routes.CONSOLE) }
     val openRun = { nav.go(Routes.RUN) }
     val openImage: (File) -> Unit = { file -> nav.go(Routes.image(file)) }
+    val openPlots = { kind: TerminalKind -> { index: Int -> nav.go(Routes.plots(kind, index)) } }
     val openInEditor = { file: File, line: Int ->
         editorVm.openAt(file, line)
         nav.popBackStack(Routes.EDITOR, inclusive = false)
@@ -405,6 +413,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                         onFontSizeChange = saveTerminalFont,
                         pip = pipVm,
                         onOpenImage = openImage,
+                        onOpenPlots = openPlots(TerminalKind.Run),
                     )
                 }
                 // Fallback if the pseudo-terminal can't be opened: the line-mode console over pipes.
@@ -422,6 +431,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                         settings = settings,
                         onFontSizeChange = saveTerminalFont,
                         onOpenInEditor = openInEditor,
+                        onOpenPlots = openPlots(TerminalKind.Interpreter),
                     )
                 }
                 composable(Routes.TERMINAL) {
@@ -433,6 +443,7 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                         settings = settings,
                         onFontSizeChange = saveTerminalFont,
                         onOpenInEditor = openInEditor,
+                        onOpenPlots = openPlots(TerminalKind.Shell),
                     )
                 }
                 composable(Routes.FILES) {
@@ -494,6 +505,34 @@ fun SkyPythonApp(snackbar: SnackbarHostState) {
                             filesVm.refresh()
                             nav.popBackStack()
                         },
+                    )
+                }
+                composable(
+                    "${Routes.PLOTS}/{${Routes.PLOTS_KIND}}?${Routes.PLOTS_INDEX}={${Routes.PLOTS_INDEX}}",
+                    arguments = listOf(
+                        navArgument(Routes.PLOTS_KIND) { type = NavType.StringType },
+                        navArgument(Routes.PLOTS_INDEX) { type = NavType.IntType; defaultValue = 0 },
+                    ),
+                ) { entry ->
+                    val terminal = when (entry.arguments?.getString(Routes.PLOTS_KIND)) {
+                        TerminalKind.Interpreter.name -> interpreterVm
+                        TerminalKind.Shell.name -> shellVm
+                        else -> runVm
+                    }
+                    val terminalState by terminal.state.collectAsStateWithLifecycle()
+                    if (terminalState.plots.isEmpty()) {
+                        // A new run cleared them (or the process was restarted): nothing to show.
+                        LaunchedEffect(Unit) { nav.popBackStack() }
+                        return@composable
+                    }
+                    PlotViewerScreen(
+                        plots = terminalState.plots,
+                        initialPage = entry.arguments?.getInt(Routes.PLOTS_INDEX) ?: 0,
+                        jumpTo = terminalState.showPlot,
+                        onJumped = terminal::plotOpened,
+                        save = { plot -> terminal.savePlot(plot).onSuccess { filesVm.refresh() } },
+                        displayPath = terminal::displayPath,
+                        onBack = { nav.popBackStack() },
                     )
                 }
                 composable(Routes.PIP) {
