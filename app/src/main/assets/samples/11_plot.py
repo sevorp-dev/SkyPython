@@ -1,4 +1,4 @@
-# Draw a chart with matplotlib (install it in Pip first)
+# Charts: sine, cosine, bars and a pie with matplotlib (install "matplotlib" in Pip first)
 #
 # matplotlib draws charts of every kind. SkyPython ships it prebuilt for
 # Android: open Pip, find "matplotlib" and tap Install. Then run this file —

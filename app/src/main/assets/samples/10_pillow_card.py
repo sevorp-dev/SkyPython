@@ -1,4 +1,4 @@
-# Make a picture card with Pillow (install "pillow" in Pip first)
+# Picture card: draw a card with Pillow and open it in the viewer (install "pillow" in Pip first)
 #
 # Pillow is a library for working with images. SkyPython ships it prebuilt
 # for Android: open Pip, find "pillow" and tap Install. Then run this file —
